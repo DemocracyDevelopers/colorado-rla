@@ -23,12 +23,6 @@ module.exports = config => {
         },
 
         webpack: {
-            plugins: [
-                new webpack.DefinePlugin({
-                    DEBUG: true
-                }),
-            ],
-
             resolve: {
                 extensions: ['.ts', '.tsx', '.js', '.json'],
 

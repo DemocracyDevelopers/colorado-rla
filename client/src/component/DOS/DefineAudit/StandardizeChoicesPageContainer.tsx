@@ -67,6 +67,7 @@ interface Props {
     history: History;
 }
 
+
 const PageContainer = (props: Props) => {
     const {
         areChoicesLoaded,
@@ -81,11 +82,12 @@ const PageContainer = (props: Props) => {
             // use the result here
             if (r.ok) {
                 history.push(NEXT_PATH);
-            }
-        })
+            } 
+       })
         .catch(reason => {
             alert('standardizeChoices error in submitAction ' + reason);
-        });
+        })
+ 
     };
 
     const previousPage = async () => {

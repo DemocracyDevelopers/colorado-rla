@@ -27,8 +27,9 @@ function createSubmitAction<S, R>(config: CreateSubmitConfig<S, R>) {
     } = config;
 
     const createData = config.createData || defaultCreateData;
-
+   
     async function submitAction(sent: S) {
+    
         action(sendType);
 
         const init: RequestInit = {
@@ -51,16 +52,21 @@ function createSubmitAction<S, R>(config: CreateSubmitConfig<S, R>) {
                 return r;
             }
 
-            const received = await r.json().catch(empty);
+            const received = await r.json().catch((error) =>{
+                console.log('Failed to parse JSON respone:', error)
+                return r.text();
+            });
             const data = createData(sent, received);
 
             action(okType, data);
             return r;
         } catch (e) {
-            action(networkFailType);
-
+           action(networkFailType);
+            console.log("createSubmitAction catch(e):" + e);
             throw e;
-        }
+        } 
+
+
     }
 
     return submitAction;

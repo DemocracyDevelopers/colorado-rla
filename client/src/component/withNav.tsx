@@ -37,6 +37,8 @@ interface IVersionButton {
     checking: boolean
 }
 
+declare const VERSION: boolean | React.ReactChild | React.ReactFragment | React.ReactPortal | null | undefined;
+
 class VersionButton extends React.Component<any, any> {
 
     public state: IVersionButton = {
@@ -68,7 +70,7 @@ class VersionButton extends React.Component<any, any> {
         } else {
         return (
             <><p><b>Backend Version:<span style={{ display: "inline-block", float: "right" }}>{this.state.versionInfo}</span></b></p>
-                <p><b>Front End Version:<span style={{ display: "inline-block", float: "right" }}>{config.version}</span></b></p></>
+                <p><b>Front End Version:<span style={{ display: "inline-block", float: "right" }}>{VERSION}</span></b></p></>
         );
         }
     }

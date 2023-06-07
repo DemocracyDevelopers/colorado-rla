@@ -1,9 +1,8 @@
 import * as React from 'react';
 
 import { Button, Card, Elevation, Intent, ProgressBar } from '@blueprintjs/core';
-
-import fetchReport from 'corla/action/dos/fetchReport';
 import startNextRound from 'corla/action/dos/startNextRound';
+import AuditReportForm from 'corla/component/AuditReportForm';
 
 interface ControlProps {
     canRenderReport: boolean;
@@ -45,14 +44,12 @@ class Control extends React.Component<ControlProps, ControlState>  {
                         </Button>
                     </div>
                     <div>
-                        <Button large
-                            disabled={!canRenderReport}
-                            intent={Intent.PRIMARY}
-                            icon='import'
-                            onClick={fetchReport}>
-                            Download audit report
-                    </Button>
-                    </div>
+                    <div>
+                        {canRenderReport && (<AuditReportForm
+                            canRenderReport={canRenderReport}
+                        /> 
+                        )}
+            </div>                    </div>
                 </div>
             );
         };

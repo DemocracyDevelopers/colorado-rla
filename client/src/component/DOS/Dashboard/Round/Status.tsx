@@ -1,8 +1,5 @@
 import * as React from 'react';
-
-import { Button, Intent } from '@blueprintjs/core';
-
-import fetchReport from 'corla/action/dos/fetchReport';
+import AuditReportForm from 'corla/component/AuditReportForm';
 
 interface StatusProps {
     auditIsComplete: boolean;
@@ -32,13 +29,10 @@ const Status = (props: StatusProps) => {
                 </span>
             </div>
             <div>
-                <Button large
-                        disabled={ !canRenderReport }
-                        intent={ Intent.PRIMARY }
-                        icon='import'
-                        onClick={ fetchReport }>
-                    Download audit report
-                </Button>
+                {canRenderReport && (<AuditReportForm
+                canRenderReport={canRenderReport}
+                /> 
+                )}
             </div>
         </div>
     );

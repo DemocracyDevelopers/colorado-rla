@@ -4,7 +4,7 @@ REM DEL /Q dist
 
 REM # Build production JavaScript bundle.
 REM npx webpack -p --config webpack.config.prod.js --output-filename bundle.js 
-npx webpack -p --config webpack.config.prod.js --output-filename bundle.js 
+npx webpack --config webpack.config.prod.js --output-filename bundle.js 
 
 
 REM # Copy root HTML document.

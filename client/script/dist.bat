@@ -12,7 +12,7 @@ cd "${CLIENT_DIR}"
 del -rf dist
 
 # Build production JavaScript bundle.
-"$(npm bin)/webpack" -p --config webpack.config.prod.js --output-filename bundle.js
+"$(npm bin)/webpack" --config webpack.config.prod.js --output-filename bundle.js
 
 # Copy root HTML document.
 copy index.prod.html dist/index.html
