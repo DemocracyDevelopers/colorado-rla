@@ -158,12 +158,16 @@ public final class AuditReport {
     for (String contestName : contestNames) {
       String newUniqueName = getFirst31Characters(contestName);
 
+      //TRK 279 2021 practice period, dowload audit report hangs
+//      for (Map.Entry me : uniqueNames.entrySet()) {
+//        LOGGER.info("Key: "+me.getKey() + " & Value: " + me.getValue());
+//      }
       while (uniqueNames.containsKey(newUniqueName)) {
         newUniqueName = getUniqueName(newUniqueName);
       }
       uniqueNames.put(newUniqueName, contestName);
     }
-    return   
+    return
        uniqueNames.entrySet()
            .stream()
            .sorted(Map.Entry.comparingByValue())
@@ -172,40 +176,53 @@ public final class AuditReport {
   }
 
   /** all the reports in one "package" **/
-  public static void generateZip(final OutputStream os) {
+  public static void generateZip(final OutputStream os, List<String> selectedReports) {
     final ZipOutputStream zos = new ZipOutputStream(os);
 
     try {
       final Map<String, String> files = ExportQueries.sqlFiles();
 
-      for (final Map.Entry<String, String> entry : files.entrySet()) {
-        final String filename = entry.getKey() + ".csv";
-        final ZipEntry zipEntry = new ZipEntry(filename);
-        zos.putNextEntry(zipEntry);
-        ExportQueries.csvOut(entry.getValue(), zos);
-        zos.closeEntry();
+      for (String reportName : selectedReports) {
+        for (final Map.Entry<String, String> entry : files.entrySet()) {
+          String name = entry.getKey();
+          if (name.equals(reportName)){
+            final String filename = name + ".csv";
+            final ZipEntry zipEntry = new ZipEntry(filename);
+            zos.putNextEntry(zipEntry);
+            ExportQueries.csvOut(entry.getValue(), zos);
+            zos.closeEntry();
+          }
+        }
+
+        if ("JSON".equalsIgnoreCase(reportName)) {
+          for (final Map.Entry<String, String> entry : files.entrySet()) {
+            final String filename = entry.getKey() + ".json";
+            final ZipEntry zipEntry = new ZipEntry(filename);
+            zos.putNextEntry(zipEntry);
+            ExportQueries.jsonOut(entry.getValue(), zos);
+            zos.closeEntry();
+          }
+        }
+
+        if ("ActivityReport".equalsIgnoreCase(reportName)) {
+          zos.putNextEntry(new ZipEntry("ActivityReport.xlsx"));
+          zos.write(generate("xlsx", "activity-all", null));
+          zos.closeEntry();
+        }
+
+        if ("ResultReport".equalsIgnoreCase(reportName)) {
+          zos.putNextEntry(new ZipEntry("ResultsReport.xlsx"));
+          zos.write(generate("xlsx", "results-all", null));
+          zos.closeEntry();
+        }
+
+        if ("StateReport".equalsIgnoreCase(reportName)) {
+          final StateReport sr = new StateReport();
+          zos.putNextEntry(new ZipEntry(sr.filenameExcel()));
+          zos.write(sr.generateExcel());
+          zos.closeEntry();
+        }
       }
-
-      for (final Map.Entry<String, String> entry : files.entrySet()) {
-        final String filename = entry.getKey() + ".json";
-        final ZipEntry zipEntry = new ZipEntry(filename);
-        zos.putNextEntry(zipEntry);
-        ExportQueries.jsonOut(entry.getValue(), zos);
-        zos.closeEntry();
-      }
-
-      zos.putNextEntry(new ZipEntry("ActivityReport.xlsx"));
-      zos.write(generate("xlsx", "activity-all", null));
-      zos.closeEntry();
-
-      zos.putNextEntry(new ZipEntry("ResultsReport.xlsx"));
-      zos.write(generate("xlsx", "results-all", null));
-      zos.closeEntry();
-
-      final StateReport sr = new StateReport();
-      zos.putNextEntry(new ZipEntry(sr.filenameExcel()));
-      zos.write(sr.generateExcel());
-      zos.closeEntry();
     } catch (IOException e) {
       LOGGER.error(e.getMessage());
     } finally {

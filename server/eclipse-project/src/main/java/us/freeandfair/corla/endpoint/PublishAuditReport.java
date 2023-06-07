@@ -18,7 +18,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.cxf.attachment.Rfc5987Util;
 
@@ -83,6 +86,9 @@ public class PublishAuditReport extends AbstractDoSDashboardEndpoint {
     String contentType;
     final String contestName = request.queryParams("contestName"); // optional when reportType is *-all
     final String reportType  = request.queryParams("reportType"); // activity/results
+    final String reports  = request.queryParams("reports"); // report choices from UI popup
+
+    List<String> selectedReports = Stream.of(reports.split(",", -1)).collect(Collectors.toList());
 
     contentType = request.queryParams("contentType");
     if (null == contentType) {
@@ -105,7 +111,7 @@ public class PublishAuditReport extends AbstractDoSDashboardEndpoint {
       case "zip": case "application/zip":
         response.header("Content-Type", "application/zip");
         response.header("Content-Disposition", "attachment; filename*=UTF-8''" + fileName(reportType, "zip"));
-        AuditReport.generateZip(os);
+        AuditReport.generateZip(os, selectedReports);
         os.close();
         break;
       default:

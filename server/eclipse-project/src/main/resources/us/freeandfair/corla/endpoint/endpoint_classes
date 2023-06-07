@@ -47,3 +47,4 @@ us.freeandfair.corla.endpoint.StartAuditRound
 us.freeandfair.corla.endpoint.StateReportDownload
 us.freeandfair.corla.endpoint.Unauthenticate
 us.freeandfair.corla.endpoint.UpdateAuditInfo
+us.freeandfair.corla.endpoint.DownloadAuditReport

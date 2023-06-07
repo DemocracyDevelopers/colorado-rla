@@ -3,41 +3,42 @@
  *
  * @title ColoradoRLA
  * @copyright 2018 Colorado Department of State
- * @license SPDX-License-Identifier: AGPL-3.0-or-later
+ * @license SPDX-License-Identifier: AGPL-LGO3.0-or-later
  * @creator Democracy Works, Inc. <dev@democracy.works>
  * @description A system to assist in conducting statewide risk-limiting audits.
  */
 
 package us.freeandfair.corla.endpoint;
 
-import static us.freeandfair.corla.asm.ASMEvent.DoSDashboardEvent.COMPLETE_AUDIT_INFO_EVENT;
-import static us.freeandfair.corla.asm.ASMEvent.DoSDashboardEvent.PARTIAL_AUDIT_INFO_EVENT;
-
-import java.lang.reflect.Type;
-import java.util.List;
-
-import javax.persistence.PersistenceException;
-
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
-
+import org.apache.commons.text.StringEscapeUtils;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import spark.Request;
 import spark.Response;
-
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
-import us.freeandfair.corla.model.AuditInfo;
-import us.freeandfair.corla.model.Contest;
-import us.freeandfair.corla.model.DoSDashboard;
-import us.freeandfair.corla.model.CountyContestResult;
 import us.freeandfair.corla.json.CanonicalUpdate;
 import us.freeandfair.corla.json.CanonicalUpdate.ChoiceChange;
+import us.freeandfair.corla.model.AuditInfo;
+import us.freeandfair.corla.model.Contest;
+import us.freeandfair.corla.model.CountyContestResult;
+import us.freeandfair.corla.model.DoSDashboard;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.query.CountyContestResultQueries;
+
+import javax.persistence.PersistenceException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+
+import static us.freeandfair.corla.asm.ASMEvent.DoSDashboardEvent.COMPLETE_AUDIT_INFO_EVENT;
+import static us.freeandfair.corla.asm.ASMEvent.DoSDashboardEvent.PARTIAL_AUDIT_INFO_EVENT;
 
 /**
  * The endpoint for renaming contests.
@@ -101,37 +102,37 @@ public class SetContestNames extends AbstractDoSDashboardEndpoint {
    */
   @Override
   public String endpointBody(final Request request, final Response response) {
+
     try {
       final List<CanonicalUpdate> canons = Main.GSON.fromJson(request.body(), TYPE_TOKEN);
 
-      if (canons == null) {
-        badDataContents(response, "malformed contest mappings");
+       if (canons == null) {
+         badDataContents(response, "null cannons, malformed contest mappings");
       } else {
-        final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
+          final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
         if (dosdb == null) {
-          LOGGER.error("could not get department of state dashboard");
           serverError(response, "could not set contest mappings");
         }
-
         final int updateCount = changeNames(canons);
-
-        asmEvent.set(nextEvent(dosdb));
+         asmEvent.set(nextEvent(dosdb));
         ok(response, String.format("re-mapped %d contest names", updateCount));
       }
     } catch (final PersistenceException e) {
-      LOGGER.error("unable to re-map contest names", e);
       serverError(response, "unable to re-map contest names");
     } catch (final JsonParseException e) {
-      LOGGER.error("malformed contest mapping", e);
       badDataContents(response, "malformed contest mapping");
+    } catch (final Exception e) {
+      badDataContents(response, "Exception");
     }
     return my_endpoint_result.get();
   }
 
-  private int changeNames(final List<CanonicalUpdate> canons) {
+  private int changeNames(final List<CanonicalUpdate> canons) throws Exception {
 
     int updateCount = 0;
     for (final CanonicalUpdate canon : canons) {
+
+
       final Long id = Long.parseLong(canon.contestId);
       final Contest contest = Persistence.getByID(id, Contest.class);
       // change contest name
@@ -139,6 +140,9 @@ public class SetContestNames extends AbstractDoSDashboardEndpoint {
         contest.setName(canon.name);
       }
       // change choice names
+      if (null == canon.choices) {
+        LOGGER.info("canon.choices IS NULL");
+      }
       if (null != canon.choices) {
         for (final ChoiceChange choiceChange: canon.choices) {
           if (null != choiceChange.oldName
@@ -149,13 +153,13 @@ public class SetContestNames extends AbstractDoSDashboardEndpoint {
                         + choiceChange.oldName +" -> "+ choiceChange.newName
                         + " contest: " + contest.name() + " county: " + contest.county());
             contest.updateChoiceName(choiceChange.oldName, choiceChange.newName);
-            
+
             CastVoteRecordQueries.updateCVRContestInfos(contest.county().id(),
                                                         contest.id(),
                                                         choiceChange.oldName,
                                                         choiceChange.newName);
-            final CountyContestResult ccr = CountyContestResultQueries
-              .matching(contest.county(), contest);
+
+            final CountyContestResult ccr = CountyContestResultQueries.matching(contest.county(), contest);
             ccr.updateChoiceName(choiceChange.oldName, choiceChange.newName);
             Persistence.update(ccr);
           }
@@ -179,10 +183,8 @@ public class SetContestNames extends AbstractDoSDashboardEndpoint {
     if (info.electionDate() == null || info.electionType() == null ||
         info.publicMeetingDate() == null || info.riskLimit() == null ||
         info.seed() == null || dosDashboard.contestsToAudit().isEmpty()) {
-      LOGGER.debug("partial audit information submitted");
       result = PARTIAL_AUDIT_INFO_EVENT;
     } else {
-      LOGGER.debug("complete audit information submitted");
       result = COMPLETE_AUDIT_INFO_EVENT;
     }
 
