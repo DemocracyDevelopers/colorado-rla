@@ -1,9 +1,9 @@
 %%% \title{DRAFT Formal Specification of the Colorado Risk Limiting Audit (CORLA) Tool}
-%%% \author{Joseph R. Kiniry and Daniel M. Zimmerman\\with input from\\Neal McBurnett, Stephanie Singer, and Joey Dodds}
-%%% \date{July 2017}
+%%% \author{Joseph R. Kiniry and Daniel M. Zimmerman\\with input from\\Neal McBurnett, Stephanie Singer, and Joey Dodds\\IRV extensions by Michelle Blom and Vanessa Teague}
+%%% \date{\today}
 %%%
 %%% \maketitle
-%%%
+%%% \tableofcontents
 %%% \section{Introduction}
 %%%
 %%% The RLA Tool is a computer system developed by Free \& Fair for
@@ -486,6 +486,7 @@ BEGIN
 % (a)CVR in a multi-seat race with refines to @tbd.
   choice: TYPE = set[option]
 
+%%% \todoIRV{Consider how to express choices for IRV contests. Several options: (a) define a choice as \texttt{list[option]} and ignore the order for one-out-of-many plurality contests.  (b) define an option as \texttt{[name: string, description: string, preference: nat]} and set the preference for 1 for all plurality contests. This might be a nice way of representing noncompliant votes,such as repeat or skipped preferences. Note that it might make sense to represent them in one way at the ballot-input stage (for example, with a complete representation of overvotes, skipped preferences etc), but in a different way during the audit stage (where it might make more sense to represent their valid interpretation).}
 %%% Elections focus on contests, each of which represents a choice
 %%% that voters can make. Making a legal choice ranges enormously
 %%% across the Earth, from marking a vote for a candidate by filling
@@ -502,6 +503,7 @@ BEGIN
        choices: choice,
        votes_allowed: nat #]
 
+%%% \todovteague{This doesn't quite match current code's definition of contest (in model.Contest). The code has a \texttt{winners\_allowed} field.}
 % @trace RDPR-6-Jul-2017 Section 25.1.2
 % @description A contest selected by the Secretary of State for a
 % risk-limiting audit.
@@ -522,6 +524,7 @@ BEGIN
   wrong_outcome: TYPE FROM election_outcomes
 
 %%% Tabulation results are calculated from the CVRs by the RLA tool.
+%%% \todoIRV{Add IRV Tabulation from CVRs; check consistency with RAIRE assertions.}
 %%% These outcomes and margins are used to drive the RLA algorithms.
 %%% These outcomes should be checked against the
 %%% \texttt{reported\_tabulation\_outcome}, and should match since
@@ -780,6 +783,7 @@ BEGIN
   imprinted_ballot: TYPE FROM ballot
   ballot_certification: TYPE
 
+%%% \todoIRV{We will now need two types of contests: plurality contests, which have a \texttt{number\_elected} and \texttt{votes\_allowed}, as below, and a second IRV type, which always has a single person elected.  Check: will there be a maximum number of preferences allowed? Or do we only need to impose a maximum (of 1) per preference? }
 % @description The number of winners in a contest. This is 1 for
 % plurality contests, and more than 1 for plurality block voting
 % contests.
@@ -855,7 +859,10 @@ END ballot_manifests
 %%% In an overvote, the interpretation of the voter's marks is that the 
 %%% voter made more selections then were allowed. In this case 
 %%% none of the voter's selections are added to the tallies.
+%%% \todoIRV{Consider equivalent judgements for IRV, which are complicated because well-formedness may fail at either the preference or the contest level. For example, an individual preference may be an overvote (a repeat of preference 2, for example), which certainly causes the overall vote to be not well formed. However, a skipped preferences causes the overall vote to be not well formed even if all individual preference choices are well formed.}
 
+%%% \todovteague{How does the concept of a vote compare with the concept of a choice above? Is it that the vote may include a 
+%%% valid choice, or may instead contain problems such as over- or under-voting?}
 % @relation well_formed_vote inherit vote
 % @relation overvote inherit vote
 % @relation undervote inherit vote
@@ -967,6 +974,7 @@ BEGIN
        audit_board: audit_board,
        county_administrator: county_administrator #]
 
+%%% \todoIRV{Confirm how IRV voting errors should be reported, e.g. repeat preferences.}
 % @trace RDPR-6-Jul-2017 Section 25.2.2(D)(1)
 % @description This report shows the total number of overvotes,
 % undervotes, blank-voted contests, and valid write-in votes for (an
@@ -1098,7 +1106,7 @@ END canvass_boards
 
 %%% Cryptography is used, via hashing, to verify that the verified
 %%% ballot manifests and CVRs uploaded by counties and stored in the
-%%% file system and database have integrity and repudiation. I.e.,
+%%% file system and database have integrity and repudiation.\todovteague{Non-repudiation? Also keen to understand how opened ballots are matched to committed cvrs, i.e. more details about (b).} I.e.,
 %%% checking a cryptographic hash of a file guarantees: (a) to the
 %%% Secretary of State and state administrators that the uploaded
 %%% files are the ones that county administrators thinks they are
@@ -1239,6 +1247,69 @@ END randomness
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%+BEGIN assertions
+
+%%% \todoIRV{This section is new for IRV}
+%%% \subsection{Assertions}
+%%% An Assertion is a claim comparing some tallies at some point in an election.
+%%% For example, for a simple plurality election in which Alice is the apparent
+%%% winner, an assertion might state that Alice's tally is higher than Bob's.
+%%% This assertion would be true if Alice is the true winner.
+%%% Because Colorado uses the variant of MACRO described in Stark's 
+%%% ``Super-simple simultaneous RLAs,'' the most natural assertion for a 
+%%% plurality contest is a single one that states that the apparent winner has
+%%% a higher tally than every other candidate.
+%%% \todovteague{I believe a separate risk calculation is performed for each contest, using the modified version of MACRO within the contest. Check this is correct.}
+%%% So for each plurality contest with some \texttt{contest\_outcome} (which 
+%%% I assume is an announced winner $W$? We will make an assertion
+%%% \texttt{highest\_tally}($W$)
+%%% which is then verified by RLA. This does not change the RLA at all - 
+%%% the actual calculation remains exactly as it is now, but the risk calculation
+%%% is attached to the assertion rather that the contest. Plurality has a 
+%%% one-to-one correspondence between assertions and contests.
+%%% 
+%%% Similarly, for k-out-of-n plurality elections, the assertion would simply
+%%% state that a set of winners all had higher tallies than every loser.
+%%% \todovteague{Check tha CORLA does multi-winner risk calculations with a single statistic}
+%%% 
+%%% (As an aside, if Colorado ever wanted to implement a more refined risk 
+%%% calculation, such as Stark's MICRO, we would simply write a separate assertion
+%%% for each (winner,loser) pair of candidates, and compute the risk separately
+%%% for each.
+%%% 
+%%% So the scoring rule for the 
+%%% \texttt{highest\_tally}($W$) assertion would simply follow Stark's Table 1:
+%%% Winner: 1, Loser: -1, undervote, overvote, not on ballot: 0.
+%%%
+%%% The overstatement is CVR score minus Hand score.
+%%% \todovteague{Check how Super-simple works with multi-winner plurality.}
+%%% 
+%%% We then define two other types of assertions for IRV:
+%%% \NEB{W}{L} claims that winner W is \emph{not eliminated before} loser L.
+%%% \IRV{W}{L}{$\mathcal{S}$} claims that winner W is \emph{not eliminated next} 
+%%% when set $\mathcal{S}$ contains the uneliminated candidates, because W
+%%% then has a higher tally than loser L.
+%%% \todovteague{Add scoring rules and over- and under-statement counts.}
+
+%%% So I think we want something like:
+assertions: THEORY
+BEGIN
+  assertion: TYPE
+  highest_tally_assertion: TYPE from assertion = 
+    [winner:option, losers:[option]]
+  not_eliminated_before_assertion: TYPE from assertion = 
+    [winner:option, loser:option]
+  not_eliminated_next_assertion: TYPE from assertion = 
+   [winner:option, loser:option,still_standing:[option]]
+%%%
+%%% Note: Not sure whether unmatching types are permitted. If not, it's easy enough to unify the types as
+%%% [candidate, [candidate],[candidate]].
+
+END assertions
+
+%%% \todoIRV{End new section for IRV.}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %+BEGIN audits
 
 %%% \subsection{Audits}
@@ -1284,8 +1355,10 @@ BEGIN
 %%% smaller.
   ballots_to_audit: TYPE = nat
 
+%%% \todoIRV{Now audit-related data such as \texttt{margin} \texttt{diluted\_margin}, etc, should attach to assertions rather than contests.}
 %%% We list various other terms relating to audits here. They will be
 %%% defined and refined in later versions of the domain model.
+%%% \todovteague{What's the difference between \texttt{contest\_margin} and \texttt{margin}}
   contest_margin: TYPE = nat
   margin: TYPE = real
 
@@ -1458,6 +1531,8 @@ END rlas
 %%% \todokiniry{For a given election, we cannot expect a 1-1
 %%% correspondence between its ballots and its CVRs. Phantom ballots
 %%% and human error will result in a violation of such a property.}
+%%% \todovteague{If a ballot has so many contests that it runs to two (or more) cards, is that
+%%% two (or more) cvrs?}
 
 cast_vote_records: THEORY
 BEGIN
@@ -2244,7 +2319,7 @@ BEGIN
   two_factor_authentication: TYPE =
     [[username, password], [physical_token + biometric]]
 %%% Two-factor authentication protocols use a
-%%% \texttt{two_factor_challenge} to prompt a user to answer a
+%%% \texttt{two\_factor\_challenge} to prompt a user to answer a
 %%% response, thereby exhibiting that the user owns/controls the
 %%% second factor.
   two_factor_challenge: TYPE
