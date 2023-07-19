@@ -66,4 +66,5 @@ Contributors
 * Rich Helton (CDOS Developer) Authored enhancements to RLA Tool Client and Server
 * Dogan Cibiceli (CDOS Developer) Authored enhancements to RLA Tool Client and Server
 
+* Michelle Blom and Vanessa Teague (Democracy Developers Ltd.) are working on IRV enhancements.
 More information about our team members [is available](docs/70_team.md).

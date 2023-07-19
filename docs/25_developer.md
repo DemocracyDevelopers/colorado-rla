@@ -192,34 +192,65 @@ In order to use the Postgres database in development, one must:
    appropriate) and start it running.
 2. Create a database called "`corla`", and grant all privileges on it
    to a user called "`corla`" with password "`corla`".
+   Also create a user called "`corlaadmin`" with secret "`corlasecret`".
 3. Initialize the "`corla`" database with test administrator data.
    For example, to accomplish the above on MacOS using Homebrew, one
    issues the following commands:
 ```
 brew install postgres
 createuser -P corla
+createuser -P corladmin
 createdb -O corla corla
 ```
-On Linux, one would replace the first command with something akin to
-`sudo apt-get install postgresql`.
+
+On Linux, 
+
+```
+sudo apt install postgresql
+sudo -u postgres createuser -P corla
+sudo -u postgres createuser -P corlaadmin
+sudo -u postgres createdb -O corla corla
+```
+
+and in order to give "`corlaadmin`" appropriate privileges:
+```
+sudo -u postgres psql
+
+postgres=# GRANT ALL PRIVILEGES ON DATABASE "corla" TO corlaadmin;
+```
+
+3. If you are running postgres locally, you will need to change the 
+"`hibernate.url`" field in "`test/resources/test.properties`" and "/server/eclipse-project/src/main/resources/us/freeandfair/corla/default.properties" 
+to
+```
+hibernate.url = jdbc:postgresql://localhost:5432/corla?reWriteBatchedInserts=true&disableColumnSantiser=true
+```
 
 That's it. If the database is there the server will use it and will,
 at this stage, create all its tables and such automatically.
-4. Run the server (to create all the database tables). Recall that
+
+4. Build the server with tests turned off. In the server/eclipse-project directory:
+```
+mvn package -DskipTests
+```
+
+5. Run the server (to create all the database tables). Recall that
    this is accomplished by either running the server in Eclipse using
    the Run button or running it from a command line using a command
    akin to `java -jar colorado_rla-VERSION-shaded.jar`.
-5. Load test authentication credentials into the database, by
+   
+6. Load test authentication credentials into the database, by
    executing the SQL in `corla-test-credentials.psql` (found in the
    `test` directory of the repository). This can be done with the
    following command on OS X:
 ```
-psql -U corla -d corla -a -f corla-test-credentials.psql
+psql -U corlaadmin -d corla -a -f test/corla-test-credentials.psql
 ```
    or the following command on Linux:
 ```
-psql -U corla -h localhost -d corla -a -f corla-test-credentials.psql
+psql -U corlaadmin -h localhost -d corla -a -f test/corla-test-credentials.psql
 ```
+7. If you have [built and run the client](https://github.com/DemocracyDevelopers/colorado-rla/blob/master/docs/15_installation.md), it is available at [http://localhost:3000](http://localhost:3000). Use the credentials from `corla-test-credentials.psql` to log in. For example, `stateadmin1` is a state administrator. Log in with no password. `123` seems to work as a response to the grid challenge.
 
 If you need to delete the database---perhaps because due to a recent
 merge the DB schema has evolved---use the `dropdb corla` command and
