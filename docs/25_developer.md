@@ -223,12 +223,10 @@ at this stage, create all its tables and such automatically.
 
 ### Local setup
 4. If you are running postgres locally, you will need to change the 
-`hibernate.url` field in `/server/eclipse-project/src/test/resources/test.properties` and '/server/eclipse-project/src/main/resources/us/freeandfair/corla/default.properties'
-> to
-> ```
-> hibernate.url = jdbc:postgresql://localhost:5432/corla?reWriteBatchedInserts=true&disableColumnSantiser=true
-> ```
-
+`hibernate.url` field in `/server/eclipse-project/src/test/resources/test.properties` and '/server/eclipse-project/src/main/resources/us/freeandfair/corla/default.properties' to
+```
+hibernate.url = jdbc:postgresql://localhost:5432/corla?reWriteBatchedInserts=true&disableColumnSantiser=true
+```
 
 5. Edit server/eclipse-project/pom.xml to comment out the parent pom.xml:
 ```
@@ -239,10 +237,9 @@ at this stage, create all its tables and such automatically.
                 <version>2.0.21</version>
         </parent>
 -->
-
 ```
-
 6. Remember to tell git not to push your changes to any of these files:
+
 ```
 git update-index --assume-unchanged server/eclipse-project/src/test/resources/test.properties
 git update-index --assume-unchanged server/eclipse-project/src/main/resources/us/freeandfair/corla/git update-index --assume-unchanged server/eclipse-project/pom.xml
@@ -258,7 +255,8 @@ mvn package -DskipTests
    this is accomplished by either running the server in Eclipse using
    the Run button or running it from a command line using a command
    akin to 
-``` ./target/java -jar colorado_rla-VERSION-shaded.jar`
+```
+./target/java -jar colorado_rla-VERSION-shaded.jar`
 ```
 9. Load test authentication credentials into the database, by
    executing the SQL in `corla-test-credentials.psql` (found in the
