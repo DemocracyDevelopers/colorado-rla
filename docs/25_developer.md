@@ -30,6 +30,7 @@ History
   Kiniry.
 * Fourth draft with updates for phase-2 delivery, 24 August 2017 by
   Joe Kiniry.
+* Updates 2 August 2023 by Vanessa Teague.
 
 Platform and Programming Languages
 ----------------------------------
@@ -187,12 +188,12 @@ the build system.*
 
 In order to use the Postgres database in development, one must:
 
-1. Install PostgreSQL (`brew install postgres` on MacOS, `apt-get
-   install postgresql` on many Linux distributions, or whatever is
-   appropriate) and start it running.
+1. Install PostgreSQL 
 2. Create a database called "`corla`", and grant all privileges on it
-   to a user called "`corla`" with password "`corla`".
+   to a user called "`corlaadmin`" with password "`corlasecret`".
 3. Initialize the "`corla`" database with test administrator data.
+
+
    For example, to accomplish the above on MacOS using Homebrew, one
    issues the following commands:
 ```
@@ -200,11 +201,56 @@ brew install postgres
 createuser -P corla
 createdb -O corla corla
 ```
-On Linux, one would replace the first command with something akin to
-`sudo apt-get install postgresql`.
+On Linux, 
+
+```
+sudo apt install postgresql
+> sudo -u postgres createuser -P corla
+sudo -u postgres createuser -P corlaadmin
+> sudo -u postgres createdb -O corlaadmin corla
+sudo -u postgres createdb -O corlaadmin corla
+```
+
+
+and in order to give "`corlaadmin`" appropriate privileges:
+```
+sudo -u postgres psql
+postgres=# GRANT ALL PRIVILEGES ON DATABASE "corla" TO corlaadmin;
+```
 
 That's it. If the database is there the server will use it and will,
 at this stage, create all its tables and such automatically.
+
+ 3. If you are running postgres locally, you will need to change the 
+> "`hibernate.url`" field in "`/server/eclipse-project/src/test/resources/test.properties`" and "/server/eclipse-project/src/main/resources/us/freeandfair/corla/default.properties" 
+> to
+> ```
+> hibernate.url = jdbc:postgresql://localhost:5432/corla?reWriteBatchedInserts=true&disableColumnSantiser=true
+> ```
+
+4. Edit server/eclipse-project/pom.xml to comment out the parent pom.xml:
+```
+<!-- Comment out Colorado parent pom.xml.
+        <parent>
+                <groupId>us.co.state.sos</groupId>
+                <artifactId>sos-parent-pom</artifactId>
+                <version>2.0.21</version>
+        </parent>
+-->
+
+```
+
+Remember to tell git not to push your changes to any of these files:
+```
+git update-index --assume-unchanged server/eclipse-project/src/test/resources/test.properties
+git update-index --assume-unchanged server/eclipse-project/src/main/resources/us/freeandfair/corla/git update-index --assume-unchanged server/eclipse-project/pom.xml
+```
+
+4. Build the server with tests turned off. In the server/eclipse-project directory:
+```
+mvn package -DskipTests
+```
+
 4. Run the server (to create all the database tables). Recall that
    this is accomplished by either running the server in Eclipse using
    the Run button or running it from a command line using a command
@@ -218,6 +264,8 @@ psql -U corla -d corla -a -f corla-test-credentials.psql
 ```
    or the following command on Linux:
 ```
+
+
 psql -U corla -h localhost -d corla -a -f corla-test-credentials.psql
 ```
 
