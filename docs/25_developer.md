@@ -195,19 +195,18 @@ In order to use the Postgres database in development, one must:
 
 
    For example, to accomplish the above on MacOS using Homebrew, one
-   issues the following commands:
+   issues the following commands.  Type 'corlasecret' when prompted for a password.
+
 ```
 brew install postgres
-createuser -P corla
-createdb -O corla corla
+createuser -P corlaadmin
+createdb -O corlaadmin corla
 ```
 On Linux, 
 
 ```
 sudo apt install postgresql
-> sudo -u postgres createuser -P corla
 sudo -u postgres createuser -P corlaadmin
-> sudo -u postgres createdb -O corlaadmin corla
 sudo -u postgres createdb -O corlaadmin corla
 ```
 
@@ -217,18 +216,21 @@ and in order to give "`corlaadmin`" appropriate privileges:
 sudo -u postgres psql
 postgres=# GRANT ALL PRIVILEGES ON DATABASE "corla" TO corlaadmin;
 ```
-
+and whatever is equivalent on MacOS.
+ 
 That's it. If the database is there the server will use it and will,
 at this stage, create all its tables and such automatically.
 
- 3. If you are running postgres locally, you will need to change the 
-> "`hibernate.url`" field in "`/server/eclipse-project/src/test/resources/test.properties`" and "/server/eclipse-project/src/main/resources/us/freeandfair/corla/default.properties" 
+### Local setup
+4. If you are running postgres locally, you will need to change the 
+`hibernate.url` field in `/server/eclipse-project/src/test/resources/test.properties` and '/server/eclipse-project/src/main/resources/us/freeandfair/corla/default.properties'
 > to
 > ```
 > hibernate.url = jdbc:postgresql://localhost:5432/corla?reWriteBatchedInserts=true&disableColumnSantiser=true
 > ```
 
-4. Edit server/eclipse-project/pom.xml to comment out the parent pom.xml:
+
+5. Edit server/eclipse-project/pom.xml to comment out the parent pom.xml:
 ```
 <!-- Comment out Colorado parent pom.xml.
         <parent>
@@ -240,41 +242,59 @@ at this stage, create all its tables and such automatically.
 
 ```
 
-Remember to tell git not to push your changes to any of these files:
+6. Remember to tell git not to push your changes to any of these files:
 ```
 git update-index --assume-unchanged server/eclipse-project/src/test/resources/test.properties
 git update-index --assume-unchanged server/eclipse-project/src/main/resources/us/freeandfair/corla/git update-index --assume-unchanged server/eclipse-project/pom.xml
 ```
 
-4. Build the server with tests turned off. In the server/eclipse-project directory:
+### Compiling and running
+7. Build the server with tests turned off. In the server/eclipse-project directory:
 ```
 mvn package -DskipTests
 ```
 
-4. Run the server (to create all the database tables). Recall that
+8. Run the server (to create all the database tables). Recall that
    this is accomplished by either running the server in Eclipse using
    the Run button or running it from a command line using a command
-   akin to `java -jar colorado_rla-VERSION-shaded.jar`.
-5. Load test authentication credentials into the database, by
+   akin to 
+``` ./target/java -jar colorado_rla-VERSION-shaded.jar`
+```
+9. Load test authentication credentials into the database, by
    executing the SQL in `corla-test-credentials.psql` (found in the
    `test` directory of the repository). This can be done with the
    following command on OS X:
 ```
-psql -U corla -d corla -a -f corla-test-credentials.psql
+psql -U corlaadmin -d corla -a -f corla-test-credentials.psql
 ```
    or the following command on Linux:
 ```
 
-
-psql -U corla -h localhost -d corla -a -f corla-test-credentials.psql
+psql -U corladmin -h localhost -d corla -a -f corla-test-credentials.psql
 ```
+
+When prompted for the password, enter `corlasecret`. 
+
+10. Now everything should be working. Note that the .jar is expected to hang when working.
+
+You can [build and run the client](https://github.com/DemocracyDevelopers/colorado-rla/blob/master/docs/15_installation.md), which will be available at [http://localhost:3000](http://localhost:3000). Use the credentials from `corla-test-credentials.psql` to log in. For example, `stateadmin1` is a state administrator. Log in with no password. `123` seems to work as a response to the grid challenge.
+
+### After the first run
+
+From now on, you should be able to build the .jar with the tests:
+
+```
+mvn package
+
+```
+
 
 If you need to delete the database---perhaps because due to a recent
 merge the DB schema has evolved---use the `dropdb corla` command and
 then recreate the DB following the steps above.
 
 There are helpful scripts for automating these actions located in the
-`server/eclipse_project/script` directory.
+`server/eclipse_project/script` directory. [VT: Note I have not updated these since changing the above.]
 
 *TBD: Describe the [Hibernate ORM](http://hibernate.org/orm/) and its
 use.*
