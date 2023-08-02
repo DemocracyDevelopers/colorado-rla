@@ -10,12 +10,8 @@
 
 package us.freeandfair.corla.endpoint;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
-import org.apache.commons.text.StringEscapeUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import spark.Request;
@@ -34,7 +30,6 @@ import us.freeandfair.corla.query.CountyContestResultQueries;
 
 import javax.persistence.PersistenceException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
 
 import static us.freeandfair.corla.asm.ASMEvent.DoSDashboardEvent.COMPLETE_AUDIT_INFO_EVENT;
@@ -105,11 +100,10 @@ public class SetContestNames extends AbstractDoSDashboardEndpoint {
 
     try {
       final List<CanonicalUpdate> canons = Main.GSON.fromJson(request.body(), TYPE_TOKEN);
-
        if (canons == null) {
-         badDataContents(response, "null cannons, malformed contest mappings");
+        badDataContents(response, "malformed contest mappings");
       } else {
-          final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
+        final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
         if (dosdb == null) {
           serverError(response, "could not set contest mappings");
         }
@@ -120,6 +114,7 @@ public class SetContestNames extends AbstractDoSDashboardEndpoint {
     } catch (final PersistenceException e) {
       serverError(response, "unable to re-map contest names");
     } catch (final JsonParseException e) {
+      LOGGER.error("JsonParseException causing malformed error", e);
       badDataContents(response, "malformed contest mapping");
     } catch (final Exception e) {
       badDataContents(response, "Exception");
@@ -127,7 +122,7 @@ public class SetContestNames extends AbstractDoSDashboardEndpoint {
     return my_endpoint_result.get();
   }
 
-  private int changeNames(final List<CanonicalUpdate> canons) throws Exception {
+  private int changeNames(final List<CanonicalUpdate> canons) {
 
     int updateCount = 0;
     for (final CanonicalUpdate canon : canons) {
@@ -153,12 +148,11 @@ public class SetContestNames extends AbstractDoSDashboardEndpoint {
                         + choiceChange.oldName +" -> "+ choiceChange.newName
                         + " contest: " + contest.name() + " county: " + contest.county());
             contest.updateChoiceName(choiceChange.oldName, choiceChange.newName);
-
+            
             CastVoteRecordQueries.updateCVRContestInfos(contest.county().id(),
                                                         contest.id(),
                                                         choiceChange.oldName,
                                                         choiceChange.newName);
-
             final CountyContestResult ccr = CountyContestResultQueries.matching(contest.county(), contest);
             ccr.updateChoiceName(choiceChange.oldName, choiceChange.newName);
             Persistence.update(ccr);
