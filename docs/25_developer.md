@@ -257,7 +257,7 @@ mvn package -DskipTests
    the Run button or running it from a command line using a command
    akin to 
 ``` 
-java -jar ./target/colorado_rla-VERSION-shaded.jar
+java -jar ./target/corla-server-[VERSION]-SNAPSHOT.jar
 ```
 9. Load test authentication credentials into the database, by
    executing the SQL in `corla-test-credentials.psql` (found in the
