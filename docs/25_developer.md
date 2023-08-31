@@ -223,7 +223,7 @@ at this stage, create all its tables and such automatically.
 
 ### Local setup
 4. If you are running postgres locally, you will need to change the 
-`hibernate.url` field in `/server/eclipse-project/src/test/resources/test.properties` and '/server/eclipse-project/src/main/resources/us/freeandfair/corla/default.properties' to
+`hibernate.url` field in `/server/eclipse-project/src/test/resources/test.properties` and `/server/eclipse-project/src/main/resources/us/freeandfair/corla/default.properties` to
 ```
 hibernate.url = jdbc:postgresql://localhost:5432/corla?reWriteBatchedInserts=true&disableColumnSantiser=true
 ```
@@ -242,7 +242,8 @@ hibernate.url = jdbc:postgresql://localhost:5432/corla?reWriteBatchedInserts=tru
 
 ```
 git update-index --assume-unchanged server/eclipse-project/src/test/resources/test.properties
-git update-index --assume-unchanged server/eclipse-project/src/main/resources/us/freeandfair/corla/git update-index --assume-unchanged server/eclipse-project/pom.xml
+git update-index --assume-unchanged server/eclipse-project/src/main/resources/us/freeandfair/corla/default.properties
+git update-index --assume-unchanged server/eclipse-project/pom.xml
 ```
 
 ### Compiling and running
