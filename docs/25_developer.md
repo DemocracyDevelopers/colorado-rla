@@ -184,6 +184,9 @@ the build system.*
 
 *TBD: Describe [Spark](http://sparkjava.com/) and its use.*
 
+Install and setup
+-----------------
+
 ### Data Persistence
 
 In order to use the Postgres database in development, one must:
