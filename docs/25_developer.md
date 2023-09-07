@@ -264,15 +264,15 @@ java -jar ./target/corla-server-[VERSION]-SNAPSHOT.jar
 ```
 9. Load test authentication credentials into the database, by
    executing the SQL in `corla-test-credentials.psql` (found in the
-   `test` directory of the repository). This can be done with the
-   following command on OS X:
+   `test` directory of the repository). cd into the project directory before running this command.
+   command on OS X:
+   
 ```
-psql -U corlaadmin -d corla -a -f corla-test-credentials.psql
+psql -U corlaadmin -d corla -a -f ./test/corla-test-credentials.psql
 ```
-   or the following command on Linux:
+   command on Linux:
 ```
-
-psql -U corlaadmin -h localhost -d corla -a -f corla-test-credentials.psql
+psql -U corlaadmin -h localhost -d corla -a -f ./test/corla-test-credentials.psql
 ```
 
 When prompted for the password, enter `corlasecret`. 

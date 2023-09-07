@@ -2,3 +2,7 @@
 /specs/pvs/.pvscontext
 /specs/pvs/corla.tex
 .DS_Store
+/server/eclipse-project/corla-server.iml
+/server/eclipse-project/dependency-reduced-pom.xml
+/server/eclipse-project/target/
+/.idea/
