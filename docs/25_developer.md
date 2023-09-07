@@ -272,7 +272,7 @@ psql -U corlaadmin -d corla -a -f ./test/corla-test-credentials.psql
 ```
    command on Linux:
 ```
-psql -U corlaadmin -h localhost -d corla -a -f corla-test-credentials.psql
+psql -U corlaadmin -h localhost -d corla -a -f ./test/corla-test-credentials.psql
 ```
 
 When prompted for the password, enter `corlasecret`. 
