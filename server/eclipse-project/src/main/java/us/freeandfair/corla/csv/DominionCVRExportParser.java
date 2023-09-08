@@ -313,9 +313,18 @@ public class DominionCVRExportParser {
         index = index + 1;
         count = count + 1;
       }
-      // get the contest name and "(Vote For=" number
-      String cn = c.substring(0, c.indexOf("(Vote For="));
-      final String vf = c.replace(cn, "").replace("(Vote For=", "").replace(")", "");
+
+      // Find how many votes are allowed
+      String voteForString ="(Vote For=";
+      int votesAllowedIndex = c.indexOf(voteForString);
+      if (votesAllowedIndex == -1)  {
+        // this is an IRV contest. The number of allowed selections is the number of ranks.
+        voteForString = "(Number of positions=1, Number of ranks=";
+        votesAllowedIndex = c.indexOf(voteForString);
+      }
+      // get the contest name and "(Vote For=" number, or "Number of Ranks=" for IRV contests.
+      String cn = c.substring(0, votesAllowedIndex);
+      final String vf = c.replace(cn, "").replace(voteForString, "").replace(")", "");
       // clean up the contest name (we used it to get the number, before cleaning)
       cn = cn.trim();
       int ms = 1; // this is our default maximum selections
