@@ -5,7 +5,6 @@ here to document a work-in-progress to more fully
 automate the procedure for setting up a runnable system
 on CentOS 7, which is close to our target environment of RHEL 7.
 
-
 # Follow Instructions in the INSTALL.md file in the deliverable.
 
 ```
