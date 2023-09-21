@@ -994,6 +994,24 @@ public class ComparisonAudit implements PersistentEntity {
     return result;
   }
 
+  /** risk limit achieved according to math.Audit **/
+  public BigDecimal riskMeasurement() {
+    if (getAuditedSampleCount() > 0
+            && getDilutedMargin().compareTo(BigDecimal.ZERO) > 0) {
+      final BigDecimal result =  Audit.pValueApproximation(getAuditedSampleCount(),
+              getDilutedMargin(),
+              getGamma(),
+              discrepancyCount(-1),
+              discrepancyCount(-2),
+              discrepancyCount(1),
+              discrepancyCount(2));
+      return result.setScale(3, BigDecimal.ROUND_HALF_UP);
+    } else {
+      // full risk (100%) when nothing is known
+      return BigDecimal.ONE;
+    }
+  }
+
   /**
    * Computes the discrepancy between two ballots. This method returns an optional
    * int that, if present, indicates a discrepancy. There are 5 possible types of
