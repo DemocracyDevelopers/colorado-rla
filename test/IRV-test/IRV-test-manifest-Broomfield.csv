@@ -1,0 +1,5 @@
+CountyID,ScannerID,BatchID,NumBallots,StorageLocation
+Broomfield,1,2,78,Bin 22
+Broomfield,1,3,78,Bin 1
+Broomfield,1,4,78,Bin 1
+Broomfield,1,5,78,Bin 17
