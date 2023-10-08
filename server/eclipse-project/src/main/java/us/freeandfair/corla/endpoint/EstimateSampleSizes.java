@@ -13,14 +13,15 @@ import spark.Request;
 import spark.Response;
 
 import us.freeandfair.corla.asm.ASMEvent;
+import us.freeandfair.corla.model.DoSDashboard;
+import us.freeandfair.corla.persistence.Persistence;
+
+import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.COMPLETE_AUDIT_INFO_SET;
 
 
 /**
  *
  */
-@SuppressWarnings({"PMD.CyclomaticComplexity", "PMD.StdCyclomaticComplexity",
-    "PMD.AtLeastOneConstructor", "PMD.ModifiedCyclomaticComplexity", "PMD.NPathComplexity",
-    "PMD.ExcessiveImports", "PMD.TooManyStaticImports"})
 public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
   /**
    * Class-wide logger
@@ -76,8 +77,21 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
    */
   @Override
   public String endpointBody(final Request the_request, final Response the_response) {
+    if (my_asm.get().currentState() != COMPLETE_AUDIT_INFO_SET) {
+      // We can only compute preliminary sample size estimates once the ASM has
+      // reached the COMPLETE_AUDIT_INFO_SET state and assertions have been
+      // generated for all IRV contests for which it is possible to form assertions.
+      // We may create a new ASM state ASSERTIONS_GENERATED_OK (or similar) to indicate
+      // when the system has completed this step, and associated events.
 
-      // TODO: flesh out required steps.
+      // For now, require the ASM to be in the COMPLETE_AUDIT_INFO_SET state.
+    }
+
+    // We will most likely want to store these preliminary sample size estimates in the
+    // DoS dashboard.
+    final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
+
+    // TODO: flesh out required steps.
     return "";
   }
 
