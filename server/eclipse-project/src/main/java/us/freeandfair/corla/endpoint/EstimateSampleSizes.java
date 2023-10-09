@@ -87,11 +87,19 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
       // For now, require the ASM to be in the COMPLETE_AUDIT_INFO_SET state.
     }
 
+    // Flesh out steps.
+    // There is a question here of whether we want to go through all of the steps
+    // of creating ComparisonAudit/IRVComparisonAudit objects and from those
+    // extract the initial sample sizes. Or do something more lightweight. However,
+    // I expect that former will be better as then we will not have duplicated sample size
+    // estimation procedures in different places in the codebase.
+
+
     // We will most likely want to store these preliminary sample size estimates in the
     // DoS dashboard.
     final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
 
-    // TODO: flesh out required steps.
+
     return "";
   }
 

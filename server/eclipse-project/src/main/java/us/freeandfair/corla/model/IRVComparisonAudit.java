@@ -55,23 +55,24 @@ public class IRVComparisonAudit extends ComparisonAudit {
                          final BigDecimal riskLimit,
                          final BigDecimal gamma,
                          final AuditReason auditReason) {
+    // Grab assertions for this contest, determine the diluted margin,
+    // and use this value in place of BigDecimal.ZERO when calling the
+    // super class's constructor.
+
+    // Assign a diluted margin to the audit:
+    // This is equal to the minimum diluted margin across assertions.
 
     super(contestResult, riskLimit, BigDecimal.ZERO, gamma, auditReason);
 
     // Ensure assertions list attribute is populated with assertions for given contest.
 
-    // Assign a diluted margin to the audit:
-    // This is equal to the minimum margin across assertions divided by the total number of
-    // auditable ballots for the universe to which the contest belongs.
-
-    // Compute initial sample sizes, these methods are defined in ComparisonAudit and are
-    // not overrided. They will call computeOptimisticSamplesToAudit() with appropriate
-    // arguments. Do we need to use super.optimisticSamplesToAudit()?
-    optimisticSamplesToAudit();
-    estimatedSamplesToAudit();
+    // Super constructor at present will call methods to compute initial sample sizes.
+    // These will call computeOptimisticSamplesToAudit() with varying arguments.
 
     // Check if the contest is not auditable, if so set status appropriately.
-    //  this.setAuditStatus(AuditStatus.NOT_AUDITABLE);
+    //  this.setAuditStatus(AuditStatus.NOT_AUDITABLE); The super class will
+    // do this if the diluted margin assigned to the contestResult is 0, however
+    // this will have been computed according to Plurality rules.
 
   }
 
