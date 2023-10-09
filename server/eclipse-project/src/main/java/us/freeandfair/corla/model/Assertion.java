@@ -65,7 +65,13 @@ public abstract class Assertion implements PersistentEntity, Serializable {
    * Assertion margin.
    */
   @Column(name = "margin", nullable = false)
-  protected BigDecimal margin;
+  protected int margin;
+
+  /**
+   * Assertion difficulty, as estimated by RAIRE.
+   */
+  @Column(name = "difficulty", nullable = false)
+  protected double difficulty;
 
   /**
    * List of candidates that the assertion assumes are `continuing' in the
@@ -88,14 +94,16 @@ public abstract class Assertion implements PersistentEntity, Serializable {
    * @param winner            Winning candidate (from contest contestID) of the assertion.
    * @param loser             Losing candidate (from contest contestID) of the assertion.
    * @param margin            Margin of the assertion.
+   * @param difficulty        Esimtated difficulty of assertion.
    * @param assumedContinuing List of candidates that assertion assumes are continuing.
    */
-  public Assertion(Long contestID, String winner, String loser, BigDecimal margin,
+  public Assertion(Long contestID, String winner, String loser, int margin, double difficulty,
                    List<String> assumedContinuing) {
     this.contestID = contestID;
     this.winner = winner;
     this.loser = loser;
     this.margin = margin;
+    this.difficulty = difficulty;
     this.assumedContinuing = assumedContinuing;
   }
 
