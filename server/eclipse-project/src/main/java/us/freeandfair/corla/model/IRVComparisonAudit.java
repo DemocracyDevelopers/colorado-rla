@@ -12,7 +12,6 @@ import javax.persistence.Cacheable;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
-import us.freeandfair.corla.math.Audit;
 
 /**
  * A class representing the state of a single audited IRV contest for
@@ -62,39 +61,55 @@ public class IRVComparisonAudit extends ComparisonAudit {
     // Assign a diluted margin to the audit:
     // This is equal to the minimum diluted margin across assertions.
 
-    super(contestResult, riskLimit, BigDecimal.ZERO, gamma, auditReason);
+    super(contestResult, riskLimit, BigDecimal.ONE, gamma, auditReason);
 
     // Ensure assertions list attribute is populated with assertions for given contest.
 
     // Super constructor at present will call methods to compute initial sample sizes.
-    // These will call computeOptimisticSamplesToAudit() with varying arguments.
+    // These will call optimisticSamplesToAudit and estimatedSamplesToAudit which will
+    // need to be overriden for IRV.
 
     // Check if the contest is not auditable, if so set status appropriately.
     //  this.setAuditStatus(AuditStatus.NOT_AUDITABLE); The super class will
     // do this if the diluted margin assigned to the contestResult is 0, however
     // this will have been computed according to Plurality rules.
 
+    // NOTE that get methods for some of the private attributes in ComparisonAudit will
+    // need to be added to the super class.
+  }
+
+  @Override
+  public int initialSamplesToAudit(){
+    // TBD
+    return 0;
+  }
+
+  @Override
+  public Integer optimisticSamplesToAudit(){
+    // TBD
+    return 0;
+  }
+
+  @Override
+  public Integer estimatedSamplesToAudit(){
+    // TBD
+    return 0;
   }
 
   /**
-   * Computes the expected number of ballots to audit overall given the
-   * specified numbers of over- and understatements.
-   *
-   * @param twoUnder The two-vote understatements.
-   * @param oneUnder The one-vote understatements.
-   * @param oneOver The one-vote overstatements.
-   * @param twoOver The two-vote overstatements.
-   *
-   * @return the expected number of ballots remaining to audit.
-   * This is the stopping sample size as defined in the literature:
-   * https://www.stat.berkeley.edu/~stark/Preprints/gentle12.pdf
+   * Updates the audit status based on the current risk limit. If the audit
+   * has already been ended or the contest is not auditable, this method has
+   * no effect on its status.
+   * Fix: RLA-00450
    */
-  private BigDecimal computeOptimisticSamplesToAudit(final int twoUnder,
-                                                     final int oneUnder,
-                                                     final int oneOver,
-                                                     final int twoOver) {
-    return Audit.optimistic(getRiskLimit(), getDilutedMargin(), getGamma(),
-                            twoUnder, oneUnder, oneOver, twoOver) ;
+  public void updateAuditStatus() {
+    // TBD
+    // In ComparisonAudit, this method calls some private methods that are incorrect for
+    // IRV (ie. recalculateSamplesToAudit()). This method is private in ComparisonAudit,
+    // and thus not overridable.
+    // We could adjust recalculateSamplesToAudit() from private to protected, however if
+    // we want to minimise changes to the original codebase, we should perhaps just
+    // redo all the public methods in ComparisonAudit that call inappropriate private methods.
   }
 
 
@@ -112,57 +127,40 @@ public class IRVComparisonAudit extends ComparisonAudit {
    * @return an optional int that is present if there is a discrepancy and absent
    * otherwise.
    */
+  @Override
   @SuppressWarnings("checkstyle:magicnumber")
   public OptionalInt computeDiscrepancy(final CastVoteRecord cvr,
                                         final CastVoteRecord auditedCVR) {
     OptionalInt result = OptionalInt.empty();
 
-
+  // TBD
 
     return result;
   }
 
   /** risk limit achieved according to math.Audit **/
+  @Override
   public BigDecimal riskMeasurement() {
       // To complete as appropriate for IRV audits.
       return BigDecimal.ONE;
   }
 
   /**
-   * Computes the discrepancy between two ballots. This method returns an optional
-   * int that, if present, indicates a discrepancy. There are 5 possible types of
-   * discrepancy: -1 and -2 indicate 1- and 2-vote understatements; 1 and 2 indicate
-   * 1- and 2- vote overstatements; and 0 indicates a discrepancy that does not
-   * count as either an under- or overstatement for the RLA algorithm, but
-   * nonetheless indicates a difference between ballot interpretations.
+   * Removes the specified over/understatement (the valid range is -2 .. 2:
+   * -2 and -1 are understatements, 0 is a discrepancy that doesn't affect the
+   * RLA calculations, and 1 and 2 are overstatements). This is typically done
+   * when a new interpretation is submitted for a ballot that had already been
+   * interpreted.
    *
-   * @param the_cvr_info The CVR info.
-   * @param the_acvr_info The ACVR info.
-   * @return an optional int that is present if there is a discrepancy and absent
-   * otherwise.
+   * @param the_record The CVRAuditInfo record that generated the discrepancy.
+   * @param the_type The type of discrepancy to remove.
+   * @exception IllegalArgumentException if an invalid discrepancy type is
+   * specified.
    */
-  private OptionalInt computeAuditedBallotDiscrepancy(final CVRContestInfo the_cvr_info,
-                                                      final CVRContestInfo the_acvr_info) {
-
-    final OptionalInt result = OptionalInt.empty();
-
-    // To be fleshed out.
-
-    return result;
-  }
-
-  /**
-   * Computes the discrepancy between a phantom ballot and the specified
-   * CVRContestInfo.
-   * @return The number of discrepancies
-   */
-  private Integer computePhantomBallotDiscrepancy(final CVRContestInfo cvrInfo,
-                                                  final ContestResult contestResult) {
-    int result = 2;
-
-    // To be fleshed out.
-
-    return result;
+  @Override
+  @SuppressWarnings("checkstyle:magicnumber")
+  public void removeDiscrepancy(final CVRAuditInfo the_record, final int the_type) {
+ 
   }
 
 }

@@ -475,7 +475,7 @@ public class ComparisonAudit implements PersistentEntity {
    * @return the expected overall number of ballots to audit, assuming
    * overstatements continue to occur at the current rate.
    */
-  public final Integer estimatedSamplesToAudit() {
+  public Integer estimatedSamplesToAudit() {
     if (my_estimated_recalculate_needed) {
       LOGGER.debug("[estimatedSampleToAudit: recalculate needed]");
       recalculateSamplesToAudit();
