@@ -90,6 +90,9 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
     // if we are generating a new set of assertions for a contests, the old ones should be replaced.
 
     // For a specified set of contest IDs, call the RAIRE service to generate assertions.
+    // Assume we extract ArrayList<Long> contestIds = .... from request.
+
+    // Task #48: Add example call to raire connector service here with contestsIds as input.
 
     // Create NEBAssertion and NENAssertion objects for the set of assertions identified by RAIRE.
 
