@@ -6,6 +6,7 @@
 package us.freeandfair.corla.model;
 
 
+import java.util.ArrayList;
 import java.util.OptionalInt;
 import java.math.BigDecimal;
 import java.util.List;
@@ -19,9 +20,8 @@ public class NEBAssertion extends Assertion  {
   /**
    * {@inheritDoc}
    */
-  public NEBAssertion(Long contestID, String winner, String loser, BigDecimal margin,
-                      List<String> assumedContinuing){
-    super(contestID, winner, loser, margin, assumedContinuing);
+  public NEBAssertion(Long contestID, String winner, String loser, int margin, double difficulty) {
+    super(contestID, winner, loser, margin, difficulty,  new ArrayList<String>());
   }
 
   /**

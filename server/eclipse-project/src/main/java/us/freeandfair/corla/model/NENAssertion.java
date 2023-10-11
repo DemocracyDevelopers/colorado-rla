@@ -21,9 +21,9 @@ public class NENAssertion extends Assertion {
   /**
    * {@inheritDoc}
    */
-  public NENAssertion(Long contestID, String winner, String loser, BigDecimal margin,
-                   List<String> assumedContinuing){
-    super(contestID, winner, loser, margin, assumedContinuing);
+  public NENAssertion(Long contestID, String winner, String loser, int margin, double difficulty,
+                      List<String> assumedContinuing) {
+    super(contestID, winner, loser, margin, difficulty, assumedContinuing);
   }
 
   /**
