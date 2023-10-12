@@ -102,6 +102,10 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
     // The DoS Dashboard contains a set of contests to audit.
     final Set<ContestToAudit> cta = dosdb.contestsToAudit();
 
+    // NOTE that for a single contest that involves multiple counties, there will be multiple
+    // entries in the list 'cta' for that contest. Contests really need to be identified by their
+    // name.
+
     // Create NEBAssertion and NENAssertion objects for the set of assertions identified by RAIRE.
 
     // Persist these assertion objects in the database.
