@@ -68,6 +68,12 @@ public abstract class Assertion implements PersistentEntity, Serializable {
   protected int margin;
 
   /**
+   * Diluted margin for the assertion.
+   */
+  @Column(name = "diluted_margin", nullable = false)
+  protected double dilutedMargin;
+
+  /**
    * Assertion difficulty, as estimated by RAIRE.
    */
   @Column(name = "difficulty", nullable = false)
@@ -90,19 +96,21 @@ public abstract class Assertion implements PersistentEntity, Serializable {
    * margin, and list of candidates that are assumed to be continuing in the assertion's
    * context.
    *
-   * @param contestResult     Assertion has been created for this ContestResult.
+   * @param contestName       Assertion has been created for this contest.
    * @param winner            Winning candidate (from contest contestID) of the assertion.
    * @param loser             Losing candidate (from contest contestID) of the assertion.
    * @param margin            Margin of the assertion.
+   * @param dilutedMargin     Diluted margin of the assertion.
    * @param difficulty        Estimated difficulty of assertion.
    * @param assumedContinuing List of candidates that assertion assumes are continuing.
    */
-  public Assertion(ContestResult contestResult, String winner, String loser, int margin,
-                   double difficulty, List<String> assumedContinuing) {
-    this.contestName = contestResult.getContestName();
+  public Assertion(String contestName, String winner, String loser, int margin,
+                   double dilutedMargin, double difficulty, List<String> assumedContinuing) {
+    this.contestName = contestName;
     this.winner = winner;
     this.loser = loser;
     this.margin = margin;
+    this.dilutedMargin = dilutedMargin;
     this.difficulty = difficulty;
     this.assumedContinuing = assumedContinuing;
   }
@@ -116,6 +124,7 @@ public abstract class Assertion implements PersistentEntity, Serializable {
     this.contestName = contestName;
   }
 
+  public void setDilutedMargin(double dilutedMargin) { this.dilutedMargin = dilutedMargin; }
 
   public void setWinner(String winner){
     this.winner = winner;
@@ -145,6 +154,7 @@ public abstract class Assertion implements PersistentEntity, Serializable {
     return this.assumedContinuing;
   }
 
+  public double getDilutedMargin() { return this.dilutedMargin; }
 
   /**
    * {@inheritDoc}

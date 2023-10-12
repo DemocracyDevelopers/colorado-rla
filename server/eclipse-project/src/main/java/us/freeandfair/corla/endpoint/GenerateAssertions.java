@@ -99,7 +99,8 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
     // Task #48: Add example call to raire connector service here with contest identifiers as input.
     final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
 
-    // The DoS Dashboard contains a set of contests to audit.
+    // The DoS Dashboard contains a set of contests to audit (not sure if this is how we will know
+    // here what contests to generate assertions for).
     final Set<ContestToAudit> cta = dosdb.contestsToAudit();
 
     // NOTE that for a single contest that involves multiple counties, there will be multiple
@@ -107,6 +108,7 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
     // name.
 
     // Create NEBAssertion and NENAssertion objects for the set of assertions identified by RAIRE.
+    // (Compute diluted margins for all assertions to form that input to constructors).
 
     // Persist these assertion objects in the database.
 

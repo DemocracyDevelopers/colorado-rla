@@ -4,6 +4,8 @@
 
 package us.freeandfair.corla.model;
 
+import us.freeandfair.corla.query.AssertionQueries;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.OptionalInt;
@@ -54,20 +56,22 @@ public class IRVComparisonAudit extends ComparisonAudit {
                          final BigDecimal riskLimit,
                          final BigDecimal gamma,
                          final AuditReason auditReason) {
-    // Grab assertions for this contest, determine the diluted margin,
-    // and use this value in place of BigDecimal.ZERO when calling the
-    // super class's constructor.
-    
-    // Assign a diluted margin to the audit:
-    // This is equal to the minimum diluted margin across assertions.
-
-    super(contestResult, riskLimit, BigDecimal.ONE, gamma, auditReason);
-
-    // Ensure assertions list attribute is populated with assertions for given contest.
-
     // Super constructor at present will call methods to compute initial sample sizes.
     // These will call optimisticSamplesToAudit and estimatedSamplesToAudit which will
-    // need to be overriden for IRV.
+    // need to be overridden for IRV. However, we need assertions to be set prior
+    // to that. So, we will either need to move those method outside of the super class
+    // constructor (which is suggested in commenting in order to remove warnings), or
+    // run the methods again in our constructor once assertions have been set.
+    super(contestResult, riskLimit, BigDecimal.ONE, gamma, auditReason);
+
+    // Grab assertions for this contest, and store them.
+    this.assertions = AssertionQueries.matching(contestResult.getContestName());
+
+    // Assign a diluted margin to the audit: compute the diluted margin for
+    // each Assertion, and take the smallest as the reportable diluted margin.
+
+
+
 
     // Check if the contest is not auditable, if so set status appropriately.
     //  this.setAuditStatus(AuditStatus.NOT_AUDITABLE); The super class will
@@ -80,18 +84,25 @@ public class IRVComparisonAudit extends ComparisonAudit {
 
   @Override
   public int initialSamplesToAudit(){
-    // TBD
-    return 0;
+    return optimisticSamplesToAudit();
   }
 
   @Override
   public Integer optimisticSamplesToAudit(){
+    if (assertions.isEmpty()) {
+      return 0;
+    }
+
     // TBD
     return 0;
   }
 
   @Override
   public Integer estimatedSamplesToAudit(){
+    if (assertions.isEmpty()) {
+      return 0;
+    }
+
     // TBD
     return 0;
   }
@@ -141,6 +152,13 @@ public class IRVComparisonAudit extends ComparisonAudit {
   /** risk limit achieved according to math.Audit **/
   @Override
   public BigDecimal riskMeasurement() {
+    if (assertions.isEmpty()) {
+      // In this case, no assertions were formed for this contest, likely
+      // because the contest was not auditable due to ties or assertion
+      // generation was too time consuming.
+      return BigDecimal.ONE;
+    }
+
       // To complete as appropriate for IRV audits.
       return BigDecimal.ONE;
   }
