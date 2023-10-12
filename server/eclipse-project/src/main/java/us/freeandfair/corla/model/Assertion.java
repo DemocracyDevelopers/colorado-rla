@@ -44,10 +44,10 @@ public abstract class Assertion implements PersistentEntity, Serializable {
   private Long version;
 
   /**
-   * ID of contest for which this Assertion was generated.
+   * Name of contest for which this Assertion was generated.
    */
-  @Column(name = "contestID", nullable = false)
-  protected Long contestID;
+  @Column(name = "contest_name", nullable = false)
+  protected String contestName;
 
   /**
    * Winner of the assertion (a candidate in the contest).
@@ -79,7 +79,7 @@ public abstract class Assertion implements PersistentEntity, Serializable {
    */
   @ElementCollection(fetch = FetchType.EAGER)
   @OrderColumn(name = "index")
-  @CollectionTable(name = "assertion_continuing",
+  @CollectionTable(name = "assertion_context",
           uniqueConstraints= @UniqueConstraint(columnNames={"assertion_id","name"}),
           joinColumns = @JoinColumn(name = "assertion_id",
                   referencedColumnName = "id"))
@@ -90,16 +90,16 @@ public abstract class Assertion implements PersistentEntity, Serializable {
    * margin, and list of candidates that are assumed to be continuing in the assertion's
    * context.
    *
-   * @param contestID         Assertion has been created for the contest with this ID.
+   * @param contestResult     Assertion has been created for this ContestResult.
    * @param winner            Winning candidate (from contest contestID) of the assertion.
    * @param loser             Losing candidate (from contest contestID) of the assertion.
    * @param margin            Margin of the assertion.
-   * @param difficulty        Esimtated difficulty of assertion.
+   * @param difficulty        Estimated difficulty of assertion.
    * @param assumedContinuing List of candidates that assertion assumes are continuing.
    */
-  public Assertion(Long contestID, String winner, String loser, int margin, double difficulty,
-                   List<String> assumedContinuing) {
-    this.contestID = contestID;
+  public Assertion(ContestResult contestResult, String winner, String loser, int margin,
+                   double difficulty, List<String> assumedContinuing) {
+    this.contestName = contestResult.getContestName();
     this.winner = winner;
     this.loser = loser;
     this.margin = margin;
@@ -108,12 +108,12 @@ public abstract class Assertion implements PersistentEntity, Serializable {
   }
 
   /**
-   * Construct an empty assertion.
+   * Construct an empty assertion (for persistence).
    */
   public Assertion(){}
 
-  public void setContestID(Long contestID){
-    this.contestID = contestID;
+  public void setContestName(String contestName){
+    this.contestName = contestName;
   }
 
 
@@ -129,8 +129,8 @@ public abstract class Assertion implements PersistentEntity, Serializable {
     this.assumedContinuing = continuing;
   }
 
-  public Long getContestID(){
-    return this.contestID;
+  public String getContestName(){
+    return this.contestName;
   }
 
   public String getWinner(){

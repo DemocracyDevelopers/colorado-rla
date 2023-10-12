@@ -57,7 +57,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
     // Grab assertions for this contest, determine the diluted margin,
     // and use this value in place of BigDecimal.ZERO when calling the
     // super class's constructor.
-
+    
     // Assign a diluted margin to the audit:
     // This is equal to the minimum diluted margin across assertions.
 
