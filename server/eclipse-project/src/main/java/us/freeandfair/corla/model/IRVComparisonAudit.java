@@ -136,6 +136,8 @@ public class IRVComparisonAudit extends ComparisonAudit {
     my_estimated_recalculate_needed = false;
   }
 
+  /* VT: I think we actually don't need to override any of these -
+   * just recalculateSamplesToAudit.
   @Override
   public int initialSamplesToAudit(){
     return optimisticSamplesToAudit();
@@ -160,6 +162,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
     // TBD
     return 0;
   }
+  */
 
   /**
    * Updates the audit status based on the current risk limit. If the audit
@@ -167,6 +170,8 @@ public class IRVComparisonAudit extends ComparisonAudit {
    * no effect on its status.
    * Fix: RLA-00450
    */
+  /* VT: Have now set recalculateAuditStatus to protected, so no need to override
+   * updateAuditStatus I think.
   public void updateAuditStatus() {
     // TBD
     // In ComparisonAudit, this method calls some private methods that are incorrect for
@@ -176,6 +181,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
     // we want to minimise changes to the original codebase, we should perhaps just
     // redo all the public methods in ComparisonAudit that call inappropriate private methods.
   }
+  */
 
 
   /**
