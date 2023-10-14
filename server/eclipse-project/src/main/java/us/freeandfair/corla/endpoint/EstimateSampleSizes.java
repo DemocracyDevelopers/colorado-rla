@@ -13,8 +13,15 @@ import spark.Request;
 import spark.Response;
 
 import us.freeandfair.corla.asm.ASMEvent;
-import us.freeandfair.corla.model.DoSDashboard;
+import us.freeandfair.corla.controller.ComparisonAuditController;
+import us.freeandfair.corla.controller.ContestCounter;
+import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.COMPLETE_AUDIT_INFO_SET;
 
@@ -94,11 +101,41 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     // I expect that former will be better as then we will not have duplicated sample size
     // estimation procedures in different places in the codebase.
 
-
-    // We will most likely want to store these preliminary sample size estimates in the
-    // DoS dashboard.
     final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
 
+    // The DoS Dashboard contains a set of contests to audit.
+    final Set<ContestToAudit> cta = dosdb.contestsToAudit();
+
+    // For estimation of sample sizes for each audit, we need to collect the ContestResult
+    // for each contest. For Plurality audits, this will involve tabulating the votes across
+    // Counties for that contest. For preliminary sample size estimation, we assign
+    // OPPORTUNISTIC_BENEFITS as the reason for each audit. The tabulated vote totals
+    // in a ContestResult for an IRV contest will not be used. In the call to ContestCounter
+    // (countAllContests), all persisted CountyContestResult's will be accessed from the database,
+    // grouped by contest, and accumulated into a single ContestResult.
+    final List<ContestResult> countedCRs = ContestCounter.countAllContests().stream().map(cr -> {
+      cr.setAuditReason(AuditReason.OPPORTUNISTIC_BENEFITS);
+      return cr;
+    }).collect(Collectors.toList());
+
+    // Q: should we be persisting the ContestResult's created? This is done in StartAuditRound,
+    // but perhaps this is not necessary for preliminary sample size estimation.
+
+    // We now create ComparisonAudit objects for each contest; the sample size estimation
+    // methods. ComparisonAuditController.createAudit will create either a Plurality or IRV
+    // ComparisonAudit depending on the type of the contest. Note that when ComparisonAudit's
+    // are created, they are persisted to the database by ComparisonAuditController.
+    final List<ComparisonAudit> comparisonAudits = countedCRs.stream().map(cr ->
+            ComparisonAuditController.createAudit(cr, dosdb.auditInfo().riskLimit()))
+            .collect(Collectors.toList());
+
+    // Call initialSamplesToAudit() on each ComparisonAudit. Create a map between contest name
+    // and the preliminary sample size. Note that each ContestResult upon which a ComparisonAudit
+    // is based will have a set of associated contest IDs.
+    final Map<String,Integer> samples = comparisonAudits.stream().collect(Collectors.toMap(
+            ComparisonAudit::getContestName, ComparisonAudit::estimatedSamplesToAudit));
+
+    // TODO: decide what to do with above.
 
     return "";
   }

@@ -9,10 +9,14 @@ package us.freeandfair.corla.endpoint;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import java.util.Set;
 import spark.Request;
 import spark.Response;
 
 import us.freeandfair.corla.asm.ASMEvent;
+import us.freeandfair.corla.model.ContestToAudit;
+import us.freeandfair.corla.model.DoSDashboard;
+import us.freeandfair.corla.persistence.Persistence;
 
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.COMPLETE_AUDIT_INFO_SET;
 
@@ -90,8 +94,21 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
     // if we are generating a new set of assertions for a contests, the old ones should be replaced.
 
     // For a specified set of contest IDs, call the RAIRE service to generate assertions.
+    // Assume we extract ArrayList<Long> contestIds = .... from request.
+
+    // Task #48: Add example call to raire connector service here with contest identifiers as input.
+    final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
+
+    // The DoS Dashboard contains a set of contests to audit (not sure if this is how we will know
+    // here what contests to generate assertions for).
+    final Set<ContestToAudit> cta = dosdb.contestsToAudit();
+
+    // NOTE that for a single contest that involves multiple counties, there will be multiple
+    // entries in the list 'cta' for that contest. Contests really need to be identified by their
+    // name.
 
     // Create NEBAssertion and NENAssertion objects for the set of assertions identified by RAIRE.
+    // (Compute diluted margins for all assertions to form that input to constructors).
 
     // Persist these assertion objects in the database.
 

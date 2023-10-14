@@ -57,10 +57,10 @@ public abstract class Assertion implements PersistentEntity, Serializable {
   private Long version;
 
   /**
-   * ID of contest for which this Assertion was generated.
+   * Name of contest for which this Assertion was generated.
    */
-  @Column(name = "contestID", nullable = false)
-  protected Long contestID;
+  @Column(name = "contest_name", nullable = false)
+  protected String contestName;
 
   /**
    * Winner of the assertion (a candidate in the contest).
@@ -81,6 +81,12 @@ public abstract class Assertion implements PersistentEntity, Serializable {
   protected int margin;
 
   /**
+   * Diluted margin for the assertion.
+   */
+  @Column(name = "diluted_margin", nullable = false)
+  protected double dilutedMargin;
+
+  /**
    * Assertion difficulty, as estimated by RAIRE.
    */
   @Column(name = "difficulty", nullable = false)
@@ -92,7 +98,7 @@ public abstract class Assertion implements PersistentEntity, Serializable {
    */
   @ElementCollection(fetch = FetchType.EAGER)
   @OrderColumn(name = "index")
-  @CollectionTable(name = "assertion_continuing",
+  @CollectionTable(name = "assertion_context",
           uniqueConstraints= @UniqueConstraint(columnNames={"assertion_id","name"}),
           joinColumns = @JoinColumn(name = "assertion_id",
                   referencedColumnName = "id"))
@@ -147,32 +153,35 @@ public abstract class Assertion implements PersistentEntity, Serializable {
    * margin, and list of candidates that are assumed to be continuing in the assertion's
    * context.
    *
-   * @param contestID         Assertion has been created for the contest with this ID.
+   * @param contestName       Assertion has been created for this contest.
    * @param winner            Winning candidate (from contest contestID) of the assertion.
    * @param loser             Losing candidate (from contest contestID) of the assertion.
    * @param margin            Margin of the assertion.
-   * @param difficulty        Esimtated difficulty of assertion.
+   * @param dilutedMargin     Diluted margin of the assertion.
+   * @param difficulty        Estimated difficulty of assertion.
    * @param assumedContinuing List of candidates that assertion assumes are continuing.
    */
-  public Assertion(Long contestID, String winner, String loser, int margin, double difficulty,
-                   List<String> assumedContinuing) {
-    this.contestID = contestID;
+  public Assertion(String contestName, String winner, String loser, int margin,
+                   double dilutedMargin, double difficulty, List<String> assumedContinuing) {
+    this.contestName = contestName;
     this.winner = winner;
     this.loser = loser;
     this.margin = margin;
+    this.dilutedMargin = dilutedMargin;
     this.difficulty = difficulty;
     this.assumedContinuing = assumedContinuing;
   }
 
   /**
-   * Construct an empty assertion.
+   * Construct an empty assertion (for persistence).
    */
   public Assertion(){}
 
-  public void setContestID(Long contestID){
-    this.contestID = contestID;
+  public void setContestName(String contestName){
+    this.contestName = contestName;
   }
 
+  public void setDilutedMargin(double dilutedMargin) { this.dilutedMargin = dilutedMargin; }
 
   public void setWinner(String winner){
     this.winner = winner;
@@ -186,8 +195,8 @@ public abstract class Assertion implements PersistentEntity, Serializable {
     this.assumedContinuing = continuing;
   }
 
-  public Long getContestID(){
-    return this.contestID;
+  public String getContestName(){
+    return this.contestName;
   }
 
   public String getWinner(){
@@ -202,6 +211,7 @@ public abstract class Assertion implements PersistentEntity, Serializable {
     return this.assumedContinuing;
   }
 
+  public double getDilutedMargin() { return this.dilutedMargin; }
   public Integer computeOptimisticSamplesToAudit (BigDecimal riskLimit, long universe_size) {
 
     // VT: We could also have a private field that stores the diluted margin.
