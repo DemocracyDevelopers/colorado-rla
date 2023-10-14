@@ -5,12 +5,15 @@
 package us.freeandfair.corla.model;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Collections;
 import java.util.List;
 import java.util.OptionalInt;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.persistence.criteria.CriteriaBuilder;
 
 
 /**
@@ -33,6 +36,13 @@ public class IRVComparisonAudit extends ComparisonAudit {
    * whose contest matches that in the IRVComparisonAudit's contestResult (attribute in super class).
    */
   private List<Assertion> assertions;
+
+  /**
+   * Size of the universe for auditing purposes. I believe this is the same as the total ballot count
+   * in the contest.
+   * TODO: Check that this is the right universe size.
+   */
+  private long my_universe_size ;
 
   /**
    * Constructs a new, empty IRVComparisonAudit (solely for persistence).
@@ -63,6 +73,8 @@ public class IRVComparisonAudit extends ComparisonAudit {
 
     super(contestResult, riskLimit, BigDecimal.ONE, gamma, auditReason);
 
+    my_universe_size = contestResult().getBallotCount();
+
     // Ensure assertions list attribute is populated with assertions for given contest.
 
     // Super constructor at present will call methods to compute initial sample sizes.
@@ -70,12 +82,46 @@ public class IRVComparisonAudit extends ComparisonAudit {
     // need to be overriden for IRV.
 
     // Check if the contest is not auditable, if so set status appropriately.
-    //  this.setAuditStatus(AuditStatus.NOT_AUDITABLE); The super class will
+    // this.setAuditStatus(AuditStatus.NOT_AUDITABLE); The super class will
     // do this if the diluted margin assigned to the contestResult is 0, however
     // this will have been computed according to Plurality rules.
 
     // NOTE that get methods for some of the private attributes in ComparisonAudit will
     // need to be added to the super class.
+  }
+
+  /**
+   * Recalculates the overall numbers of ballots to audit, setting this
+   * object's `my_optimistic_samples_to_audit` and
+   * `my_estimates_samples_to_audit` fields.
+   */
+  @Override protected void recalculateSamplesToAudit() {
+    LOGGER.debug(String.format("[IRVComparisonAudit::recalculateSamplestoAudit start contestName=%s, "
+                    + " optimistic=%d, estimated=%d]",
+            contestResult().getContestName(),
+            my_optimistic_samples_to_audit, my_estimated_samples_to_audit));
+
+    if (my_optimistic_recalculate_needed) {
+      LOGGER.debug("[IRVComparisonAudit::recalculateSamplesToAudit: calling computeOptimisticSamplesToAudit]");
+
+      List<Integer> optimisticSamples = (List<Integer>) assertions.stream().map(a -> a.computeOptimisticSamplesToAudit(getRiskLimit(), my_universe_size));
+
+      my_optimistic_samples_to_audit = Collections.max(optimisticSamples);
+      my_optimistic_recalculate_needed = false;
+    }
+
+    LOGGER.debug("[IRVComparisonAudit::recalculateSamplesToAudit: calling computeEstimatedSamplesToAudit]");
+
+    List<Integer> estimatedSamples =  (List<Integer>) assertions.stream().map(a -> a.computeEstimatedSamplesToAudit(getRiskLimit(), my_universe_size, getAuditedSampleCount()));
+
+    my_optimistic_samples_to_audit = Collections.max(estimatedSamples);
+    my_optimistic_recalculate_needed = false;
+
+    LOGGER.debug(String.format("[IRVComparisonAudit::recalculateSamplestoAudit end contestName=%s, "
+                    + " optimistic=%d, estimated=%d]",
+            contestResult().getContestName(),
+            my_optimistic_samples_to_audit, my_estimated_samples_to_audit));
+    my_estimated_recalculate_needed = false;
   }
 
   @Override

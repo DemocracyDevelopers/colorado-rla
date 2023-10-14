@@ -152,14 +152,14 @@ public class ComparisonAudit implements PersistentEntity {
    * The number of samples to audit overall assuming no further overstatements.
    */
   @Column(nullable = false)
-  private Integer my_optimistic_samples_to_audit = 0;
+  protected Integer my_optimistic_samples_to_audit = 0;
 
   /**
    * The expected number of samples to audit overall assuming overstatements
    * continue at the current rate.
    */
   @Column(nullable = false)
-  private Integer my_estimated_samples_to_audit = 0;
+  protected Integer my_estimated_samples_to_audit = 0;
 
   /**
    * The number of two-vote understatements recorded so far.
@@ -209,14 +209,14 @@ public class ComparisonAudit implements PersistentEntity {
    * estimate needs to be recalculated.
    */
   @Column(nullable = false)
-  private Boolean my_optimistic_recalculate_needed = true;
+  protected Boolean my_optimistic_recalculate_needed = true;
 
   /**
    * A flag that indicates whether the non-optimistic ballots to
    * audit estimate needs to be recalculated
    */
   @Column(nullable = false)
-  private Boolean my_estimated_recalculate_needed = true;
+  protected Boolean my_estimated_recalculate_needed = true;
 
   /**
    * The sequence of CastVoteRecord ids for this contest ordered by County id
@@ -521,7 +521,7 @@ public class ComparisonAudit implements PersistentEntity {
    * object's `my_optimistic_samples_to_audit` and
    * `my_estimates_samples_to_audit` fields.
    */
-  private void recalculateSamplesToAudit() {
+  protected void recalculateSamplesToAudit() {
     LOGGER.debug(String.format("[recalculateSamplestoAudit start contestName=%s, "
                                + "twoUnder=%d, oneUnder=%d, oneOver=%d, twoOver=%d"
                                + " optimistic=%d, estimated=%d]",
