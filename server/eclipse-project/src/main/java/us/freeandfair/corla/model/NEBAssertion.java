@@ -20,9 +20,9 @@ public class NEBAssertion extends Assertion  {
   /**
    * {@inheritDoc}
    */
-  public NEBAssertion(String contestName, String winner, String loser, int margin, double dilutedMargin,
+  public NEBAssertion(String contestName, String winner, String loser, int margin, long universeSize,
                       double difficulty) {
-    super(contestName, winner, loser, margin, dilutedMargin, difficulty,  new ArrayList<String>());
+    super(contestName, winner, loser, margin, universeSize, difficulty,  new ArrayList<String>());
   }
 
   /**

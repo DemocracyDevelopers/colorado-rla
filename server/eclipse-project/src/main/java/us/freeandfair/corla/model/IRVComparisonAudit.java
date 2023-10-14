@@ -84,14 +84,18 @@ public class IRVComparisonAudit extends ComparisonAudit {
     // run the methods again in our constructor once assertions have been set.
     super(contestResult, riskLimit, BigDecimal.ONE, gamma, auditReason);
 
+    // set to the sum of all ballot counts in all counties.
     my_universe_size = contestResult().getBallotCount();
-    // Grab assertions for this contest, and store them.
-    this.assertions = AssertionQueries.matching(contestResult.getContestName());
+
+    // Grab assertions for this contest, and store them. Set them up with the
+    // right universe size.
+    this.assertions = AssertionQueries.matching(contestResult.getContestName(), my_universe_size);
 
     // Assign a diluted margin to the audit: compute the diluted margin for
     // each Assertion, and take the smallest as the reportable diluted margin.
 
 
+    // VT: This is the correct ballot count for super-simple, because it _is_ correctly
 
 
     // Check if the contest is not auditable, if so set status appropriately.
@@ -117,7 +121,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
     if (my_optimistic_recalculate_needed) {
       LOGGER.debug("[IRVComparisonAudit::recalculateSamplesToAudit: calling computeOptimisticSamplesToAudit]");
 
-      List<Integer> optimisticSamples = assertions.stream().map(a -> a.computeOptimisticSamplesToAudit(getRiskLimit(), my_universe_size)).collect(Collectors.toList());
+      List<Integer> optimisticSamples = assertions.stream().map(a -> a.computeOptimisticSamplesToAudit(getRiskLimit())).collect(Collectors.toList());
 
       my_optimistic_samples_to_audit = Collections.max(optimisticSamples);
       my_optimistic_recalculate_needed = false;
@@ -125,16 +129,15 @@ public class IRVComparisonAudit extends ComparisonAudit {
 
     LOGGER.debug("[IRVComparisonAudit::recalculateSamplesToAudit: calling computeEstimatedSamplesToAudit]");
 
-    List<Integer> estimatedSamples =  assertions.stream().map(a -> a.computeEstimatedSamplesToAudit(getRiskLimit(), my_universe_size, getAuditedSampleCount())).collect(Collectors.toList());
+    List<Integer> estimatedSamples =  assertions.stream().map(a -> a.computeEstimatedSamplesToAudit(getRiskLimit(), getAuditedSampleCount())).collect(Collectors.toList());
 
-    my_optimistic_samples_to_audit = Collections.max(estimatedSamples);
-    my_optimistic_recalculate_needed = false;
+    my_estimated_samples_to_audit = Collections.max(estimatedSamples);
+    my_estimated_recalculate_needed = false;
 
     LOGGER.debug(String.format("[IRVComparisonAudit::recalculateSamplestoAudit end contestName=%s, "
                     + " optimistic=%d, estimated=%d]",
             contestResult().getContestName(),
             my_optimistic_samples_to_audit, my_estimated_samples_to_audit));
-    my_estimated_recalculate_needed = false;
   }
 
   /* VT: I think we actually don't need to override any of these -

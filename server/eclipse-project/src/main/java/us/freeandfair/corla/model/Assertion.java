@@ -157,17 +157,20 @@ public abstract class Assertion implements PersistentEntity, Serializable {
    * @param winner            Winning candidate (from contest contestID) of the assertion.
    * @param loser             Losing candidate (from contest contestID) of the assertion.
    * @param margin            Margin of the assertion.
-   * @param dilutedMargin     Diluted margin of the assertion.
+   * @param universeSize      Size of the universe for this audit, i.e. overall ballot count.
    * @param difficulty        Estimated difficulty of assertion.
    * @param assumedContinuing List of candidates that assertion assumes are continuing.
    */
   public Assertion(String contestName, String winner, String loser, int margin,
-                   double dilutedMargin, double difficulty, List<String> assumedContinuing) {
+                   long universeSize, double difficulty, List<String> assumedContinuing) {
     this.contestName = contestName;
     this.winner = winner;
     this.loser = loser;
     this.margin = margin;
-    this.dilutedMargin = dilutedMargin;
+
+    assert universeSize != 0 : "Assertion constructor: can't work with zero universeSize.";
+    this.dilutedMargin = margin / (double) universeSize;
+
     this.difficulty = difficulty;
     this.assumedContinuing = assumedContinuing;
   }
@@ -180,8 +183,6 @@ public abstract class Assertion implements PersistentEntity, Serializable {
   public void setContestName(String contestName){
     this.contestName = contestName;
   }
-
-  public void setDilutedMargin(double dilutedMargin) { this.dilutedMargin = dilutedMargin; }
 
   public void setWinner(String winner){
     this.winner = winner;
@@ -212,12 +213,10 @@ public abstract class Assertion implements PersistentEntity, Serializable {
   }
 
   public double getDilutedMargin() { return this.dilutedMargin; }
-  public Integer computeOptimisticSamplesToAudit (BigDecimal riskLimit, long universe_size) {
 
-    // VT: We could also have a private field that stores the diluted margin.
-    BigDecimal dilutedMargin = BigDecimal.valueOf(margin / (double) universe_size);
+  public Integer computeOptimisticSamplesToAudit (BigDecimal riskLimit) {
 
-    my_optimistic_samples_to_audit = Audit.optimistic(riskLimit, dilutedMargin, Audit.GAMMA,
+    my_optimistic_samples_to_audit = Audit.optimistic(riskLimit, BigDecimal.valueOf(dilutedMargin), Audit.GAMMA,
             my_two_vote_under_count, my_one_vote_under_count, my_one_vote_over_count, my_two_vote_over_count).intValue();
 
     return my_optimistic_samples_to_audit;
@@ -228,7 +227,7 @@ public abstract class Assertion implements PersistentEntity, Serializable {
    * immediately prior. OTOH perhaps that's bad because it means that calling computeEstimatedSamplesToAudit
    * will have the side-effect of changing my_optimistic_samples_to_audit. I have therefore left it as it is.
    */
-  public Integer computeEstimatedSamplesToAudit (BigDecimal riskLimit, long universe_size, int auditedSampleCount) {
+  public Integer computeEstimatedSamplesToAudit (BigDecimal riskLimit, int auditedSampleCount) {
 
     var scalingFac = scalingFactor(auditedSampleCount, my_one_vote_over_count, my_two_vote_over_count);
 
@@ -315,5 +314,4 @@ public abstract class Assertion implements PersistentEntity, Serializable {
       return BigDecimal.ONE.add(BigDecimal.valueOf(overstatements).divide(auditedSamples, MathContext.DECIMAL128));
     }
   }
-
 }
