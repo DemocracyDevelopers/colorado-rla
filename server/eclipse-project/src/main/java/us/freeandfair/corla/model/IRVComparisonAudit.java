@@ -11,6 +11,7 @@ import java.math.RoundingMode;
 import java.util.Collections;
 import java.util.List;
 import java.util.OptionalInt;
+import java.util.stream.Collectors;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Entity;
@@ -116,7 +117,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
     if (my_optimistic_recalculate_needed) {
       LOGGER.debug("[IRVComparisonAudit::recalculateSamplesToAudit: calling computeOptimisticSamplesToAudit]");
 
-      List<Integer> optimisticSamples = (List<Integer>) assertions.stream().map(a -> a.computeOptimisticSamplesToAudit(getRiskLimit(), my_universe_size));
+      List<Integer> optimisticSamples = assertions.stream().map(a -> a.computeOptimisticSamplesToAudit(getRiskLimit(), my_universe_size)).collect(Collectors.toList());
 
       my_optimistic_samples_to_audit = Collections.max(optimisticSamples);
       my_optimistic_recalculate_needed = false;
@@ -124,7 +125,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
 
     LOGGER.debug("[IRVComparisonAudit::recalculateSamplesToAudit: calling computeEstimatedSamplesToAudit]");
 
-    List<Integer> estimatedSamples =  (List<Integer>) assertions.stream().map(a -> a.computeEstimatedSamplesToAudit(getRiskLimit(), my_universe_size, getAuditedSampleCount()));
+    List<Integer> estimatedSamples =  assertions.stream().map(a -> a.computeEstimatedSamplesToAudit(getRiskLimit(), my_universe_size, getAuditedSampleCount())).collect(Collectors.toList());
 
     my_optimistic_samples_to_audit = Collections.max(estimatedSamples);
     my_optimistic_recalculate_needed = false;
