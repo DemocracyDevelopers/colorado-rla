@@ -31,18 +31,11 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.WordUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import us.freeandfair.corla.model.CVRContestInfo;
-import us.freeandfair.corla.model.CastVoteRecord;
+import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
-import us.freeandfair.corla.model.Choice;
-import us.freeandfair.corla.model.Contest;
-import us.freeandfair.corla.model.County;
-import us.freeandfair.corla.model.CountyContestResult;
-import us.freeandfair.corla.model.CountyDashboard;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CountyContestResultQueries;
 import us.freeandfair.corla.util.DBExceptionUtil;
@@ -295,15 +288,17 @@ public class DominionCVRExportParser {
   /**
    * Updates the contest names, max selections, and choice counts structures.
    *
-   * @param the_line The CSV line containing the contest information.
-   * @param the_names The contest names.
+   * @param the_line          The CSV line containing the contest information.
+   * @param the_names         The contest names.
    * @param the_votes_allowed The votes allowed table.
    * @param the_choice_counts The choice counts table.
+   * @param the_contest_types The contest types - either PLURALITY or IRV.
    */
   private void updateContestStructures(final CSVRecord the_line,
                                        final List<String> the_names,
                                        final Map<String, Integer> the_votes_allowed,
-                                       final Map<String, Integer> the_choice_counts) {
+                                       final Map<String, Integer> the_choice_counts,
+                                       final Map<String, ContestType> the_contest_types) {
     int index = my_first_contest_column;
     do {
       final String c = the_line.get(index);
@@ -314,15 +309,19 @@ public class DominionCVRExportParser {
         count = count + 1;
       }
 
-      // Find how many votes are allowed
+      // Find how many votes are allowed and what kind of contest it is.
+      ContestType contestType = ContestType.PLURALITY;
       String voteForString ="(Vote For=";
       int votesAllowedIndex = c.indexOf(voteForString);
       if (votesAllowedIndex == -1)  {
         // this is an IRV contest. The number of allowed selections is the number of ranks.
         voteForString = "(Number of positions=1, Number of ranks=";
         votesAllowedIndex = c.indexOf(voteForString);
+        contestType = ContestType.IRV;
       }
+
       // get the contest name and "(Vote For=" number, or "Number of Ranks=" for IRV contests.
+      // This will throw an exception if neither voteForSting above matched.
       String cn = c.substring(0, votesAllowedIndex);
       final String vf = c.replace(cn, "").replace(voteForString, "").replace(")", "");
       // clean up the contest name (we used it to get the number, before cleaning)
@@ -336,23 +335,26 @@ public class DominionCVRExportParser {
       the_names.add(cn);
       the_choice_counts.put(cn, count);
       the_votes_allowed.put(cn, ms);
+      the_contest_types.put(cn, contestType);
     } while (index < the_line.size());
   }
 
   /**
    * Create contest and result objects for use later in parsing.
    *
-   * @param choiceLine The CSV line containing the choice information.
+   * @param choiceLine      The CSV line containing the choice information.
    * @param explanationLine The CSV line containing the choice explanations.
-   * @param contestNames The list of contest names.
-   * @param votesAllowed The table of votes allowed values.
-   * @param choiceCounts The table of contest choice counts.
+   * @param contestNames    The list of contest names.
+   * @param votesAllowed    The table of votes allowed values.
+   * @param choiceCounts    The table of contest choice counts.
+   * @param contestTypes   The table of contest types, PLURALITY or IRV.
    */
   private Result addContests(final CSVRecord choiceLine,
-                           final CSVRecord explanationLine,
-                           final List<String> contestNames,
-                           final Map<String, Integer> votesAllowed,
-                           final Map<String, Integer> choiceCounts) {
+                             final CSVRecord explanationLine,
+                             final List<String> contestNames,
+                             final Map<String, Integer> votesAllowed,
+                             final Map<String, Integer> choiceCounts,
+                             final Map<String, ContestType> contestTypes) {
     final Result result = new Result();
     int index = my_first_contest_column;
     int contest_count = 0;
@@ -382,7 +384,7 @@ public class DominionCVRExportParser {
       // note that we're using the "Vote For" number as the number of winners
       // allowed as well, because the Dominion format doesn't give us that
       // separately
-      final Contest c = new Contest(contestName, my_county, "", choices,
+      final Contest c = new Contest(contestName, my_county, contestTypes.get(contestName).toString(), choices,
                                     votesAllowed.get(contestName), votesAllowed.get(contestName),
                                     contest_count);
       LOGGER.debug(String.format("[addContests: county=%s, contest=%s", my_county.name(), c));
@@ -631,7 +633,7 @@ public class DominionCVRExportParser {
    * Makes a comma-separated string of the specified collection of
    * strings.
    *
-   * @param the_list The list.
+   * @param the_strings The list.
    * @return the comma-separated string.
    */
   private String stringList(final Collection<String> the_strings) {
@@ -709,16 +711,17 @@ public class DominionCVRExportParser {
       my_first_contest_column = my_first_contest_column + 1;
     }
     // find all the contest names, how many choices each has,
-    // and how many choices can be made in each
+    // how many choices can be made in each, and what type of contest each is.
     final List<String> contest_names = new ArrayList<String>();
     final Map<String, Integer> contest_votes_allowed = new HashMap<String, Integer>();
     final Map<String, Integer> contest_choice_counts = new HashMap<String, Integer>();
+    final Map<String, ContestType> contest_types = new HashMap<>();
 
     // we expect the second line to be a list of contest names, each appearing once
     // for each choice in the contest
 
     updateContestStructures(contest_line, contest_names, contest_votes_allowed,
-                            contest_choice_counts);
+                            contest_choice_counts, contest_types);
 
 
     headerResult = processHeaders(expl_line);
@@ -727,7 +730,7 @@ public class DominionCVRExportParser {
       return headerResult;
     } else {
       Result addContestResult =addContests(choice_line, expl_line, contest_names,
-                                           contest_votes_allowed, contest_choice_counts);
+                                           contest_votes_allowed, contest_choice_counts, contest_types);
       if (!addContestResult.success) {
         return addContestResult ;
       }
