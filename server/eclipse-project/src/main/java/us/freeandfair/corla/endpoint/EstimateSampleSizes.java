@@ -91,9 +91,16 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
    * @return A ComparisonAudit object for the contest under audit.
    */
   private ComparisonAudit createAuditForSampleEstimation(final ContestResult cr, final BigDecimal riskLimit){
+    if (cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.IRV.toString()))) {
+      return new IRVComparisonAudit(cr, riskLimit, Audit.GAMMA, cr.getAuditReason());
+    }
     // Check type of contest: IRV vs Plurality (TBD: We will need to add ContestType to ContestResult).
     // For now, let's assume its a Plurality contest.
-    return new ComparisonAudit(cr, riskLimit, cr.getDilutedMargin(), Audit.GAMMA, cr.getAuditReason());
+    if (cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.PLURALITY.toString()))) {
+      return new ComparisonAudit(cr, riskLimit, cr.getDilutedMargin(), Audit.GAMMA, cr.getAuditReason());
+    }
+
+    throw new RuntimeException("EstimateSampleSizes: Contest "+cr.getContestName()+" has inconsistent plurality/IRV types.");
   }
 
   /**
@@ -145,6 +152,8 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     // Call initialSamplesToAudit() on each ComparisonAudit. Create a map between contest name
     // and the preliminary sample size. Note that each ContestResult upon which a ComparisonAudit
     // is based will have a set of associated contest IDs.
+    // VT: I think either initialSamplesToAudit or estimatedSamplesToAudit would work. They should
+    // be the same when all the errors are zero anyway.
     final Map<String,Integer> samples = comparisonAudits.stream().collect(Collectors.toMap(
             ComparisonAudit::getContestName, ComparisonAudit::estimatedSamplesToAudit));
 
