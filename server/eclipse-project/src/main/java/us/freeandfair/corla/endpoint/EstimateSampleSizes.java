@@ -12,12 +12,15 @@ import org.apache.log4j.Logger;
 import spark.Request;
 import spark.Response;
 
+import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.controller.ComparisonAuditController;
 import us.freeandfair.corla.controller.ContestCounter;
+import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -79,6 +82,20 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     my_event.set(null);
   }
 
+
+  /**
+   * Given a ContestResult and a risk limit, return a ComparisonAudit object appropriate to the contest.
+   *
+   * @param cr           ContestResult for contest under audit.
+   * @param riskLimit    Risk limit for the audit
+   * @return A ComparisonAudit object for the contest under audit.
+   */
+  private ComparisonAudit createAuditForSampleEstimation(final ContestResult cr, final BigDecimal riskLimit){
+    // Check type of contest: IRV vs Plurality (TBD: We will need to add ContestType to ContestResult).
+    // For now, let's assume its a Plurality contest.
+    return new ComparisonAudit(cr, riskLimit, cr.getDilutedMargin(), Audit.GAMMA, cr.getAuditReason());
+  }
+
   /**
    * {@inheritDoc}
    */
@@ -94,17 +111,11 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
       // For now, require the ASM to be in the COMPLETE_AUDIT_INFO_SET state.
     }
 
-    // Flesh out steps.
     // There is a question here of whether we want to go through all of the steps
     // of creating ComparisonAudit/IRVComparisonAudit objects and from those
     // extract the initial sample sizes. Or do something more lightweight. However,
     // I expect that former will be better as then we will not have duplicated sample size
     // estimation procedures in different places in the codebase.
-
-    final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
-
-    // The DoS Dashboard contains a set of contests to audit.
-    final Set<ContestToAudit> cta = dosdb.contestsToAudit();
 
     // For estimation of sample sizes for each audit, we need to collect the ContestResult
     // for each contest. For Plurality audits, this will involve tabulating the votes across
@@ -118,15 +129,17 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
       return cr;
     }).collect(Collectors.toList());
 
-    // Q: should we be persisting the ContestResult's created? This is done in StartAuditRound,
-    // but perhaps this is not necessary for preliminary sample size estimation.
+    // Get the DoS Dashboard (will contain risk limit for audit).
+    final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
 
     // We now create ComparisonAudit objects for each contest; the sample size estimation
     // methods. ComparisonAuditController.createAudit will create either a Plurality or IRV
     // ComparisonAudit depending on the type of the contest. Note that when ComparisonAudit's
-    // are created, they are persisted to the database by ComparisonAuditController.
+    // are created, they are persisted to the database by ComparisonAuditController. NOTE we
+    // could (should)? avoid doing this by directly creating ComparisonAudits without using
+    // the ComparisonAuditController for the purpose of preliminary sample size estimation.
     final List<ComparisonAudit> comparisonAudits = countedCRs.stream().map(cr ->
-            ComparisonAuditController.createAudit(cr, dosdb.auditInfo().riskLimit()))
+            createAuditForSampleEstimation(cr, dosdb.auditInfo().riskLimit()))
             .collect(Collectors.toList());
 
     // Call initialSamplesToAudit() on each ComparisonAudit. Create a map between contest name
@@ -135,9 +148,11 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     final Map<String,Integer> samples = comparisonAudits.stream().collect(Collectors.toMap(
             ComparisonAudit::getContestName, ComparisonAudit::estimatedSamplesToAudit));
 
-    // TODO: decide what to do with above.
+    // Update response with the sample estimates for each contest.
+    // TODO
 
-    return "";
+
+    return my_endpoint_result.get();
   }
 
 }
