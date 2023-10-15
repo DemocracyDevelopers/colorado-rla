@@ -91,11 +91,12 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
    * @return A ComparisonAudit object for the contest under audit.
    */
   private ComparisonAudit createAuditForSampleEstimation(final ContestResult cr, final BigDecimal riskLimit){
+
+    // Check type of contest: IRV vs Plurality. If there's a mix of IRV and plurality in one unified contest,
+    // that's an error.
     if (cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.IRV.toString()))) {
       return new IRVComparisonAudit(cr, riskLimit, Audit.GAMMA, cr.getAuditReason());
     }
-    // Check type of contest: IRV vs Plurality (TBD: We will need to add ContestType to ContestResult).
-    // For now, let's assume its a Plurality contest.
     if (cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.PLURALITY.toString()))) {
       return new ComparisonAudit(cr, riskLimit, cr.getDilutedMargin(), Audit.GAMMA, cr.getAuditReason());
     }
@@ -158,8 +159,17 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
             ComparisonAudit::getContestName, ComparisonAudit::estimatedSamplesToAudit));
 
     // Update response with the sample estimates for each contest.
-    // TODO
 
+    try {
+      if (samples.isEmpty()) {
+        dataNotFound(the_response, "No Comparison Audits found.");
+      } else {
+        okJSON(the_response, Main.GSON.toJson(samples));
+      }
+    } catch (final Exception e) {
+      // Not sure if this is the right kind of error.
+      serverError(the_response, "could not find any Comparison Audits to estimate.");
+    }
 
     return my_endpoint_result.get();
   }
