@@ -13,9 +13,7 @@ import java.util.List;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
-import javax.persistence.Cacheable;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.persistence.criteria.CriteriaBuilder;
 
 
@@ -30,14 +28,16 @@ import javax.persistence.criteria.CriteriaBuilder;
  */
 @Entity
 @Cacheable(true)
-@Table(name = "comparison_audit")
-
+@DiscriminatorValue("IRV")
 public class IRVComparisonAudit extends ComparisonAudit {
 
   /**
    * List of assertions associated with this audit. These will be all assertions in the database table
    * whose contest matches that in the IRVComparisonAudit's contestResult (attribute in super class).
    */
+  @ManyToMany()
+  @JoinTable(name = "audit_to_assertions",
+          joinColumns = { @JoinColumn(name = "id") })
   private List<Assertion> assertions;
 
   /**

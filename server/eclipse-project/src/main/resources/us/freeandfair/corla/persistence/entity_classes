@@ -20,3 +20,7 @@ us.freeandfair.corla.model.IntermediateAuditReportInfo
 us.freeandfair.corla.model.LogEntry
 us.freeandfair.corla.model.Tribute
 us.freeandfair.corla.model.UploadedFile
+us.freeandfair.corla.model.Assertion
+us.freeandfair.corla.model.NEBAssertion
+us.freeandfair.corla.model.NENAssertion
+us.freeandfair.corla.model.IRVComparisonAudit

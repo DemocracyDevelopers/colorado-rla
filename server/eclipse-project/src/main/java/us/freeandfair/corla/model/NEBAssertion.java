@@ -16,6 +16,7 @@ import java.util.OptionalInt;
  *
  */
 @Entity
+@Cacheable(true)
 @DiscriminatorValue("NEB")
 public class NEBAssertion extends Assertion  {
 

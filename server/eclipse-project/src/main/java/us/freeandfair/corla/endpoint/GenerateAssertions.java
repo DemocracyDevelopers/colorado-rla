@@ -103,6 +103,8 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
     // here what contests to generate assertions for).
     final Set<ContestToAudit> cta = dosdb.contestsToAudit();
 
+    //final List<String> contestNames = ...
+
     // NOTE that for a single contest that involves multiple counties, there will be multiple
     // entries in the list 'cta' for that contest. Contests really need to be identified by their
     // name.

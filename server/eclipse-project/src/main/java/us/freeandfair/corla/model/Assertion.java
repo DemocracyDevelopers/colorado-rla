@@ -8,16 +8,12 @@
 
 package us.freeandfair.corla.model;
 
-import com.google.gson.annotations.JsonAdapter;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.hibernate.annotations.Immutable;
-import us.freeandfair.corla.json.ContestJsonAdapter;
 import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.persistence.PersistentEntity;
 
 import javax.persistence.*;
-import javax.persistence.criteria.CriteriaBuilder;
 import java.io.Serializable;
 import java.math.MathContext;
 import java.math.RoundingMode;
@@ -27,7 +23,6 @@ import java.util.List;
 
 @Entity
 @Table(name = "assertion")
-@JsonAdapter(ContestJsonAdapter.class)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "assertion_type")
 public abstract class Assertion implements PersistentEntity, Serializable {
@@ -98,11 +93,8 @@ public abstract class Assertion implements PersistentEntity, Serializable {
    * assertion's context.
    */
   @ElementCollection(fetch = FetchType.EAGER)
-  @OrderColumn(name = "index")
   @CollectionTable(name = "assertion_context",
-          uniqueConstraints= @UniqueConstraint(columnNames={"assertion_id","name"}),
-          joinColumns = @JoinColumn(name = "assertion_id",
-                  referencedColumnName = "id"))
+          joinColumns = @JoinColumn(name = "id"))
   protected List<String> assumedContinuing;
 
   /**
