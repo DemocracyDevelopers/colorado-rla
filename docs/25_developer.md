@@ -203,21 +203,30 @@ In order to use the Postgres database in development, one must:
 ```
 brew install postgres
 createuser -P corlaadmin
-createdb -O corlaadmin corla
+createdb -O corlaadmin scratch
 ```
+alternatively you can use following commands to create new scratch db.(usually password for user postgres is postgres unless you changed it at installation time)
+
+```
+psql -U postgres
+create database scratch with owner postgres;
+\c scratch
+grant all on schema public to corlaadmin;
+```
+
 On Linux, 
 
 ```
 sudo apt install postgresql
 sudo -u postgres createuser -P corlaadmin
-sudo -u postgres createdb -O corlaadmin corla
+sudo -u postgres createdb -O corlaadmin scratch
 ```
 
 
 and in order to give "`corlaadmin`" appropriate privileges:
 ```
 sudo -u postgres psql
-postgres=# GRANT ALL PRIVILEGES ON DATABASE "corla" TO corlaadmin;
+postgres=# GRANT ALL PRIVILEGES ON DATABASE "scratch" TO corlaadmin;
 ```
 and whatever is equivalent on MacOS.
  
@@ -228,7 +237,7 @@ at this stage, create all its tables and such automatically.
 4. If you are running postgres locally, you will need to change the 
 `hibernate.url` field in `/server/eclipse-project/src/test/resources/test.properties` and `/server/eclipse-project/src/main/resources/us/freeandfair/corla/default.properties` to
 ```
-hibernate.url = jdbc:postgresql://localhost:5432/corla?reWriteBatchedInserts=true&disableColumnSantiser=true
+hibernate.url = jdbc:postgresql://localhost:5432/scratch?reWriteBatchedInserts=true&disableColumnSantiser=true
 ```
 
 5. Edit server/eclipse-project/pom.xml to comment out the parent pom.xml:
@@ -268,11 +277,11 @@ java -jar ./target/corla-server-[VERSION]-SNAPSHOT.jar
    command on OS X:
    
 ```
-psql -U corlaadmin -d corla -a -f ./test/corla-test-credentials.psql
+psql -U corlaadmin -d scratch -a -f ./test/corla-test-credentials.psql
 ```
    command on Linux:
 ```
-psql -U corlaadmin -h localhost -d corla -a -f ./test/corla-test-credentials.psql
+psql -U corlaadmin -h localhost -d scratch -a -f ./test/corla-test-credentials.psql
 ```
 
 When prompted for the password, enter `corlasecret`. 
@@ -292,7 +301,7 @@ mvn package
 
 
 If you need to delete the database---perhaps because due to a recent
-merge the DB schema has evolved---use the `dropdb corla` command and
+merge the DB schema has evolved---use the `dropdb scratch` command and
 then recreate the DB following the steps above.
 
 There are helpful scripts for automating these actions located in the
