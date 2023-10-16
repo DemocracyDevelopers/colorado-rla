@@ -94,10 +94,10 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
 
     // Check type of contest: IRV vs Plurality. If there's a mix of IRV and plurality in one unified contest,
     // that's an error.
-    if (cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.IRV.name()))) {
+    if (cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.IRV.toString()))) {
       return new IRVComparisonAudit(cr, riskLimit, Audit.GAMMA, cr.getAuditReason());
     }
-    if (cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.PLURALITY.name()))) {
+    if (cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.PLURALITY.toString()))) {
       return new ComparisonAudit(cr, riskLimit, cr.getDilutedMargin(), Audit.GAMMA, cr.getAuditReason());
     }
 
