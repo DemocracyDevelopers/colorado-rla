@@ -11,8 +11,7 @@ import us.freeandfair.corla.query.Setup;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 public class EstimateSampleSizesTest {
@@ -40,10 +39,8 @@ public class EstimateSampleSizesTest {
     }
   }
 
-  @Test()
-  public void testEstimateSampleSizesSimplePlurality() {
-    // For testing sample size estimation endpoint, we need a series of CountyContestResult's
-    // in the database, their associated Counties and Contests, a DoSDashboard with audit info.
+  @Test
+  public void testEstimateSampleSizePlurality(){
 
     // Add data for county contest results to the database
     final Session s = Persistence.currentSession();
@@ -67,11 +64,82 @@ public class EstimateSampleSizesTest {
             + " (1,50,'Alice'), (1,5,'Bob'), (1,20,'Chuan'), (1,150,'Diego') ";
     s.createNativeQuery(query).executeUpdate();
 
-    // NOTE: need to persist CountyContestResult objects in order for them to be collected via Persistence.
-
     EstimateSampleSizes esr = new EstimateSampleSizes();
     Map<String,Integer> samples = esr.estimateSampleSizes();
     System.out.println(samples);
   }
+
+  /*
+  @Test()
+  public void testEstimateSampleSizesSimplePlurality() {
+    // For testing sample size estimation endpoint, we need a series of CountyContestResult's
+    // in the database, their associated Counties and Contests, a DoSDashboard with audit info.
+
+    County cty = CountyQueries.fromString("Boulder");
+
+    Persistence.saveOrUpdate(cty);
+
+    List<String> candidates = Arrays.asList("Alice", "Bob", "Chuan", "Diego");
+    List<Choice> choices = candidates.stream().map(c -> { return new Choice(c,
+            "", false, false);}).collect(Collectors.toList());
+
+    Contest c1 = new Contest("Board of Parks", cty, "PLURALITY", choices, 1,
+            1, 0);
+
+    Persistence.saveOrUpdate(c1);
+
+    CountyContestResult ctr = new CountyContestResult(cty, c1);
+
+    int cntr = 0;
+    for(int i = 0; i < 20; ++i) {
+      ctr.addCVR(createVoteFor("Alice", c1, cty, cntr));
+      ++cntr;
+    }
+    for(int i = 0; i < 10; ++i) {
+      ctr.addCVR(createVoteFor("Bob", c1, cty, cntr));
+      ++cntr;
+    }
+    for(int i = 0; i < 100; ++i) {
+      ctr.addCVR(createVoteFor("Chuan", c1, cty, cntr));
+      ++cntr;
+    }
+    for(int i = 0; i < 40; ++i) {
+      ctr.addCVR(createVoteFor("Diego", c1, cty, cntr));
+      ++cntr;
+    }
+
+    ctr.updateResults();
+
+    Persistence.saveOrUpdate(ctr);
+
+    List<CountyContestResult> contestResults = Persistence.getAll(CountyContestResult.class);
+
+    System.out.println(contestResults.size());
+
+  }
+
+  private CastVoteRecord createVoteFor(final String name, final Contest co, final County cty, Integer position){
+    // Create CVRContestInfo
+    List<String> votes = new ArrayList();
+    votes.add(name);
+
+    CVRContestInfo ci = new CVRContestInfo(co, null,null, votes);
+    List<CVRContestInfo> contest_info = new ArrayList();
+    contest_info.add(ci);
+
+    CastVoteRecord cvr = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
+            null,
+            1L,
+            position,
+            1,
+            1,
+            "1",
+            1,
+            "1",
+            "a",
+            contest_info);
+    Persistence.save(cvr);
+    return cvr;
+  }*/
 
 }
