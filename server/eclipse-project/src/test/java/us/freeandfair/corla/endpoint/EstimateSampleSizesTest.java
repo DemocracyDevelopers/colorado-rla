@@ -45,7 +45,7 @@ public class EstimateSampleSizesTest {
     // Add data for county contest results to the database
     final Session s = Persistence.currentSession();
 
-    String query = "insert into contest (id,description,name,sequence_number,votes_allowed,winners_allowed,county_id) values "
+    /*String query = "insert into contest (id,description,name,sequence_number,votes_allowed,winners_allowed,county_id) values "
             + " (0,'PLURALITY','Board of Parks',0,1,1,48), (1,'PLURALITY','Board of Tax and Estimation',1,1,1,49)";
     s.createNativeQuery(query).executeUpdate();
 
@@ -62,10 +62,12 @@ public class EstimateSampleSizesTest {
     query = "insert into county_contest_vote_total (result_id,vote_total,choice) values "
             + " (0,20,'Alice'), (0,10,'Bob'), (0,100,'Chuan'), (0,40,'Diego'), "
             + " (1,50,'Alice'), (1,5,'Bob'), (1,20,'Chuan'), (1,150,'Diego') ";
-    s.createNativeQuery(query).executeUpdate();
+    s.createNativeQuery(query).executeUpdate();*/
 
     EstimateSampleSizes esr = new EstimateSampleSizes();
     Map<String,Integer> samples = esr.estimateSampleSizes();
+
+    // TODO: compare sample sizes to known estimates.
     System.out.println(samples);
   }
 
