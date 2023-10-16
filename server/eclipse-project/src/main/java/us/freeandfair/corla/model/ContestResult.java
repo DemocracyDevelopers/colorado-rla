@@ -150,6 +150,8 @@ public class ContestResult implements PersistentEntity, Serializable {
   @Column(name = "contest_name", nullable = false)
   private String contestName;
 
+
+
   /**
    * The margin divided by total number of ballots cast.
    */
