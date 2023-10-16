@@ -94,10 +94,10 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
 
     // Check type of contest: IRV vs Plurality. If there's a mix of IRV and plurality in one unified contest,
     // that's an error.
-    if (cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.IRV.toString()))) {
+    if (cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.IRV.name()))) {
       return new IRVComparisonAudit(cr, riskLimit, Audit.GAMMA, cr.getAuditReason());
     }
-    if (cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.PLURALITY.toString()))) {
+    if (cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.PLURALITY.name()))) {
       return new ComparisonAudit(cr, riskLimit, cr.getDilutedMargin(), Audit.GAMMA, cr.getAuditReason());
     }
 
@@ -105,26 +105,10 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
   }
 
   /**
-   * {@inheritDoc}
+   * Compute sample sizes for all contests for which CountyContestResults exist in the database.
+   * @return A map between contest name and the estimated sample size required for that contest.
    */
-  @Override
-  public String endpointBody(final Request the_request, final Response the_response) {
-    if (my_asm.get().currentState() != COMPLETE_AUDIT_INFO_SET) {
-      // We can only compute preliminary sample size estimates once the ASM has
-      // reached the COMPLETE_AUDIT_INFO_SET state and assertions have been
-      // generated for all IRV contests for which it is possible to form assertions.
-      // We may create a new ASM state ASSERTIONS_GENERATED_OK (or similar) to indicate
-      // when the system has completed this step, and associated events.
-
-      // For now, require the ASM to be in the COMPLETE_AUDIT_INFO_SET state.
-    }
-
-    // There is a question here of whether we want to go through all of the steps
-    // of creating ComparisonAudit/IRVComparisonAudit objects and from those
-    // extract the initial sample sizes. Or do something more lightweight. However,
-    // I expect that former will be better as then we will not have duplicated sample size
-    // estimation procedures in different places in the codebase.
-
+  public Map<String, Integer> estimateSampleSizes(){
     // For estimation of sample sizes for each audit, we need to collect the ContestResult
     // for each contest. For Plurality audits, this will involve tabulating the votes across
     // Counties for that contest. For preliminary sample size estimation, we assign
@@ -155,11 +139,31 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     // is based will have a set of associated contest IDs.
     // VT: I think either initialSamplesToAudit or estimatedSamplesToAudit would work. They should
     // be the same when all the errors are zero anyway.
-    final Map<String,Integer> samples = comparisonAudits.stream().collect(Collectors.toMap(
+    return comparisonAudits.stream().collect(Collectors.toMap(
             ComparisonAudit::getContestName, ComparisonAudit::estimatedSamplesToAudit));
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String endpointBody(final Request the_request, final Response the_response) {
+    if (my_asm.get().currentState() != COMPLETE_AUDIT_INFO_SET) {
+      // We can only compute preliminary sample size estimates once the ASM has
+      // reached the COMPLETE_AUDIT_INFO_SET state and assertions have been
+      // generated for all IRV contests for which it is possible to form assertions.
+      // We may create a new ASM state ASSERTIONS_GENERATED_OK (or similar) to indicate
+      // when the system has completed this step, and associated events.
+
+      // For now, require the ASM to be in the COMPLETE_AUDIT_INFO_SET state.
+      serverError(the_response, "Complete audit information has not been set");
+      return my_endpoint_result.get();
+    }
+
+    // Estimate sample sizes
+    final Map<String, Integer> samples = estimateSampleSizes();
 
     // Update response with the sample estimates for each contest.
-
     try {
       if (samples.isEmpty()) {
         dataNotFound(the_response, "No Comparison Audits found.");
@@ -168,7 +172,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
       }
     } catch (final Exception e) {
       // Not sure if this is the right kind of error.
-      serverError(the_response, "could not find any Comparison Audits to estimate.");
+      serverError(the_response, "Could not find any Comparison Audits to estimate.");
     }
 
     return my_endpoint_result.get();
