@@ -26,9 +26,10 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
-@Immutable
 @Table(name = "assertion")
 @JsonAdapter(ContestJsonAdapter.class)
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "assertion_type")
 public abstract class Assertion implements PersistentEntity, Serializable {
 
   /**

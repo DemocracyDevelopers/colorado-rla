@@ -6,16 +6,25 @@
 package us.freeandfair.corla.model;
 
 
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.OptionalInt;
-import java.math.BigDecimal;
-import java.util.List;
+
 
 /**
  * Generic assertion for an assertion-based audit.
  *
  */
+@Entity
+@DiscriminatorValue("NEB")
 public class NEBAssertion extends Assertion  {
+
+  /**
+   * Construct an empty NEB assertion (for persistence).
+   */
+  public NEBAssertion(){
+    super();
+  }
 
   /**
    * {@inheritDoc}

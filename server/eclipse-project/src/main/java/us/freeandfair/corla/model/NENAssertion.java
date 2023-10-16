@@ -7,16 +7,24 @@
 package us.freeandfair.corla.model;
 
 
+import javax.persistence.*;
 import java.util.OptionalInt;
-import java.math.BigDecimal;
 import java.util.List;
 
 /**
  * Generic assertion for an assertion-based audit.
  *
  */
+@Entity
+@DiscriminatorValue("NEN")
 public class NENAssertion extends Assertion {
 
+  /**
+   * Construct an empty NEN assertion (for persistence).
+   */
+  public NENAssertion(){
+    super();
+  }
 
   /**
    * {@inheritDoc}
