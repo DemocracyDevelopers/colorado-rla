@@ -51,7 +51,6 @@ public final class AssertionQueries {
    * @return the list of assertions defined for the contest
    */
   public static List<Assertion> matching(final String contestName) {
-    // Following is an example for grabbing a single ComparisonAudit from the database
     final Session s = Persistence.currentSession();
     final TypedQuery<Assertion> q =
       s.createQuery("select ca from Assertion ca "
@@ -61,7 +60,7 @@ public final class AssertionQueries {
     try {
       return q.getResultList();
     } catch (javax.persistence.NoResultException e ) {
-      return null;
+      return new ArrayList<>();
     }
   }
 
