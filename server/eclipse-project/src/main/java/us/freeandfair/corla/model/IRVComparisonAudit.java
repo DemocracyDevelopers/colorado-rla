@@ -112,32 +112,62 @@ public class IRVComparisonAudit extends ComparisonAudit {
    * object's `my_optimistic_samples_to_audit` and
    * `my_estimates_samples_to_audit` fields.
    */
-  @Override protected void recalculateSamplesToAudit() {
+  @Override
+  protected void recalculateSamplesToAudit() {
     LOGGER.debug(String.format("[IRVComparisonAudit::recalculateSamplestoAudit start contestName=%s, "
                     + " optimistic=%d, estimated=%d]",
             contestResult().getContestName(),
             my_optimistic_samples_to_audit, my_estimated_samples_to_audit));
 
-    if (my_optimistic_recalculate_needed) {
-      LOGGER.debug("[IRVComparisonAudit::recalculateSamplesToAudit: calling computeOptimisticSamplesToAudit]");
-
-      List<Integer> optimisticSamples = assertions.stream().map(a -> a.computeOptimisticSamplesToAudit(getRiskLimit())).collect(Collectors.toList());
-
-      my_optimistic_samples_to_audit = Collections.max(optimisticSamples);
+    if(assertions.isEmpty()){
+      LOGGER.debug("[IRVComparisonAudit::recalculateSamplesToAudit: no assertions in audit]");
+      my_optimistic_samples_to_audit = 0;
+      my_estimated_samples_to_audit = 0;
       my_optimistic_recalculate_needed = false;
+      my_estimated_recalculate_needed = false;
     }
+    else {
+      if (my_optimistic_recalculate_needed) {
+        LOGGER.debug("[IRVComparisonAudit::recalculateSamplesToAudit: calling computeOptimisticSamplesToAudit]");
 
-    LOGGER.debug("[IRVComparisonAudit::recalculateSamplesToAudit: calling computeEstimatedSamplesToAudit]");
+        List<Integer> optimisticSamples = assertions.stream().map(a ->
+                a.computeOptimisticSamplesToAudit(getRiskLimit())).collect(Collectors.toList());
 
-    List<Integer> estimatedSamples =  assertions.stream().map(a -> a.computeEstimatedSamplesToAudit(getRiskLimit(), getAuditedSampleCount())).collect(Collectors.toList());
+        my_optimistic_samples_to_audit = Collections.max(optimisticSamples);
+        my_optimistic_recalculate_needed = false;
+      }
 
-    my_estimated_samples_to_audit = Collections.max(estimatedSamples);
-    my_estimated_recalculate_needed = false;
+      LOGGER.debug("[IRVComparisonAudit::recalculateSamplesToAudit: calling computeEstimatedSamplesToAudit]");
+
+      List<Integer> estimatedSamples = assertions.stream().map(a -> a.computeEstimatedSamplesToAudit(getRiskLimit(),
+              getAuditedSampleCount())).collect(Collectors.toList());
+
+      my_estimated_samples_to_audit = Collections.max(estimatedSamples);
+      my_estimated_recalculate_needed = false;
+    }
 
     LOGGER.debug(String.format("[IRVComparisonAudit::recalculateSamplestoAudit end contestName=%s, "
                     + " optimistic=%d, estimated=%d]",
             contestResult().getContestName(),
             my_optimistic_samples_to_audit, my_estimated_samples_to_audit));
+  }
+
+  /*
+   * MB: Estimate sample sizes endpoint calls initialSamplesToAudit().
+   */
+  @Override
+  public int initialSamplesToAudit() {
+    LOGGER.debug("[IRVComparisonAudit::initialSamplesToAudit: calling computeOptimisticSamplesToAudit]");
+
+    if(assertions.isEmpty()){
+      return 0;
+    }
+    else{
+      List<Integer> optimisticSamples = assertions.stream().map(a ->
+              a.computeOptimisticSamplesToAudit(getRiskLimit())).collect(Collectors.toList());
+
+      return Collections.max(optimisticSamples);
+    }
   }
 
   /* VT: I think we actually don't need to override any of these -
