@@ -140,7 +140,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     // VT: I think either initialSamplesToAudit or estimatedSamplesToAudit would work. They should
     // be the same when all the errors are zero anyway.
     return comparisonAudits.stream().collect(Collectors.toMap(
-            ComparisonAudit::getContestName, ComparisonAudit::estimatedSamplesToAudit));
+            ComparisonAudit::getContestName, ComparisonAudit::initialSamplesToAudit));
   }
 
   /**
