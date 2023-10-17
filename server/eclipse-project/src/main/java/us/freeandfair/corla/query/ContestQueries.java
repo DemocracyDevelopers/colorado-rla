@@ -26,6 +26,7 @@ import javax.persistence.criteria.Root;
 import org.hibernate.Session;
 
 import us.freeandfair.corla.Main;
+import us.freeandfair.corla.model.Assertion;
 import us.freeandfair.corla.model.Contest;
 import us.freeandfair.corla.model.County;
 import us.freeandfair.corla.persistence.Persistence;
@@ -115,5 +116,25 @@ public final class ContestQueries {
       }
     }
     Persistence.flush();
+  }
+
+  /**
+   * Obtain the list of Contests matching a given contest name.
+   *
+   * @param contestName      The contest name
+   * @return the list of Contests with the given contests name, returns an empty list if no such contests exist.
+   */
+  public static List<Contest> matching(final String contestName) {
+    final Session s = Persistence.currentSession();
+    final TypedQuery<Contest> q =
+            s.createQuery("select co from Contest co "
+                    + " where co.my_name = :contestName", Contest.class);
+    q.setParameter("contestName", contestName);
+
+    try {
+      return q.getResultList();
+    } catch (javax.persistence.NoResultException e ) {
+      return new ArrayList<>();
+    }
   }
 }
