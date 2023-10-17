@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 
 public class EstimateSampleSizesTest {
@@ -30,7 +31,7 @@ public class EstimateSampleSizesTest {
     // Create DoSDashboard with some audit information.
     DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
     dosdb.updateAuditInfo(new AuditInfo("general", Instant.now(), Instant.now(),
-            "12856782643571354365", BigDecimal.valueOf(5)));
+            "12856782643571354365", BigDecimal.valueOf(0.05)));
     Persistence.saveOrUpdate(dosdb);
     Persistence.flush();
   }
@@ -51,6 +52,10 @@ public class EstimateSampleSizesTest {
     County cty = CountyQueries.fromString("Boulder");
 
     // To do: need to add ballot manifest data.
+    BallotManifestInfo bmi = new BallotManifestInfo(cty.id(), 1, "1",
+            170, "Bin 1", 0L, 169L);
+
+    Persistence.save(bmi);
 
     List<String> candidates = Arrays.asList("Alice", "Bob", "Chuan", "Diego");
 
@@ -93,17 +98,18 @@ public class EstimateSampleSizesTest {
 
     EstimateSampleSizes esr = new EstimateSampleSizes();
     Map<String,Integer> samples = esr.estimateSampleSizes();
+    Map<String,Integer> expected = Map.of("Board of Parks", 18);
 
-    System.out.println(samples);
+    assertEquals(samples, expected);
   }
 
   private CastVoteRecord createVoteFor(final String name, final Contest co, final County cty, Integer position){
     // Create CVRContestInfo
-    List<String> votes = new ArrayList();
+    List<String> votes = new ArrayList<String>();
     votes.add(name);
 
     CVRContestInfo ci = new CVRContestInfo(co, null,null, votes);
-    List<CVRContestInfo> contest_info = new ArrayList();
+    List<CVRContestInfo> contest_info = new ArrayList<CVRContestInfo>();
     contest_info.add(ci);
 
     CastVoteRecord cvr = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
