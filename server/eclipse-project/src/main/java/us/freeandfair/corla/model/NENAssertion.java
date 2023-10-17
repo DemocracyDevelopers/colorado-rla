@@ -16,7 +16,6 @@ import java.util.List;
  *
  */
 @Entity
-@Cacheable(true)
 @DiscriminatorValue("NEN")
 public class NENAssertion extends Assertion {
 

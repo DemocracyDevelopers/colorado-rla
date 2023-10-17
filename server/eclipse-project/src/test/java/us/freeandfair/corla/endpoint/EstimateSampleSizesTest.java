@@ -33,7 +33,7 @@ public class EstimateSampleSizesTest {
     dosdb.updateAuditInfo(new AuditInfo("general", Instant.now(), Instant.now(),
             "12856782643571354365", BigDecimal.valueOf(0.05)));
     Persistence.saveOrUpdate(dosdb);
-    Persistence.flush();
+    Persistence.flushAndClear();
   }
 
   @AfterTest()
@@ -56,6 +56,7 @@ public class EstimateSampleSizesTest {
             170, "Bin 1", 0L, 169L);
 
     Persistence.save(bmi);
+    Persistence.flushAndClear();
 
     List<String> candidates = Arrays.asList("Alice", "Bob", "Chuan", "Diego");
 
@@ -66,6 +67,7 @@ public class EstimateSampleSizesTest {
             1, 0);
 
     Persistence.saveOrUpdate(c1);
+    Persistence.flushAndClear();
 
     CountyContestResult ctr = new CountyContestResult(cty, c1);
 
@@ -90,7 +92,7 @@ public class EstimateSampleSizesTest {
     ctr.updateResults();
 
     Persistence.saveOrUpdate(ctr);
-    Persistence.flush();
+    Persistence.flushAndClear();
 
     List<CountyContestResult> contestResults = Persistence.getAll(CountyContestResult.class);
 
@@ -124,6 +126,7 @@ public class EstimateSampleSizesTest {
             "a",
             contest_info);
     Persistence.save(cvr);
+    Persistence.flushAndClear();
     return cvr;
   }
 
