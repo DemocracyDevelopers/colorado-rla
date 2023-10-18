@@ -52,29 +52,30 @@ public class EstimateSampleSizesTest {
   }
 
   /**
-   * Demonstration of estimate sample sizes endpoint logic for a simple
-   * Plurality contest.
+   * Create a Plurality contest for the given county, contest name, and with the given
+   * distribution of votes.
+   *
+   * @param county            County to which the contest belongs (name).
+   * @param contest           Name of the contest.
+   * @param candidate_votes   Map between candidate name and their vote total.
+   * @param total             Total number of CVRs with the contest on it.
    */
-  @Test()
-  public void testEstimateSampleSizesSimplePlurality() {
-    // For testing sample size estimation endpoint, we need a series of CountyContestResult's
-    // in the database, their associated Counties and Contests, a DoSDashboard with audit info.
-
-    County cty = CountyQueries.fromString("Boulder");
+  private void createPluralityContest(String county, String contest, Map<String,Integer> candidate_votes, int total){
+    County cty = CountyQueries.fromString(county);
 
     // To do: need to add ballot manifest data.
     BallotManifestInfo bmi = new BallotManifestInfo(cty.id(), 1, "1",
-            170, "Bin 1", 0L, 169L);
+            total, "Bin 1", 0L, (long) total);
 
     Persistence.save(bmi);
     Persistence.flushAndClear();
 
-    List<String> candidates = Arrays.asList("Alice", "Bob", "Chuan", "Diego");
+    Set<String> candidates = candidate_votes.keySet();
 
     List<Choice> choices = candidates.stream().map(c -> { return new Choice(c,
             "", false, false);}).collect(Collectors.toList());
 
-    Contest c1 = new Contest("Board of Parks", cty, "PLURALITY", choices, 1,
+    Contest c1 = new Contest(contest, cty, "PLURALITY", choices, 1,
             1, 0);
 
     Persistence.saveOrUpdate(c1);
@@ -83,35 +84,91 @@ public class EstimateSampleSizesTest {
     CountyContestResult ctr = new CountyContestResult(cty, c1);
 
     int cntr = 0;
-    for(int i = 0; i < 20; ++i) {
-      ctr.addCVR(createVoteFor("Alice", c1, cntr));
-      ++cntr;
-    }
-    for(int i = 0; i < 10; ++i) {
-      ctr.addCVR(createVoteFor("Bob", c1, cntr));
-      ++cntr;
-    }
-    for(int i = 0; i < 100; ++i) {
-      ctr.addCVR(createVoteFor("Chuan", c1, cntr));
-      ++cntr;
-    }
-    for(int i = 0; i < 40; ++i) {
-      ctr.addCVR(createVoteFor("Diego", c1, cntr));
-      ++cntr;
+    for(Map.Entry<String,Integer> entry : candidate_votes.entrySet()){
+      for(int i = 0; i < entry.getValue(); ++i){
+        ctr.addCVR(createVoteFor(entry.getKey(), c1, cntr));
+        ++cntr;
+      }
     }
 
     ctr.updateResults();
 
     Persistence.saveOrUpdate(ctr);
     Persistence.flushAndClear();
-
-    List<CountyContestResult> contestResults = CountyContestResultQueries.withContestName("Board of Parks");
-
-    EstimateSampleSizes esr = new EstimateSampleSizes();
-    Map<String,Integer> samples = esr.estimateSampleSizes();
-
-    System.out.println("Board of Parks " + samples.get("Board of Parks").toString());
   }
+
+  /**
+   * Creates and persists an example Plurality election for the Boulder county called
+   * Board of Parks.
+   */
+  private void createBoulderBoardOfParks(){
+    createPluralityContest("Boulder", "Board of Parks", Map.of("Alice", 20, "Bob", 10,
+            "Chuan", 100, "Diego", 40), 170);
+  }
+
+  /**
+   * Creates and persists an example Plurality election for the Broomfield county called
+   * Board of Transport.
+   */
+  private void createBroomfieldBoardOfTransport(){
+    createPluralityContest("Broomfield", "Board of Transport", Map.of("Wendy", 150, "Kara", 130,
+            "Raoul", 350, "Chao", 320), 950);
+  }
+
+  /**
+   * Demonstration of estimate sample sizes endpoint logic for a simple
+   * Plurality contest.
+   */
+  @Test()
+  public void testEstimateSampleSizesSimplePlurality() {
+    try {
+      createBoulderBoardOfParks();
+      createBroomfieldBoardOfTransport();
+
+      EstimateSampleSizes esr = new EstimateSampleSizes();
+      Map<String,Integer> samples = esr.estimateSampleSizes();
+
+      System.out.println("[Boulder] Board of Parks " + samples.get("Board of Parks").toString());
+      System.out.println("[Broomfield] Board of Transport " + samples.get("Board of Transport").toString());
+
+    } catch(Exception e){
+      System.out.println(e.getMessage());
+    }
+  }
+
+  /**
+   * Demonstration test of estimate sample size endpoint logic for a series of
+   * IRV contests.
+   */
+  @Test()
+  public void testEstimateSampleSizesIRVMayorals() {
+    try {
+      loadIRVContestConfiguration("assertions/irv_estimation_test_case1.json");
+      computeAndDisplaySampleSizes();
+
+    } catch(Exception e){
+      System.out.println(e.getMessage());
+    }
+  }
+
+  /**
+   * Demonstration test of estimate sample size endpoint logic for a series of
+   * IRV AND Plurality contests.
+   */
+  @Test()
+  public void testEstimateSampleSizesIRVMayoralsAndPlurality() {
+    try {
+      loadIRVContestConfiguration("assertions/irv_estimation_test_case1.json");
+      createBroomfieldBoardOfTransport();
+      createBoulderBoardOfParks();
+
+      computeAndDisplaySampleSizes();
+
+    } catch(Exception e){
+      System.out.println(e.getMessage());
+    }
+  }
+
 
   /**
    * Creates a cast vote record in a given Plurality contest containing a vote
@@ -147,17 +204,40 @@ public class EstimateSampleSizesTest {
     return cvr;
   }
 
+
   /**
-   * Demonstration test of estimate sample size endpoint logic for a series of
-   * IRV contests.
+   * Computes sample sizes for all contests in the database. Returns
+   * these samples sizes, and prints them to stdout.
    */
-  @Test()
-  public void testEstimateSampleSizesIRVMayorals() {
+  private Map<String, Integer> computeAndDisplaySampleSizes(){
+    // Call core logic of the EstimateSampleSizes endpoint.
+    EstimateSampleSizes esr = new EstimateSampleSizes();
+
+    // Get a map between contest name and the initial sample size expected
+    // for that contest.
+    Map<String, Integer> samples = esr.estimateSampleSizes();
+
+    // Print sample sizes (for demonstration).
+    for (Map.Entry<String, Integer> entry : samples.entrySet()) {
+      System.out.println(entry.getKey() + ": " + entry.getValue());
+    }
+
+    return samples;
+  }
+
+  /**
+   * Given a JSON configuration file defining a series of IRV contests with
+   * assertions, create and persist County, Contest, CountyContestResult,
+   * and Assertion objects.
+   *
+   * @param config_file   JSON configuration file defining a series of IRV contests.
+   */
+  private void loadIRVContestConfiguration(String config_file){
     ClassLoader classLoader = getClass().getClassLoader();
     try {
       // Grab test configuration: a series of IRV contests with attached assertions
       // in JSON format.
-      FileReader file = new FileReader(classLoader.getResource("assertions/irv_estimation_test_case1.json").getFile());
+      FileReader file = new FileReader(classLoader.getResource(config_file).getFile());
       JsonElement json = Main.GSON.fromJson(file, JsonElement.class);
       JsonObject jobj = json.getAsJsonObject();
 
@@ -197,19 +277,6 @@ public class EstimateSampleSizesTest {
         ++cty_cntr;
         ++seq_cntr;
       }
-
-      // Call core logic of the EstimateSampleSizes endpoint.
-      EstimateSampleSizes esr = new EstimateSampleSizes();
-
-      // Get a map between contest name and the initial sample size expected
-      // for that contest.
-      Map<String, Integer> samples = esr.estimateSampleSizes();
-
-      // Print sample sizes (for demonstration).
-      for (Map.Entry<String, Integer> entry : samples.entrySet()) {
-        System.out.println(entry.getKey() + ": " + entry.getValue());
-      }
-
     } catch(Exception e){
       System.out.println(e.getMessage());
     }
