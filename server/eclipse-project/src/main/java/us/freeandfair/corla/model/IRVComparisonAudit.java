@@ -89,22 +89,36 @@ public class IRVComparisonAudit extends ComparisonAudit {
 
     // Grab assertions for this contest, and store them. Set them up with the
     // right universe size.
-    this.assertions = AssertionQueries.matching(contestResult.getContestName(), my_universe_size);
+    this.assertions = AssertionQueries.matching(contestResult.getContestName());
 
-    // Assign a diluted margin to the audit: compute the diluted margin for
-    // each Assertion, and take the smallest as the reportable diluted margin.
+    // If there are no assertions for this audit, then the contest is not
+    // auditable. Otherwise, it is auditable.
+    // The super class will label the audit as NOT_AUDITABLE if the diluted margin
+    // assigned to the contestResult is 0, however this will have been computed
+    // according to Plurality rules and has no bearing on the auditability of
+    // an IRV contest.
+    if (this.assertions.isEmpty()){
+      this.setAuditStatus(AuditStatus.NOT_AUDITABLE);
+    }
+    else{
+      this.setAuditStatus(AuditStatus.NOT_STARTED);
+    }
 
+    // Assign a diluted margin to the audit
 
     // VT: This is the correct ballot count for super-simple, because it _is_ correctly
 
 
     // Check if the contest is not auditable, if so set status appropriately.
-    // this.setAuditStatus(AuditStatus.NOT_AUDITABLE); The super class will
-    // do this if the diluted margin assigned to the contestResult is 0, however
-    // this will have been computed according to Plurality rules.
+    // this.setAuditStatus(AuditStatus.NOT_AUDITABLE);
 
     // NOTE that get methods for some of the private attributes in ComparisonAudit will
     // need to be added to the super class.
+
+    // As the super class invokes sample size estimation methods in its constructor,
+    // we need to invoke them here after the audit's assertions have been populated.
+    optimisticSamplesToAudit();
+    estimatedSamplesToAudit();
   }
 
   /**
@@ -114,6 +128,11 @@ public class IRVComparisonAudit extends ComparisonAudit {
    */
   @Override
   protected void recalculateSamplesToAudit() {
+    if(assertions == null){
+      // We have not yet populated our assertions list
+      return;
+    }
+
     LOGGER.debug(String.format("[IRVComparisonAudit::recalculateSamplestoAudit start contestName=%s, "
                     + " optimistic=%d, estimated=%d]",
             contestResult().getContestName(),
@@ -157,6 +176,10 @@ public class IRVComparisonAudit extends ComparisonAudit {
    */
   @Override
   public int initialSamplesToAudit() {
+    if(assertions == null){
+      // We have not yet populated our assertions list
+      return 0;
+    }
     LOGGER.debug("[IRVComparisonAudit::initialSamplesToAudit: calling computeOptimisticSamplesToAudit]");
 
     if(assertions.isEmpty()){
