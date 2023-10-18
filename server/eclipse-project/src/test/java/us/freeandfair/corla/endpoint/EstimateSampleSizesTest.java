@@ -10,7 +10,6 @@ import org.testng.annotations.Test;
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
-import us.freeandfair.corla.query.CountyContestResultQueries;
 import us.freeandfair.corla.query.CountyQueries;
 import us.freeandfair.corla.query.Setup;
 
@@ -22,7 +21,7 @@ import java.util.stream.Collectors;
 
 
 
-
+@Test(groups = {"integration"})
 public class EstimateSampleSizesTest {
 
   private EstimateSampleSizesTest() {}
@@ -65,7 +64,7 @@ public class EstimateSampleSizesTest {
 
     // To do: need to add ballot manifest data.
     BallotManifestInfo bmi = new BallotManifestInfo(cty.id(), 1, "1",
-            total, "Bin 1", 0L, (long) total);
+            total, "Bin 1", 0L, (long) total-1);
 
     Persistence.save(bmi);
     Persistence.flushAndClear();
@@ -265,6 +264,11 @@ public class EstimateSampleSizesTest {
         Contest co = new Contest(name, cty, ContestType.IRV.toString(), choices, 1,
                 1, seq_cntr);
         CountyContestResult ctr = new CountyContestResult(cty, co);
+
+        BallotManifestInfo bmi = new BallotManifestInfo(cty.id(), 1, "1",
+                universe, "Bin 1", 0L, (long) universe-1);
+
+        Persistence.save(bmi);
 
         Persistence.saveOrUpdate(cty);
         Persistence.save(co);
