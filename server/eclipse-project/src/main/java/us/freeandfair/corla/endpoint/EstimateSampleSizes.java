@@ -14,7 +14,6 @@ import spark.Response;
 
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
-import us.freeandfair.corla.controller.ComparisonAuditController;
 import us.freeandfair.corla.controller.ContestCounter;
 import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.*;
@@ -23,7 +22,6 @@ import us.freeandfair.corla.persistence.Persistence;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.COMPLETE_AUDIT_INFO_SET;
@@ -116,10 +114,8 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     // in a ContestResult for an IRV contest will not be used. In the call to ContestCounter
     // (countAllContests), all persisted CountyContestResult's will be accessed from the database,
     // grouped by contest, and accumulated into a single ContestResult.
-    final List<ContestResult> countedCRs = ContestCounter.countAllContests().stream().map(cr -> {
-      cr.setAuditReason(AuditReason.OPPORTUNISTIC_BENEFITS);
-      return cr;
-    }).collect(Collectors.toList());
+    final List<ContestResult> countedCRs = ContestCounter.countAllContests().stream().peek(cr ->
+            cr.setAuditReason(AuditReason.OPPORTUNISTIC_BENEFITS)).collect(Collectors.toList());
 
     // Get the DoS Dashboard (will contain risk limit for audit).
     final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
