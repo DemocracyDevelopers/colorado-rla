@@ -144,10 +144,13 @@ public class EstimateSampleSizesTest {
   public void testEstimateSampleSizesIRVMayorals() {
     ClassLoader classLoader = getClass().getClassLoader();
     try {
+      // Grab test configuration: a series of IRV contests with attached assertions
+      // in JSON format.
       FileReader file = new FileReader(classLoader.getResource("assertions/irv_estimation_test_case1.json").getFile());
       JsonElement json = Main.GSON.fromJson(file, JsonElement.class);
       JsonObject jobj = json.getAsJsonObject();
 
+      // Parse each contest in the configuration file.
       JsonArray contests = (JsonArray) jobj.get("contests");
       long cty_cntr = 5000;
       int seq_cntr = 0;
@@ -159,12 +162,14 @@ public class EstimateSampleSizesTest {
         JsonArray assertions = cobject.get("assertions").getAsJsonArray();
         JsonArray candidates = cobject.get("candidates").getAsJsonArray();
 
+        // Parse candidates: form a list of Choice
         List<Choice> choices = new ArrayList<>();
         for(JsonElement c : candidates){
           choices.add(new Choice(c.getAsString(), "", false,
                   false));
         }
 
+        // Create, and persist, the County, Contest, and CountyContestResult
         County cty = new County(county, cty_cntr);
         Contest co = new Contest(name, cty, ContestType.IRV.toString(), choices, 1,
                 1, seq_cntr);
@@ -175,15 +180,21 @@ public class EstimateSampleSizesTest {
         Persistence.save(ctr);
         Persistence.flushAndClear();
 
+        // Create and persist the assertions for the contest.
         loadAssertions(assertions, name, choices, universe);
 
         ++cty_cntr;
         ++seq_cntr;
       }
 
+      // Call core logic of the EstimateSampleSizes endpoint.
       EstimateSampleSizes esr = new EstimateSampleSizes();
+
+      // Get a map between contest name and the initial sample size expected
+      // for that contest.
       Map<String, Integer> samples = esr.estimateSampleSizes();
 
+      // Print sample sizes (for demonstration).
       for (Map.Entry<String, Integer> entry : samples.entrySet()) {
         System.out.println(entry.getKey() + ": " + entry.getValue());
       }
@@ -193,6 +204,15 @@ public class EstimateSampleSizesTest {
     }
   }
 
+  /**
+   * Create assertions for the given contest from the JsonArray of assertions provided as input.
+   * These assertions will be persisted.
+   *
+   * @param assertions   A JsonArray containing assertion descriptions in JSON format.
+   * @param contest      Name of the contest to which the assertions belong.
+   * @param choices      List of candidates in the contest (as a list of Choice).
+   * @param universe     Number of ballots in the universe to which this contest belongs.
+   */
   private void loadAssertions(JsonArray assertions, String contest, List<Choice> choices, int universe){
     for(JsonElement a : assertions){
       JsonObject o = a.getAsJsonObject();
@@ -213,14 +233,14 @@ public class EstimateSampleSizesTest {
       }
 
       if(isnen){
-        NENAssertion nen = new NENAssertion(contest, choices.get(winner).name(), choices.get(loser).name(),
-                margin, universe, difficulty, continuing);
+        NENAssertion nen = new NENAssertion(contest, choices.get(winner).name(),
+                choices.get(loser).name(), margin, universe, difficulty, continuing);
         Persistence.saveOrUpdate(nen);
         Persistence.flushAndClear();
       }
       else{
-        NEBAssertion neb = new NEBAssertion(contest, choices.get(winner).name(), choices.get(loser).name(),
-                margin, universe, difficulty);
+        NEBAssertion neb = new NEBAssertion(contest, choices.get(winner).name(),
+                choices.get(loser).name(), margin, universe, difficulty);
         Persistence.saveOrUpdate(neb);
         Persistence.flushAndClear();
       }

@@ -134,13 +134,11 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
             createAuditForSampleEstimation(cr, dosdb.auditInfo().riskLimit()))
             .collect(Collectors.toList());
 
-    // Call initialSamplesToAudit() on each ComparisonAudit. Create a map between contest name
+    // Call estimatedSamplesToAudit() on each ComparisonAudit. Create a map between contest name
     // and the preliminary sample size. Note that each ContestResult upon which a ComparisonAudit
     // is based will have a set of associated contest IDs.
-    // VT: I think either initialSamplesToAudit or estimatedSamplesToAudit would work. They should
-    // be the same when all the errors are zero anyway.
     return comparisonAudits.stream().collect(Collectors.toMap(
-            ComparisonAudit::getContestName, ComparisonAudit::initialSamplesToAudit));
+            ComparisonAudit::getContestName, ComparisonAudit::estimatedSamplesToAudit));
   }
 
   /**
