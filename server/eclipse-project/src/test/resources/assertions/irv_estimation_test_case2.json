@@ -1,0 +1,235 @@
+{
+	"contests" : [
+		{
+			"name" : "2021 NSW Local Government election for Ballina Mayoral",
+			"county" : "Ballina",
+			"candidates" : ["WILLIAMS Keith","JOHNSON Jeff","MCCARTHY Steve","JOHNSTON Eoin","CADWALLADER Sharon"],
+			"assertions" : [{"assertion":{"type":"NEB","winner":4,"loser":0},"margin":4071,"difficulty":6.610906411201179},{"assertion":{"type":"NEB","winner":4,"loser":2},"margin":6059,"difficulty":4.441822082851956},{"assertion":{"type":"NEB","winner":4,"loser":3},"margin":4836,"difficulty":5.565136476426799},{"assertion":{"type":"NEN","winner":4,"loser":1,"continuing":[1,4]},"margin":3694,"difficulty":7.285598267460747}], 
+			"universe" : 27853
+		},
+		{
+			"name" : "2021 NSW Local Government election for Bellingen Mayoral",
+			"county" : "Bellingen",
+			"candidates" : ["ALLAN Steve","WOODWARD Andrew","KING Dominic"],
+			"assertions" : [{"assertion":{"type":"NEB","winner":0,"loser":1},"margin":3167,"difficulty":2.644142721818756},{"assertion":{"type":"NEN","winner":0,"loser":2,"continuing":[0,2]},"margin":2512,"difficulty":3.3335987261146496}], 
+			"universe" : 8609
+		},
+		{
+			"name" : "2021 NSW Local Government election for Burwood Mayoral",
+			"county" : "Burwood",
+			"candidates" : ["HULL David","MURRAY Alan","CUTCHER Ned","FAKER John"],
+			"assertions" : [{"assertion":{"type":"NEB","winner":3,"loser":1},"margin":8306,"difficulty":2.1426679508788826},{"assertion":{"type":"NEB","winner":3,"loser":2},"margin":7598,"difficulty":2.342326928138984},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,3]},"margin":7043,"difficulty":2.5269061479483175}], 
+			"universe" : 18232
+		},
+		{
+			"name" : "2021 NSW Local Government election for Byron Mayoral",
+			"county" : "Byron",
+			"candidates" : ["HUNTER Alan","CLARKE Bruce","COOREY Cate","ANDERSON John","MCILRATH Christopher","LYON Michael","DEY Duncan","PUGH Asren","SWIVEL Mark"],
+			"assertions" : [{"assertion":{"type":"NEB","winner":5,"loser":0},"margin":2098,"difficulty":8.658245948522403},{"assertion":{"type":"NEB","winner":5,"loser":1},"margin":1866,"difficulty":9.734726688102894},{"assertion":{"type":"NEB","winner":5,"loser":3},"margin":2808,"difficulty":6.469017094017094},{"assertion":{"type":"NEB","winner":5,"loser":4},"margin":3345,"difficulty":5.430493273542601},{"assertion":{"type":"NEN","winner":2,"loser":6,"continuing":[2,6]},"margin":2344,"difficulty":7.749573378839591},{"assertion":{"type":"NEN","winner":5,"loser":2,"continuing":[2,5]},"margin":2302,"difficulty":7.890964378801042},{"assertion":{"type":"NEN","winner":5,"loser":6,"continuing":[5,6]},"margin":2914,"difficulty":6.233699382292381},{"assertion":{"type":"NEN","winner":5,"loser":7,"continuing":[5,7]},"margin":2284,"difficulty":7.953152364273205},{"assertion":{"type":"NEN","winner":5,"loser":8,"continuing":[5,8]},"margin":1060,"difficulty":17.13679245283019},{"assertion":{"type":"NEN","winner":8,"loser":6,"continuing":[6,8]},"margin":1351,"difficulty":13.44559585492228},{"assertion":{"type":"NEN","winner":8,"loser":7,"continuing":[7,8]},"margin":1571,"difficulty":11.562698917886696},{"assertion":{"type":"NEN","winner":2,"loser":7,"continuing":[2,7,8]},"margin":1190,"difficulty":15.264705882352942},{"assertion":{"type":"NEN","winner":5,"loser":2,"continuing":[2,5,8]},"margin":1235,"difficulty":14.708502024291498},{"assertion":{"type":"NEN","winner":5,"loser":6,"continuing":[2,5,6]},"margin":3289,"difficulty":5.522955305564001},{"assertion":{"type":"NEN","winner":5,"loser":6,"continuing":[5,6,8]},"margin":1459,"difficulty":12.450308430431802},{"assertion":{"type":"NEN","winner":5,"loser":7,"continuing":[2,5,7]},"margin":1803,"difficulty":10.07487520798669},{"assertion":{"type":"NEN","winner":5,"loser":7,"continuing":[5,6,7]},"margin":2350,"difficulty":7.729787234042553},{"assertion":{"type":"NEN","winner":5,"loser":7,"continuing":[5,7,8]},"margin":2995,"difficulty":6.065108514190317},{"assertion":{"type":"NEN","winner":6,"loser":7,"continuing":[6,7,8]},"margin":1257,"difficulty":14.45107398568019},{"assertion":{"type":"NEN","winner":8,"loser":6,"continuing":[2,6,8]},"margin":1920,"difficulty":9.4609375},{"assertion":{"type":"NEN","winner":8,"loser":7,"continuing":[6,7,8]},"margin":1556,"difficulty":11.674164524421593},{"assertion":{"type":"NEN","winner":5,"loser":2,"continuing":[2,5,6,8]},"margin":2037,"difficulty":8.917525773195877},{"assertion":{"type":"NEN","winner":5,"loser":6,"continuing":[2,5,6,7]},"margin":2279,"difficulty":7.970601140851251},{"assertion":{"type":"NEN","winner":5,"loser":7,"continuing":[2,5,7,8]},"margin":2478,"difficulty":7.330508474576271},{"assertion":{"type":"NEN","winner":5,"loser":7,"continuing":[5,6,7,8]},"margin":2933,"difficulty":6.193317422434368},{"assertion":{"type":"NEN","winner":8,"loser":7,"continuing":[2,6,7,8]},"margin":1230,"difficulty":14.768292682926829},{"assertion":{"type":"NEN","winner":5,"loser":7,"continuing":[2,5,6,7,8]},"margin":2661,"difficulty":6.826381059751973}], 
+			"universe" : 18732
+		},
+		{
+			"name" : "2021 NSW Local Government election for Canada Bay Mayoral",
+			"county" : "Canada Bay",
+			"candidates" : ["TSIREKAS Angelo","LITTLE Julia","MEGNA Michael","JAGO Charles","RAMONDINO Daniela"],
+			"assertions" : [{"assertion":{"type":"NEB","winner":0,"loser":3},"margin":8610,"difficulty":5.637862950058072},{"assertion":{"type":"NEB","winner":0,"loser":4},"margin":11770,"difficulty":4.124214103653356},{"assertion":{"type":"NEN","winner":0,"loser":1,"continuing":[0,1]},"margin":5963,"difficulty":8.140533288613113},{"assertion":{"type":"NEN","winner":0,"loser":2,"continuing":[0,2]},"margin":9049,"difficulty":5.364349651895237},{"assertion":{"type":"NEN","winner":0,"loser":2,"continuing":[0,1,2]},"margin":7799,"difficulty":6.224131298884473}], 
+			"universe" : 49682
+        },
+		{
+			"name" : "2021 NSW Local Government election for City of Broken Hill Mayoral",
+			"county" : "City of Broken Hill",
+			"candidates" : ["TURLEY Darriea","KENNEDY Tom","GALLAGHER Dave"],
+			"assertions" : [{"assertion":{"type":"NEN","winner":1,"loser":0,"continuing":[0,1]},"margin":3381,"difficulty":3.1978704525288375},{"assertion":{"type":"NEN","winner":1,"loser":2,"continuing":[1,2]},"margin":3299,"difficulty":3.2773567747802366},{"assertion":{"type":"NEN","winner":1,"loser":2,"continuing":[0,1,2]},"margin":3457,"difficulty":3.1275672548452413}], 
+			"universe" : 11084
+		},
+        {
+            "name" : "2021 NSW Local Government election for City of Cessnock Mayoral",
+            "county" : "City of Cessnock",
+            "candidates" : ["MURRAY Janet","SUVAAL Jay","MOORES John","OLSEN Ian"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":1,"loser":0},"margin":9899,"difficulty":3.686938074552985},{"assertion":{"type":"NEB","winner":1,"loser":2},"margin":6793,"difficulty":5.372736640659502},{"assertion":{"type":"NEN","winner":1,"loser":3,"continuing":[1,3]},"margin":5644,"difficulty":6.466513111268604}],
+            "universe" : 37944
+        },
+        {
+            "name" : "2021 NSW Local Government election for City of Coffs Harbour Mayoral",
+            "county" : "City of Coffs Harbour",
+            "candidates" : ["SWAN Tegan","CECATO George","ADENDORFF Michael","JUDGE Tony","PRYCE Rodger","PIKE Donna","AMOS Paul","TOWNLEY Sally","ARKAN John","CASSELL Jonathan"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":6,"loser":2},"margin":7664,"difficulty":5.891831941544885},{"assertion":{"type":"NEB","winner":6,"loser":5},"margin":7149,"difficulty":6.31626800951182},{"assertion":{"type":"NEB","winner":6,"loser":8},"margin":7530,"difficulty":5.99667994687915},{"assertion":{"type":"NEB","winner":6,"loser":9},"margin":5646,"difficulty":7.9976974849450935},{"assertion":{"type":"NEN","winner":6,"loser":0,"continuing":[0,6]},"margin":6789,"difficulty":6.651200471350714},{"assertion":{"type":"NEN","winner":6,"loser":1,"continuing":[1,6]},"margin":7745,"difficulty":5.830213040671401},{"assertion":{"type":"NEN","winner":6,"loser":3,"continuing":[3,6]},"margin":8954,"difficulty":5.042997542997543},{"assertion":{"type":"NEN","winner":6,"loser":4,"continuing":[4,6]},"margin":5935,"difficulty":7.608256107834878},{"assertion":{"type":"NEN","winner":6,"loser":7,"continuing":[6,7]},"margin":6677,"difficulty":6.762767710049423},{"assertion":{"type":"NEN","winner":6,"loser":0,"continuing":[0,4,6]},"margin":6235,"difficulty":7.242181234963914},{"assertion":{"type":"NEN","winner":6,"loser":1,"continuing":[0,1,6]},"margin":7509,"difficulty":6.013450526035424},{"assertion":{"type":"NEN","winner":6,"loser":1,"continuing":[1,4,6]},"margin":7060,"difficulty":6.395892351274788},{"assertion":{"type":"NEN","winner":6,"loser":1,"continuing":[1,6,7]},"margin":6418,"difficulty":7.035680897475849},{"assertion":{"type":"NEN","winner":6,"loser":3,"continuing":[0,3,6]},"margin":8741,"difficulty":5.165884910193341},{"assertion":{"type":"NEN","winner":6,"loser":3,"continuing":[1,3,6]},"margin":8514,"difficulty":5.303617571059432},{"assertion":{"type":"NEN","winner":6,"loser":3,"continuing":[3,4,6]},"margin":8059,"difficulty":5.603052487901725},{"assertion":{"type":"NEN","winner":6,"loser":3,"continuing":[3,6,7]},"margin":8307,"difficulty":5.4357770554953655},{"assertion":{"type":"NEN","winner":6,"loser":7,"continuing":[0,6,7]},"margin":6507,"difficulty":6.939449823267251},{"assertion":{"type":"NEN","winner":6,"loser":7,"continuing":[4,6,7]},"margin":5268,"difficulty":8.571564160971906},{"assertion":{"type":"NEN","winner":6,"loser":0,"continuing":[0,4,6,7]},"margin":5658,"difficulty":7.98073524213503},{"assertion":{"type":"NEN","winner":6,"loser":1,"continuing":[0,1,4,6]},"margin":6887,"difficulty":6.5565558298243065},{"assertion":{"type":"NEN","winner":6,"loser":1,"continuing":[0,1,6,7]},"margin":6393,"difficulty":7.063194118567183},{"assertion":{"type":"NEN","winner":6,"loser":1,"continuing":[1,4,6,7]},"margin":5825,"difficulty":7.751931330472103},{"assertion":{"type":"NEN","winner":6,"loser":3,"continuing":[0,1,3,6]},"margin":8207,"difficulty":5.502010478859511},{"assertion":{"type":"NEN","winner":6,"loser":3,"continuing":[0,3,4,6]},"margin":7973,"difficulty":5.663489276307538},{"assertion":{"type":"NEN","winner":6,"loser":3,"continuing":[0,3,6,7]},"margin":8229,"difficulty":5.487301008628023},{"assertion":{"type":"NEN","winner":6,"loser":3,"continuing":[1,3,4,6]},"margin":7774,"difficulty":5.808464111139696},{"assertion":{"type":"NEN","winner":6,"loser":3,"continuing":[1,3,6,7]},"margin":7934,"difficulty":5.6913284597932945},{"assertion":{"type":"NEN","winner":6,"loser":3,"continuing":[3,4,6,7]},"margin":7470,"difficulty":6.044846050870147},{"assertion":{"type":"NEN","winner":6,"loser":1,"continuing":[0,1,4,6,7]},"margin":5833,"difficulty":7.741299502828733},{"assertion":{"type":"NEN","winner":6,"loser":3,"continuing":[0,1,3,4,6]},"margin":7574,"difficulty":5.961843147610246},{"assertion":{"type":"NEN","winner":6,"loser":3,"continuing":[0,1,3,6,7]},"margin":7759,"difficulty":5.819693259440649},{"assertion":{"type":"NEN","winner":6,"loser":3,"continuing":[0,3,4,6,7]},"margin":7495,"difficulty":6.024683122081387},{"assertion":{"type":"NEN","winner":6,"loser":3,"continuing":[1,3,4,6,7]},"margin":7248,"difficulty":6.229994481236203},{"assertion":{"type":"NEN","winner":6,"loser":3,"continuing":[0,1,3,4,6,7]},"margin":7150,"difficulty":6.315384615384615}],
+            "universe" : 46929
+        },
+        {
+            "name" : "2021 NSW Local Government election for City of Griffith Mayoral",
+            "county" : "City of Griffith",
+            "candidates" : ["MERCURI Rina","NAPOLI Anne","ZAPPACOSTA Dino","LA ROCCA Mariacarmina (Carmel)","CURRAN Doug"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":4,"loser":3},"margin":4372,"difficulty":3.2431381518755718},{"assertion":{"type":"NEN","winner":4,"loser":0,"continuing":[0,4]},"margin":4046,"difficulty":3.504448838358873},{"assertion":{"type":"NEN","winner":4,"loser":1,"continuing":[1,4]},"margin":3606,"difficulty":3.9320576816417083},{"assertion":{"type":"NEN","winner":4,"loser":2,"continuing":[2,4]},"margin":4364,"difficulty":3.249083409715857},{"assertion":{"type":"NEN","winner":4,"loser":0,"continuing":[0,1,4]},"margin":4392,"difficulty":3.2283697632058286},{"assertion":{"type":"NEN","winner":4,"loser":2,"continuing":[0,2,4]},"margin":4212,"difficulty":3.3663342830009495},{"assertion":{"type":"NEN","winner":4,"loser":2,"continuing":[1,2,4]},"margin":4295,"difficulty":3.3012805587892897},{"assertion":{"type":"NEN","winner":4,"loser":0,"continuing":[0,1,2,4]},"margin":4267,"difficulty":3.322943520037497}],
+            "universe" : 14804
+        },
+        {
+            "name" : "2021 NSW Local Government election for City of Lake Macquarie Mayoral",
+            "county" : "City of Lake Macquarie",
+            "candidates" : ["FRASER Kay","DAWSON Rosmairi","CUBIS Luke","PAULING Jason"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":0,"loser":1},"margin":42556,"difficulty":3.0626938622050943},{"assertion":{"type":"NEB","winner":0,"loser":2},"margin":42797,"difficulty":3.045447110778793},{"assertion":{"type":"NEN","winner":0,"loser":3,"continuing":[0,3]},"margin":41890,"difficulty":3.1113869658629745}],
+            "universe" : 135601
+        },
+        {
+            "name" : "2021 NSW Local Government election for City of Lismore Mayoral",
+            "county" : "City of Lismore",
+            "candidates" : ["KRIEG Steve","COOK Darlene","HEALEY Patrick","GRINDON-EKINS Vanessa","ROB Big","BIRD Elly"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":0,"loser":2},"margin":11088,"difficulty":2.3876262626262625},{"assertion":{"type":"NEB","winner":0,"loser":4},"margin":11873,"difficulty":2.22976501305483},{"assertion":{"type":"NEN","winner":0,"loser":1,"continuing":[0,1]},"margin":9248,"difficulty":2.862673010380623},{"assertion":{"type":"NEN","winner":0,"loser":3,"continuing":[0,3]},"margin":9053,"difficulty":2.924334474759748},{"assertion":{"type":"NEN","winner":0,"loser":5,"continuing":[0,5]},"margin":9036,"difficulty":2.929836210712705},{"assertion":{"type":"NEN","winner":0,"loser":1,"continuing":[0,1,3]},"margin":12446,"difficulty":2.12710911136108},{"assertion":{"type":"NEN","winner":0,"loser":1,"continuing":[0,1,5]},"margin":12062,"difficulty":2.1948267285690597},{"assertion":{"type":"NEN","winner":0,"loser":5,"continuing":[0,3,5]},"margin":11581,"difficulty":2.2859856661773597},{"assertion":{"type":"NEN","winner":0,"loser":1,"continuing":[0,1,3,5]},"margin":12632,"difficulty":2.0957884737175427}],
+            "universe" : 27044
+        },
+        {
+            "name" : "2021 NSW Local Government election for City of Liverpool Mayoral",
+            "county" : "City of Liverpool",
+            "candidates" : ["HAGARTY Nathan","MORSHED Asm","ANDJELKOVIC Milomir (Michael)","HARLE Peter","MANNOUN Ned"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":4,"loser":1},"margin":32364,"difficulty":3.5587999011247065},{"assertion":{"type":"NEB","winner":4,"loser":2},"margin":28000,"difficulty":4.113464285714286},{"assertion":{"type":"NEB","winner":4,"loser":3},"margin":28713,"difficulty":4.011318914777279},{"assertion":{"type":"NEN","winner":4,"loser":0,"continuing":[0,4]},"margin":2536,"difficulty":45.416798107255524}],
+            "universe" : 120656
+        },
+        {
+            "name" : "2021 NSW Local Government election for City of Maitland Mayoral",
+            "county" : "City of Maitland",
+            "candidates" : ["BROWN John","MITCHELL Ben","BAKER Loretta","PENFOLD Philip","SAFFARI Shahriar (Sean)","COOPER Michael","BURKE Brian"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":3,"loser":0},"margin":9087,"difficulty":5.962473863761417},{"assertion":{"type":"NEB","winner":3,"loser":1},"margin":5267,"difficulty":10.28688057717866},{"assertion":{"type":"NEB","winner":3,"loser":4},"margin":13113,"difficulty":4.13185388545718},{"assertion":{"type":"NEB","winner":3,"loser":5},"margin":8970,"difficulty":6.040245261984392},{"assertion":{"type":"NEB","winner":3,"loser":6},"margin":11946,"difficulty":4.535493052067638},{"assertion":{"type":"NEN","winner":3,"loser":2,"continuing":[2,3]},"margin":1151,"difficulty":47.072980017376196}],
+            "universe" : 56056
+        },
+        {
+            "name" : "2021 NSW Local Government election for City of Newcastle Mayoral",
+            "county" : "City of Newcastle",
+            "candidates" : ["CHURCH John","NELMES Nuatali","HOLDING Rod","MACKENZIE John","O'BRIEN Steve","BARRIE Jenny"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":1,"loser":2},"margin":28278,"difficulty":3.546042860173987},{"assertion":{"type":"NEB","winner":1,"loser":3},"margin":20140,"difficulty":4.978897715988084},{"assertion":{"type":"NEB","winner":1,"loser":4},"margin":32422,"difficulty":3.092807353031892},{"assertion":{"type":"NEB","winner":1,"loser":5},"margin":20959,"difficulty":4.784340855956868},{"assertion":{"type":"NEN","winner":1,"loser":0,"continuing":[0,1]},"margin":16957,"difficulty":5.913487055493307}],
+            "universe" : 103043
+        },
+        {
+            "name" : "2021 NSW Local Government election for City of Orange Mayoral",
+            "county" : "City of Orange",
+            "candidates" : ["HAMLING Jason","SPALDING Amanda","JONES Neil","WHITTON Jeffery","DUFFY Kevin","SMITH Lesley","MILETO Tony"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":0,"loser":3},"margin":1058,"difficulty":23.019848771266542},{"assertion":{"type":"NEB","winner":0,"loser":5},"margin":2131,"difficulty":11.428906616611918},{"assertion":{"type":"NEN","winner":0,"loser":1,"continuing":[0,1]},"margin":2390,"difficulty":10.190376569037657},{"assertion":{"type":"NEN","winner":0,"loser":2,"continuing":[0,2]},"margin":2432,"difficulty":10.014391447368421},{"assertion":{"type":"NEN","winner":0,"loser":4,"continuing":[0,4]},"margin":2359,"difficulty":10.324289953370073},{"assertion":{"type":"NEN","winner":0,"loser":6,"continuing":[0,6]},"margin":487,"difficulty":50.01026694045174},{"assertion":{"type":"NEN","winner":4,"loser":2,"continuing":[2,4]},"margin":487,"difficulty":50.01026694045174},{"assertion":{"type":"NEN","winner":6,"loser":1,"continuing":[1,6]},"margin":2021,"difficulty":12.050964868876793},{"assertion":{"type":"NEN","winner":6,"loser":2,"continuing":[2,6]},"margin":1922,"difficulty":12.671696149843912},{"assertion":{"type":"NEN","winner":6,"loser":4,"continuing":[4,6]},"margin":1440,"difficulty":16.913194444444443},{"assertion":{"type":"NEN","winner":0,"loser":1,"continuing":[0,1,2]},"margin":2446,"difficulty":9.957072771872445},{"assertion":{"type":"NEN","winner":0,"loser":1,"continuing":[0,1,4]},"margin":2205,"difficulty":11.045351473922903},{"assertion":{"type":"NEN","winner":0,"loser":1,"continuing":[0,1,6]},"margin":1815,"difficulty":13.418732782369146},{"assertion":{"type":"NEN","winner":0,"loser":2,"continuing":[0,2,4]},"margin":2010,"difficulty":12.116915422885572},{"assertion":{"type":"NEN","winner":0,"loser":2,"continuing":[0,2,6]},"margin":1806,"difficulty":13.485603543743078},{"assertion":{"type":"NEN","winner":0,"loser":4,"continuing":[0,4,6]},"margin":1680,"difficulty":14.49702380952381},{"assertion":{"type":"NEN","winner":4,"loser":2,"continuing":[1,2,4]},"margin":660,"difficulty":36.90151515151515},{"assertion":{"type":"NEN","winner":6,"loser":1,"continuing":[1,2,6]},"margin":1964,"difficulty":12.40071283095723},{"assertion":{"type":"NEN","winner":6,"loser":1,"continuing":[1,4,6]},"margin":1677,"difficulty":14.522957662492546},{"assertion":{"type":"NEN","winner":6,"loser":2,"continuing":[2,4,6]},"margin":1338,"difficulty":18.20254110612855},{"assertion":{"type":"NEN","winner":0,"loser":1,"continuing":[0,1,2,4]},"margin":2097,"difficulty":11.614210777300906},{"assertion":{"type":"NEN","winner":0,"loser":1,"continuing":[0,1,2,6]},"margin":1954,"difficulty":12.464176049129989},{"assertion":{"type":"NEN","winner":0,"loser":1,"continuing":[0,1,4,6]},"margin":1673,"difficulty":14.557680812910938},{"assertion":{"type":"NEN","winner":0,"loser":2,"continuing":[0,2,4,6]},"margin":1537,"difficulty":15.845803513337671},{"assertion":{"type":"NEN","winner":4,"loser":1,"continuing":[1,2,4,6]},"margin":521,"difficulty":46.74664107485604},{"assertion":{"type":"NEN","winner":6,"loser":1,"continuing":[1,2,4,6]},"margin":1592,"difficulty":15.298366834170855},{"assertion":{"type":"NEN","winner":0,"loser":1,"continuing":[0,1,2,4,6]},"margin":1778,"difficulty":13.697975253093363}],
+            "universe" : 25409
+        },
+        {
+            "name" : "2021 NSW Local Government election for City of Shellharbour Mayoral",
+            "county" : "City of Shellharbour",
+            "candidates" : ["HOMER Chris","SALIBA Marianne"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":0,"loser":1},"margin":2595,"difficulty":17.83159922928709}],
+            "universe" : 47759
+        },
+        {
+            "name" : "2021 NSW Local Government election for City of Shoalhaven Mayoral",
+            "county" : "City of Shoalhaven",
+            "candidates" : ["GREEN Paul","KITCHENER Mark","WHITE Patricia","WATSON Greg","DIGIGLIO Nina","FINDLEY Amanda"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":5,"loser":1},"margin":7731,"difficulty":8.670288449101022},{"assertion":{"type":"NEB","winner":5,"loser":2},"margin":7491,"difficulty":8.9480710185556},{"assertion":{"type":"NEB","winner":5,"loser":3},"margin":6489,"difficulty":10.329788873478194},{"assertion":{"type":"NEB","winner":5,"loser":4},"margin":11154,"difficulty":6.009503317195625},{"assertion":{"type":"NEN","winner":5,"loser":0,"continuing":[0,5]},"margin":1614,"difficulty":41.53035935563817}],
+            "universe" : 70130
+        },
+        {
+            "name" : "2021 NSW Local Government election for City of Sydney Mayoral",
+            "county" : "City of Sydney",
+            "candidates" : ["VITHOULKAS Angela","WELDON Yvonne","SCOTT Linda","JARRETT Shauna","ELLSMORE Sylvie","MOORE Clover"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":5,"loser":0},"margin":33982,"difficulty":3.487463951503737},{"assertion":{"type":"NEN","winner":5,"loser":1,"continuing":[1,5]},"margin":32540,"difficulty":3.6420098340503997},{"assertion":{"type":"NEN","winner":5,"loser":2,"continuing":[2,5]},"margin":32140,"difficulty":3.6873366521468576},{"assertion":{"type":"NEN","winner":5,"loser":3,"continuing":[3,5]},"margin":40991,"difficulty":2.8911468371105853},{"assertion":{"type":"NEN","winner":5,"loser":4,"continuing":[4,5]},"margin":38294,"difficulty":3.0947668041990912},{"assertion":{"type":"NEN","winner":5,"loser":1,"continuing":[1,2,5]},"margin":35153,"difficulty":3.371291212698774},{"assertion":{"type":"NEN","winner":5,"loser":3,"continuing":[1,3,5]},"margin":35768,"difficulty":3.3133247595616195},{"assertion":{"type":"NEN","winner":5,"loser":3,"continuing":[2,3,5]},"margin":37641,"difficulty":3.1484551419994156},{"assertion":{"type":"NEN","winner":5,"loser":4,"continuing":[1,4,5]},"margin":41219,"difficulty":2.875154661685145},{"assertion":{"type":"NEN","winner":5,"loser":4,"continuing":[2,4,5]},"margin":42798,"difficulty":2.769077994298799},{"assertion":{"type":"NEN","winner":5,"loser":4,"continuing":[3,4,5]},"margin":39317,"difficulty":3.014243202685861},{"assertion":{"type":"NEN","winner":5,"loser":1,"continuing":[1,2,3,5]},"margin":36484,"difficulty":3.2483006249314768},{"assertion":{"type":"NEN","winner":5,"loser":4,"continuing":[1,2,4,5]},"margin":42096,"difficulty":2.815255606233371},{"assertion":{"type":"NEN","winner":5,"loser":4,"continuing":[1,3,4,5]},"margin":40697,"difficulty":2.912032827972578},{"assertion":{"type":"NEN","winner":5,"loser":4,"continuing":[2,3,4,5]},"margin":41725,"difficulty":2.840287597363691},{"assertion":{"type":"NEN","winner":5,"loser":4,"continuing":[1,2,3,4,5]},"margin":41286,"difficulty":2.8704887855447367}],
+            "universe" : 120186
+        },
+        {
+            "name" : "2021 NSW Local Government election for City of Willoughby Mayoral",
+            "county" : "City of Willoughby",
+            "candidates" : ["ROZOS Angelo","CAMPBELL Craig","TAYLOR Tanya"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":2,"loser":1},"margin":3090,"difficulty":12.278964401294498},{"assertion":{"type":"NEN","winner":2,"loser":0,"continuing":[0,2]},"margin":2531,"difficulty":14.990912682734097}],
+            "universe" : 39453
+        },
+        {
+            "name" : "2021 NSW Local Government election for City of Wollongong Mayoral",
+            "county" : "City of Wollongong",
+            "candidates" : ["GLYKIS Marie","DORAHY John","BROWN Tania","BRADBERY Gordon","ANTHONY Andrew","COX Mithra"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":3,"loser":0},"margin":24767,"difficulty":5.1374813259579275},{"assertion":{"type":"NEB","winner":3,"loser":1},"margin":8298,"difficulty":15.333815377199326},{"assertion":{"type":"NEB","winner":3,"loser":4},"margin":20823,"difficulty":6.110550833213273},{"assertion":{"type":"NEB","winner":3,"loser":5},"margin":10770,"difficulty":11.814298978644382},{"assertion":{"type":"NEN","winner":3,"loser":2,"continuing":[2,3]},"margin":2666,"difficulty":47.72693173293323}],
+            "universe" : 131740
+        },
+        {
+            "name" : "2021 NSW Local Government election for Eurobodalla Mayoral",
+            "county" : "Eurobodalla",
+            "candidates" : ["WORTHINGTON Alison","GRACE David","SMITH Gary","HATCHER Mat","HARRISON N (Tubby)","POLLOCK Rob","STARMER Karyn"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":3,"loser":2},"margin":2797,"difficulty":9.126206649982123},{"assertion":{"type":"NEN","winner":1,"loser":0,"continuing":[0,1]},"margin":1931,"difficulty":13.219057483169342},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,3]},"margin":3610,"difficulty":7.070914127423823},{"assertion":{"type":"NEN","winner":3,"loser":1,"continuing":[1,3]},"margin":1630,"difficulty":15.660122699386504},{"assertion":{"type":"NEN","winner":3,"loser":4,"continuing":[3,4]},"margin":2966,"difficulty":8.606203641267701},{"assertion":{"type":"NEN","winner":3,"loser":5,"continuing":[3,5]},"margin":3317,"difficulty":7.69550798914682},{"assertion":{"type":"NEN","winner":3,"loser":6,"continuing":[3,6]},"margin":1106,"difficulty":23.079566003616637},{"assertion":{"type":"NEN","winner":4,"loser":0,"continuing":[0,4]},"margin":1509,"difficulty":16.91583830351226},{"assertion":{"type":"NEN","winner":5,"loser":0,"continuing":[0,5]},"margin":1238,"difficulty":20.618739903069468},{"assertion":{"type":"NEN","winner":6,"loser":0,"continuing":[0,6]},"margin":3502,"difficulty":7.288977727013135},{"assertion":{"type":"NEN","winner":6,"loser":1,"continuing":[1,6]},"margin":1963,"difficulty":13.003565970453387},{"assertion":{"type":"NEN","winner":6,"loser":4,"continuing":[4,6]},"margin":1168,"difficulty":21.85445205479452},{"assertion":{"type":"NEN","winner":1,"loser":0,"continuing":[0,1,5]},"margin":1116,"difficulty":22.872759856630825},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,1,3]},"margin":3916,"difficulty":6.518386108273749},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,3,4]},"margin":2090,"difficulty":12.213397129186603},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,3,5]},"margin":2762,"difficulty":9.241853729181752},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,3,6]},"margin":3229,"difficulty":7.905233818519665},{"assertion":{"type":"NEN","winner":3,"loser":1,"continuing":[1,3,6]},"margin":1889,"difficulty":13.512969825304394},{"assertion":{"type":"NEN","winner":3,"loser":4,"continuing":[1,3,4]},"margin":2203,"difficulty":11.58692691783931},{"assertion":{"type":"NEN","winner":3,"loser":4,"continuing":[3,4,5]},"margin":2856,"difficulty":8.93767507002801},{"assertion":{"type":"NEN","winner":3,"loser":4,"continuing":[3,4,6]},"margin":2285,"difficulty":11.171115973741795},{"assertion":{"type":"NEN","winner":3,"loser":5,"continuing":[1,3,5]},"margin":1667,"difficulty":15.3125374925015},{"assertion":{"type":"NEN","winner":3,"loser":5,"continuing":[3,5,6]},"margin":1896,"difficulty":13.463080168776372},{"assertion":{"type":"NEN","winner":4,"loser":0,"continuing":[0,1,4]},"margin":2066,"difficulty":12.355275895450145},{"assertion":{"type":"NEN","winner":4,"loser":0,"continuing":[0,4,6]},"margin":1533,"difficulty":16.651011089367255},{"assertion":{"type":"NEN","winner":5,"loser":0,"continuing":[0,1,5]},"margin":2366,"difficulty":10.788672865595943},{"assertion":{"type":"NEN","winner":5,"loser":0,"continuing":[0,5,6]},"margin":1984,"difficulty":12.865927419354838},{"assertion":{"type":"NEN","winner":6,"loser":0,"continuing":[0,1,6]},"margin":3585,"difficulty":7.120223152022315},{"assertion":{"type":"NEN","winner":6,"loser":0,"continuing":[0,4,6]},"margin":2009,"difficulty":12.705823792931806},{"assertion":{"type":"NEN","winner":6,"loser":0,"continuing":[0,5,6]},"margin":2292,"difficulty":11.136998254799302},{"assertion":{"type":"NEN","winner":6,"loser":5,"continuing":[4,5,6]},"margin":1109,"difficulty":23.017132551848512},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,1,3,4]},"margin":2839,"difficulty":8.99119408242339},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,1,3,5]},"margin":3147,"difficulty":8.111217032094057},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,1,3,6]},"margin":3559,"difficulty":7.1722393930879464},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,3,4,6]},"margin":2487,"difficulty":10.2637716123844},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,3,5,6]},"margin":2875,"difficulty":8.878608695652174},{"assertion":{"type":"NEN","winner":3,"loser":1,"continuing":[1,3,5,6]},"margin":1618,"difficulty":15.776266996291719},{"assertion":{"type":"NEN","winner":3,"loser":4,"continuing":[0,3,4,5]},"margin":1887,"difficulty":13.527291997880234},{"assertion":{"type":"NEN","winner":3,"loser":4,"continuing":[1,3,4,5]},"margin":2229,"difficulty":11.451772095109915},{"assertion":{"type":"NEN","winner":3,"loser":4,"continuing":[1,3,4,6]},"margin":1847,"difficulty":13.820249052517596},{"assertion":{"type":"NEN","winner":3,"loser":4,"continuing":[3,4,5,6]},"margin":2297,"difficulty":11.112755768393557},{"assertion":{"type":"NEN","winner":4,"loser":0,"continuing":[0,1,4,5]},"margin":1377,"difficulty":18.537400145243282},{"assertion":{"type":"NEN","winner":4,"loser":0,"continuing":[0,1,4,6]},"margin":2026,"difficulty":12.599210266535044},{"assertion":{"type":"NEN","winner":4,"loser":0,"continuing":[0,4,5,6]},"margin":1203,"difficulty":21.218620116375728},{"assertion":{"type":"NEN","winner":5,"loser":0,"continuing":[0,1,4,5]},"margin":1464,"difficulty":17.435792349726775},{"assertion":{"type":"NEN","winner":5,"loser":0,"continuing":[0,1,5,6]},"margin":2475,"difficulty":10.313535353535354},{"assertion":{"type":"NEN","winner":5,"loser":0,"continuing":[0,4,5,6]},"margin":1260,"difficulty":20.25873015873016},{"assertion":{"type":"NEN","winner":6,"loser":0,"continuing":[0,1,4,6]},"margin":2106,"difficulty":12.120607787274453},{"assertion":{"type":"NEN","winner":6,"loser":0,"continuing":[0,1,5,6]},"margin":2492,"difficulty":10.243178170144462},{"assertion":{"type":"NEN","winner":6,"loser":0,"continuing":[0,4,5,6]},"margin":1556,"difficulty":16.404884318766065},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,1,3,4,5]},"margin":2529,"difficulty":10.093317516805062},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,1,3,4,6]},"margin":2822,"difficulty":9.045357902197024},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,1,3,5,6]},"margin":3215,"difficulty":7.939657853810265},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,3,4,5,6]},"margin":2313,"difficulty":11.035884133160398},{"assertion":{"type":"NEN","winner":3,"loser":4,"continuing":[1,3,4,5,6]},"margin":1910,"difficulty":13.364397905759162},{"assertion":{"type":"NEN","winner":4,"loser":0,"continuing":[0,1,4,5,6]},"margin":1681,"difficulty":15.185008923259964},{"assertion":{"type":"NEN","winner":5,"loser":0,"continuing":[0,1,4,5,6]},"margin":1757,"difficulty":14.528173022196926},{"assertion":{"type":"NEN","winner":6,"loser":0,"continuing":[0,1,4,5,6]},"margin":1711,"difficulty":14.9187609585038},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,1,3,4,5,6]},"margin":2651,"difficulty":9.628819313466616}],
+            "universe" : 26604
+        },
+        {
+            "name" : "2021 NSW Local Government election for Hornsby Mayoral",
+            "county" : "Hornsby",
+            "candidates" : ["HEYDE Emma","RUDDOCK Philip"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":1,"loser":0},"margin":12474,"difficulty":6.866762866762866}],
+            "universe" : 87792
+        },
+        {
+            "name" : "2021 NSW Local Government election for Hunter's Hill Mayoral",
+            "county" : "Hunter's Hill",
+            "candidates" : ["GUAZZAROTTO David","MILES Zac","QUINN Richard","WILLIAMS Ross"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":1,"loser":0},"margin":496,"difficulty":16.846774193548388},{"assertion":{"type":"NEN","winner":1,"loser":3,"continuing":[1,3]},"margin":384,"difficulty":21.760416666666668},{"assertion":{"type":"NEN","winner":2,"loser":3,"continuing":[2,3]},"margin":239,"difficulty":34.96234309623431},{"assertion":{"type":"NEN","winner":1,"loser":2,"continuing":[1,2,3]},"margin":1403,"difficulty":5.955808980755524},{"assertion":{"type":"NEN","winner":3,"loser":2,"continuing":[1,2,3]},"margin":218,"difficulty":38.330275229357795},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,1,2,3]},"margin":1616,"difficulty":5.170792079207921}],
+            "universe" : 8572
+        },
+        {
+            "name" : "2021 NSW Local Government election for Kempsey Mayoral",
+            "county" : "Kempsey",
+            "candidates" : ["HAUVILLE Leo","EVANS Andrew","BAIN Arthur","CAMPBELL Liz","SAUL Dean","IRWIN Troy","RAEBURN Bruce"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":0,"loser":1},"margin":2981,"difficulty":5.899027172089903},{"assertion":{"type":"NEB","winner":0,"loser":2},"margin":1678,"difficulty":10.47973778307509},{"assertion":{"type":"NEB","winner":0,"loser":4},"margin":2681,"difficulty":6.5591197314434915},{"assertion":{"type":"NEB","winner":0,"loser":5},"margin":2920,"difficulty":6.022260273972603},{"assertion":{"type":"NEB","winner":0,"loser":6},"margin":3269,"difficulty":5.379320893239523},{"assertion":{"type":"NEN","winner":0,"loser":3,"continuing":[0,3]},"margin":387,"difficulty":45.43927648578811}],
+            "universe" : 18471
+        },
+        {
+            "name" : "2021 NSW Local Government election for Mosman Mayoral",
+            "county" : "Mosman",
+            "candidates" : ["MOLINE Libby","BENDALL Roy","HARDING Sarah","CORRIGAN Carolyn","MENZIES Simon"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":3,"loser":2},"margin":5008,"difficulty":3.2797523961661343},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,3]},"margin":4387,"difficulty":3.7440164121267383},{"assertion":{"type":"NEN","winner":3,"loser":1,"continuing":[1,3]},"margin":4779,"difficulty":3.4369114877589455},{"assertion":{"type":"NEN","winner":3,"loser":4,"continuing":[3,4]},"margin":3651,"difficulty":4.498767460969598},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,3,4]},"margin":4870,"difficulty":3.372689938398357},{"assertion":{"type":"NEN","winner":3,"loser":1,"continuing":[0,1,3]},"margin":4524,"difficulty":3.6306366047745358},{"assertion":{"type":"NEN","winner":3,"loser":1,"continuing":[1,3,4]},"margin":4500,"difficulty":3.65},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,1,3,4]},"margin":4772,"difficulty":3.4419530595138306}],
+            "universe" : 16926
+        },
+        {
+            "name" : "2021 NSW Local Government election for Nambucca Mayoral",
+            "county" : "Nambucca",
+            "candidates" : ["JENVEY Susan","HOBAN Rhonda"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":1,"loser":0},"margin":4562,"difficulty":2.7360806663743973}],
+            "universe" : 12816
+        },
+        {
+            "name" : "2021 NSW Local Government election for Port Macquarie-Hastings Mayoral",
+            "county" : "Port Macquarie-Hastings",
+            "candidates" : ["PINSON Peta","GATES Steven","SHEPPARD Rachel","INTEMANN Lisa","LIPOVAC Nik"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":0,"loser":1},"margin":22431,"difficulty":2.429628638937185},{"assertion":{"type":"NEB","winner":0,"loser":3},"margin":20528,"difficulty":2.654861652377241},{"assertion":{"type":"NEB","winner":0,"loser":4},"margin":23931,"difficulty":2.27733901633864},{"assertion":{"type":"NEN","winner":0,"loser":2,"continuing":[0,2]},"margin":19106,"difficulty":2.8524547262640008}],
+            "universe" : 56827
+        },
+        {
+            "name" : "2021 NSW Local Government election for Port Stephens Mayoral",
+            "county" : "Port Stephens",
+            "candidates" : ["ANDERSON Leah","PALMER Ryan"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":1,"loser":0},"margin":567,"difficulty":84.31569664902999}],
+            "universe" : 49528
+        },
+        {
+            "name" : "2021 NSW Local Government election for Richmond Mayoral",
+            "county" : "Richmond",
+            "candidates" : ["MUSTOW Robert","HAYES Robert"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":0,"loser":1},"margin":5821,"difficulty":2.302868922865487}],
+            "universe" : 14064
+        },
+        {
+            "name" : "2021 NSW Local Government election for Singleton Mayoral",
+            "county" : "Singleton",
+            "candidates" : ["MOORE Sue","THOMPSON Danny","JARRETT Tony","CHARLTON Belinda"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":0,"loser":2},"margin":1248,"difficulty":11.021634615384615},{"assertion":{"type":"NEB","winner":0,"loser":3},"margin":2599,"difficulty":5.2924201616006155},{"assertion":{"type":"NEN","winner":0,"loser":1,"continuing":[0,1]},"margin":1135,"difficulty":12.118942731277533}],
+            "universe" : 14337
+        },
+        {
+            "name" : "2021 NSW Local Government election for The Hills Shire Mayoral",
+            "county" : "The Hills Shire",
+            "candidates" : ["SHAHAMAT Vida","GANGEMI Peter","ROZYCKI Jerzy (George)","TRACEY Ryan","YAZDANI Ereboni (Alexia)"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":1,"loser":0},"margin":35535,"difficulty":2.9656395103419166},{"assertion":{"type":"NEB","winner":1,"loser":2},"margin":45281,"difficulty":2.3273337602968134},{"assertion":{"type":"NEB","winner":1,"loser":4},"margin":39969,"difficulty":2.6366433986339413},{"assertion":{"type":"NEN","winner":1,"loser":3,"continuing":[1,3]},"margin":28636,"difficulty":3.6801229221958374}],
+            "universe" : 108399
+        },
+        {
+            "name" : "2021 NSW Local Government election for Uralla Mayoral",
+            "county" : "Uralla",
+            "candidates" : ["BELL Robert","LEDGER Natasha","STRUTT Isabel"],
+            "assertions" : [{"assertion":{"type":"NEN","winner":0,"loser":1,"continuing":[0,1]},"margin":2404,"difficulty":1.5727953410981697},{"assertion":{"type":"NEN","winner":0,"loser":2,"continuing":[0,2]},"margin":2320,"difficulty":1.6297413793103448},{"assertion":{"type":"NEN","winner":0,"loser":1,"continuing":[0,1,2]},"margin":2358,"difficulty":1.6034775233248515}],
+            "universe" : 3906
+        },
+        {
+            "name" : "2021 NSW Local Government election for Wollondilly Mayoral",
+            "county" : "Wollondilly",
+            "candidates" : ["KHAN Robert","BANASIK Michael","DEETH Matthew","LAW Ray","GOULD Matt","HANNAN Judy"],
+            "assertions" : [{"assertion":{"type":"NEB","winner":4,"loser":0},"margin":1543,"difficulty":20.320803629293582},{"assertion":{"type":"NEN","winner":2,"loser":1,"continuing":[1,2]},"margin":2272,"difficulty":13.800616197183098},{"assertion":{"type":"NEN","winner":2,"loser":3,"continuing":[2,3]},"margin":1697,"difficulty":18.47672362993518},{"assertion":{"type":"NEN","winner":4,"loser":1,"continuing":[1,4]},"margin":3836,"difficulty":8.173879040667362},{"assertion":{"type":"NEN","winner":4,"loser":2,"continuing":[2,4]},"margin":1963,"difficulty":15.97300050942435},{"assertion":{"type":"NEN","winner":4,"loser":3,"continuing":[3,4]},"margin":2855,"difficulty":10.982486865148863},{"assertion":{"type":"NEN","winner":4,"loser":5,"continuing":[4,5]},"margin":1285,"difficulty":24.40077821011673},{"assertion":{"type":"NEN","winner":5,"loser":1,"continuing":[1,5]},"margin":3623,"difficulty":8.65443003036158},{"assertion":{"type":"NEN","winner":5,"loser":3,"continuing":[3,5]},"margin":2082,"difficulty":15.060038424591738},{"assertion":{"type":"NEN","winner":2,"loser":1,"continuing":[1,2,3]},"margin":1587,"difficulty":19.75740390674228},{"assertion":{"type":"NEN","winner":2,"loser":1,"continuing":[1,2,5]},"margin":2178,"difficulty":14.39623507805326},{"assertion":{"type":"NEN","winner":4,"loser":1,"continuing":[1,2,4]},"margin":3309,"difficulty":9.475672408582653},{"assertion":{"type":"NEN","winner":4,"loser":1,"continuing":[1,3,4]},"margin":3376,"difficulty":9.287618483412322},{"assertion":{"type":"NEN","winner":4,"loser":1,"continuing":[1,4,5]},"margin":3874,"difficulty":8.09370160041301},{"assertion":{"type":"NEN","winner":4,"loser":2,"continuing":[2,4,5]},"margin":1641,"difficulty":19.107251675807433},{"assertion":{"type":"NEN","winner":4,"loser":3,"continuing":[2,3,4]},"margin":2674,"difficulty":11.725878833208677},{"assertion":{"type":"NEN","winner":4,"loser":3,"continuing":[3,4,5]},"margin":2093,"difficulty":14.98088867654085},{"assertion":{"type":"NEN","winner":5,"loser":1,"continuing":[1,2,5]},"margin":3404,"difficulty":9.211222091656873},{"assertion":{"type":"NEN","winner":5,"loser":1,"continuing":[1,3,5]},"margin":3253,"difficulty":9.638794958499846},{"assertion":{"type":"NEN","winner":5,"loser":3,"continuing":[2,3,5]},"margin":2263,"difficulty":13.855501546619532},{"assertion":{"type":"NEN","winner":2,"loser":1,"continuing":[1,2,3,5]},"margin":1878,"difficulty":16.695953141640043},{"assertion":{"type":"NEN","winner":3,"loser":1,"continuing":[1,2,3,5]},"margin":1303,"difficulty":24.06369915579432},{"assertion":{"type":"NEN","winner":4,"loser":1,"continuing":[1,2,3,4]},"margin":3113,"difficulty":10.07227754577578},{"assertion":{"type":"NEN","winner":4,"loser":1,"continuing":[1,2,4,5]},"margin":3518,"difficulty":8.91273450824332},{"assertion":{"type":"NEN","winner":4,"loser":1,"continuing":[1,3,4,5]},"margin":3564,"difficulty":8.797699214365881},{"assertion":{"type":"NEN","winner":4,"loser":3,"continuing":[2,3,4,5]},"margin":2026,"difficulty":15.476307996051332},{"assertion":{"type":"NEN","winner":5,"loser":1,"continuing":[1,2,3,5]},"margin":3163,"difficulty":9.913057224154285},{"assertion":{"type":"NEN","winner":4,"loser":1,"continuing":[1,2,3,4,5]},"margin":3353,"difficulty":9.351327169698777}],
+            "universe" : 33005
+        }
+	]
+}
