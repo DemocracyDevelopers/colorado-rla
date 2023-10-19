@@ -304,13 +304,6 @@ public class EstimateSampleSizesTest {
       int winner = atype.get("winner").getAsInt();
       int loser = atype.get("loser").getAsInt();
 
-      if(winner >= choices.size()){
-        winner = 0;
-      }
-      if(loser >= choices.size()){
-        loser = 0;
-      }
-
       int margin = o.get("margin").getAsInt();
       double difficulty = o.get("difficulty").getAsDouble();
 
