@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class GenerateAssertionRequestDto {
-  private Long contestId;
+  private String contestName;
   private Integer totalAuditableBallots;
   private Integer timeProvisionForResult;
 }

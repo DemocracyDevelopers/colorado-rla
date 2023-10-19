@@ -12,8 +12,4 @@ import lombok.NoArgsConstructor;
 public class RaireResponse {
   private JsonNode metadata;
   public Map<String, AssertionPermutations> solution;
-
-
-
-
 }

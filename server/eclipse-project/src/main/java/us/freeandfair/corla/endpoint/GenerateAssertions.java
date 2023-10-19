@@ -6,26 +6,40 @@
 package us.freeandfair.corla.endpoint;
 
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import spark.Request;
 import spark.Response;
 import us.freeandfair.corla.asm.ASMEvent;
+import us.freeandfair.corla.model.Assertion;
 import us.freeandfair.corla.model.Contest;
 import us.freeandfair.corla.model.ContestToAudit;
 import us.freeandfair.corla.model.DoSDashboard;
-import us.freeandfair.corla.raire.request.GenerateAssertionRequestDto;
-import us.freeandfair.corla.raire.response.AuditResponse;
+import us.freeandfair.corla.model.NEBAssertion;
+import us.freeandfair.corla.model.NENAssertion;
+import us.freeandfair.corla.model.raire.request.GenerateAssertionRequestDto;
+import us.freeandfair.corla.model.raire.response.AssertionPermutations;
+import us.freeandfair.corla.model.raire.response.AssertionResult;
+import us.freeandfair.corla.model.raire.response.AuditResponse;
+import us.freeandfair.corla.model.raire.response.RaireResponse;
 import us.freeandfair.corla.persistence.Persistence;
 
 
@@ -116,33 +130,64 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
 //      return "";
 //    }
     //Looks like contestIds and Contest Names are 1 to 1 mapping based on the tables.
-    final Set<Long> contestIds = cta.stream().map(ContestToAudit::contest).map(Contest::id)
+    final Set<String > contestNames = cta.stream().map(ContestToAudit::contest).map(Contest::name)
         .collect(Collectors.toSet());
     final Set<GenerateAssertionRequestDto> assertionRequest = new LinkedHashSet<>();
 
-    contestIds.forEach(contestId -> assertionRequest.add(
+    contestNames.forEach(contestId -> assertionRequest.add(
                 GenerateAssertionRequestDto.builder()
-                    .contestId(6002L)
+                    .contestName("IRV for Test County")
                     .timeProvisionForResult(10)
 //                    .totalAuditableBallots() //TODO is it possible to get this here?
                     .build()));
+
+    // Following is temporary code until we integrate and get real data for contest names
+    //TODO start: remove
     assertionRequest.add(
         GenerateAssertionRequestDto.builder()
-            .contestId(6002L)
+            .contestName("IRV for Test County")
             .timeProvisionForResult(10)
 //                    .totalAuditableBallots() //TODO is it possible to get this here?
             .build());
+    //TODO end: Remove
+
     final Client client = ClientBuilder.newClient();
     WebTarget webTarget
         = client.target("http://localhost:8080/cvr/audit");
-    Invocation.Builder invocationBuilder
-        = webTarget.request(MediaType.APPLICATION_JSON);
 
-    jakarta.ws.rs.core.Response response = invocationBuilder.post(
-        Entity.entity(assertionRequest, MediaType.APPLICATION_JSON));
-    List<AuditResponse> list = (List<AuditResponse>) response.readEntity(List.class);
+    Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
+
+//    jakarta.ws.rs.core.Response response = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON), Set.class);
+    List generic = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON), List.class);
     LOGGER.info("Test response");
-    LOGGER.info(list);
+    LOGGER.info(generic);
+    ObjectMapper objectMapper = new ObjectMapper();
+    List<AuditResponse> raireResponse = objectMapper.convertValue(generic, new TypeReference<List<AuditResponse>>() { });
+
+
+    raireResponse.stream().forEach(auditResponse -> {
+      RaireResponse result = auditResponse.getResult();
+      Map<String, AssertionPermutations> solution = result.getSolution();
+      AssertionPermutations assertionPermutations = solution.get("Ok");
+      List<AssertionResult> assertions = assertionPermutations.getAssertions();
+      assertions.forEach(assertionResult -> {
+        JsonNode candidates = auditResponse.getResult().getMetadata().get("candidates");
+        Assertion assertion;
+        if(StringUtils.equalsIgnoreCase("NEB", assertionResult.getAssertion().getType())) {
+          assertion =  new NEBAssertion(auditResponse.getContestName(), candidates.get(assertionResult.getAssertion().getWinner()).asText(),
+              candidates.get(assertionResult.getAssertion().getLoser()).asText(),
+              assertionResult.getMargin(), 10, assertionResult.getDifficulty()); //TODO what is universeSize
+          assertion.setContinuing(List.of("MOCK"));
+        } else if(StringUtils.equalsIgnoreCase("NEN", assertionResult.getAssertion().getType())) {
+          assertion = new NENAssertion();
+        } else {
+          throw new IllegalStateException("The audit resulted in an error state");
+        }
+        Persistence.save(assertion);
+      });
+
+    });
+    Persistence.flushAndClear();
 
     // NOTE that for a single contest that involves multiple counties, there will be multiple
     // entries in the list 'cta' for that contest. Contests really need to be identified by their
