@@ -142,7 +142,7 @@ public class EstimateSampleSizesTest {
   @Test()
   public void testEstimateSampleSizesIRVMayorals() {
     try {
-      loadIRVContestConfiguration("assertions/irv_estimation_test_case1.json");
+      loadIRVContestConfiguration("assertions/irv_estimation_test_case2.json");
       computeAndDisplaySampleSizes();
 
     } catch(Exception e){
@@ -157,7 +157,7 @@ public class EstimateSampleSizesTest {
   @Test()
   public void testEstimateSampleSizesIRVMayoralsAndPlurality() {
     try {
-      loadIRVContestConfiguration("assertions/irv_estimation_test_case1.json");
+      loadIRVContestConfiguration("assertions/irv_estimation_test_case2.json");
       createBroomfieldBoardOfTransport();
       createBoulderBoardOfParks();
 
@@ -303,6 +303,13 @@ public class EstimateSampleSizesTest {
       boolean isnen = atype.get("type").getAsString().equals("NEN");
       int winner = atype.get("winner").getAsInt();
       int loser = atype.get("loser").getAsInt();
+
+      if(winner >= choices.size()){
+        winner = 0;
+      }
+      if(loser >= choices.size()){
+        loser = 0;
+      }
 
       int margin = o.get("margin").getAsInt();
       double difficulty = o.get("difficulty").getAsDouble();
