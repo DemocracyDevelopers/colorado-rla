@@ -262,6 +262,11 @@ public class IRVComparisonAudit extends ComparisonAudit {
     OptionalInt result = OptionalInt.empty();
 
   // TBD
+    // VT: Suggest this should just iterate though all the assertions and call
+    // a.computeDiscrepancy, then take a form of max which is:
+    // nothing (i.e. no optional int) if all the calls to a.computeDiscrepancy return nothing.
+    // If any of the calls to a.computeDiscrepancy return something, a something with the max
+    // of the returned values.
 
     return result;
   }
