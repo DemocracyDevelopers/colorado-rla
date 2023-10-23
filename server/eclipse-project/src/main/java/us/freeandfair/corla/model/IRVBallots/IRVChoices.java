@@ -29,6 +29,7 @@ public class IRVChoices {
         if (preferences.length == 0) {
             return;
         }
+        // FIXME This needs to deal with candidate names that have parentheses.
         for (String preference : preferences) {
             String[] vote = preference.split("\\(");
             String rank = vote[1].split("\\)")[0];
@@ -71,6 +72,8 @@ public class IRVChoices {
     /* Applies Rule 26.7.1 from
      * https://www.sos.state.co.us/pubs/rule_making/CurrentRules/8CCR1505-1/Rule26.pdf
      * Returns new updated ballot.
+     * This is the rule that identifies overvotes (i.e. repeated ranks) and removes all
+     * subsequent preferences.
      */
     public IRVChoices ApplyRule1() {
 
@@ -91,6 +94,7 @@ public class IRVChoices {
 
     /* Applies Rule 26.7.2 from
      * https://www.sos.state.co.us/pubs/rule_making/CurrentRules/8CCR1505-1/Rule26.pdf
+     * This removes everything from the skipped preference onwards.
      * Returns new updated ballot.
      */
     public IRVChoices ApplyRule2() {
@@ -118,6 +122,7 @@ public class IRVChoices {
 
     /* Applies Rule 26.7.3 from
      * https://www.sos.state.co.us/pubs/rule_making/CurrentRules/8CCR1505-1/Rule26.pdf
+     * This removes duplicated preferences for the same candidates.
      * Returns new updated ballot.
      */
     public IRVChoices ApplyRule3() {
