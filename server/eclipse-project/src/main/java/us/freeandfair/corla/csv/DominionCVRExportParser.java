@@ -42,6 +42,7 @@ import us.freeandfair.corla.util.DBExceptionUtil;
 import us.freeandfair.corla.util.ExponentialBackoffHelper;
 
 import static us.freeandfair.corla.model.ContestType.IRV;
+import static us.freeandfair.corla.util.IRVVoteParsing.parseValidIRVVote;
 
 /**
  * Parser for Dominion CVR export files.
@@ -529,15 +530,19 @@ public class DominionCVRExportParser {
         index = index + 1;
       }
 
-      // If this is an IRV contest, each candidate 'name' will include a rank in parentheses.
-      // Redo ballot interpretation to sort them in preference order an remove explicit ranks.
-      if (co.description() == ContestType.IRV.toString()) {
-        votes = parseIRVBallot(votes);
-      }
-
       // if this contest was on the ballot, add it to the votes
       if (present) {
-        contest_info.add(new CVRContestInfo(co, null, null, votes));
+        if (co.description() == ContestType.IRV.toString()) {
+          // If this is an IRV contest, each candidate 'name' will include a rank in parentheses.
+          // Redo ballot interpretation to sort them in preference order and remove explicit ranks.
+          // This will throw an exception if the row is not a valid IRV vote.
+          contest_info.add(new CVRContestInfo(co, null, null,parseValidIRVVote(votes)));
+
+        } else {
+          // for plurality, just add the votes as they are.
+          contest_info.add(new CVRContestInfo(co, null, null, votes));
+
+        }
       }
     }
 

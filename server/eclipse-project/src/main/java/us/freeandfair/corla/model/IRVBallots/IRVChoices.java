@@ -9,6 +9,9 @@ import java.util.stream.Collectors;
  * invalid, that is, with repeated candidate names or repeated preferences.
  */
 public class IRVChoices {
+
+    // Always sorted by preference, from highest preference (i.e. lowest number) to lowest preference (i.e. highest number)
+    // Repeated or skipped preferences are allowed.
     private List<Preference> choices;
 
     public int getLength() {
@@ -22,6 +25,8 @@ public class IRVChoices {
 
 
     // Build a new ballot from the string of CandidateName(rank) strings in the colorado-rla database.
+    // FIXME probably almost everywhere that calls this now, will instead want to be called on an ordered list
+    // of choices.
     public IRVChoices(String sanitizedChoices) {
         ArrayList<Preference> mutableChoices = new ArrayList<>();
 
@@ -143,6 +148,25 @@ public class IRVChoices {
         return new IRVChoices(mutableChoices);
     }
 
+    /* Returns this IRV vote as a sorted list of candidate names, starting with the first preference
+     * and ending with the lowest.
+     * Throws an exception if called on an invalid vote.
+     */
+    public List<String> AsSortedList() {
+        // Neither of these calls should ever be made.
+        if ( !IsValid() ) {
+            throw new RuntimeException("Attempt to call AsSortedList on invalid vote: "+choices);
+        }
+        if (! IsSorted(choices)) {
+            throw new RuntimeException("Attempt to call AsSortedList on unsorted choices.");
+        }
+
+        return choices.stream().map(Preference::getCandidateName).collect(Collectors.toUnmodifiableList());
+    }
+
+    /* This will include explicit preferences in parentheses. Intended for votes that may not be valid,
+     * e.g. "Alice(1),Bob(1),Chuan(3)".
+     */
     public String toString() {
         return choices.stream().map(Preference::toString).collect(Collectors.joining(","));
     }
@@ -155,4 +179,5 @@ public class IRVChoices {
         }
         return true;
     }
+
 }
