@@ -41,6 +41,8 @@ import us.freeandfair.corla.query.CountyContestResultQueries;
 import us.freeandfair.corla.util.DBExceptionUtil;
 import us.freeandfair.corla.util.ExponentialBackoffHelper;
 
+import static us.freeandfair.corla.model.ContestType.IRV;
+
 /**
  * Parser for Dominion CVR export files.
  *
@@ -317,7 +319,7 @@ public class DominionCVRExportParser {
         // this is an IRV contest. The number of allowed selections is the number of ranks.
         voteForString = "(Number of positions=1, Number of ranks=";
         votesAllowedIndex = c.indexOf(voteForString);
-        contestType = ContestType.IRV;
+        contestType = IRV;
       }
 
       // get the contest name and "(Vote For=" number, or "Number of Ranks=" for IRV contests.
@@ -526,6 +528,13 @@ public class DominionCVRExportParser {
         }
         index = index + 1;
       }
+
+      // If this is an IRV contest, each candidate 'name' will include a rank in parentheses.
+      // Redo ballot interpretation to sort them in preference order an remove explicit ranks.
+      if (co.description() == ContestType.IRV.toString()) {
+        votes = parseIRVBallot(votes);
+      }
+
       // if this contest was on the ballot, add it to the votes
       if (present) {
         contest_info.add(new CVRContestInfo(co, null, null, votes));
