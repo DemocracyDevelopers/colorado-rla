@@ -43,6 +43,7 @@ import us.freeandfair.corla.util.ExponentialBackoffHelper;
 
 import static us.freeandfair.corla.model.ContestType.IRV;
 import static us.freeandfair.corla.util.IRVVoteParsing.parseValidIRVVote;
+import static us.freeandfair.corla.util.IRVVoteParsing.removeParenthesesAndRepeatedNamesFromChoices;
 
 /**
  * Parser for Dominion CVR export files.
@@ -387,6 +388,14 @@ public class DominionCVRExportParser {
       // note that we're using the "Vote For" number as the number of winners
       // allowed as well, because the Dominion format doesn't give us that
       // separately
+
+      // The 'choices' are plain candidate names for plurality, but candidatename(rank) strings for IRV.
+      // We need to remove the parenthesized ranks before storing the choices.
+      if (contestTypes.get(contestName).toString().equalsIgnoreCase(ContestType.IRV.toString())) {
+        removeParenthesesAndRepeatedNamesFromChoices(choices);
+      }
+
+
       final Contest c = new Contest(contestName, my_county, contestTypes.get(contestName).toString(), choices,
                                     votesAllowed.get(contestName), votesAllowed.get(contestName),
                                     contest_count);
@@ -532,11 +541,12 @@ public class DominionCVRExportParser {
 
       // if this contest was on the ballot, add it to the votes
       if (present) {
-        if (co.description() == ContestType.IRV.toString()) {
+        if (co.description().equalsIgnoreCase(ContestType.IRV.toString())) {
           // If this is an IRV contest, each candidate 'name' will include a rank in parentheses.
           // Redo ballot interpretation to sort them in preference order and remove explicit ranks.
           // This will throw an exception if the row is not a valid IRV vote.
-          contest_info.add(new CVRContestInfo(co, null, null,parseValidIRVVote(votes)));
+          final List<String> IRVVoteAsNameList = parseValidIRVVote(votes);
+          contest_info.add(new CVRContestInfo(co, null, null,IRVVoteAsNameList));
 
         } else {
           // for plurality, just add the votes as they are.
