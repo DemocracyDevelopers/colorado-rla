@@ -215,7 +215,10 @@ public class Contest implements PersistentEntity, Serializable {
   public County county() {
     return my_county;
   }
-  
+
+  public List<Choice> getChoices() { return my_choices; }
+  public void setChoices(final List<Choice> choices) {my_choices = choices; }
+
   /**
    * Checks to see if the specified choice is valid for this contest.
    * 

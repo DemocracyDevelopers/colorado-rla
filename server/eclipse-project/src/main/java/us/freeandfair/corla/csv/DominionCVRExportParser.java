@@ -42,8 +42,7 @@ import us.freeandfair.corla.util.DBExceptionUtil;
 import us.freeandfair.corla.util.ExponentialBackoffHelper;
 
 import static us.freeandfair.corla.model.ContestType.IRV;
-import static us.freeandfair.corla.util.IRVVoteParsing.parseValidIRVVote;
-import static us.freeandfair.corla.util.IRVVoteParsing.removeParenthesesAndRepeatedNamesFromChoices;
+import static us.freeandfair.corla.util.IRVVoteParsing.*;
 
 /**
  * Parser for Dominion CVR export files.
@@ -390,9 +389,11 @@ public class DominionCVRExportParser {
       // separately
 
       // The 'choices' are plain candidate names for plurality, but candidatename(rank) strings for IRV.
-      // We need to remove the parenthesized ranks before storing the choices.
+      // We need to add non-parenthesized names so that we can store votes that don't use them.
+      //
       if (contestTypes.get(contestName).toString().equalsIgnoreCase(ContestType.IRV.toString())) {
-        removeParenthesesAndRepeatedNamesFromChoices(choices);
+        // removeParenthesesAndRepeatedNamesFromChoices(choices);
+        // FIXME appendNamesWithoutParenthesesToChoices(choices);
       }
 
 
@@ -404,7 +405,14 @@ public class DominionCVRExportParser {
       contest_count = contest_count + 1;
       try {
         Persistence.saveOrUpdate(c);
-        final CountyContestResult r = CountyContestResultQueries.matching(my_county, c);
+
+        CountyContestResult r;
+        // Get either a (fresh) IRVContestResult for IRV contests, or a ContestResult for non-IRV ones.
+        if(c.description().equalsIgnoreCase(IRV.toString())) {
+          r = CountyContestResultQueries.IRVmatching(my_county, c);
+        } else {
+          r = CountyContestResultQueries.matching(my_county, c);
+        }
         my_contests.add(c);
         my_results.add(r);
       } catch (PersistenceException pe) {
@@ -541,18 +549,22 @@ public class DominionCVRExportParser {
 
       // if this contest was on the ballot, add it to the votes
       if (present) {
+        /*
         if (co.description().equalsIgnoreCase(ContestType.IRV.toString())) {
           // If this is an IRV contest, each candidate 'name' will include a rank in parentheses.
           // Redo ballot interpretation to sort them in preference order and remove explicit ranks.
           // This will throw an exception if the row is not a valid IRV vote.
+          // FIXME move this out of here.
           final List<String> IRVVoteAsNameList = parseValidIRVVote(votes);
           contest_info.add(new CVRContestInfo(co, null, null,IRVVoteAsNameList));
 
         } else {
           // for plurality, just add the votes as they are.
+
+         */
           contest_info.add(new CVRContestInfo(co, null, null, votes));
 
-        }
+        // }
       }
     }
 
@@ -787,8 +799,15 @@ public class DominionCVRExportParser {
         checkForFlush();
       }
 
+      // For IRV contests, reset the contest names by removing the parenthesized ranks.
+      // For other contests, just update the results directly.
       for (final CountyContestResult r : my_results) {
-        r.updateResults();
+        if (r.getClass() == us.freeandfair.corla.model.IRVCountyContestResult.class ) {
+          ((IRVCountyContestResult) r).removeParenthesesFromChoiceNames();
+        } else {
+          // Only relevant for plurality
+          r.updateResults();
+        }
         Persistence.saveOrUpdate(r);
       }
 

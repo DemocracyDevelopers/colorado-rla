@@ -112,7 +112,7 @@ public class CountyContestResult implements PersistentEntity, Serializable {
    */
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
   @JoinColumn
-  private Contest my_contest;
+  protected Contest my_contest;
 
   /**
    * The winners allowed.
@@ -143,7 +143,7 @@ public class CountyContestResult implements PersistentEntity, Serializable {
                                              referencedColumnName = MY_ID))
   @MapKeyColumn(name = "choice")
   @Column(name = "vote_total")
-  private Map<String, Integer> my_vote_totals = new HashMap<>();
+  protected Map<String, Integer> my_vote_totals = new HashMap<>();
   
   /**
    * The minimum pairwise margin between a winner and a loser.

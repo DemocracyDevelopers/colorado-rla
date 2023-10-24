@@ -30,6 +30,7 @@ import us.freeandfair.corla.Main;
 import us.freeandfair.corla.model.Contest;
 import us.freeandfair.corla.model.County;
 import us.freeandfair.corla.model.CountyContestResult;
+import us.freeandfair.corla.model.IRVCountyContestResult;
 import us.freeandfair.corla.persistence.Persistence;
 
 /**
@@ -60,6 +61,20 @@ public final class CountyContestResultQueries {
   @SuppressWarnings("PMD.AvoidLiteralsInIfCondition")
   public static CountyContestResult matching(final County the_county,
                                              final Contest the_contest) {
+    return do_matching(the_county, the_contest, false);
+  }
+
+  // FIXME this should throw an exception if it is told to retrieve an IRV
+  // contest but it's actually only an ordinary CountyContestResult.
+  // However, I'm not sure that I've done this correctly. Need to check.
+  public static IRVCountyContestResult IRVmatching(final County the_county,
+                                                final Contest the_contest) {
+    return (IRVCountyContestResult) do_matching(the_county, the_contest, true);
+  }
+
+
+  private static CountyContestResult do_matching(final County the_county,
+    final Contest the_contest, boolean expect_IRV)  {
     CountyContestResult result = null;
     
     try {
@@ -79,7 +94,11 @@ public final class CountyContestResultQueries {
       if (query_results.size() == 1) {
         result = query_results.get(0);
       } else if (query_results.isEmpty()) {
-        result = new CountyContestResult(the_county, the_contest);
+        if (expect_IRV) {
+          result = new IRVCountyContestResult(the_county, the_contest);
+        } else {
+          result = new CountyContestResult(the_county, the_contest);
+        }
         Persistence.saveOrUpdate(result);
       } else {
         throw new IllegalStateException("unique constraint violated on CountyContestResult");

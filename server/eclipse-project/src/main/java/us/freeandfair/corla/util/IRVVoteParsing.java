@@ -2,6 +2,7 @@ package us.freeandfair.corla.util;
 
 import org.apache.commons.lang.StringUtils;
 import us.freeandfair.corla.model.Choice;
+import us.freeandfair.corla.model.ContestType;
 import us.freeandfair.corla.model.IRVBallots.IRVChoices;
 import us.freeandfair.corla.model.IRVBallots.Preference;
 
@@ -55,19 +56,43 @@ public class IRVVoteParsing {
      * first preference for.
      */
     public static void removeParenthesesAndRepeatedNamesFromChoices(final List<Choice> choices) {
-        Set<String> candidatesWeKeep = new HashSet<>();
-        for (Choice c : choices ) {
+        Set<Choice> distinctChoices = new HashSet<>();
+
+        // Add each choice into the set of distinct choices after removing parentheses after name.
+        for (Choice c : choices)  {
             Preference parsedPreference = parseIRVpreference(c.name());
-            if (candidatesWeKeep.add(parsedPreference.getCandidateName())) {
-                // If add returns true, this is the first time we've encountered that candidate.
-                // The candidate has been added to the set we've kept.
-                // Update the name in choices.
-                c.setName(parsedPreference.getCandidateName());
-            } else {
-                // We already added this candidate. Remove this choice.
-                choices.remove(c);
-            }
+            c.setName(parsedPreference.getCandidateName());
+            distinctChoices.add(c);
         }
+
+        choices.clear();
+        choices.addAll(distinctChoices);
+    }
+
+    public static List<Choice> removeParenthesesAndRepeatedNames(final List<Choice> choices) {
+        Set<Choice> distinctChoices = new HashSet<>();
+
+        // Add each choice into the set of distinct choices after removing parentheses after name.
+        for (Choice c : choices)  {
+            Preference parsedPreference = parseIRVpreference(c.name());
+            c.setName(parsedPreference.getCandidateName());
+            distinctChoices.add(c);
+        }
+
+        return new ArrayList<Choice>(distinctChoices);
+    }
+
+    public static void appendNamesWithoutParenthesesToChoices(final List<Choice> choices) {
+        Set<Choice> distinctChoices = new HashSet<>();
+
+        // Add each choice into the set of distinct choices after removing parentheses after name.
+        for (Choice c : choices)  {
+            Preference parsedPreference = parseIRVpreference(c.name());
+            distinctChoices.add(
+                    new Choice(parsedPreference.getCandidateName(), c.description(), c.qualifiedWriteIn(), c.fictitious()));
+        }
+
+        choices.addAll(distinctChoices);
     }
 
     /* Parses a string like "Name(n)" where n is a rank, and returns a Preference object with the correct
