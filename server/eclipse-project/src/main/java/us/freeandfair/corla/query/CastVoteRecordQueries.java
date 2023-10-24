@@ -231,7 +231,7 @@ public final class CastVoteRecordQueries {
   }
 
   /**
-   * change the votes from the export as if the cvr expost file headers had
+   * change the votes from the export as if the cvr export file headers had
    * contained the newChoice rather than the oldChoice
    **/
   public static int updateCVRContestInfos(final Long countyId, final Long contestId,
@@ -261,6 +261,33 @@ public final class CastVoteRecordQueries {
         .setParameter("newChoice", newChoice)
         .setParameter("county_id", countyId)
         .setParameter("contest_id", contestId);
+
+    return q.executeUpdate();
+  }
+
+
+  /**
+   * change the votes from the export as if the cvr export file headers had
+   * contained non-parenthesized candidate names. Sort them in order of preference.
+   **/
+  public static int updateCVRChoices( Long countyId, final Long contestId, String newChoices ) {
+
+
+    final Session s = Persistence.currentSession();
+
+    // FIXME Should newChoices be a single string with explicit "," etc, or should it be a list of strings?
+
+    final Query q = s
+            // this will only fix the first match, which is what we want, because
+            // this
+            // will make it possible to fix mistakes that create duplicates
+            .createNativeQuery("update cvr_contest_info set choices = " +
+                    ":newChoices" +
+                    " where county_id = :county_id " +
+                    " and contest_id = :contest_id " )
+            .setParameter("newChoices", newChoices)
+            .setParameter("county_id", countyId)
+            .setParameter("contest_id", contestId);
 
     return q.executeUpdate();
   }

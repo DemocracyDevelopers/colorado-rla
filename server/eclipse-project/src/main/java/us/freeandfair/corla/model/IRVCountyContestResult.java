@@ -258,6 +258,11 @@ public class IRVCountyContestResult extends CountyContestResult {
       }
     }
   }
+
+  public void removeParenthesesFromCVRRecords() {
+
+  }
+
   /**
    * Compute the pairwise margin between the specified choices.
    * If the first choice has more votes than the second, the

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.persistence.PersistenceException;
 
@@ -37,6 +38,7 @@ import org.apache.log4j.Logger;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.query.CountyContestResultQueries;
 import us.freeandfair.corla.util.DBExceptionUtil;
 import us.freeandfair.corla.util.ExponentialBackoffHelper;
@@ -372,6 +374,7 @@ public class DominionCVRExportParser {
         final String explanation = explanationLine.get(index).trim();
         // "Write-in" is a fictitious candidate that denotes the beginning of
         // the list of qualified write-in candidates
+        // FIXME need to add "Write-in(1)", "Write-in(2)" etc.
         final boolean isFictitious = "Write-in".equalsIgnoreCase(choice);
         choices.add(new Choice(choice, explanation, isWriteIn, isFictitious));
         if (isFictitious) {
@@ -799,16 +802,31 @@ public class DominionCVRExportParser {
         checkForFlush();
       }
 
-      // For IRV contests, reset the contest names by removing the parenthesized ranks.
-      // For other contests, just update the results directly.
       for (final CountyContestResult r : my_results) {
+        // For IRV contests, reset the contest choice names by removing the parenthesized ranks.
         if (r.getClass() == us.freeandfair.corla.model.IRVCountyContestResult.class ) {
           ((IRVCountyContestResult) r).removeParenthesesFromChoiceNames();
+          String name = r.contest().name();
         } else {
-          // Only relevant for plurality
+          // For plurality contests, just update the results directly.
           r.updateResults();
         }
         Persistence.saveOrUpdate(r);
+      }
+
+      var mySequenceNumbers = my_parsed_cvrs.stream().map(CastVoteRecord::sequenceNumber).collect(Collectors.toList());
+      Map<Integer,CastVoteRecord> cvrs = CastVoteRecordQueries.get(my_county.id(), RecordType.UPLOADED, mySequenceNumbers);
+
+      for (CastVoteRecord cvr : cvrs.values()) {
+        for (CVRContestInfo contestInfo : cvr.contestInfo()) {
+          if (contestInfo.contest().description().equalsIgnoreCase(IRV.toString())) {
+            List<String> updatedChoices = removeParenthesesAndRepeatedNames(contestInfo.contest().getChoices())
+                    .stream().map(Choice::name).collect(Collectors.toList());
+            String updatedChoiceString = "\""+String.join("\",\"",updatedChoices);
+            CastVoteRecordQueries.updateCVRChoices(cvr.countyID(), contestInfo.contest().id(), updatedChoiceString) ;
+            Persistence.saveOrUpdate(cvr);
+          }
+        }
       }
 
       // commit any uncommitted records
