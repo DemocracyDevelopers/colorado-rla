@@ -12,6 +12,7 @@
 package us.freeandfair.corla.model;
 
 import static us.freeandfair.corla.util.EqualsHashcodeHelper.nullableEquals;
+import static us.freeandfair.corla.util.IRVVoteParsing.removeParenthesesAndRepeatedNames;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -283,6 +284,23 @@ public class CountyContestResult implements PersistentEntity, Serializable {
                                final String newName) {
     final Integer vote_total = my_vote_totals.remove(oldName);
     my_vote_totals.put(newName, vote_total);
+  }
+
+  /**
+   * Used for IRV ballots. This needs to be done _after_ CSVs are read. It takes the artificial list
+   * of choices with preferences, .e.g "Alice (1)", "Alice (2)", "Bob (1)", "Bob (2)" and resets them
+   * to just the 'real' candidate names, e.g. "Alice", "Bob".
+   */
+  public void removeParenthesesFromChoiceNames() {
+    my_vote_totals.clear();
+    List<Choice> updatedChoices = removeParenthesesAndRepeatedNames(my_contest.getChoices());
+    my_contest.setChoices(updatedChoices);
+    my_vote_totals.clear();
+    for (final Choice c : my_contest.choices()) {
+      if (!c.fictitious()) {
+        my_vote_totals.put(c.name(), 0);
+      }
+    }
   }
 
   /**

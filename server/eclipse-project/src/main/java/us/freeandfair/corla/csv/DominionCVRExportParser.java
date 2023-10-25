@@ -408,14 +408,7 @@ public class DominionCVRExportParser {
       contest_count = contest_count + 1;
       try {
         Persistence.saveOrUpdate(c);
-
-        CountyContestResult r;
-        // Get either a (fresh) IRVContestResult for IRV contests, or a ContestResult for non-IRV ones.
-        if(c.description().equalsIgnoreCase(IRV.toString())) {
-          r = CountyContestResultQueries.IRVmatching(my_county, c);
-        } else {
-          r = CountyContestResultQueries.matching(my_county, c);
-        }
+        final CountyContestResult r = CountyContestResultQueries.matching(my_county, c);
         my_contests.add(c);
         my_results.add(r);
       } catch (PersistenceException pe) {
@@ -804,13 +797,11 @@ public class DominionCVRExportParser {
 
       for (final CountyContestResult r : my_results) {
         // For IRV contests, reset the contest choice names by removing the parenthesized ranks.
-        if (r.getClass() == us.freeandfair.corla.model.IRVCountyContestResult.class ) {
-          ((IRVCountyContestResult) r).removeParenthesesFromChoiceNames();
-          String name = r.contest().name();
-        } else {
-          // For plurality contests, just update the results directly.
-          r.updateResults();
+        if (r.contest().description().equalsIgnoreCase(IRV.toString())) {
+          r.removeParenthesesFromChoiceNames();
         }
+
+        r.updateResults();
         Persistence.saveOrUpdate(r);
       }
 
