@@ -282,6 +282,22 @@ public abstract class Assertion implements PersistentEntity, Serializable {
   public abstract OptionalInt computeDiscrepancy(final CastVoteRecord cvr,
                                                  final CastVoteRecord auditedCVR);
 
+
+  /**
+   * Removes the specified over/understatement (the valid range is -2 .. 2:
+   * -2 and -1 are understatements, 0 is a discrepancy that doesn't affect the
+   * RLA calculations, and 1 and 2 are overstatements). This is typically done
+   * when a new interpretation is submitted for a ballot that had already been
+   * interpreted.
+   *
+   * @param the_record The CVRAuditInfo record that generated the discrepancy.
+   * @param the_type The type of discrepancy to remove.
+   * @exception IllegalArgumentException if an invalid discrepancy type is
+   * specified.
+   */
+  @SuppressWarnings("checkstyle:magicnumber")
+  public abstract void removeDiscrepancy(final CVRAuditInfo the_record, final int the_type);
+
   /**
    * A scaling factor for the estimate, from 1 (when no samples have
    * been audited) upward.

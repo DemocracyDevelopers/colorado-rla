@@ -42,4 +42,11 @@ public class NENAssertion extends Assertion {
     OptionalInt result = OptionalInt.empty();
     return result;
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  public void removeDiscrepancy(final CVRAuditInfo the_record, final int the_type){
+
+  }
 }
