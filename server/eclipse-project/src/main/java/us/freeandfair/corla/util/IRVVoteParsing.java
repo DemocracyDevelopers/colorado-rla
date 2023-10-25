@@ -54,21 +54,10 @@ public class IRVVoteParsing {
      * the two choices "Alice, Bob".
      * Throws an exception if it encounters preferences higher than 1 for a candidate it hasn't met the
      * first preference for.
+     *
+     * This is intended for choices (i.e. Candidate names), not for votes, because it ignores
+     * rank information.
      */
-    public static void removeParenthesesAndRepeatedNamesFromChoices(final List<Choice> choices) {
-        Set<Choice> distinctChoices = new HashSet<>();
-
-        // Add each choice into the set of distinct choices after removing parentheses after name.
-        for (Choice c : choices)  {
-            Preference parsedPreference = parseIRVpreference(c.name());
-            c.setName(parsedPreference.getCandidateName());
-            distinctChoices.add(c);
-        }
-
-        choices.clear();
-        choices.addAll(distinctChoices);
-    }
-
     public static List<Choice> removeParenthesesAndRepeatedNames(final List<Choice> choices) {
         Set<Choice> distinctChoices = new HashSet<>();
 
@@ -82,31 +71,25 @@ public class IRVVoteParsing {
         return new ArrayList<Choice>(distinctChoices);
     }
 
-    public static void appendNamesWithoutParenthesesToChoices(final List<Choice> choices) {
-        Set<Choice> distinctChoices = new HashSet<>();
-
-        // Add each choice into the set of distinct choices after removing parentheses after name.
-        for (Choice c : choices)  {
-            Preference parsedPreference = parseIRVpreference(c.name());
-            distinctChoices.add(
-                    new Choice(parsedPreference.getCandidateName(), c.description(), c.qualifiedWriteIn(), c.fictitious()));
-        }
-
-        choices.addAll(distinctChoices);
-    }
-
     /* Parses a string like "Name(n)" where n is a rank, and returns a Preference object with the correct
      * rank.
-     * FIXME needs to ensure that only preferences at the end are dealt with - at the moment Fred (jnr) (6)
-     * will not parse.
+     * Throws an exception if the input doesn't fit into the name(digits) pattern.
      */
     private static Preference parseIRVpreference(final String nameAndPref) {
-        String[] vote = nameAndPref.split("\\(");
-        String rank = vote[1].split("\\)")[0];
-        if (!StringUtils.isNumeric(rank)) {
-            throw new RuntimeException("Couldn't parse candidate-preference: "+nameAndPref);
+
+        // Look for digits in parentheses at the end of the string.
+        String regexp ="\\((\\d+\\))$";
+
+        try {
+            String vote = nameAndPref.split(regexp)[0];
+            String rank1 = nameAndPref.replace(vote, "");
+                    String rank2 = rank1.trim().split("[\\(\\)]")[1];
+
+            return new Preference(Integer.parseInt(rank2), vote.trim());
+
+        } catch (NumberFormatException | IndexOutOfBoundsException e2) {
+            throw new RuntimeException("Couldn't parse candidate-preference: " + nameAndPref);
         }
-        return new Preference(Integer.parseInt(rank), vote[0].trim());
     }
 }
 

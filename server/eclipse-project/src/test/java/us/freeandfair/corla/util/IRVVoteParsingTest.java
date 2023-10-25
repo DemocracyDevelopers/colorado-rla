@@ -83,20 +83,42 @@ public class IRVVoteParsingTest {
         List<Choice> choices = new ArrayList<>();
         Collections.addAll(choices, c1, c2, c3, c4);
 
-        removeParenthesesAndRepeatedNamesFromChoices(choices);
+        List<Choice> updatedChoices = removeParenthesesAndRepeatedNames(choices);
 
-        Set<String> names = choices.stream().map(Choice::name).collect(Collectors.toSet());
+        Set<String> names = updatedChoices.stream().map(Choice::name).collect(Collectors.toSet());
 
         assertTrue(names.contains("Alice"));
         assertTrue(names.contains("Bob"));
-        assertEquals(2, choices.size());
+        assertEquals(2, updatedChoices.size());
     }
 
     @Test
     void tidyBlankIRVBallotChoices() {
         List<Choice> choices  = new ArrayList<>();
-        removeParenthesesAndRepeatedNamesFromChoices(choices);
-        assertEquals(0, choices.size());
+        List<Choice> updatedChoices = removeParenthesesAndRepeatedNames(choices);
+        assertEquals(0, updatedChoices.size());
+    }
+
+    @Test
+    void trickyIRVBallotChoices() {
+        Choice c1 = new Choice("Alice (Zahra) (1)", ContestType.IRV.toString(), false, false);
+        Choice c2 = new Choice("Alice (Zahra)(3)", ContestType.IRV.toString(), false, false);
+        Choice c3 = new Choice("Alice (Not Zahra) (2)", ContestType.IRV.toString(), false, false);
+        Choice c4 = new Choice("Henry (8) (1)", ContestType.IRV.toString(), false, false);
+        Choice c5 = new Choice("Henry (8) (2)", ContestType.IRV.toString(), false, false);
+        List<Choice> choices = new ArrayList<>();
+        Collections.addAll(choices, c1, c2, c3, c4,c5);
+
+        List<Choice> updatedChoices = removeParenthesesAndRepeatedNames(choices);
+
+        List<Choice> aliceNotZahrasPref = updatedChoices.stream().filter(c -> c.name().equals("Alice (Not Zahra)")).collect(Collectors.toList());
+        Set<String> names = updatedChoices.stream().map(Choice::name).collect(Collectors.toSet());
+
+        assertEquals(1, aliceNotZahrasPref.size());
+        assertTrue(names.contains("Alice (Zahra)"));
+        assertTrue(names.contains("Alice (Not Zahra)"));
+        assertTrue(names.contains("Henry (8)"));
+        assertEquals(3, updatedChoices.size());
     }
 
     @Test
