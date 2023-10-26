@@ -787,22 +787,13 @@ public class DominionCVRExportParser {
 
 
       for (final CountyContestResult r : my_results) {
-        // For IRV contests, reset the contest choice names by removing the parenthesized ranks.
-        // TODO: It's possible this step is unnecessary - we need to store plain names in vote choices, but we
-        // may not really have a reason for updating the choices in the CountyContestResult. Perhaps they
-        // should just be left as "Alice (1)", "Alice (2)" etc.
-        if (r.contest().description().equalsIgnoreCase(IRV.toString())) {
-          r.removeParenthesesFromFirstPreferenceChoiceNames();
-          r.updateDefaultsForIRV();
-        }
-
         r.updateResults();
         Persistence.saveOrUpdate(r);
       }
 
       // commit any uncommitted records
 
-       commitCVRsAndUpdateCountyDashboard();
+      commitCVRsAndUpdateCountyDashboard();
     }
 
     result.success = true; // we made it through, yay!

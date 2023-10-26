@@ -308,24 +308,6 @@ public class CountyContestResult implements PersistentEntity, Serializable {
   */
 
   /**
-   * Used for IRV Ballots, as the first stage of simplifying candidate names.  It takes the artificial list
-   * of choices with preferences, .e.g "Alice (1)", "Alice (2)", "Bob (1)", "Bob (2)" and resets the first
-   * preferences to just the 'real' candidate names, e.g. "Alice", "Bob".
-   * Non-first preferences are unaffected.
-   */
-  public List<Choice> removeParenthesesFromFirstPreferenceChoiceNames() {
-    try {
-
-    my_vote_totals.clear();
-    List<Choice> updatedChoices = removeFirstPreferenceParenthesesFromChoiceNames(my_contest.getChoices());
-    reset();
-    return updatedChoices;
-    } catch (IRVParsingException e) {
-      throw new IllegalArgumentException(e);
-    }
-  }
-
-  /**
    * Used for IRV. Resets values such as min/max margin and num_winners so that they have either
    * reasonable values (for IRV) or clearly-invalid values (e.g. max margin).
    * TODO It's possible that a better design would be to have an IRVCountyContestResult subclass, which
