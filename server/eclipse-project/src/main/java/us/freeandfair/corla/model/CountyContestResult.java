@@ -318,6 +318,22 @@ public class CountyContestResult implements PersistentEntity, Serializable {
   }
 
   /**
+   * Used for IRV. Resets values such as min/max margin and num_winners so that they have either
+   * reasonable values (for IRV) or clearly-invalid values (e.g. max margin).
+   * TODO It's possible that a better design would be to have an IRVCountyContestResult subclass, which
+   * set these defaults accordingly and updated some of them (e.g. min margin) when the assertions were derived.
+   */
+  public void updateDefaultsForIRV() {
+
+    my_winners_allowed = 1;
+    my_winners = new HashSet<>();
+    my_losers = new HashSet<>();
+    my_max_margin = -1;
+    my_min_margin = -1;
+
+  }
+
+  /**
    * Compute the pairwise margin between the specified choices.
    * If the first choice has more votes than the second, the
    * result will be positive; if the second choie has more 
@@ -632,7 +648,8 @@ public class CountyContestResult implements PersistentEntity, Serializable {
   }
 
 
-    /**
+
+  /**
    * A reverse integer comparator, for sorting lists of integers in reverse.
    */
   @SuppressFBWarnings("RV_NEGATING_RESULT_OF_COMPARETO")

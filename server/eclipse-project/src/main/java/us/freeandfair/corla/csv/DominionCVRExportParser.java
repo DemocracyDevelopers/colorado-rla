@@ -782,7 +782,8 @@ public class DominionCVRExportParser {
       for (final CountyContestResult r : my_results) {
         // For IRV contests, reset the contest choice names by removing the parenthesized ranks.
         if (r.contest().description().equalsIgnoreCase(IRV.toString())) {
-          List<Choice> newChoices = r.removeParenthesesFromFirstPreferenceChoiceNames();
+          r.removeParenthesesFromFirstPreferenceChoiceNames();
+          r.updateDefaultsForIRV();
         }
 
         r.updateResults();
