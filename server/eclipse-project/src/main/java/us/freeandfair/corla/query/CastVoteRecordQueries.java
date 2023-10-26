@@ -267,8 +267,8 @@ public final class CastVoteRecordQueries {
 
 
   /**
-   * change the votes from the export as if the cvr export file headers had
-   * contained non-parenthesized candidate names. Sort them in order of preference.
+   * change the votes from the export as if the cvr export file
+   * had contained the newChoices.
    **/
   public static int updateCVRChoices( Long countyId, final Long contestId, String newChoices ) {
 

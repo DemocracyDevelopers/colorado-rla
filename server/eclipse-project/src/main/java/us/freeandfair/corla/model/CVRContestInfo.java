@@ -143,13 +143,19 @@ public class CVRContestInfo implements Serializable {
   public ConsensusValue consensus() {
     return my_consensus;
   }
-  
+
   /**
    * @return the choices in this record.
    */
   public List<String> choices() {
     return Collections.unmodifiableList(my_choices);
   }
+
+  /**
+   * set the choices in this record.
+   * Used for record updating for IRV.
+   */
+  public void setChoices(List<String> choices) { my_choices = choices; }
   
   /**
    * @return a String representation of this cast vote record.

@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 
 import javax.persistence.PersistenceException;
 
+// import jdk.internal.icu.text.UnicodeSet;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -384,22 +385,8 @@ public class DominionCVRExportParser {
         }
         index = index + 1;
       }
-      // now that we have all the choices, we can create a Contest object for
-      // this contest (note the empty contest description at the moment, below,
-      // as that's not in the CVR files and may not actually be used)
-      // note that we're using the "Vote For" number as the number of winners
-      // allowed as well, because the Dominion format doesn't give us that
-      // separately
 
-      // The 'choices' are plain candidate names for plurality, but candidatename(rank) strings for IRV.
-      // We need to add non-parenthesized names so that we can store votes that don't use them.
-      //
-      if (contestTypes.get(contestName).toString().equalsIgnoreCase(ContestType.IRV.toString())) {
-        // removeParenthesesAndRepeatedNamesFromChoices(choices);
-        // FIXME appendNamesWithoutParenthesesToChoices(choices);
-      }
-
-
+      // FIXME for IRV, votesAllowed should be 1 always.
       final Contest c = new Contest(contestName, my_county, contestTypes.get(contestName).toString(), choices,
                                     votesAllowed.get(contestName), votesAllowed.get(contestName),
                                     contest_count);
@@ -545,22 +532,7 @@ public class DominionCVRExportParser {
 
       // if this contest was on the ballot, add it to the votes
       if (present) {
-        /*
-        if (co.description().equalsIgnoreCase(ContestType.IRV.toString())) {
-          // If this is an IRV contest, each candidate 'name' will include a rank in parentheses.
-          // Redo ballot interpretation to sort them in preference order and remove explicit ranks.
-          // This will throw an exception if the row is not a valid IRV vote.
-          // FIXME move this out of here.
-          final List<String> IRVVoteAsNameList = parseValidIRVVote(votes);
-          contest_info.add(new CVRContestInfo(co, null, null,IRVVoteAsNameList));
-
-        } else {
-          // for plurality, just add the votes as they are.
-
-         */
           contest_info.add(new CVRContestInfo(co, null, null, votes));
-
-        // }
       }
     }
 
@@ -768,11 +740,14 @@ public class DominionCVRExportParser {
       }
         
 
+      // Keep a list of the parsed cvrs, for later IRV choice updating.
+      List<CastVoteRecord> cvrs = new ArrayList<>();
+
       // subsequent lines contain cast vote records
       while (records.hasNext()) {
         final CSVRecord cvr_line = records.next();
         try {
-          extractCVR(cvr_line);
+          cvrs.add(extractCVR(cvr_line));
         } catch (final Exception e) {
           LOGGER.error(e.getClass());
           LOGGER.error(e.getMessage());
@@ -795,34 +770,31 @@ public class DominionCVRExportParser {
         checkForFlush();
       }
 
+      for ( CastVoteRecord cvr : cvrs ) {
+         for (CVRContestInfo cInfo : cvr.contestInfo()) {
+           List<String> newVote = parseValidIRVVote(cInfo.choices());
+           cInfo.setChoices(newVote);
+         }
+         Persistence.saveOrUpdate(cvr);
+      }
+
+      final Map<String, List<Choice>> new_choices_by_ccr = new HashMap<>();
+
       for (final CountyContestResult r : my_results) {
         // For IRV contests, reset the contest choice names by removing the parenthesized ranks.
         if (r.contest().description().equalsIgnoreCase(IRV.toString())) {
-          r.removeParenthesesFromChoiceNames();
+          // r.removeParenthesesFromChoiceNames();
+          List<Choice> newChoices = r.removeParenthesesFromFirstPreferenceChoiceNames();
+          new_choices_by_ccr.put(r.contest().name(), newChoices);
         }
 
         r.updateResults();
         Persistence.saveOrUpdate(r);
       }
 
-      var mySequenceNumbers = my_parsed_cvrs.stream().map(CastVoteRecord::sequenceNumber).collect(Collectors.toList());
-      Map<Integer,CastVoteRecord> cvrs = CastVoteRecordQueries.get(my_county.id(), RecordType.UPLOADED, mySequenceNumbers);
-
-      for (CastVoteRecord cvr : cvrs.values()) {
-        for (CVRContestInfo contestInfo : cvr.contestInfo()) {
-          if (contestInfo.contest().description().equalsIgnoreCase(IRV.toString())) {
-            List<String> updatedChoices = removeParenthesesAndRepeatedNames(contestInfo.contest().getChoices())
-                    .stream().map(Choice::name).collect(Collectors.toList());
-            String updatedChoiceString = "\""+String.join("\",\"",updatedChoices);
-            CastVoteRecordQueries.updateCVRChoices(cvr.countyID(), contestInfo.contest().id(), updatedChoiceString) ;
-            Persistence.saveOrUpdate(cvr);
-          }
-        }
-      }
-
       // commit any uncommitted records
 
-      commitCVRsAndUpdateCountyDashboard();
+       commitCVRsAndUpdateCountyDashboard();
     }
 
     result.success = true; // we made it through, yay!
@@ -830,4 +802,5 @@ public class DominionCVRExportParser {
 
     return result;
   }
+
 }

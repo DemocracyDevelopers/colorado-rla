@@ -12,6 +12,7 @@
 package us.freeandfair.corla.model;
 
 import static us.freeandfair.corla.util.EqualsHashcodeHelper.nullableEquals;
+import static us.freeandfair.corla.util.IRVVoteParsing.removeFirstPreferenceParenthesesFromChoiceNames;
 import static us.freeandfair.corla.util.IRVVoteParsing.removeParenthesesAndRepeatedNames;
 
 import java.io.Serializable;
@@ -301,6 +302,19 @@ public class CountyContestResult implements PersistentEntity, Serializable {
         my_vote_totals.put(c.name(), 0);
       }
     }
+  }
+
+  /**
+   * Used for IRV Ballots, as the first stage of simplifying candidate names.  It takes the artificial list
+   * of choices with preferences, .e.g "Alice (1)", "Alice (2)", "Bob (1)", "Bob (2)" and resets the first
+   * preferences to just the 'real' candidate names, e.g. "Alice", "Bob".
+   * Non-first preferences are unaffected.
+   */
+  public List<Choice> removeParenthesesFromFirstPreferenceChoiceNames() {
+    my_vote_totals.clear();
+    List<Choice> updatedChoices = removeFirstPreferenceParenthesesFromChoiceNames(my_contest.getChoices());
+    reset();
+    return updatedChoices;
   }
 
   /**
@@ -616,8 +630,9 @@ public class CountyContestResult implements PersistentEntity, Serializable {
   public int hashCode() {
     return id().hashCode();
   }
-  
-  /**
+
+
+    /**
    * A reverse integer comparator, for sorting lists of integers in reverse.
    */
   @SuppressFBWarnings("RV_NEGATING_RESULT_OF_COMPARETO")

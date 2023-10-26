@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class IRVVoteParsing {
 
@@ -58,6 +59,40 @@ public class IRVVoteParsing {
      * This is intended for choices (i.e. Candidate names), not for votes, because it ignores
      * rank information.
      */
+    public static void removeParenthesesAndRepeatedNamesFromChoices(final List<Choice> choices) {
+        Set<Choice> distinctChoices = new HashSet<>();
+
+        // Add each choice into the set of distinct choices after removing parentheses after name.
+        for (Choice c : choices)  {
+            Preference parsedPreference = parseIRVpreference(c.name());
+            c.setName(parsedPreference.getCandidateName());
+            distinctChoices.add(c);
+        }
+
+        choices.clear();
+        choices.addAll(distinctChoices);
+    }
+
+    /**
+     * Scans through a list of Choices. For each first preference, removes the (1), leaving only the
+     * candidate's name.
+     * Returns the list of new (preference-less) Choices.
+     */
+    public static List<Choice> removeFirstPreferenceParenthesesFromChoiceNames(final List<Choice> choices) {
+        List<Choice> choicesWithPlainNames = new ArrayList<>();
+
+        // Add each choice into the set of distinct choices after removing parentheses after name.
+        for (Choice c : choices)  {
+            Preference parsedPreference = parseIRVpreference(c.name());
+            if (parsedPreference.getRank() == 1) {
+                c.setName(parsedPreference.getCandidateName());
+                choicesWithPlainNames.add(c);
+            }
+        }
+
+        return choicesWithPlainNames;
+    }
+
     public static List<Choice> removeParenthesesAndRepeatedNames(final List<Choice> choices) {
         Set<Choice> distinctChoices = new HashSet<>();
 
@@ -69,6 +104,45 @@ public class IRVVoteParsing {
         }
 
         return new ArrayList<Choice>(distinctChoices);
+    }
+
+    /* Checks that the list of choices is sorted according to preference. Throws an exception if the list is
+     * not a valid preference list.
+     * TODO It wouldn't be too hard to sort them, but I think that case never arises anyway.
+     */
+    public static void checkSortIRVPreferences(final List<Choice> choices) {
+        if (choices.isEmpty()) {
+            return;
+        }
+
+        Preference p_current = parseIRVpreference(choices.get(0).name());
+        for (int i =0 ; i < choices.size()-2 ; i++) {
+            Preference p_next = parseIRVpreference(choices.get(i+1).name());
+            if (p_current.getRank() >= p_next.getRank()) {
+                throw new RuntimeException("Error parsing IRV CSV: "+choices);
+            }
+            p_current = p_next;
+        }
+    }
+
+    /** This assumes the oldChoices include explicit parenthesized ranks, while newChoices
+     *  contains the same names but without the parenthesized ranks. It first checks
+     *  that they are properly sorted, then 'removes' the explicit parentheses by replacing
+     *  everything of that form with its corresponding plain name.
+     *  Throws an exception if either the ranks aren't sorted, or there is a name in the
+     *  old choices that doesn't have a corresponding name in the new choices.
+     */
+    public static void updateIRVPreferencesWithNewChoices(List<Choice> oldChoices, List<Choice> newChoices) {
+       checkSortIRVPreferences(oldChoices);
+
+       for (int i =0 ; i < oldChoices.size() ; i++)  {
+           Preference pref = parseIRVpreference(oldChoices.get(i).name());
+           List<Choice> newChoice = newChoices.stream().filter(c -> c.name().equals(pref.getCandidateName())).collect(Collectors.toList());
+           if (newChoice.size() != 1) {
+               throw new RuntimeException("Error parsing CSV"+oldChoices);
+           }
+           oldChoices.set(i, newChoice.get(0));
+       }
     }
 
     /* Parses a string like "Name(n)" where n is a rank, and returns a Preference object with the correct

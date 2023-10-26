@@ -122,6 +122,54 @@ public class IRVVoteParsingTest {
     }
 
     @Test
+    void removeFirstPreferencesTest() {
+        Choice c1 = new Choice("Alice (Zahra) (1)", ContestType.IRV.toString(), false, false);
+        Choice c2 = new Choice("Alice (Zahra)(3)", ContestType.IRV.toString(), false, false);
+        Choice c3 = new Choice("Alice (Not Zahra) (2)", ContestType.IRV.toString(), false, false);
+        Choice c4 = new Choice("Henry (8) (1)", ContestType.IRV.toString(), false, false);
+        Choice c5 = new Choice("Henry (8) (2)", ContestType.IRV.toString(), false, false);
+        List<Choice> choices = new ArrayList<>();
+        Collections.addAll(choices, c1, c2, c3, c4,c5);
+
+        List<Choice> correctedChoices = removeFirstPreferenceParenthesesFromChoiceNames(choices);
+
+        assertEquals(2, correctedChoices.size());
+        assertEquals("Alice (Zahra)", c1.name());
+        assertEquals("Alice (Zahra)(3)" , c2.name());
+        assertEquals("Alice (Not Zahra) (2)", c3.name());
+        assertEquals("Henry (8)",c4.name());
+        assertEquals("Henry (8) (2)",c5.name());
+
+    }
+
+    @Test
+    public void testCheckSortIRVPreferencesTest() {
+
+        Choice c1 = new Choice("Alice (Zahra) (1)", ContestType.IRV.toString(), false, false);
+        Choice c2 = new Choice("Alice (Not Zahra) (2)", ContestType.IRV.toString(), false, false);
+        Choice c3 = new Choice("Henry (8) (3)", ContestType.IRV.toString(), false, false);
+        Choice c4 = new Choice("Henry jnr (4)", ContestType.IRV.toString(), false, false);
+        List<Choice> choices = new ArrayList<>();
+        Collections.addAll(choices, c1, c2, c3, c4);
+
+        checkSortIRVPreferences(choices);
+        assertTrue(true);
+    }
+
+    @Test(expectedExceptions = RuntimeException.class)
+    public void testCheckUnsortedThrowsException() {
+
+        Choice c1 = new Choice("Alice (Zahra) (2)", ContestType.IRV.toString(), false, false);
+        Choice c2 = new Choice("Alice (Not Zahra) (1)", ContestType.IRV.toString(), false, false);
+        Choice c3 = new Choice("Henry (8) (3)", ContestType.IRV.toString(), false, false);
+        Choice c4 = new Choice("Henry jnr (4)", ContestType.IRV.toString(), false, false);
+        List<Choice> choices = new ArrayList<>();
+        Collections.addAll(choices, c1, c2, c3, c4);
+
+        checkSortIRVPreferences(choices);
+
+    }
+    @Test
     private boolean listsEqual(List<String> list1, List<String> list2) {
         if (list1.size() != list2.size()) {
             return false;
