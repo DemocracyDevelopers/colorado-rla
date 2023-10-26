@@ -3,6 +3,8 @@ package us.freeandfair.corla.endpoint;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.junit.After;
+import org.junit.Before;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -19,27 +21,24 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertEquals;
 
 
-@Test(groups = {"integration"})
 public class EstimateSampleSizesTest {
 
   private EstimateSampleSizesTest() {}
 
 
-  @BeforeTest()
+  @BeforeTest
   public void setUp() {
     Setup.setProperties();
     Persistence.beginTransaction();
-
-    Persistence.currentSession().getSessionFactory().getCache().evictAllRegions();
 
     // Create DoSDashboard with some audit information.
     DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
     dosdb.updateAuditInfo(new AuditInfo("general", Instant.now(), Instant.now(),
             "12856782643571354365", BigDecimal.valueOf(0.05)));
-    Persistence.saveOrUpdate(dosdb);
-    Persistence.flushAndClear();
+    Persistence.persist(dosdb);
   }
 
   @AfterTest()
@@ -47,6 +46,7 @@ public class EstimateSampleSizesTest {
     try {
       Persistence.rollbackTransaction();
     } catch (Exception e) {
+      System.out.println(e.getMessage());
     }
   }
 
@@ -66,8 +66,7 @@ public class EstimateSampleSizesTest {
     BallotManifestInfo bmi = new BallotManifestInfo(cty.id(), 1, "1",
             total, "Bin 1", 0L, (long) total-1);
 
-    Persistence.save(bmi);
-    Persistence.flushAndClear();
+    Persistence.persist(bmi);
 
     Set<String> candidates = candidate_votes.keySet();
 
@@ -77,8 +76,7 @@ public class EstimateSampleSizesTest {
     Contest c1 = new Contest(contest, cty, "PLURALITY", choices, 1,
             1, 0);
 
-    Persistence.saveOrUpdate(c1);
-    Persistence.flushAndClear();
+    Persistence.persist(c1);
 
     CountyContestResult ctr = new CountyContestResult(cty, c1);
 
@@ -92,8 +90,7 @@ public class EstimateSampleSizesTest {
 
     ctr.updateResults();
 
-    Persistence.saveOrUpdate(ctr);
-    Persistence.flushAndClear();
+    Persistence.persist(ctr);
   }
 
   /**
@@ -125,10 +122,15 @@ public class EstimateSampleSizesTest {
       createBroomfieldBoardOfTransport();
 
       EstimateSampleSizes esr = new EstimateSampleSizes();
-      Map<String,Integer> samples = esr.estimateSampleSizes();
+      List<String[]> samples = esr.estimateSampleSizes();
 
-      System.out.println("[Boulder] Board of Parks " + samples.get("Board of Parks").toString());
-      System.out.println("[Broomfield] Board of Transport " + samples.get("Board of Transport").toString());
+      assertEquals(2, samples.size());
+
+      for (String[] s: samples){
+        assertEquals(6, s.length);
+        System.out.println(String.join(",", s));
+      }
+
 
     } catch(Exception e){
       System.out.println(e.getMessage());
@@ -144,6 +146,7 @@ public class EstimateSampleSizesTest {
     try {
       loadIRVContestConfiguration("assertions/irv_estimation_test_case2.json");
       computeAndDisplaySampleSizes();
+
 
     } catch(Exception e){
       System.out.println(e.getMessage());
@@ -198,8 +201,7 @@ public class EstimateSampleSizesTest {
             "1",
             "a",
             contest_info);
-    Persistence.save(cvr);
-    Persistence.flushAndClear();
+    Persistence.persist(cvr);
     return cvr;
   }
 
@@ -208,17 +210,17 @@ public class EstimateSampleSizesTest {
    * Computes sample sizes for all contests in the database. Returns
    * these samples sizes, and prints them to stdout.
    */
-  private Map<String, Integer> computeAndDisplaySampleSizes(){
+  private List<String[]> computeAndDisplaySampleSizes(){
     // Call core logic of the EstimateSampleSizes endpoint.
     EstimateSampleSizes esr = new EstimateSampleSizes();
 
     // Get a map between contest name and the initial sample size expected
     // for that contest.
-    Map<String, Integer> samples = esr.estimateSampleSizes();
+    List<String[]> samples = esr.estimateSampleSizes();
 
     // Print sample sizes (for demonstration).
-    for (Map.Entry<String, Integer> entry : samples.entrySet()) {
-      System.out.println(entry.getKey() + ": " + entry.getValue());
+    for (String[] s: samples){
+      System.out.println(String.join(",", s));
     }
 
     return samples;
@@ -268,12 +270,10 @@ public class EstimateSampleSizesTest {
         BallotManifestInfo bmi = new BallotManifestInfo(cty.id(), 1, "1",
                 universe, "Bin 1", 0L, (long) universe-1);
 
-        Persistence.save(bmi);
-
-        Persistence.saveOrUpdate(cty);
-        Persistence.save(co);
-        Persistence.save(ctr);
-        Persistence.flushAndClear();
+        Persistence.persist(bmi);
+        Persistence.persist(cty);
+        Persistence.persist(co);
+        Persistence.persist(ctr);
 
         // Create and persist the assertions for the contest.
         loadAssertions(assertions, name, choices, universe);
@@ -317,14 +317,12 @@ public class EstimateSampleSizesTest {
       if(isnen){
         NENAssertion nen = new NENAssertion(contest, choices.get(winner).name(),
                 choices.get(loser).name(), margin, universe, difficulty, continuing);
-        Persistence.saveOrUpdate(nen);
-        Persistence.flushAndClear();
+        Persistence.persist(nen);
       }
       else{
         NEBAssertion neb = new NEBAssertion(contest, choices.get(winner).name(),
                 choices.get(loser).name(), margin, universe, difficulty);
-        Persistence.saveOrUpdate(neb);
-        Persistence.flushAndClear();
+        Persistence.persist(neb);
       }
     }
   }

@@ -22,6 +22,7 @@ import us.freeandfair.corla.persistence.Persistence;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.COMPLETE_AUDIT_INFO_SET;
@@ -103,10 +104,34 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
   }
 
   /**
-   * Compute sample sizes for all contests for which CountyContestResults exist in the database.
-   * @return A map between contest name and the estimated sample size required for that contest.
+   * Construct a sample size estimate data row for a comparison audit
+   * @param ca     Comparison audit whose sample size is being estimated.
+   * @return Array of strings defining: county name (or "Multiple if the audit crosses multiple counties);
+   * contest name; contest type; ballots cast; diluted margin; and estimated sample size.
    */
-  public Map<String, Integer> estimateSampleSizes(){
+  private String[] createSampleEstimateRow(final ComparisonAudit ca){
+    // A multi-jurisdictional contest will involve multiple counties.
+    final List<String> countyNames = ca.getCounties().stream().map(County::name).collect(Collectors.toList());
+
+    // All contests will have the same contest type (otherwise createAuditForSampleEstimation will have
+    // thrown an exception.
+    final List<String> contestTypes = ca.contestResult().getContests().stream().map(Contest::description)
+            .collect(Collectors.toList());
+    final String contestType = contestTypes.get(0);
+
+    final String county = countyNames.size() > 1 ? "Multiple" : countyNames.get(0);
+
+    return new String[]{county, ca.getContestName(), contestType, ca.contestResult().getBallotCount().toString(),
+      ca.getDilutedMargin().toString(), ca.estimatedSamplesToAudit().toString()};
+  }
+
+  /**
+   * Compute sample sizes for all contests for which CountyContestResults exist in the database.
+   * @return A list of string arrays containing rows with the following data: county name,
+   * contest name, contest type, single or multi-jurisdictional, ballots cast, diluted margin,
+   * and estimated sample size.
+   */
+  public List<String[]> estimateSampleSizes(){
     // For estimation of sample sizes for each audit, we need to collect the ContestResult
     // for each contest. For Plurality audits, this will involve tabulating the votes across
     // Counties for that contest. For preliminary sample size estimation, we assign
@@ -130,11 +155,9 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
             createAuditForSampleEstimation(cr, dosdb.auditInfo().riskLimit()))
             .collect(Collectors.toList());
 
-    // Call estimatedSamplesToAudit() on each ComparisonAudit. Create a map between contest name
-    // and the preliminary sample size. Note that each ContestResult upon which a ComparisonAudit
-    // is based will have a set of associated contest IDs.
-    return comparisonAudits.stream().collect(Collectors.toMap(
-            ComparisonAudit::getContestName, ComparisonAudit::estimatedSamplesToAudit));
+    // Call estimatedSamplesToAudit() on each ComparisonAudit. Create a list of rows where
+    // each row is an array of strings, containing:
+    return comparisonAudits.stream().map(this::createSampleEstimateRow).collect(Collectors.toList());
   }
 
   /**
@@ -144,24 +167,22 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
   public String endpointBody(final Request the_request, final Response the_response) {
     if (my_asm.get().currentState() != COMPLETE_AUDIT_INFO_SET) {
       // We can only compute preliminary sample size estimates once the ASM has
-      // reached the COMPLETE_AUDIT_INFO_SET state and assertions have been
-      // generated for all IRV contests for which it is possible to form assertions.
-      // We may create a new ASM state ASSERTIONS_GENERATED_OK (or similar) to indicate
-      // when the system has completed this step, and associated events.
+      // reached the COMPLETE_AUDIT_INFO_SET state (and assertions have been
+      // generated for all IRV contests for which it is possible to form assertions.)
 
-      // For now, require the ASM to be in the COMPLETE_AUDIT_INFO_SET state.
       serverError(the_response, "Complete audit information has not been set");
       return my_endpoint_result.get();
     }
 
     // Estimate sample sizes
-    final Map<String, Integer> samples = estimateSampleSizes();
+    final List<String[]> samples = estimateSampleSizes();
 
     // Update response with the sample estimates for each contest.
     try {
       if (samples.isEmpty()) {
         dataNotFound(the_response, "No Comparison Audits found.");
       } else {
+        // Temporary; endpoint will be designed to export samples to CSV.
         okJSON(the_response, Main.GSON.toJson(samples));
       }
     } catch (final Exception e) {
