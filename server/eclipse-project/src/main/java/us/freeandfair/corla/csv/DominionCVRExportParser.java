@@ -43,6 +43,7 @@ import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.query.CountyContestResultQueries;
 import us.freeandfair.corla.util.DBExceptionUtil;
 import us.freeandfair.corla.util.ExponentialBackoffHelper;
+import us.freeandfair.corla.util.IRVParsingException;
 
 import static us.freeandfair.corla.model.ContestType.IRV;
 import static us.freeandfair.corla.util.IRVVoteParsing.*;
@@ -375,8 +376,7 @@ public class DominionCVRExportParser {
         final String explanation = explanationLine.get(index).trim();
         // "Write-in" is a fictitious candidate that denotes the beginning of
         // the list of qualified write-in candidates
-        // FIXME need to add "Write-in(1)", "Write-in(2)" etc.
-        final boolean isFictitious = "Write-in".equalsIgnoreCase(choice);
+        final boolean isFictitious = "Write-in".equalsIgnoreCase(choice) || IsIRVWriteIn(choice);
         choices.add(new Choice(choice, explanation, isWriteIn, isFictitious));
         if (isFictitious) {
           // consider all subsequent choices in this contest to be qualified
@@ -386,9 +386,17 @@ public class DominionCVRExportParser {
         index = index + 1;
       }
 
-      // FIXME for IRV, votesAllowed should be 1 always.
+      int winnersAllowedThisContest;
+      if (contestTypes.get(contestName).equals(ContestType.IRV)) {
+        // For IRV, votesAllowed should be 1 always.
+        winnersAllowedThisContest = 1;
+      } else {
+        // Replicating the assumption that for plurality, the winners allowed and the votes allowed are the same.
+        winnersAllowedThisContest = votesAllowed.get(contestName);
+      }
+
       final Contest c = new Contest(contestName, my_county, contestTypes.get(contestName).toString(), choices,
-                                    votesAllowed.get(contestName), votesAllowed.get(contestName),
+                                    votesAllowed.get(contestName), winnersAllowedThisContest,
                                     contest_count);
       LOGGER.debug(String.format("[addContests: county=%s, contest=%s", my_county.name(), c));
 
@@ -533,7 +541,16 @@ public class DominionCVRExportParser {
 
       // if this contest was on the ballot, add it to the votes
       if (present) {
-         contest_info.add(new CVRContestInfo(co, null, null, votes));
+          // If this is an IRV contest, rewrite the vote to remove parenthesized ranks.
+          if (co.description().equalsIgnoreCase(ContestType.IRV.toString())) {
+            try {
+              contest_info.add(new CVRContestInfo(co, null, null, parseValidIRVVote(votes)));
+            } catch (IRVParsingException e) {
+              throw new IllegalArgumentException(e);
+            }
+          } else {
+            contest_info.add(new CVRContestInfo(co, null, null, votes));
+          }
       }
     }
 
@@ -741,14 +758,11 @@ public class DominionCVRExportParser {
       }
         
 
-      // Keep a list of the parsed cvrs, for later IRV choice updating.
-      List<CastVoteRecord> cvrs = new ArrayList<>();
-
       // subsequent lines contain cast vote records
       while (records.hasNext()) {
         final CSVRecord cvr_line = records.next();
         try {
-          cvrs.add(extractCVR(cvr_line));
+          extractCVR(cvr_line);
         } catch (final Exception e) {
           LOGGER.error(e.getClass());
           LOGGER.error(e.getMessage());
@@ -771,6 +785,7 @@ public class DominionCVRExportParser {
         checkForFlush();
       }
 
+      /*
       for ( CastVoteRecord cvr : cvrs ) {
          for (CVRContestInfo cInfo : cvr.contestInfo()) {
            List<String> newVote = parseValidIRVVote(cInfo.choices());
@@ -778,6 +793,7 @@ public class DominionCVRExportParser {
          }
          Persistence.saveOrUpdate(cvr);
       }
+      */
 
       for (final CountyContestResult r : my_results) {
         // For IRV contests, reset the contest choice names by removing the parenthesized ranks.

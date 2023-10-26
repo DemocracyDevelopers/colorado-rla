@@ -52,6 +52,7 @@ import javax.persistence.Version;
 
 import us.freeandfair.corla.persistence.PersistentEntity;
 import us.freeandfair.corla.persistence.StringSetConverter;
+import us.freeandfair.corla.util.IRVParsingException;
 import us.freeandfair.corla.util.SuppressFBWarnings;
 
 /**
@@ -292,7 +293,8 @@ public class CountyContestResult implements PersistentEntity, Serializable {
    * of choices with preferences, .e.g "Alice (1)", "Alice (2)", "Bob (1)", "Bob (2)" and resets them
    * to just the 'real' candidate names, e.g. "Alice", "Bob".
    */
-  public void removeParenthesesFromChoiceNames() {
+  /*
+  public void removeParenthesesFromChoiceNames() throws IRVParsingException {
     my_vote_totals.clear();
     List<Choice> updatedChoices = removeParenthesesAndRepeatedNames(my_contest.getChoices());
     my_contest.setChoices(updatedChoices);
@@ -303,6 +305,7 @@ public class CountyContestResult implements PersistentEntity, Serializable {
       }
     }
   }
+  */
 
   /**
    * Used for IRV Ballots, as the first stage of simplifying candidate names.  It takes the artificial list
@@ -311,10 +314,15 @@ public class CountyContestResult implements PersistentEntity, Serializable {
    * Non-first preferences are unaffected.
    */
   public List<Choice> removeParenthesesFromFirstPreferenceChoiceNames() {
+    try {
+
     my_vote_totals.clear();
     List<Choice> updatedChoices = removeFirstPreferenceParenthesesFromChoiceNames(my_contest.getChoices());
     reset();
     return updatedChoices;
+    } catch (IRVParsingException e) {
+      throw new IllegalArgumentException(e);
+    }
   }
 
   /**
@@ -537,12 +545,17 @@ public class CountyContestResult implements PersistentEntity, Serializable {
    * Update the vote totals using the data from the specified CVR.
    * 
    * @param the_cvr The CVR.
+   * TODO: This is possibly another good place for an IRVCountyContestResult subclass. Rather than special-casing IRV
+   * in this method, we could just override this method to not do the plurality count in the IRV case. (The plurality
+   * count of course doesn't mean much in the IRV case anyway.)
    */
   public void addCVR(final CastVoteRecord the_cvr) {
     final CVRContestInfo ci = the_cvr.contestInfoForContest(my_contest);
     if (ci != null) {
-      for (final String s : ci.choices()) {
-        my_vote_totals.put(s, my_vote_totals.get(s) + 1);
+      if (!my_contest.description().equals(ContestType.IRV.toString())) {
+        for (final String s : ci.choices()) {
+          my_vote_totals.put(s, my_vote_totals.get(s) + 1);
+        }
       }
       my_contest_ballot_count = Integer.valueOf(my_contest_ballot_count + 1);
     }

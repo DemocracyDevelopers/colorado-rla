@@ -24,7 +24,7 @@ public class IRVVoteParsingTest {
 
     // Check that a valid vote is parsed properly.
     @Test
-    public void parseValidIRVVoteTest() {
+    public void parseValidIRVVoteTest() throws IRVParsingException {
         List<String> inputVote = Arrays.asList("Alice(2)", "Chuan(1)","Bob(3)");
         List<String> expectedOutputVote = Arrays.asList("Chuan","Alice","Bob");
 
@@ -33,14 +33,14 @@ public class IRVVoteParsingTest {
 
     // Check that an effort to convert an invalid vote into a sorted list throws an exception.
     @Test(expectedExceptions = RuntimeException.class)
-    void whenGivenInvalidVote_parseValidIRVVote_throwsException() {
+    void whenGivenInvalidVote_parseValidIRVVote_throwsException() throws IRVParsingException {
         List<String> invalidInputVote = Arrays.asList("Alice(1)", "Chuan(1)","Bob(3)");
 
         parseValidIRVVote(invalidInputVote);
     }
 
     @Test
-    void parseValidEmptyIRVVoteTest() {
+    void parseValidEmptyIRVVoteTest() throws IRVParsingException {
         List<String> invalidInputVote = new ArrayList<>();
 
         List<String> output = parseValidIRVVote(invalidInputVote);
@@ -48,7 +48,7 @@ public class IRVVoteParsingTest {
     }
 
     @Test
-    void parseIRVVoteTest() {
+    void parseIRVVoteTest() throws IRVParsingException {
         List<String> inputVote = Arrays.asList("Alice(2)", "Chuan(1)","Bob(3)");
         IRVChoices irvChoices = parseIRVVote(inputVote);
 
@@ -56,7 +56,7 @@ public class IRVVoteParsingTest {
     }
 
     @Test
-    void parseInvalidIRVVoteTest() {
+    void parseInvalidIRVVoteTest() throws IRVParsingException {
         List<String> inputVote = Arrays.asList("Alice(1)", "Chuan(1)","Bob(3)");
         IRVChoices irvChoices = parseIRVVote(inputVote);
 
@@ -66,8 +66,20 @@ public class IRVVoteParsingTest {
         assertTrue(atLeastOneEqual);
     }
 
+    @Test (expectedExceptions = IRVParsingException.class)
+    void parseExampleIRVVoteTest() throws IRVParsingException {
+        List<String> inputVote = List.of("Candidate 5(1)", "Candidate 6(2)", "Candidate 7(3)", "Candidate 8(4)", "Candidate 9(5)", "Candidate 10(6)", "Candidate 11(7)", "Candidate 12(8)", "Candidate 2(9)","Candidate 1(10) ");
+        IRVChoices irvChoices = parseIRVVote(inputVote);
+    }
+
+    @Test (expectedExceptions = IRVParsingException.class)
+    void parseBadExampleIRVVoteTest() throws IRVParsingException {
+        List<String> inputVote = List.of("Candidate 5(1)", "Candidate 6(2)", "Candidate 7(3)", "Candidate 8(4)", "Candidate 9(5)", "Candidate 10(6)", "Candidate 11(7)", "Candidate 12(8)", "Candidate 1(10) ");
+        IRVChoices irvChoices = parseIRVVote(inputVote);
+    }
+
     @Test
-    void parseBlankIRVVoteTest() {
+    void parseBlankIRVVoteTest() throws IRVParsingException {
        List<String>  inputVote = new ArrayList<>();
        IRVChoices irvChoices = parseIRVVote(inputVote);
 
@@ -75,7 +87,7 @@ public class IRVVoteParsingTest {
     }
 
     @Test
-    void tidyIRVBallotChoices() {
+    void tidyIRVBallotChoices() throws IRVParsingException {
         Choice c1 = new Choice("Alice(1)", ContestType.IRV.toString(), false, false);
         Choice c2 = new Choice("Alice(2)", ContestType.IRV.toString(), false, false);
         Choice c3 = new Choice("Bob(1)", ContestType.IRV.toString(), false, false);
@@ -93,14 +105,14 @@ public class IRVVoteParsingTest {
     }
 
     @Test
-    void tidyBlankIRVBallotChoices() {
+    void tidyBlankIRVBallotChoices() throws IRVParsingException {
         List<Choice> choices  = new ArrayList<>();
         List<Choice> updatedChoices = removeParenthesesAndRepeatedNames(choices);
         assertEquals(0, updatedChoices.size());
     }
 
     @Test
-    void trickyIRVBallotChoices() {
+    void trickyIRVBallotChoices() throws IRVParsingException {
         Choice c1 = new Choice("Alice (Zahra) (1)", ContestType.IRV.toString(), false, false);
         Choice c2 = new Choice("Alice (Zahra)(3)", ContestType.IRV.toString(), false, false);
         Choice c3 = new Choice("Alice (Not Zahra) (2)", ContestType.IRV.toString(), false, false);
@@ -122,7 +134,7 @@ public class IRVVoteParsingTest {
     }
 
     @Test
-    void removeFirstPreferencesTest() {
+    void removeFirstPreferencesTest() throws IRVParsingException {
         Choice c1 = new Choice("Alice (Zahra) (1)", ContestType.IRV.toString(), false, false);
         Choice c2 = new Choice("Alice (Zahra)(3)", ContestType.IRV.toString(), false, false);
         Choice c3 = new Choice("Alice (Not Zahra) (2)", ContestType.IRV.toString(), false, false);
@@ -143,7 +155,7 @@ public class IRVVoteParsingTest {
     }
 
     @Test
-    public void testCheckSortIRVPreferencesTest() {
+    public void testCheckSortIRVPreferencesTest() throws IRVParsingException {
 
         Choice c1 = new Choice("Alice (Zahra) (1)", ContestType.IRV.toString(), false, false);
         Choice c2 = new Choice("Alice (Not Zahra) (2)", ContestType.IRV.toString(), false, false);
@@ -157,7 +169,7 @@ public class IRVVoteParsingTest {
     }
 
     @Test(expectedExceptions = RuntimeException.class)
-    public void testCheckUnsortedThrowsException() {
+    public void testCheckUnsortedThrowsException() throws IRVParsingException {
 
         Choice c1 = new Choice("Alice (Zahra) (2)", ContestType.IRV.toString(), false, false);
         Choice c2 = new Choice("Alice (Not Zahra) (1)", ContestType.IRV.toString(), false, false);

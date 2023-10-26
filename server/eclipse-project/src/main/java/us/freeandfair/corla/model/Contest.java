@@ -13,6 +13,7 @@
 package us.freeandfair.corla.model;
 
 import static us.freeandfair.corla.util.EqualsHashcodeHelper.*;
+import static us.freeandfair.corla.util.IRVVoteParsing.parseIRVPreference;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -40,7 +41,9 @@ import javax.persistence.Version;
 import com.google.gson.annotations.JsonAdapter;
 
 import us.freeandfair.corla.json.ContestJsonAdapter;
+import us.freeandfair.corla.model.IRVBallots.Preference;
 import us.freeandfair.corla.persistence.PersistentEntity;
+import us.freeandfair.corla.util.IRVParsingException;
 
 /**
  * The definition of a contest; comprises a contest name and a set of
@@ -217,7 +220,6 @@ public class Contest implements PersistentEntity, Serializable {
   }
 
   public List<Choice> getChoices() { return my_choices; }
-  public void setChoices(final List<Choice> choices) {my_choices = choices; }
 
   /**
    * Checks to see if the specified choice is valid for this contest.
@@ -229,6 +231,28 @@ public class Contest implements PersistentEntity, Serializable {
     for (final Choice c : my_choices) {
       if (c.name().equals(the_choice)) {
         return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Checks to see if the specified choice is a valid name of an IRV 'choice'
+   * That is, this should return true if the choice is "Alice" and the my_choices
+   * list includes "Alice(n)" for any n.
+   * @param s a string assumed to be a plain name
+   * @return true if any choice matches s(pref).
+   */
+  public boolean isValidIRVChoiceName(String s) {
+    for (final Choice c : my_choices) {
+      try {
+        Preference pref = parseIRVPreference(c.name());
+        if (pref.getCandidateName().equalsIgnoreCase(s)) {
+          return true;
+        }
+      } catch (IRVParsingException e) {
+        // It's OK if the choices don't parse as valid IRV choices; but then this is definitely not a valid IRV option.
+        return false;
       }
     }
     return false;
@@ -320,4 +344,5 @@ public class Contest implements PersistentEntity, Serializable {
   public int hashCode() {
     return nullableHashCode(name().hashCode());
   }
+
 }

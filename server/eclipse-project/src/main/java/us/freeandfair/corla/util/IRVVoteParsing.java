@@ -1,8 +1,6 @@
 package us.freeandfair.corla.util;
 
-import org.apache.commons.lang.StringUtils;
 import us.freeandfair.corla.model.Choice;
-import us.freeandfair.corla.model.ContestType;
 import us.freeandfair.corla.model.IRVBallots.IRVChoices;
 import us.freeandfair.corla.model.IRVBallots.Preference;
 
@@ -20,11 +18,11 @@ public class IRVVoteParsing {
      * in parentheses, and returns the corresponding IRVChoices.  Note that this does _not_ check for
      * validity - the returned IRVChoices may include duplicates, repeated preferences, etc.
      */
-    public static IRVChoices parseIRVVote(final List<String> votes) {
+    public static IRVChoices parseIRVVote(final List<String> votes) throws IRVParsingException {
        List<Preference> choices = new ArrayList<>();
 
        for (String v : votes) {
-           choices.add(parseIRVpreference(v));
+           choices.add(parseIRVPreference(v));
        }
 
        return new IRVChoices(choices);
@@ -36,11 +34,11 @@ public class IRVVoteParsing {
      * If valid, it returns a list of names only, sorted by preference order (highest preference first).
      * If not valid, it throws an exception.
      */
-    public static List<String> parseValidIRVVote(final List<String> votes) {
+    public static List<String> parseValidIRVVote(final List<String> votes) throws IRVParsingException {
        IRVChoices choices = parseIRVVote(votes);
 
        if (!choices.IsValid())   {
-           throw new RuntimeException("Error parsing IRV vote: "+votes);
+           throw new IRVParsingException("Error parsing IRV vote: "+votes);
        }
 
        // choices are valid.
@@ -59,12 +57,12 @@ public class IRVVoteParsing {
      * This is intended for choices (i.e. Candidate names), not for votes, because it ignores
      * rank information.
      */
-    public static void removeParenthesesAndRepeatedNamesFromChoices(final List<Choice> choices) {
+    public static void removeParenthesesAndRepeatedNamesFromChoices(final List<Choice> choices) throws IRVParsingException {
         Set<Choice> distinctChoices = new HashSet<>();
 
         // Add each choice into the set of distinct choices after removing parentheses after name.
         for (Choice c : choices)  {
-            Preference parsedPreference = parseIRVpreference(c.name());
+            Preference parsedPreference = parseIRVPreference(c.name());
             c.setName(parsedPreference.getCandidateName());
             distinctChoices.add(c);
         }
@@ -78,12 +76,12 @@ public class IRVVoteParsing {
      * candidate's name.
      * Returns the list of new (preference-less) Choices.
      */
-    public static List<Choice> removeFirstPreferenceParenthesesFromChoiceNames(final List<Choice> choices) {
+    public static List<Choice> removeFirstPreferenceParenthesesFromChoiceNames(final List<Choice> choices) throws IRVParsingException {
         List<Choice> choicesWithPlainNames = new ArrayList<>();
 
         // Add each choice into the set of distinct choices after removing parentheses after name.
         for (Choice c : choices)  {
-            Preference parsedPreference = parseIRVpreference(c.name());
+            Preference parsedPreference = parseIRVPreference(c.name());
             if (parsedPreference.getRank() == 1) {
                 c.setName(parsedPreference.getCandidateName());
                 choicesWithPlainNames.add(c);
@@ -93,12 +91,12 @@ public class IRVVoteParsing {
         return choicesWithPlainNames;
     }
 
-    public static List<Choice> removeParenthesesAndRepeatedNames(final List<Choice> choices) {
+    public static List<Choice> removeParenthesesAndRepeatedNames(final List<Choice> choices) throws IRVParsingException {
         Set<Choice> distinctChoices = new HashSet<>();
 
         // Add each choice into the set of distinct choices after removing parentheses after name.
         for (Choice c : choices)  {
-            Preference parsedPreference = parseIRVpreference(c.name());
+            Preference parsedPreference = parseIRVPreference(c.name());
             c.setName(parsedPreference.getCandidateName());
             distinctChoices.add(c);
         }
@@ -110,16 +108,16 @@ public class IRVVoteParsing {
      * not a valid preference list.
      * TODO It wouldn't be too hard to sort them, but I think that case never arises anyway.
      */
-    public static void checkSortIRVPreferences(final List<Choice> choices) {
+    public static void checkSortIRVPreferences(final List<Choice> choices) throws IRVParsingException {
         if (choices.isEmpty()) {
             return;
         }
 
-        Preference p_current = parseIRVpreference(choices.get(0).name());
+        Preference p_current = parseIRVPreference(choices.get(0).name());
         for (int i =0 ; i < choices.size()-2 ; i++) {
-            Preference p_next = parseIRVpreference(choices.get(i+1).name());
+            Preference p_next = parseIRVPreference(choices.get(i+1).name());
             if (p_current.getRank() >= p_next.getRank()) {
-                throw new RuntimeException("Error parsing IRV CSV: "+choices);
+                throw new IRVParsingException("Error parsing IRV CSV: "+choices);
             }
             p_current = p_next;
         }
@@ -132,24 +130,38 @@ public class IRVVoteParsing {
      *  Throws an exception if either the ranks aren't sorted, or there is a name in the
      *  old choices that doesn't have a corresponding name in the new choices.
      */
-    public static void updateIRVPreferencesWithNewChoices(List<Choice> oldChoices, List<Choice> newChoices) {
+    public static void updateIRVPreferencesWithNewChoices(List<Choice> oldChoices, List<Choice> newChoices) throws IRVParsingException {
        checkSortIRVPreferences(oldChoices);
 
        for (int i =0 ; i < oldChoices.size() ; i++)  {
-           Preference pref = parseIRVpreference(oldChoices.get(i).name());
+           Preference pref = parseIRVPreference(oldChoices.get(i).name());
            List<Choice> newChoice = newChoices.stream().filter(c -> c.name().equals(pref.getCandidateName())).collect(Collectors.toList());
            if (newChoice.size() != 1) {
-               throw new RuntimeException("Error parsing CSV"+oldChoices);
+               throw new IRVParsingException("Error parsing CSV"+oldChoices);
            }
            oldChoices.set(i, newChoice.get(0));
        }
+    }
+
+    /** Tests whether a string is an IRV write-in, i.e. "Write-in (n)" for some n.
+     */
+    public static boolean IsIRVWriteIn (String choice) {
+
+        try {
+            Preference pref = parseIRVPreference(choice);
+            return pref.getCandidateName().equalsIgnoreCase("Write-in");
+        } catch (IRVParsingException e) {
+            // It's OK to have an IRVParsing exception here - it just means that it's not an IRV choice,
+            // and hence definitely not an IRV write-in.
+            return true;
+        }
     }
 
     /* Parses a string like "Name(n)" where n is a rank, and returns a Preference object with the correct
      * rank.
      * Throws an exception if the input doesn't fit into the name(digits) pattern.
      */
-    private static Preference parseIRVpreference(final String nameAndPref) {
+    public static Preference parseIRVPreference(final String nameAndPref) throws IRVParsingException {
 
         // Look for digits in parentheses at the end of the string.
         String regexp ="\\((\\d+\\))$";
@@ -162,8 +174,10 @@ public class IRVVoteParsing {
             return new Preference(Integer.parseInt(rank2), vote.trim());
 
         } catch (NumberFormatException | IndexOutOfBoundsException e2) {
-            throw new RuntimeException("Couldn't parse candidate-preference: " + nameAndPref);
+            throw new IRVParsingException("Couldn't parse candidate-preference: " + nameAndPref);
         }
     }
+
+
 }
 
