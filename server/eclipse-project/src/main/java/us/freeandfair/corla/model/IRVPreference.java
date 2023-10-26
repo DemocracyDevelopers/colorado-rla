@@ -1,7 +1,7 @@
-package us.freeandfair.corla.model.IRVBallots;
+package us.freeandfair.corla.model;
 
 
-public class Preference implements Comparable<Preference> {
+public class IRVPreference implements Comparable<IRVPreference> {
 
     private final Integer rank;
     private final String candidateName;
@@ -13,7 +13,7 @@ public class Preference implements Comparable<Preference> {
     public String getCandidateName() {
         return candidateName;
     }
-    public Preference(Integer r, String name) {
+    public IRVPreference(Integer r, String name) {
         rank = r;
         candidateName = name;
     }
@@ -21,7 +21,7 @@ public class Preference implements Comparable<Preference> {
     // We only care about whether the rank is lower than the other rank,
     // not the name of the candidate.
     @Override
-    public int compareTo(Preference preference) {
+    public int compareTo(IRVPreference preference) {
         return this.rank.compareTo(preference.rank);
     }
 

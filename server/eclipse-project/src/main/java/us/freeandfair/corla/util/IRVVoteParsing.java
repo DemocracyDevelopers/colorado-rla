@@ -1,8 +1,8 @@
 package us.freeandfair.corla.util;
 
 import us.freeandfair.corla.model.Choice;
-import us.freeandfair.corla.model.IRVBallots.IRVChoices;
-import us.freeandfair.corla.model.IRVBallots.Preference;
+import us.freeandfair.corla.model.IRVChoices;
+import us.freeandfair.corla.model.IRVPreference;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -19,7 +19,7 @@ public class IRVVoteParsing {
      * validity - the returned IRVChoices may include duplicates, repeated preferences, etc.
      */
     public static IRVChoices parseIRVVote(final List<String> votes) throws IRVParsingException {
-       List<Preference> choices = new ArrayList<>();
+       List<IRVPreference> choices = new ArrayList<>();
 
        for (String v : votes) {
            choices.add(parseIRVPreference(v));
@@ -62,7 +62,7 @@ public class IRVVoteParsing {
 
         // Add each choice into the set of distinct choices after removing parentheses after name.
         for (Choice c : choices)  {
-            Preference parsedPreference = parseIRVPreference(c.name());
+            IRVPreference parsedPreference = parseIRVPreference(c.name());
             c.setName(parsedPreference.getCandidateName());
             distinctChoices.add(c);
         }
@@ -81,7 +81,7 @@ public class IRVVoteParsing {
 
         // Add each choice into the set of distinct choices after removing parentheses after name.
         for (Choice c : choices)  {
-            Preference parsedPreference = parseIRVPreference(c.name());
+            IRVPreference parsedPreference = parseIRVPreference(c.name());
             if (parsedPreference.getRank() == 1) {
                 c.setName(parsedPreference.getCandidateName());
                 choicesWithPlainNames.add(c);
@@ -96,7 +96,7 @@ public class IRVVoteParsing {
 
         // Add each choice into the set of distinct choices after removing parentheses after name.
         for (Choice c : choices)  {
-            Preference parsedPreference = parseIRVPreference(c.name());
+            IRVPreference parsedPreference = parseIRVPreference(c.name());
             c.setName(parsedPreference.getCandidateName());
             distinctChoices.add(c);
         }
@@ -113,9 +113,9 @@ public class IRVVoteParsing {
             return;
         }
 
-        Preference p_current = parseIRVPreference(choices.get(0).name());
+        IRVPreference p_current = parseIRVPreference(choices.get(0).name());
         for (int i =0 ; i < choices.size()-2 ; i++) {
-            Preference p_next = parseIRVPreference(choices.get(i+1).name());
+            IRVPreference p_next = parseIRVPreference(choices.get(i+1).name());
             if (p_current.getRank() >= p_next.getRank()) {
                 throw new IRVParsingException("Error parsing IRV CSV: "+choices);
             }
@@ -134,7 +134,7 @@ public class IRVVoteParsing {
        checkSortIRVPreferences(oldChoices);
 
        for (int i =0 ; i < oldChoices.size() ; i++)  {
-           Preference pref = parseIRVPreference(oldChoices.get(i).name());
+           IRVPreference pref = parseIRVPreference(oldChoices.get(i).name());
            List<Choice> newChoice = newChoices.stream().filter(c -> c.name().equals(pref.getCandidateName())).collect(Collectors.toList());
            if (newChoice.size() != 1) {
                throw new IRVParsingException("Error parsing CSV"+oldChoices);
@@ -148,7 +148,7 @@ public class IRVVoteParsing {
     public static boolean IsIRVWriteIn (String choice) {
 
         try {
-            Preference pref = parseIRVPreference(choice);
+            IRVPreference pref = parseIRVPreference(choice);
             return pref.getCandidateName().equalsIgnoreCase("Write-in");
         } catch (IRVParsingException e) {
             // It's OK to have an IRVParsing exception here - it just means that it's not an IRV choice,
@@ -161,7 +161,7 @@ public class IRVVoteParsing {
      * rank.
      * Throws an exception if the input doesn't fit into the name(digits) pattern.
      */
-    public static Preference parseIRVPreference(final String nameAndPref) throws IRVParsingException {
+    public static IRVPreference parseIRVPreference(final String nameAndPref) throws IRVParsingException {
 
         // Look for digits in parentheses at the end of the string.
         String regexp ="\\((\\d+\\))$";
@@ -171,7 +171,7 @@ public class IRVVoteParsing {
             String rank1 = nameAndPref.replace(vote, "");
                     String rank2 = rank1.trim().split("[\\(\\)]")[1];
 
-            return new Preference(Integer.parseInt(rank2), vote.trim());
+            return new IRVPreference(Integer.parseInt(rank2), vote.trim());
 
         } catch (NumberFormatException | IndexOutOfBoundsException e2) {
             throw new IRVParsingException("Couldn't parse candidate-preference: " + nameAndPref);

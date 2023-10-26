@@ -41,7 +41,6 @@ import javax.persistence.Version;
 import com.google.gson.annotations.JsonAdapter;
 
 import us.freeandfair.corla.json.ContestJsonAdapter;
-import us.freeandfair.corla.model.IRVBallots.Preference;
 import us.freeandfair.corla.persistence.PersistentEntity;
 import us.freeandfair.corla.util.IRVParsingException;
 
@@ -246,7 +245,7 @@ public class Contest implements PersistentEntity, Serializable {
   public boolean isValidIRVChoiceName(String s) {
     for (final Choice c : my_choices) {
       try {
-        Preference pref = parseIRVPreference(c.name());
+        IRVPreference pref = parseIRVPreference(c.name());
         if (pref.getCandidateName().equalsIgnoreCase(s)) {
           return true;
         }

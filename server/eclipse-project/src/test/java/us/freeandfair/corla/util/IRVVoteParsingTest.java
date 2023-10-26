@@ -8,7 +8,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.model.ContestType;
-import us.freeandfair.corla.model.IRVBallots.IRVChoices;
+import us.freeandfair.corla.model.IRVChoices;
 
 import java.util.*;
 import java.util.stream.Collectors;

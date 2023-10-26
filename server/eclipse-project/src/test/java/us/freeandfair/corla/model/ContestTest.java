@@ -4,9 +4,6 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import static org.junit.Assert.*;
 
-import us.freeandfair.corla.model.IRVBallots.BallotInterpretationDuplicatesBeforeOvervotes;
-import us.freeandfair.corla.model.IRVBallots.IRVChoices;
-
 import java.util.List;
 
 // Testing IRV-specific additions to the contest class.

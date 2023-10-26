@@ -1,6 +1,6 @@
-package us.freeandfair.corla.model.IRVBallots;
+package us.freeandfair.corla.model;
 
-public class BallotInterpretationDuplicatesBeforeOvervotes {
+public class IRVBallotInterpretationDuplicatesBeforeOvervotes {
 
     public static IRVChoices InterpretValidIntent(final IRVChoices b) {
         IRVChoices i3 = b.ApplyRule3();
