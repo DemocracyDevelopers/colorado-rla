@@ -785,18 +785,12 @@ public class DominionCVRExportParser {
         checkForFlush();
       }
 
-      /*
-      for ( CastVoteRecord cvr : cvrs ) {
-         for (CVRContestInfo cInfo : cvr.contestInfo()) {
-           List<String> newVote = parseValidIRVVote(cInfo.choices());
-           cInfo.setChoices(newVote);
-         }
-         Persistence.saveOrUpdate(cvr);
-      }
-      */
 
       for (final CountyContestResult r : my_results) {
         // For IRV contests, reset the contest choice names by removing the parenthesized ranks.
+        // TODO: It's possible this step is unnecessary - we need to store plain names in vote choices, but we
+        // may not really have a reason for updating the choices in the CountyContestResult. Perhaps they
+        // should just be left as "Alice (1)", "Alice (2)" etc.
         if (r.contest().description().equalsIgnoreCase(IRV.toString())) {
           r.removeParenthesesFromFirstPreferenceChoiceNames();
           r.updateDefaultsForIRV();
