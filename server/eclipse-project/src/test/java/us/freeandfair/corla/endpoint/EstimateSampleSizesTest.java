@@ -3,11 +3,8 @@ package us.freeandfair.corla.endpoint;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import org.junit.After;
-import org.junit.Before;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+
+import org.testng.annotations.*;
 
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.model.*;
@@ -29,7 +26,7 @@ public class EstimateSampleSizesTest {
   private EstimateSampleSizesTest() {}
 
 
-  @BeforeTest
+  @BeforeMethod
   public void setUp() {
     Setup.setProperties();
     Persistence.beginTransaction();
@@ -41,7 +38,7 @@ public class EstimateSampleSizesTest {
     Persistence.persist(dosdb);
   }
 
-  @AfterTest()
+  @AfterMethod
   public void tearDown() {
     try {
       Persistence.rollbackTransaction();
