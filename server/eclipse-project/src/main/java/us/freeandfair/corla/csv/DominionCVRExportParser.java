@@ -530,9 +530,10 @@ public class DominionCVRExportParser {
         index = index + 1;
       }
 
+
       // if this contest was on the ballot, add it to the votes
       if (present) {
-          contest_info.add(new CVRContestInfo(co, null, null, votes));
+         contest_info.add(new CVRContestInfo(co, null, null, votes));
       }
     }
 
@@ -778,14 +779,10 @@ public class DominionCVRExportParser {
          Persistence.saveOrUpdate(cvr);
       }
 
-      final Map<String, List<Choice>> new_choices_by_ccr = new HashMap<>();
-
       for (final CountyContestResult r : my_results) {
         // For IRV contests, reset the contest choice names by removing the parenthesized ranks.
         if (r.contest().description().equalsIgnoreCase(IRV.toString())) {
-          // r.removeParenthesesFromChoiceNames();
           List<Choice> newChoices = r.removeParenthesesFromFirstPreferenceChoiceNames();
-          new_choices_by_ccr.put(r.contest().name(), newChoices);
         }
 
         r.updateResults();
