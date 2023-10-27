@@ -89,7 +89,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
 
     // Grab assertions for this contest, and store them. Set them up with the
     // right universe size.
-    this.assertions = AssertionQueries.matching(contestResult.getContestName());
+    assertions = AssertionQueries.matching(contestResult.getContestName());
 
     // If there are no assertions for this audit, then the contest is not
     // auditable. Otherwise, it is auditable.
@@ -97,23 +97,16 @@ public class IRVComparisonAudit extends ComparisonAudit {
     // assigned to the contestResult is 0, however this will have been computed
     // according to Plurality rules and has no bearing on the auditability of
     // an IRV contest.
-    if (this.assertions.isEmpty()){
-      this.setAuditStatus(AuditStatus.NOT_AUDITABLE);
+    if (assertions.isEmpty()){
+      diluted_margin = BigDecimal.ZERO;
+      setAuditStatus(AuditStatus.NOT_AUDITABLE);
     }
     else{
-      this.setAuditStatus(AuditStatus.NOT_STARTED);
+      // Assign a diluted margin to the audit
+      diluted_margin = BigDecimal.valueOf(Collections.min(assertions.stream().
+              map(Assertion::getDilutedMargin).collect(Collectors.toList())));
+      setAuditStatus(AuditStatus.NOT_STARTED);
     }
-
-    // Assign a diluted margin to the audit
-
-    // VT: This is the correct ballot count for super-simple, because it _is_ correctly
-
-
-    // Check if the contest is not auditable, if so set status appropriately.
-    // this.setAuditStatus(AuditStatus.NOT_AUDITABLE);
-
-    // NOTE that get methods for some of the private attributes in ComparisonAudit will
-    // need to be added to the super class.
 
     // As the super class invokes sample size estimation methods in its constructor,
     // we need to invoke them here after the audit's assertions have been populated.
@@ -172,7 +165,8 @@ public class IRVComparisonAudit extends ComparisonAudit {
   }
 
   /*
-   * MB: Estimate sample sizes endpoint calls initialSamplesToAudit().
+   * MB: This method is not used in the super class, however if it starts getting used, it needs to
+   * be overridden here.
    */
   @Override
   public int initialSamplesToAudit() {
@@ -193,54 +187,6 @@ public class IRVComparisonAudit extends ComparisonAudit {
     }
   }
 
-  /* VT: I think we actually don't need to override any of these -
-   * just recalculateSamplesToAudit.
-  @Override
-  public int initialSamplesToAudit(){
-    return optimisticSamplesToAudit();
-  }
-
-  @Override
-  public Integer optimisticSamplesToAudit(){
-    if (assertions.isEmpty()) {
-      return 0;
-    }
-
-    // TBD
-    return 0;
-  }
-
-  @Override
-  public Integer estimatedSamplesToAudit(){
-    if (assertions.isEmpty()) {
-      return 0;
-    }
-
-    // TBD
-    return 0;
-  }
-  */
-
-  /**
-   * Updates the audit status based on the current risk limit. If the audit
-   * has already been ended or the contest is not auditable, this method has
-   * no effect on its status.
-   * Fix: RLA-00450
-   */
-  /* VT: Have now set recalculateAuditStatus to protected, so no need to override
-   * updateAuditStatus I think.
-  public void updateAuditStatus() {
-    // TBD
-    // In ComparisonAudit, this method calls some private methods that are incorrect for
-    // IRV (ie. recalculateSamplesToAudit()). This method is private in ComparisonAudit,
-    // and thus not overridable.
-    // We could adjust recalculateSamplesToAudit() from private to protected, however if
-    // we want to minimise changes to the original codebase, we should perhaps just
-    // redo all the public methods in ComparisonAudit that call inappropriate private methods.
-  }
-  */
-
-
   /**
    * Computes the over/understatement represented by the specified CVR and ACVR.
    * This method returns an optional int that, if present, indicates a discrepancy.
@@ -250,8 +196,8 @@ public class IRVComparisonAudit extends ComparisonAudit {
    * overstatement for the RLA algorithm, but nonetheless indicates a difference
    * between ballot interpretations.
    *
-   * @param cvr The CVR that the machine saw
-   * @param auditedCVR The ACVR that the human audit board saw
+   * @param cvr         The CVR that the machine saw
+   * @param auditedCVR  The ACVR that the human audit board saw
    * @return an optional int that is present if there is a discrepancy and absent
    * otherwise.
    */

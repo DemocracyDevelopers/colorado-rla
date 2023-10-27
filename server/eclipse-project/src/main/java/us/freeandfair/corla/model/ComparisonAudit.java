@@ -117,7 +117,7 @@ public class ComparisonAudit implements PersistentEntity {
    */
   @Column(updatable = false, nullable = false,
           precision = PRECISION, scale = SCALE)
-          private BigDecimal diluted_margin = BigDecimal.ONE;
+          protected BigDecimal diluted_margin = BigDecimal.ONE;
 
   /**
    * The risk limit.

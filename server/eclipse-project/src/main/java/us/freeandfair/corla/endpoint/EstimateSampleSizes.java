@@ -182,7 +182,8 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
       if (samples.isEmpty()) {
         dataNotFound(the_response, "No Comparison Audits found.");
       } else {
-        // Temporary; endpoint will be designed to export samples to CSV.
+        // Temporary; endpoint will be designed to export samples to CSV file, given
+        // file path specified in the request.
         okJSON(the_response, Main.GSON.toJson(samples));
       }
     } catch (final Exception e) {

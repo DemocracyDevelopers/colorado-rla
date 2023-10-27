@@ -111,6 +111,8 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
   public String endpointBody(final Request the_request, final Response the_response) {
     final CastVoteRecord newAcvr;
 
+    // NOTE: Ballot interpretation has to happen here.
+
     try {
       final SubmittedAuditCVR submission =
         Main.GSON.fromJson(the_request.body(), SubmittedAuditCVR.class);
