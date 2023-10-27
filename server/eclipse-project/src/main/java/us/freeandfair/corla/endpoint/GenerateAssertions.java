@@ -24,8 +24,8 @@ import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.model.Contest;
 import us.freeandfair.corla.model.ContestToAudit;
 import us.freeandfair.corla.model.DoSDashboard;
-import us.freeandfair.corla.model.raire.request.GenerateAssertionRequestDto;
-import us.freeandfair.corla.model.raire.response.AuditResponse;
+import us.freeandfair.corla.raire.request.GenerateAssertionRequestDto;
+import us.freeandfair.corla.raire.response.AuditResponse;
 import us.freeandfair.corla.persistence.Persistence;
 
 

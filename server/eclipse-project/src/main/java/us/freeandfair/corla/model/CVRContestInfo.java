@@ -112,12 +112,12 @@ public class CVRContestInfo implements Serializable {
     my_choices.addAll(the_choices);
     for (final String s : my_choices) {
       if (!my_contest.isValidChoice(s)) {
-        throw new IllegalArgumentException("invalid choice " + s + 
+        throw new IllegalArgumentException("invalid choice " + s +
                                            " for contest " + my_contest);
       }
     }
   }
-  
+
   /**
    * @return the contest in this record.
    */
@@ -143,14 +143,14 @@ public class CVRContestInfo implements Serializable {
   public ConsensusValue consensus() {
     return my_consensus;
   }
-  
+
   /**
    * @return the choices in this record.
    */
   public List<String> choices() {
     return Collections.unmodifiableList(my_choices);
   }
-  
+
   /**
    * @return a String representation of this cast vote record.
    */

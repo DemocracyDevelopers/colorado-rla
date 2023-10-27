@@ -231,7 +231,7 @@ public final class CastVoteRecordQueries {
   }
 
   /**
-   * change the votes from the export as if the cvr expost file headers had
+   * change the votes from the export as if the cvr export file headers had
    * contained the newChoice rather than the oldChoice
    **/
   public static int updateCVRContestInfos(final Long countyId, final Long contestId,

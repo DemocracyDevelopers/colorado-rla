@@ -215,7 +215,7 @@ public class Contest implements PersistentEntity, Serializable {
   public County county() {
     return my_county;
   }
-  
+
   /**
    * Checks to see if the specified choice is valid for this contest.
    * 
@@ -317,4 +317,5 @@ public class Contest implements PersistentEntity, Serializable {
   public int hashCode() {
     return nullableHashCode(name().hashCode());
   }
+
 }
