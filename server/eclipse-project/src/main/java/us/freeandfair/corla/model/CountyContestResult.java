@@ -12,8 +12,6 @@
 package us.freeandfair.corla.model;
 
 import static us.freeandfair.corla.util.EqualsHashcodeHelper.nullableEquals;
-import static us.freeandfair.corla.util.IRVVoteParsing.removeFirstPreferenceParenthesesFromChoiceNames;
-import static us.freeandfair.corla.util.IRVVoteParsing.removeParenthesesAndRepeatedNames;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -52,7 +50,6 @@ import javax.persistence.Version;
 
 import us.freeandfair.corla.persistence.PersistentEntity;
 import us.freeandfair.corla.persistence.StringSetConverter;
-import us.freeandfair.corla.util.IRVParsingException;
 import us.freeandfair.corla.util.SuppressFBWarnings;
 
 /**
@@ -115,7 +112,7 @@ public class CountyContestResult implements PersistentEntity, Serializable {
    */
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
   @JoinColumn
-  protected Contest my_contest;
+  private Contest my_contest;
 
   /**
    * The winners allowed.
