@@ -143,7 +143,7 @@ public class CountyContestResult implements PersistentEntity, Serializable {
                                              referencedColumnName = MY_ID))
   @MapKeyColumn(name = "choice")
   @Column(name = "vote_total")
-  protected Map<String, Integer> my_vote_totals = new HashMap<>();
+  private Map<String, Integer> my_vote_totals = new HashMap<>();
   
   /**
    * The minimum pairwise margin between a winner and a loser.
