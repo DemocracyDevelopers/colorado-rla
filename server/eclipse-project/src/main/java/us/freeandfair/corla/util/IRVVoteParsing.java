@@ -4,10 +4,7 @@ import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.model.IRVChoices;
 import us.freeandfair.corla.model.IRVPreference;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class IRVVoteParsing {
@@ -49,26 +46,25 @@ public class IRVVoteParsing {
      * - identifies parenthesized ranks
      * - removes all but the first preference of a particular name
      * - removes the parenthesized rank (1) from the first occurence of each name.
+     * - returns a list of Choices, in which each real candidate is represented once, without parentheses
      * So for example four choices "Alice(1), Alice(2), Bob(1), Bob(2)" should become
-     * the two choices "Alice, Bob".
-     * Throws an exception if it encounters preferences higher than 1 for a candidate it hasn't met the
-     * first preference for.
+     * the two choices "Alice, Bob" with the data matching whatever was in "Alice (1)", "Bob (1)" respectively.
      *
      * This is intended for choices (i.e. Candidate names), not for votes, because it ignores
      * rank information.
      */
-    public static void removeParenthesesAndRepeatedNamesFromChoices(final List<Choice> choices) throws IRVParsingException {
+    public static List<Choice> parseIRVHeadersExtractChoiceNames(final List<Choice> choices) throws IRVParsingException {
         Set<Choice> distinctChoices = new HashSet<>();
 
         // Add each choice into the set of distinct choices after removing parentheses after name.
         for (Choice c : choices)  {
             IRVPreference parsedPreference = parseIRVPreference(c.name());
-            c.setName(parsedPreference.getCandidateName());
-            distinctChoices.add(c);
+            Choice newChoice = new Choice(parsedPreference.getCandidateName(), c.description(), c.qualifiedWriteIn(), c.fictitious());
+            distinctChoices.add(newChoice);
         }
 
-        choices.clear();
-        choices.addAll(distinctChoices);
+        List<Choice> distinctChoicesList = new ArrayList<>(distinctChoices);
+        return distinctChoicesList;
     }
 
     /**

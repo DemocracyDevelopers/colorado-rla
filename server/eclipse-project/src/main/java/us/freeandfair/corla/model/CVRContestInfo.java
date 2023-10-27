@@ -110,10 +110,8 @@ public class CVRContestInfo implements Serializable {
     my_comment = the_comment;
     my_consensus = the_consensus;
     my_choices.addAll(the_choices);
-    boolean isIRV = my_contest.description().equalsIgnoreCase(ContestType.IRV.toString());
-
     for (final String s : my_choices) {
-      if ( (!isIRV && !my_contest.isValidChoice(s)) || ( isIRV && !my_contest.isValidIRVChoiceName(s))) {
+      if (!my_contest.isValidChoice(s)) {
         throw new IllegalArgumentException("invalid choice " + s +
                                            " for contest " + my_contest);
       }

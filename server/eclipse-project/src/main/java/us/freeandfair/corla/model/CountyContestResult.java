@@ -289,41 +289,6 @@ public class CountyContestResult implements PersistentEntity, Serializable {
   }
 
   /**
-   * Used for IRV ballots. This needs to be done _after_ CSVs are read. It takes the artificial list
-   * of choices with preferences, .e.g "Alice (1)", "Alice (2)", "Bob (1)", "Bob (2)" and resets them
-   * to just the 'real' candidate names, e.g. "Alice", "Bob".
-   */
-  /*
-  public void removeParenthesesFromChoiceNames() throws IRVParsingException {
-    my_vote_totals.clear();
-    List<Choice> updatedChoices = removeParenthesesAndRepeatedNames(my_contest.getChoices());
-    my_contest.setChoices(updatedChoices);
-    my_vote_totals.clear();
-    for (final Choice c : my_contest.choices()) {
-      if (!c.fictitious()) {
-        my_vote_totals.put(c.name(), 0);
-      }
-    }
-  }
-  */
-
-  /**
-   * Used for IRV. Resets values such as min/max margin and num_winners so that they have either
-   * reasonable values (for IRV) or clearly-invalid values (e.g. max margin).
-   * TODO It's possible that a better design would be to have an IRVCountyContestResult subclass, which
-   * set these defaults accordingly and updated some of them (e.g. min margin) when the assertions were derived.
-   */
-  public void updateDefaultsForIRV() {
-
-    my_winners_allowed = 1;
-    my_winners = new HashSet<>();
-    my_losers = new HashSet<>();
-    my_max_margin = -1;
-    my_min_margin = -1;
-
-  }
-
-  /**
    * Compute the pairwise margin between the specified choices.
    * If the first choice has more votes than the second, the
    * result will be positive; if the second choie has more 
@@ -527,17 +492,15 @@ public class CountyContestResult implements PersistentEntity, Serializable {
    * Update the vote totals using the data from the specified CVR.
    * 
    * @param the_cvr The CVR.
-   * TODO: This is possibly another good place for an IRVCountyContestResult subclass. Rather than special-casing IRV
-   * in this method, we could just override this method to not do the plurality count in the IRV case. (The plurality
-   * count of course doesn't mean much in the IRV case anyway.)
+   *
+   * This obviously doesn't do anything sensible for IRV - it just counts as if all the votes are k-out-of-n
+   * plurality contests.
    */
   public void addCVR(final CastVoteRecord the_cvr) {
     final CVRContestInfo ci = the_cvr.contestInfoForContest(my_contest);
     if (ci != null) {
-      if (!my_contest.description().equals(ContestType.IRV.toString())) {
-        for (final String s : ci.choices()) {
-          my_vote_totals.put(s, my_vote_totals.get(s) + 1);
-        }
+      for (final String s : ci.choices()) {
+        my_vote_totals.put(s, my_vote_totals.get(s) + 1);
       }
       my_contest_ballot_count = Integer.valueOf(my_contest_ballot_count + 1);
     }
@@ -643,8 +606,7 @@ public class CountyContestResult implements PersistentEntity, Serializable {
   }
 
 
-
-  /**
+    /**
    * A reverse integer comparator, for sorting lists of integers in reverse.
    */
   @SuppressFBWarnings("RV_NEGATING_RESULT_OF_COMPARETO")

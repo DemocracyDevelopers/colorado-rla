@@ -87,6 +87,64 @@ public class IRVVoteParsingTest {
     }
 
     @Test
+    void IRVHeadersParenthesisRemoval() throws IRVParsingException {
+        Choice c1 = new Choice("Alice(1)", ContestType.IRV.toString(), false, false);
+        Choice c2 = new Choice("Alice(2)", ContestType.IRV.toString(), false, false);
+        Choice c3 = new Choice("Bob(1)", ContestType.IRV.toString(), false, false);
+        Choice c4 = new Choice("Bob(2)", ContestType.IRV.toString(), false, false);
+        List<Choice> choices = new ArrayList<>();
+        Collections.addAll(choices, c1, c2, c3, c4);
+
+        List<Choice> updatedChoices = parseIRVHeadersExtractChoiceNames(choices);
+
+        assertTrue(updatedChoices.stream().map(Choice::name).collect(Collectors.toList()).contains("Alice"));
+        assertTrue(updatedChoices.stream().map(Choice::name).collect(Collectors.toList()).contains("Bob"));
+        assertEquals(2, updatedChoices.size());
+    }
+
+    @Test
+    void tidyReturnBlankIRVBallotChoices() throws IRVParsingException {
+        List<Choice> choices  = new ArrayList<>();
+        List<Choice> updatedChoices = parseIRVHeadersExtractChoiceNames(choices);
+        assertEquals(0, updatedChoices.size());
+    }
+
+    @Test (expectedExceptions = IRVParsingException.class)
+    void extractPlainChoicesThrowsExceptionWithInvalidChoices() throws IRVParsingException {
+        Choice c1 = new Choice("Alice (1)", ContestType.IRV.toString(), false, false);
+        Choice c2 = new Choice("InvalidChoice", ContestType.IRV.toString(), false, false);
+        Choice c3 = new Choice("Alice (Not Zahra) (2)", ContestType.IRV.toString(), false, false);
+        Choice c4 = new Choice("Henry (8) (1)", ContestType.IRV.toString(), false, false);
+        Choice c5 = new Choice("Henry (8) (2)", ContestType.IRV.toString(), false, false);
+        List<Choice> choices = new ArrayList<>();
+        Collections.addAll(choices, c1, c2, c3, c4,c5);
+
+        List<Choice> updatedChoices = parseIRVHeadersExtractChoiceNames(choices);
+    }
+
+    @Test
+    void trickyIRVBallotChoicesToPlainChoices() throws IRVParsingException {
+        Choice c1 = new Choice("Alice (Zahra) (1)", ContestType.IRV.toString(), false, false);
+        Choice c2 = new Choice("Alice (Zahra)(3)", ContestType.IRV.toString(), false, false);
+        Choice c3 = new Choice("Alice (Not Zahra) (2)", ContestType.IRV.toString(), false, false);
+        Choice c4 = new Choice("Henry (8) (1)", ContestType.IRV.toString(), false, false);
+        Choice c5 = new Choice("Henry (8) (2)", ContestType.IRV.toString(), false, false);
+        List<Choice> choices = new ArrayList<>();
+        Collections.addAll(choices, c1, c2, c3, c4,c5);
+
+        List<Choice> updatedChoices = parseIRVHeadersExtractChoiceNames(choices);
+
+        List<Choice> aliceNotZahrasPref = updatedChoices.stream().filter(c -> c.name().equals("Alice (Not Zahra)")).collect(Collectors.toList());
+        Set<String> names = updatedChoices.stream().map(Choice::name).collect(Collectors.toSet());
+
+        assertEquals(1, aliceNotZahrasPref.size());
+        assertTrue(names.contains("Alice (Zahra)"));
+        assertTrue(names.contains("Alice (Not Zahra)"));
+        assertTrue(names.contains("Henry (8)"));
+        assertEquals(3, updatedChoices.size());
+    }
+
+    @Test
     void tidyIRVBallotChoices() throws IRVParsingException {
         Choice c1 = new Choice("Alice(1)", ContestType.IRV.toString(), false, false);
         Choice c2 = new Choice("Alice(2)", ContestType.IRV.toString(), false, false);
