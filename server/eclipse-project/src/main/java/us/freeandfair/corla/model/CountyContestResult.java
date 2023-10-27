@@ -489,6 +489,9 @@ public class CountyContestResult implements PersistentEntity, Serializable {
    * Update the vote totals using the data from the specified CVR.
    * 
    * @param the_cvr The CVR.
+   *
+   * This obviously doesn't do anything sensible for IRV - it just counts as if all the votes are k-out-of-n
+   * plurality contests.
    */
   public void addCVR(final CastVoteRecord the_cvr) {
     final CVRContestInfo ci = the_cvr.contestInfoForContest(my_contest);
@@ -598,8 +601,9 @@ public class CountyContestResult implements PersistentEntity, Serializable {
   public int hashCode() {
     return id().hashCode();
   }
-  
-  /**
+
+
+    /**
    * A reverse integer comparator, for sorting lists of integers in reverse.
    */
   @SuppressFBWarnings("RV_NEGATING_RESULT_OF_COMPARETO")

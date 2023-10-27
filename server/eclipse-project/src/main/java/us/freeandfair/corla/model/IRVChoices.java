@@ -1,4 +1,4 @@
-package us.freeandfair.corla.model.IRVBallots;
+package us.freeandfair.corla.model;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -9,21 +9,26 @@ import java.util.stream.Collectors;
  * invalid, that is, with repeated candidate names or repeated preferences.
  */
 public class IRVChoices {
-    private List<Preference> choices;
+
+    // Always sorted by preference, from highest preference (i.e. lowest number) to lowest preference (i.e. highest number)
+    // Repeated or skipped preferences are allowed.
+    private List<IRVPreference> choices;
 
     public int getLength() {
         return choices.size();
     }
 
-    public IRVChoices(List<Preference> mutableChoices) {
-        mutableChoices.sort(Preference::compareTo);
+    public IRVChoices(List<IRVPreference> mutableChoices) {
+        mutableChoices.sort(IRVPreference::compareTo);
         choices = Collections.unmodifiableList(mutableChoices);
     }
 
 
     // Build a new ballot from the string of CandidateName(rank) strings in the colorado-rla database.
+    // FIXME probably almost everywhere that calls this now, will instead want to be called on an ordered list
+    // of choices.
     public IRVChoices(String sanitizedChoices) {
-        ArrayList<Preference> mutableChoices = new ArrayList<>();
+        ArrayList<IRVPreference> mutableChoices = new ArrayList<>();
 
         String[] preferences = sanitizedChoices.trim().split(",");
         if (preferences.length == 0) {
@@ -37,10 +42,10 @@ public class IRVChoices {
                 throw new RuntimeException("Couldn't parse ballot");
                 //Invalid rank. Ballot is not usable. IF ballot is invalid, this safeguards us against number format exception
             }
-            mutableChoices.add(new Preference(Integer.parseInt(rank), vote[0].trim()));
+            mutableChoices.add(new IRVPreference(Integer.parseInt(rank), vote[0].trim()));
         }
 
-        mutableChoices.sort(Preference::compareTo);
+        mutableChoices.sort(IRVPreference::compareTo);
         choices = Collections.unmodifiableList(mutableChoices);
     }
 
@@ -58,7 +63,7 @@ public class IRVChoices {
 
         // Test for a perfect integer sequence of length choices.size(), by filling in the i-th element when i is read.
         boolean[] preferencesInOrder = new boolean[choices.size()];
-        for(Preference p : choices) {
+        for(IRVPreference p : choices) {
             // If this preference is out of bounds or already used, the pref list is invalid
             if (p.getRank() < 1 || p.getRank() > choices.size() || preferencesInOrder[p.getRank()-1]) {
                 return false;
@@ -79,7 +84,7 @@ public class IRVChoices {
 
         assert IsSorted(choices) : "Error: Trying to apply Rule 1 to unsorted preferences.";
 
-        List<Preference> mutableChoices = new ArrayList<Preference>(choices);
+        List<IRVPreference> mutableChoices = new ArrayList<IRVPreference>(choices);
         for (int i=0 ; i < mutableChoices.size()-1 ; i++) {
             if ((mutableChoices.get(i)).compareTo(mutableChoices.get(i + 1)) == 0) {
                 // We found an overvote. Skip from this item.
@@ -104,10 +109,10 @@ public class IRVChoices {
 
         // If the first element is not rank 1, the ballot is effectively blank.
         if(!choices.isEmpty() && choices.get(0).getRank() != 1) {
-            return new IRVChoices(new ArrayList<Preference>());
+            return new IRVChoices(new ArrayList<IRVPreference>());
         }
 
-        List<Preference> mutableChoices = new ArrayList<Preference>(choices);
+        List<IRVPreference> mutableChoices = new ArrayList<IRVPreference>(choices);
 
         for (int i=0 ; i < mutableChoices.size()-1 ; i++) {
             if ((mutableChoices.get(i+1)).getRank() > mutableChoices.get(i).getRank() + 1) {
@@ -130,9 +135,9 @@ public class IRVChoices {
         assert IsSorted(choices) : "Error: Trying to apply Rule 3 to unsorted preferences.";
 
         HashSet<String> candidates = new HashSet<>();
-        List<Preference> mutableChoices = new ArrayList<Preference>();
+        List<IRVPreference> mutableChoices = new ArrayList<IRVPreference>();
 
-        for (Preference choice : choices) {
+        for (IRVPreference choice : choices) {
             if (!candidates.contains(choice.getCandidateName())) {
                 // This candidate hasn't been mentioned before. Add it to both the vote and the set of mentioned candidates.
                 mutableChoices.add(choice);
@@ -143,11 +148,30 @@ public class IRVChoices {
         return new IRVChoices(mutableChoices);
     }
 
-    public String toString() {
-        return choices.stream().map(Preference::toString).collect(Collectors.joining(","));
+    /* Returns this IRV vote as a sorted list of candidate names, starting with the first preference
+     * and ending with the lowest.
+     * Throws an exception if called on an invalid vote.
+     */
+    public List<String> AsSortedList() {
+        // Neither of these calls should ever be made.
+        if ( !IsValid() ) {
+            throw new RuntimeException("Attempt to call AsSortedList on invalid vote: "+choices);
+        }
+        if (! IsSorted(choices)) {
+            throw new RuntimeException("Attempt to call AsSortedList on unsorted choices.");
+        }
+
+        return choices.stream().map(IRVPreference::getCandidateName).collect(Collectors.toUnmodifiableList());
     }
 
-    private boolean IsSorted(List<Preference> choices) {
+    /* This will include explicit preferences in parentheses. Intended for votes that may not be valid,
+     * e.g. "Alice(1),Bob(1),Chuan(3)".
+     */
+    public String toString() {
+        return choices.stream().map(IRVPreference::toString).collect(Collectors.joining(","));
+    }
+
+    private boolean IsSorted(List<IRVPreference> choices) {
         for (int i=0 ; i < choices.size()-1 ; i++) {
             if ((choices.get(i)).compareTo(choices.get(i + 1)) > 0) {
                 return false;
@@ -155,4 +179,5 @@ public class IRVChoices {
         }
         return true;
     }
+
 }

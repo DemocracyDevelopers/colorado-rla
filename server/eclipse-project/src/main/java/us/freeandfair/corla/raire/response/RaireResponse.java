@@ -1,4 +1,4 @@
-package us.freeandfair.corla.model.raire.response;
+package us.freeandfair.corla.raire.response;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.Map;

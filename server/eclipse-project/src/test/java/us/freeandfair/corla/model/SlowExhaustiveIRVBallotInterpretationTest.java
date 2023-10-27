@@ -4,10 +4,6 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import us.freeandfair.corla.model.IRVBallots.BallotInterpretationDuplicatesBeforeOvervotes;
-import us.freeandfair.corla.model.IRVBallots.IRVChoices;
-import us.freeandfair.corla.model.IRVBallots.Preference;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -41,13 +37,13 @@ public class SlowExhaustiveIRVBallotInterpretationTest {
 
     @Test
     void testValidityOfDuplicatesBeforeOvervotes() {
-        assertTrue(ballotListValidityTest(BallotInterpretationDuplicatesBeforeOvervotes::InterpretValidIntent, testVoteList1));
+        assertTrue(ballotListValidityTest(IRVBallotInterpretationDuplicatesBeforeOvervotes::InterpretValidIntent, testVoteList1));
     }
 
     @Test
     void testValidityOfDuplicatesBeforeOvervotesExhaustively() {
         assertTrue(testValidityExhaustively(5,
-                BallotInterpretationDuplicatesBeforeOvervotes::InterpretValidIntent));
+                IRVBallotInterpretationDuplicatesBeforeOvervotes::InterpretValidIntent));
     }
 
     // Runs the ballot interpretation function on all the ballots in the input
@@ -99,7 +95,7 @@ public class SlowExhaustiveIRVBallotInterpretationTest {
     private static IRVChoices generateVoteFromPad(long pad, int numCandidates) {
 
         String[] candidateNameArray = {"A", "B", "C", "D", "E", "F", "G"};
-        List<Preference> choices = new ArrayList<Preference>();
+        List<IRVPreference> choices = new ArrayList<IRVPreference>();
         long localPad = pad;
 
         for(int i=0 ; i < numCandidates ; i++) {
@@ -108,7 +104,7 @@ public class SlowExhaustiveIRVBallotInterpretationTest {
             // if the bit is 1.
             for(int j = 0 ; j < numCandidates ; j++) {
                 if(localPad % 2 == 1) {
-                    choices.add(new Preference(j+1, name));
+                    choices.add(new IRVPreference(j+1, name));
                 }
                 localPad = localPad >> 1;
             }
