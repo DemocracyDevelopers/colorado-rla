@@ -32,7 +32,7 @@ public class IRVVoteParsingTest {
     }
 
     // Check that an effort to convert an invalid vote into a sorted list throws an exception.
-    @Test(expectedExceptions = RuntimeException.class)
+    @Test(expectedExceptions = IRVParsingException.class)
     void whenGivenInvalidVote_parseValidIRVVote_throwsException() throws IRVParsingException {
         List<String> invalidInputVote = Arrays.asList("Alice(1)", "Chuan(1)","Bob(3)");
 
@@ -226,7 +226,7 @@ public class IRVVoteParsingTest {
         assertTrue(true);
     }
 
-    @Test(expectedExceptions = RuntimeException.class)
+    @Test(expectedExceptions = IRVParsingException.class)
     public void testCheckUnsortedThrowsException() throws IRVParsingException {
 
         Choice c1 = new Choice("Alice (Zahra) (2)", ContestType.IRV.toString(), false, false);
