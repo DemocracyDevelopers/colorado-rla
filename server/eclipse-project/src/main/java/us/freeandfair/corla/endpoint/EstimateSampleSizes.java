@@ -50,7 +50,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
    */
   @Override
   public EndpointType endpointType() {
-    return EndpointType.POST;
+    return EndpointType.GET;
   }
 
   /**
