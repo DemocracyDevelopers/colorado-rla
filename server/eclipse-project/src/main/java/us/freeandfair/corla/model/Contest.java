@@ -13,7 +13,6 @@
 package us.freeandfair.corla.model;
 
 import static us.freeandfair.corla.util.EqualsHashcodeHelper.*;
-import static us.freeandfair.corla.util.IRVVoteParsing.parseIRVPreference;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -42,7 +41,6 @@ import com.google.gson.annotations.JsonAdapter;
 
 import us.freeandfair.corla.json.ContestJsonAdapter;
 import us.freeandfair.corla.persistence.PersistentEntity;
-import us.freeandfair.corla.util.IRVParsingException;
 
 /**
  * The definition of a contest; comprises a contest name and a set of
