@@ -43,17 +43,17 @@ public final class ContestQueries {
    */
   private ContestQueries() {
     // do nothing
-  }  
-  
+  }
+
   /**
    * Gets contests that are in the specified set of counties.
-   * 
+   *
    * @param the_counties The counties.
    * @return the matching contests, or null if the query fails.
    */
   public static List<Contest> forCounties(final Set<County> the_counties) {
     List<Contest> result = null;
-    
+
     try {
       final Session s = Persistence.currentSession();
       final CriteriaBuilder cb = s.getCriteriaBuilder();
@@ -65,26 +65,26 @@ public final class ContestQueries {
       }
       cq.select(root);
       cq.where(cb.or(disjuncts.toArray(new Predicate[disjuncts.size()])));
-      cq.orderBy(cb.asc(root.get("my_county").get("my_id")), 
-                 cb.asc(root.get("my_sequence_number")));
+      cq.orderBy(cb.asc(root.get("my_county").get("my_id")),
+              cb.asc(root.get("my_sequence_number")));
       final TypedQuery<Contest> query = s.createQuery(cq);
-      result = query.getResultList();  
+      result = query.getResultList();
     } catch (final PersistenceException e) {
       Main.LOGGER.error("Exception when reading contests from database: " + e);
     }
 
     return result;
   }
-  
+
   /**
    * Gets contests that are in the specified county.
-   * 
+   *
    * @param the_county The county.
    * @return the matching contests, or null if the query fails.
    */
   public static Set<Contest> forCounty(final County the_county) {
     Set<Contest> result = null;
-    
+
     try {
       final Session s = Persistence.currentSession();
       final CriteriaBuilder cb = s.getCriteriaBuilder();
@@ -101,15 +101,15 @@ public final class ContestQueries {
 
     return result;
   }
-  
+
   /**
    * Deletes all the contests for the county with the specified ID.
-   * 
+   *
    * @param the_id The county ID.
    */
   public static void deleteForCounty(final Long the_county_id) {
-    final Set<Contest> contests = 
-        forCounty(Persistence.getByID(the_county_id, County.class));
+    final Set<Contest> contests =
+            forCounty(Persistence.getByID(the_county_id, County.class));
     if (contests != null) {
       for (final Contest c : contests) {
         Persistence.delete(c);
@@ -121,8 +121,8 @@ public final class ContestQueries {
   /**
    * Obtain the list of Contests matching a given contest name.
    *
-   * @param contestName      The contest name
-   * @return the list of Contests with the given contests name, returns an empty list if no such contests exist.
+   * @param contestName The contest name
+   * @return the list of Contests with the given contest name, returns an empty list if no such contests exist.
    */
   public static List<Contest> matching(final String contestName) {
     final Session s = Persistence.currentSession();
@@ -133,7 +133,23 @@ public final class ContestQueries {
 
     try {
       return q.getResultList();
-    } catch (javax.persistence.NoResultException e ) {
+    } catch (javax.persistence.NoResultException e) {
+      return new ArrayList<>();
+    }
+  }
+
+  /**
+   * Obtain the list of Contests matching a given contest name.
+   *
+   * @return the complete list of Contests.
+   */
+  public static List<Contest> getAll() {
+    final Session s = Persistence.currentSession();
+    final TypedQuery<Contest> q = s.createQuery("select co from Contest co ", Contest.class);
+
+    try {
+      return q.getResultList();
+    } catch (javax.persistence.NoResultException e) {
       return new ArrayList<>();
     }
   }
