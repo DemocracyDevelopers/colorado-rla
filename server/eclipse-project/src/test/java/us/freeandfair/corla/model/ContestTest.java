@@ -24,12 +24,4 @@ public class ContestTest {
     @AfterTest()
     public void tearDown() {
     }
-
-    @Test
-    public void validIRVChoiceNamesTest() {
-       assertTrue(my_contest.isValidIRVChoiceName("Alice"));
-       assertTrue(my_contest.isValidIRVChoiceName("Bob"));
-       assertFalse(my_contest.isValidIRVChoiceName("Diego"));
-    }
-
 }

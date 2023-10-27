@@ -218,8 +218,6 @@ public class Contest implements PersistentEntity, Serializable {
     return my_county;
   }
 
-  // public List<Choice> getChoices() { return my_choices; }
-
   /**
    * Checks to see if the specified choice is valid for this contest.
    * 
@@ -230,28 +228,6 @@ public class Contest implements PersistentEntity, Serializable {
     for (final Choice c : my_choices) {
       if (c.name().equals(the_choice)) {
         return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Checks to see if the specified choice is a valid name of an IRV 'choice'
-   * That is, this should return true if the choice is "Alice" and the my_choices
-   * list includes "Alice(n)" for any n.
-   * @param s a string assumed to be a plain name
-   * @return true if any choice matches s(pref).
-   */
-  public boolean isValidIRVChoiceName(String s) {
-    for (final Choice c : my_choices) {
-      try {
-        IRVPreference pref = parseIRVPreference(c.name());
-        if (pref.getCandidateName().equalsIgnoreCase(s)) {
-          return true;
-        }
-      } catch (IRVParsingException e) {
-        // It's OK if the choices don't parse as valid IRV choices; but then this is definitely not a valid IRV option.
-        return false;
       }
     }
     return false;
