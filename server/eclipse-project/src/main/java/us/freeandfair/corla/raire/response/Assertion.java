@@ -13,5 +13,5 @@ public class Assertion {
   private Integer loser;
 
   // Should be empty or null for NEB assertions.
-  private String[] assumed_continuing;
+  private Integer[] continuing;
 }

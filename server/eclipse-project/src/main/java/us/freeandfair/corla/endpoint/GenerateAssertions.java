@@ -7,7 +7,6 @@ package us.freeandfair.corla.endpoint;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -152,7 +151,7 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
       Map<String, AssertionPermutations> solution = result.getSolution();
       AssertionPermutations assertionPermutations = solution.get("Ok");
       List<AssertionResult> assertions = assertionPermutations.getAssertions();
-      JsonNode candidates = auditResponse.getResult().getMetadata().get("candidates");
+      List<String> candidates = auditResponse.getResult().getMetadata().getCandidates();
       Long universeSize = IRVContestResults.get(auditResponse.getContestName()).getBallotCount();
       assertions.forEach(assertionResult -> {
         Assertion assertion = assertionJSONToJava(assertionResult, candidates, auditResponse.getContestName(), universeSize);
@@ -180,14 +179,15 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
     // NENAssertion testAssertion = new NENAssertion("TestContest","Winner", "Loser", 5, 1000, 0.123, List.of("Winner","Loser"));
     // okJSON(the_response, Main.GSON.toJson(testAssertion));
 
-    okJSON(the_response, Main.GSON.toJson(responseAssertions));
+    // okJSON(the_response, Main.GSON.toJson(responseAssertions));
+    okJSON(the_response, Main.GSON.toJson(raireResponse));
     return my_endpoint_result.get();
   }
 
-  private Assertion assertionJSONToJava(AssertionResult assertionResult, JsonNode candidates, String contestName, Long universeSize) {
-    String winner = candidates.get(assertionResult.getAssertion().getWinner()).asText();
-    String loser = candidates.get(assertionResult.getAssertion().getLoser()).asText();
-    String[] assumed_continuing = assertionResult.getAssertion().getAssumed_continuing();
+  private Assertion assertionJSONToJava(AssertionResult assertionResult, List<String> candidates, String contestName, Long universeSize) {
+    String winner = candidates.get(assertionResult.getAssertion().getWinner());
+    String loser = candidates.get(assertionResult.getAssertion().getLoser());
+    Integer[] continuing = assertionResult.getAssertion().getContinuing();
     Integer margin = assertionResult.getMargin();
     double difficulty = assertionResult.getDifficulty();
 
@@ -195,13 +195,14 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
 
     // NEB assertions. There should be no 'assumed continuing' candidates.
     if (StringUtils.equalsIgnoreCase("NEB", assertionResult.getAssertion().getType()) &&
-       (assumed_continuing == null || assumed_continuing.length == 0))  {
-        assertion = new NEBAssertion(contestName, winner, loser, margin, universeSize, difficulty);
+            (continuing == null || continuing.length == 0))  {
+      assertion = new NEBAssertion(contestName, winner, loser, margin, universeSize, difficulty);
     }
     // NEN assertion. 'assumed continuing' should be non-null. Empty is fine.
     else if (StringUtils.equalsIgnoreCase("NEN", assertionResult.getAssertion().getType()) &&
-            assumed_continuing != null) {
-       assertion = new NENAssertion(contestName, winner, loser, margin, universeSize, difficulty, List.of(assumed_continuing));
+            continuing != null) {
+      List<String> continuingByName = Arrays.stream(continuing).map(candidates::get).collect(Collectors.toList());
+      assertion = new NENAssertion(contestName, winner, loser, margin, universeSize, difficulty, continuingByName);
     } else {
       throw new IllegalStateException("Illegal Assertion: "+assertionResult.getAssertion());
     }
