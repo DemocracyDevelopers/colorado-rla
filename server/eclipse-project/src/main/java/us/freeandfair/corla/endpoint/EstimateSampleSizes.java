@@ -18,8 +18,11 @@ import us.freeandfair.corla.controller.ContestCounter;
 import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.util.SparkHelper;
 
+import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -80,6 +83,15 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
   protected void reset() {
     my_event.set(null);
   }
+
+  public static final String[] HEADERS = {
+          "County",
+          "Contest Name",
+          "Contest Type",
+          "Ballots Cast",
+          "Diluted Margin",
+          "Sample Size"
+  };
 
 
   /**
@@ -175,20 +187,25 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     }
 
     // Estimate sample sizes
-    final List<String[]> samples = estimateSampleSizes();
-
-    // Update response with the sample estimates for each contest.
     try {
+      final List<String[]> samples = estimateSampleSizes();
+
       if (samples.isEmpty()) {
         dataNotFound(the_response, "No Comparison Audits found.");
       } else {
-        // Temporary; endpoint will be designed to export samples to CSV file, given
-        // file path specified in the request.
-        okJSON(the_response, Main.GSON.toJson(samples));
+        the_response.header("Content-Type", "test/csv");
+        the_response.header("Content-Disposition", "attachment; filename*=UTF-8''sample_sizes.csv");
+        final OutputStream os = SparkHelper.getRaw(the_response).getOutputStream();
+        os.write(((String.join(",",EstimateSampleSizes.HEADERS)) + "\n").getBytes(StandardCharsets.UTF_8));
+        for (String[] row : samples) {
+          os.write(((String.join(",", row)) + "\n").getBytes(StandardCharsets.UTF_8));
+        }
+        os.close();
+        ok(the_response);
       }
     } catch (final Exception e) {
       // Not sure if this is the right kind of error.
-      serverError(the_response, "Could not find any Comparison Audits to estimate.");
+      serverError(the_response, "Could not find any Comparison Audits to estimate, or sample sizes could not be estimated.");
     }
 
     return my_endpoint_result.get();
