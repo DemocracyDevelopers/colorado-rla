@@ -11,4 +11,7 @@ public class Assertion {
   private String type;
   private Integer winner;
   private Integer loser;
+
+  // Should be empty or null for NEB assertions.
+  private Integer[] continuing;
 }

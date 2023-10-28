@@ -10,10 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RaireResponse {
-  private JsonNode metadata;
+  private Metadata metadata;
+
+  // TODO Note this might not work in the case that the String is "Err" rather than OK.
   public Map<String, AssertionPermutations> solution;
-
-
-
-
 }
