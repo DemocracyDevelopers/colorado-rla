@@ -26,11 +26,11 @@ import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.controller.ContestCounter;
 import us.freeandfair.corla.model.*;
-import us.freeandfair.corla.model.raire.request.GenerateAssertionRequestDto;
-import us.freeandfair.corla.model.raire.response.AssertionPermutations;
-import us.freeandfair.corla.model.raire.response.AssertionResult;
-import us.freeandfair.corla.model.raire.response.AuditResponse;
-import us.freeandfair.corla.model.raire.response.RaireResponse;
+import us.freeandfair.corla.raire.request.GenerateAssertionRequestDto;
+import us.freeandfair.corla.raire.response.AssertionPermutations;
+import us.freeandfair.corla.raire.response.AssertionResult;
+import us.freeandfair.corla.raire.response.AuditResponse;
+import us.freeandfair.corla.raire.response.RaireResponse;
 import us.freeandfair.corla.persistence.Persistence;
 
 
