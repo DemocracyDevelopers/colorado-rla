@@ -318,6 +318,7 @@ public abstract class Assertion implements PersistentEntity, Serializable {
                   " stored in assertion for contest " + contestName);
       }
     }
+
   }
 
 
@@ -359,6 +360,7 @@ public abstract class Assertion implements PersistentEntity, Serializable {
                   " stored in assertion for contest " + contestName);
       }
     }
+
   }
 
   /**

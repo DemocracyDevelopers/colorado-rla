@@ -8,6 +8,7 @@ import us.freeandfair.corla.query.AssertionQueries;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.OptionalInt;
@@ -195,6 +196,9 @@ public class IRVComparisonAudit extends ComparisonAudit {
    * overstatement for the RLA algorithm, but nonetheless indicates a difference
    * between ballot interpretations.
    *
+   * This method will return the maximum discrepancy arising from this CVR-ACVR
+   * pair across all assertions in this audit.
+   *
    * @param cvr         The CVR that the machine saw
    * @param auditedCVR  The ACVR that the human audit board saw
    * @return an optional int that is present if there is a discrepancy and absent
@@ -204,16 +208,21 @@ public class IRVComparisonAudit extends ComparisonAudit {
   @SuppressWarnings("checkstyle:magicnumber")
   public OptionalInt computeDiscrepancy(final CastVoteRecord cvr,
                                         final CastVoteRecord auditedCVR) {
-    OptionalInt result = OptionalInt.empty();
+    List<Integer> discrepancies = new ArrayList<>();
+    for(Assertion a : assertions){
+      OptionalInt result = a.computeDiscrepancy(cvr, auditedCVR);
 
-  // TBD
-    // VT: Suggest this should just iterate though all the assertions and call
-    // a.computeDiscrepancy, then take a form of max which is:
-    // nothing (i.e. no optional int) if all the calls to a.computeDiscrepancy return nothing.
-    // If any of the calls to a.computeDiscrepancy return something, a something with the max
-    // of the returned values.
+      if(result.isPresent()){
+        discrepancies.add(result.getAsInt());
+      }
+    }
 
-    return result;
+    if(discrepancies.isEmpty()){
+      return OptionalInt.empty();
+    }
+    else{
+      return OptionalInt.of(Collections.max(discrepancies));
+    }
   }
 
   /** risk limit achieved according to math.Audit **/
@@ -247,9 +256,13 @@ public class IRVComparisonAudit extends ComparisonAudit {
   public void removeDiscrepancy(final CVRAuditInfo the_record, final int the_type) {
     // Iterate over the assertions for this audit, and remove 'the_count' instances of this
     // discrepancy from their tallies (if the discrepancy is relevant to the assertion).
-    for(Assertion a : assertions){
+    for (Assertion a : assertions) {
       a.removeDiscrepancy(the_record);
     }
+
+    // Update the tallies of discrepancies for reporting purposes, and the flag for
+    // indicating that a sample size recalculation is needed.
+    super.removeDiscrepancy(the_record, the_type);
   }
 
   /**
@@ -270,9 +283,13 @@ public class IRVComparisonAudit extends ComparisonAudit {
                                 final int the_type){
     // Iterate over the assertions for this audit, and record 'the_count' instances of this
     // discrepancy toward their tallies (if the discrepancy is relevant to the assertion).
-    for(Assertion a : assertions){
+    for (Assertion a : assertions) {
       a.recordDiscrepancy(the_record);
     }
+
+    // Update the tallies of discrepancies for reporting purposes, and the flag for
+    // indicating that a sample size recalculation is needed.
+    super.recordDiscrepancy(the_record, the_type);
   }
 
 }
