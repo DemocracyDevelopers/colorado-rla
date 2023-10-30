@@ -107,7 +107,10 @@ public abstract class Assertion implements PersistentEntity, Serializable {
    * Map between CVR ID and the discrepancy calculated for it (and its A-CVR) in the context
    * of this assertion, based on the last call to computeDiscrepancy(). Calls to computeDiscrepancy()
    * will update this map.
-   * TODO: new table not yet being created (debug this).
+   * TODO: new table not yet being created (debug this). Idea is that this will be a table called
+   * "assertion_cvr_discrepancy" which will have columns "id,crv_id,discrepancy", where "id"
+   * corresponds to this Assertion's ID, "cvr_id" to the ID of the CVR that is involved in the
+   * discrepancy, and "discrepancy" the value of the discrepancy from -2 to 2.
    */
   @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "assertion_cvr_discrepancy",
