@@ -1,8 +1,6 @@
 package us.freeandfair.corla.model;
 
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.AssertionQueries;
@@ -19,14 +17,14 @@ public class AssertionTest {
   private AssertionTest() {};
 
 
-  @BeforeTest()
+  @BeforeMethod()
   public void setUp() {
     Setup.setProperties();
     Persistence.beginTransaction();
 
   }
 
-  @AfterTest()
+  @AfterMethod()
   public void tearDown() {
     try {
       Persistence.rollbackTransaction();
@@ -66,5 +64,7 @@ public class AssertionTest {
     assertEquals("Board of Play", nen_act.getContestName());
     assertEquals(Arrays.asList("Chuan", "Alice", "Diego"), nen_act.getContinuing());
   }
+
+
 
 }

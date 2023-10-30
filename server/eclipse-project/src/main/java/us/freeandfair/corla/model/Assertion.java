@@ -11,15 +11,15 @@ package us.freeandfair.corla.model;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import us.freeandfair.corla.math.Audit;
+import us.freeandfair.corla.persistence.LongIntegerMapConverter;
 import us.freeandfair.corla.persistence.PersistentEntity;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.math.MathContext;
 import java.math.RoundingMode;
-import java.util.OptionalInt;
+import java.util.*;
 import java.math.BigDecimal;
-import java.util.List;
 
 @Entity
 @Table(name = "assertion")
@@ -104,6 +104,19 @@ public abstract class Assertion implements PersistentEntity, Serializable {
   private Integer my_optimistic_samples_to_audit = 0;
 
   /**
+   * Map between CVR ID and the discrepancy calculated for it (and its A-CVR) in the context
+   * of this assertion, based on the last call to computeDiscrepancy(). Calls to computeDiscrepancy()
+   * will update this map.
+   * TODO: new table not yet being created (debug this).
+   */
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(name = "assertion_cvr_discrepancy",
+          joinColumns = @JoinColumn(name = "id"))
+  @MapKeyColumn(name = "cvr_id")
+  @Column(name = "discrepancy", nullable = false)
+  protected Map<Long,Integer> cvrDiscrepancy = new HashMap<>();
+
+  /**
    * The expected number of samples to audit overall assuming overstatements
    * continue at the current rate.
    */
@@ -111,35 +124,34 @@ public abstract class Assertion implements PersistentEntity, Serializable {
   private Integer my_estimated_samples_to_audit = 0;
 
   /**
-   * The number of two-vote understatements recorded so far.
+   * The two-vote understatements recorded so far.
    */
   @Column(nullable = false)
-  private Integer my_two_vote_under_count = 0;
+  protected Integer my_two_vote_under_count = 0;
 
   /**
-   * The number of one-vote understatements recorded so far.
+   * The one-vote understatements recorded so far.
    */
   @Column(nullable = false)
-  private Integer my_one_vote_under_count = 0;
+  protected Integer my_one_vote_under_count = 0;
 
   /**
-   * The number of one-vote overstatements recorded so far.
+   * The one-vote overstatements recorded so far.
    */
   @Column(nullable = false)
-  private Integer my_one_vote_over_count = 0;
+  protected Integer my_one_vote_over_count = 0;
 
   /**
-   * The number of two-vote overstatements recorded so far.
+   * The two-vote overstatements recorded so far.
    */
   @Column(nullable = false)
-  private Integer my_two_vote_over_count = 0;
+  protected Integer my_two_vote_over_count = 0;
 
   /**
-   * The number of discrepancies recorded so far that are neither
-   * understatements nor overstatements.
+   * Discrepancies recorded so far that are neither understatements nor overstatements.
    */
   @Column(nullable = false)
-  private Integer my_other_count = 0;
+  protected Integer my_other_count = 0;
 
   /**
    * Creates an Assertion for a specific contest. The assertion has a given winner, loser,
@@ -228,7 +240,8 @@ public abstract class Assertion implements PersistentEntity, Serializable {
       LOGGER.debug("[computeEstimatedSamplesToAudit: zero overcounts]");
       my_estimated_samples_to_audit = my_optimistic_samples_to_audit;
     } else {
-      LOGGER.debug(String.format("[IRVComparisonAudit::recalculateSamplesToAudit: non-zero overcounts, using scaling factor %s]", scalingFac));
+      LOGGER.debug(String.format("[IRVComparisonAudit::recalculateSamplesToAudit: non-zero overcounts, " +
+              "using scaling factor %s]", scalingFac));
       my_estimated_samples_to_audit =
               BigDecimal.valueOf(my_optimistic_samples_to_audit)
                       .multiply(scalingFac)
@@ -266,37 +279,84 @@ public abstract class Assertion implements PersistentEntity, Serializable {
 
 
   /**
-   * Computes the over/understatement represented by the specified CVR and ACVR.
-   * This method returns an optional int that, if present, indicates a discrepancy.
-   * There are 5 possible types of discrepancy: -1 and -2 indicate 1- and 2-vote
-   * understatements; 1 and 2 indicate 1- and 2- vote overstatements; and 0
-   * indicates a discrepancy that does not count as either an under- or
-   * overstatement for the RLA algorithm, but nonetheless indicates a difference
-   * between ballot interpretations.
+   * For a given CVRAuditInfo capturing a discrepancy between a CVR and ACVR, check if the
+   * discrepancy is relevant for this assertion (if it is present in its cvrDiscrepancy map). If so,
+   * increment the counters for its discrepancy type.
    *
-   * @param cvr        The CVR that the machine saw
-   * @param auditedCVR The ACVR that the human audit board saw
-   * @return an optional int that is present if there is a discrepancy and absent
-   * otherwise.
+   * @param the_record   CVRAuditInfo representing the CVR-ACVR pair that has resulted in a discrepancy.
+   * @exception IllegalArgumentException if the discrepancy associated with this CVR-ACVR pair is not valid.
    */
-  public abstract OptionalInt computeDiscrepancy(final CastVoteRecord cvr,
-                                                 final CastVoteRecord auditedCVR);
+  public void recordDiscrepancy(final CVRAuditInfo the_record) {
+    if(cvrDiscrepancy.containsKey(the_record.id())){
+      int theType = cvrDiscrepancy.get(the_record.id());
+      switch (theType) {
+        case -2:
+          my_two_vote_under_count += 1;
+          break;
+
+        case -1:
+          my_one_vote_under_count += 1;
+          break;
+
+        case 0:
+          my_other_count += 1;
+          break;
+
+        case 1:
+          my_one_vote_over_count += 1;
+          break;
+
+        case 2:
+          my_two_vote_over_count += 1;
+          break;
+
+        default:
+          throw new IllegalArgumentException("Invalid discrepancy type " + theType +
+                  " stored in assertion for contest " + contestName);
+      }
+    }
+  }
+
 
 
   /**
-   * Removes the specified over/understatement (the valid range is -2 .. 2:
-   * -2 and -1 are understatements, 0 is a discrepancy that doesn't affect the
-   * RLA calculations, and 1 and 2 are overstatements). This is typically done
-   * when a new interpretation is submitted for a ballot that had already been
-   * interpreted.
+   * Removes discrepancies relating to a given CVR-ACVR comparison.
    *
    * @param the_record The CVRAuditInfo record that generated the discrepancy.
-   * @param the_type The type of discrepancy to remove.
-   * @exception IllegalArgumentException if an invalid discrepancy type is
-   * specified.
+   * @exception IllegalArgumentException if an invalid discrepancy type has been stored in this assertion.
    */
-  @SuppressWarnings("checkstyle:magicnumber")
-  public abstract void removeDiscrepancy(final CVRAuditInfo the_record, final int the_type);
+  public void removeDiscrepancy(final CVRAuditInfo the_record){
+    // Check if this CVR-ACVR pair produced a discrepancy with respect to this assertion.
+    // (Note the CVRAuditInfo ID is always the CVR ID).
+    if(cvrDiscrepancy.containsKey(the_record.id())){
+      int theType = cvrDiscrepancy.get(the_record.id());
+      switch (theType) {
+        case -2:
+          my_two_vote_under_count -= 1;
+          break;
+
+        case -1:
+          my_one_vote_under_count -= 1;
+          break;
+
+        case 0:
+          my_other_count -= 1;
+          break;
+
+        case 1:
+          my_one_vote_over_count -= 1;
+          break;
+
+        case 2:
+          my_two_vote_over_count -= 1;
+          break;
+
+        default:
+          throw new IllegalArgumentException("Invalid discrepancy type " + theType +
+                  " stored in assertion for contest " + contestName);
+      }
+    }
+  }
 
   /**
    * A scaling factor for the estimate, from 1 (when no samples have
@@ -316,11 +376,115 @@ public abstract class Assertion implements PersistentEntity, Serializable {
    */
   private BigDecimal scalingFactor(int auditedSamplesInt, Integer one_vote_overstatements, Integer two_vote_overstatements) {
     final BigDecimal auditedSamples = BigDecimal.valueOf(auditedSamplesInt);
-    final Integer overstatements = one_vote_overstatements + two_vote_overstatements;
+    final int overstatements = one_vote_overstatements + two_vote_overstatements;
     if (auditedSamples.equals(BigDecimal.ZERO)) {
       return BigDecimal.ONE;
     } else {
       return BigDecimal.ONE.add(BigDecimal.valueOf(overstatements).divide(auditedSamples, MathContext.DECIMAL128));
     }
   }
+
+  /**
+   * Computes the over/understatement represented by the specified CVR and ACVR.
+   * This method returns an optional int that, if present, indicates a discrepancy.
+   * There are 5 possible types of discrepancy: -1 and -2 indicate 1- and 2-vote
+   * understatements; 1 and 2 indicate 1- and 2- vote overstatements; and 0
+   * indicates a discrepancy that does not count as either an under- or
+   * overstatement for the RLA algorithm, but nonetheless indicates a difference
+   * between ballot interpretations.
+   *
+   * If a discrepancy is found, it will be recorded in the cvrDiscrepancy map
+   * for this Assertion. It will not be added to the Assertion's discrepancy
+   * counters until the recordDiscrepancy() method is called.
+   *
+   * @param cvr        The CVR that the machine saw
+   * @param auditedCVR The ACVR that the human audit board saw
+   * @return an optional int that is present if there is a discrepancy and absent
+   * otherwise.
+   */
+  public OptionalInt computeDiscrepancy(final CastVoteRecord cvr,
+                                        final CastVoteRecord auditedCVR) {
+    OptionalInt result = OptionalInt.empty();
+
+    // Get CVRContestInfo matching this assertion's contest from the CVR and audited ballot.
+    final Optional<CVRContestInfo> cvrInfo = cvr.contestInfoForContestResult(this.contestName);
+    final Optional<CVRContestInfo> acvrInfo = auditedCVR.contestInfoForContestResult(this.contestName);
+
+    if (auditedCVR.recordType() == CastVoteRecord.RecordType.PHANTOM_BALLOT) {
+        // There is no matching audited ballot for this CVR (the audited ballot is a phantom),
+        // and the relevant contest for this assertion is on the CVR.
+        // If the contest has not been recorded as being on this CVR, the worst-case discrepancy in
+        // this instance is a 1-vote overstatement (we treat the CVR score as being 0 in this case,
+        // and if the ACVR score is -1, we get a 1-vote overstatement).
+        result = cvrInfo.map(this::computeDiscrepancyPhantomBallot).orElseGet(() -> OptionalInt.of(1));
+
+    } else if (cvr.recordType() == CastVoteRecord.RecordType.PHANTOM_RECORD){
+      // Similar to the phantom ballot, we use the worst case scenario.
+      result = OptionalInt.of(2);
+
+      if(acvrInfo.isPresent()){
+        // Compute ballot score for this assertion.
+        int acvrScore = score(acvrInfo.get());
+
+        // Based on the ballot score, what is the maximum discrepancy we could have for the
+        // phantom CVR and given ballot?
+        result = OptionalInt.of(1 - acvrScore);
+      }
+
+    } else if (cvrInfo.isPresent() && acvrInfo.isPresent()) {
+      if (acvrInfo.get().consensus() == CVRContestInfo.ConsensusValue.NO) {
+        // A lack of consensus for this contest between auditors is treated as if the ballot is a
+        // phantom ballot.
+        result = computeDiscrepancyPhantomBallot(cvrInfo.get());
+      } else {
+        // First, determine whether there is a difference in the votes on the CVR vs the ballot.
+        // If there is no difference, there is no discrepancy.
+        boolean recordsSame = cvrInfo.get().choices().equals(acvrInfo.get().choices());
+        if(recordsSame){
+          result = OptionalInt.empty();
+        }
+        else {
+          // There is a difference, compute the discrepancy for this assertion (if any).
+          int cvrScore = score(cvrInfo.get());
+          int acvrScore = score(acvrInfo.get());
+          result = OptionalInt.of(cvrScore - acvrScore);
+        }
+      }
+    }
+    // If we have determined there is a discrepancy, record the type in cvrDiscrepancies. If
+    // we have found there is no discrepancy, ensure that any discrepancy record from a prior call to
+    // computeDiscrepancy() for this CVR is removed.
+    if(result.isPresent()){
+      cvrDiscrepancy.put(cvr.getCvrId(), result.getAsInt());
+    }
+    else {
+      cvrDiscrepancy.remove(cvr.getCvrId());
+    }
+
+    return result;
+  }
+
+  /**
+   * Returns the worst case discrepancy possible for this assertion given that we have a
+   * CVR with the relevant contest on it, and no matching ballot.
+   * @param cvrInfo   Contest information on the given CVR.
+   * @return The worst case discrepancy for this assertion given a CVR and no matching ballot.
+   */
+  private OptionalInt computeDiscrepancyPhantomBallot(final CVRContestInfo cvrInfo){
+    // Compute the score for the CVR (in the context of this assertion).
+    final int score = score(cvrInfo);
+
+    // The maximum discrepancy we can have is 1 + the score assigned to the CVR. If
+    // the CVR gives the vote to the assertion's winner, then we could have a 2-vote
+    // overstatement if the ballot gave the vote to the loser.
+    return OptionalInt.of(score + 1);
+  }
+
+  /**
+   * Computes the Score for the given vote in the context of this assertion. For details on
+   * how votes are scored for assertions, refer to the Guide to RAIRE.
+   * @param info   Contest information containing the vote to be scored.
+   * @return Vote score (either -1, 0, or 1).
+   */
+  protected abstract int score(final CVRContestInfo info);
 }

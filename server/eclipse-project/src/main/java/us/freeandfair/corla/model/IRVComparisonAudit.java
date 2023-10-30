@@ -27,7 +27,6 @@ import javax.persistence.criteria.CriteriaBuilder;
  * Note: superclass attributes are private, will need to access via get/set methods.
  */
 @Entity
-@Cacheable(true)
 @DiscriminatorValue("IRV")
 public class IRVComparisonAudit extends ComparisonAudit {
 
@@ -246,7 +245,34 @@ public class IRVComparisonAudit extends ComparisonAudit {
   @Override
   @SuppressWarnings("checkstyle:magicnumber")
   public void removeDiscrepancy(final CVRAuditInfo the_record, final int the_type) {
- 
+    // Iterate over the assertions for this audit, and remove 'the_count' instances of this
+    // discrepancy from their tallies (if the discrepancy is relevant to the assertion).
+    for(Assertion a : assertions){
+      a.removeDiscrepancy(the_record);
+    }
+  }
+
+  /**
+   * Records the specified discrepancy. If the discrepancy is for this Contest
+   * but from a CVR/ballot that was not selected for this Contest (selected for
+   * another Contest), is does not contribute to the counts and calculations. It
+   * is still recorded, though, for informational purposes. The valid range is
+   * -2 .. 2: -2 and -1 are understatements, 0 is a discrepancy that doesn't
+   * affect the RLA calculations, and 1 and 2 are overstatements).
+   *
+   * @param the_record The CVRAuditInfo record that generated the discrepancy.
+   * @param the_type The type of discrepancy to add.
+   * @exception IllegalArgumentException if an invalid discrepancy type is
+   * specified.
+   */
+  @SuppressWarnings("checkstyle:magicnumber")
+  public void recordDiscrepancy(final CVRAuditInfo the_record,
+                                final int the_type){
+    // Iterate over the assertions for this audit, and record 'the_count' instances of this
+    // discrepancy toward their tallies (if the discrepancy is relevant to the assertion).
+    for(Assertion a : assertions){
+      a.recordDiscrepancy(the_record);
+    }
   }
 
 }
