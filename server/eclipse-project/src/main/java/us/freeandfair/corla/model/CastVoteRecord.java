@@ -552,6 +552,18 @@ final public class CastVoteRecord implements Comparable<CastVoteRecord>,
       .findFirst();
   }
 
+    /**
+     * Get info about a CVR by way of a ContestResult, matching on contest
+     * name.
+     * @param contestName Name of the contest to match on.
+     * @return maybe the first CVRContestInfo found, maybe nothing.
+     */
+    public Optional<CVRContestInfo> contestInfoForContestResult(final String contestName) {
+        return my_contest_info.stream()
+                .filter(x -> x.contest().name().equals(contestName))
+                .findFirst();
+    }
+
   /**
    * @return the audit flag. This flag is meaningless unless it was explicitly set
    * when this record was loaded. It is useful only for communicating information
