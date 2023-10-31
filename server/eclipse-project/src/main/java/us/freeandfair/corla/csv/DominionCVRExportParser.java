@@ -570,10 +570,13 @@ public class DominionCVRExportParser {
 
       // if this contest was on the ballot, add it to the votes
       if (present) {
-          // If this is an IRV contest, rewrite the vote to remove parenthesized ranks.
+          // If this is an IRV contest, the vote to remove parenthesized ranks and compute the valid interpretation.
+          // Then store the valid interpretation as an orded list of candidate names without explicit ranks.
+          // Throw an exception if it can't be parsed, _not_ if it's merely an invalid IRV preference list.
           if (co.description().equalsIgnoreCase(ContestType.IRV.toString())) {
             try {
-              contest_info.add(new CVRContestInfo(co, null, null, parseValidIRVVote(votes)));
+              contest_info.add(new CVRContestInfo(co, null, null,
+                                                                 IRVVoteToValidInterpretationAsSortedList(votes)));
             } catch (IRVParsingException e) {
               throw new IllegalArgumentException(e);
             }

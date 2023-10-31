@@ -9,6 +9,7 @@ import org.testng.annotations.Test;
 import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.model.ContestType;
 import us.freeandfair.corla.model.IRVChoices;
+import us.freeandfair.corla.model.IRVPreference;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -29,6 +30,7 @@ public class IRVVoteParsingTest {
         List<String> expectedOutputVote = Arrays.asList("Chuan","Alice","Bob");
 
         assertTrue(listsEqual(parseValidIRVVote(inputVote), expectedOutputVote));
+        assertTrue(listsEqual(IRVVoteToValidInterpretationAsSortedList(inputVote), expectedOutputVote));
     }
 
     // Check that an effort to convert an invalid vote into a sorted list throws an exception.
@@ -40,11 +42,20 @@ public class IRVVoteParsingTest {
     }
 
     @Test
+    void whenGivenInvalidVote_IRVVoteToValidInterpretation() throws IRVParsingException {
+        List<String> invalidInputVote = Arrays.asList("Alice(1)", "Chuan(1)","Bob(3)");
+
+        assertTrue(IRVVoteToValidInterpretationAsSortedList(invalidInputVote).isEmpty());
+    }
+
+    @Test
     void parseValidEmptyIRVVoteTest() throws IRVParsingException {
         List<String> invalidInputVote = new ArrayList<>();
 
         List<String> output = parseValidIRVVote(invalidInputVote);
         assertTrue(output.isEmpty());
+
+        assertTrue(IRVVoteToValidInterpretationAsSortedList(invalidInputVote).isEmpty());
     }
 
     @Test
@@ -53,6 +64,9 @@ public class IRVVoteParsingTest {
         IRVChoices irvChoices = parseIRVVote(inputVote);
 
         assertTrue(irvChoices.toString().equals("Chuan(1),Alice(2),Bob(3)"));
+
+        List<String> expectedOutput = List.of("Chuan", "Alice", "Bob");
+        assertTrue(listsEqual(IRVVoteToValidInterpretationAsSortedList(inputVote), expectedOutput));
     }
 
     @Test
@@ -64,15 +78,42 @@ public class IRVVoteParsingTest {
                 || irvChoices.toString().equals("Alice(1),Chuan(1),Bob(3)");
 
         assertTrue(atLeastOneEqual);
+
+        assertTrue(IRVVoteToValidInterpretationAsSortedList(inputVote).isEmpty());
     }
 
-    @Test (expectedExceptions = IRVParsingException.class)
+    @Test
     void parseExampleIRVVoteTest() throws IRVParsingException {
-        List<String> inputVote = List.of("Candidate 5(1)", "Candidate 6(2)", "Candidate 7(3)", "Candidate 8(4)", "Candidate 9(5)", "Candidate 10(6)", "Candidate 11(7)", "Candidate 12(8)", "Candidate 2(9)","Candidate 1(10) ");
+        List<String> inputVote = List.of("Candidate 5(1)", "Candidate 6(2)", "Candidate 7(3)", "Candidate 8(4)",
+                "Candidate 9(5)", "Candidate 10(6)", "Candidate 11(7)", "Candidate 12(8)", "Candidate 2(9)","Candidate 1(10) ");
         IRVChoices irvChoices = parseIRVVote(inputVote);
     }
 
-    @Test (expectedExceptions = IRVParsingException.class)
+    @Test
+    void parseAndInterpretExampleIRVVoteTest() throws IRVParsingException {
+        List<String> inputVote = List.of("Candidate 5(1)", "Candidate 6(2)", "Candidate 7(3)", "Candidate 8(4)", "Candidate 9(5)", "Candidate 10(6)", "Candidate 11(7)", "Candidate 12(8)", "Candidate 2(9)","Candidate 1(10) ");
+        List<String> expectedOutput = List.of("Candidate 5", "Candidate 6", "Candidate 7", "Candidate 8", "Candidate 9", "Candidate 10", "Candidate 11", "Candidate 12", "Candidate 2","Candidate 1");
+
+        assertTrue(listsEqual(IRVVoteToValidInterpretationAsSortedList(inputVote), expectedOutput));
+    }
+
+    @Test
+    void parseExampleIRVVoteTestCandidate10() throws IRVParsingException {
+        List<String> inputVote = List.of("Candidate 1(10) ");
+
+        assertTrue(IRVVoteToValidInterpretationAsSortedList(inputVote).isEmpty());
+    }
+
+    @Test
+    void parseAndInterpretExampleIRVVoteTestCandidate10() throws IRVParsingException {
+        List<String> inputVote = List.of("Candidate 5(1)", "Candidate 6(2)", "Candidate 7(3)", "Candidate 8(4)", "Candidate 9(5)", "Candidate 10(6)", "Candidate 11(7)", "Candidate 12(8)", "Candidate 2(9)","Candidate 1(10) ");
+        List<String> expectedOutput = List.of("Candidate 5", "Candidate 6", "Candidate 7", "Candidate 8", "Candidate 9", "Candidate 10", "Candidate 11", "Candidate 12", "Candidate 2","Candidate 1");
+
+        assertTrue(listsEqual(IRVVoteToValidInterpretationAsSortedList(inputVote), expectedOutput));
+    }
+
+    // This example is missing a 9th preference.
+    @Test
     void parseBadExampleIRVVoteTest() throws IRVParsingException {
         List<String> inputVote = List.of("Candidate 5(1)", "Candidate 6(2)", "Candidate 7(3)", "Candidate 8(4)", "Candidate 9(5)", "Candidate 10(6)", "Candidate 11(7)", "Candidate 12(8)", "Candidate 1(10) ");
         IRVChoices irvChoices = parseIRVVote(inputVote);
@@ -239,6 +280,46 @@ public class IRVVoteParsingTest {
         checkSortIRVPreferences(choices);
 
     }
+
+    @Test
+    public void parseTwoDigitPreferences() throws IRVParsingException {
+        String choice = "Alice(10)";
+
+        IRVPreference p = parseIRVPreference(choice);
+
+        assertEquals(10,p.getRank());
+        assertEquals("Alice", p.getCandidateName());
+    }
+    @Test
+    public void parseTwoDigitPreferences2() throws IRVParsingException {
+        String choice = "Candidate 1(10)";
+
+        IRVPreference p = parseIRVPreference(choice);
+
+        assertEquals(10,p.getRank());
+        assertEquals("Candidate 1", p.getCandidateName());
+    }
+
+    @Test
+    public void parseTwoDigitPreferences2WithSpace() throws IRVParsingException {
+        String choice = "Candidate 1(10) ";
+
+        IRVPreference p = parseIRVPreference(choice);
+
+        assertEquals(10,p.getRank());
+        assertEquals("Candidate 1", p.getCandidateName());
+    }
+
+    @Test
+    public void parseTwoDigitPreferences2WithOtherSpace() throws IRVParsingException {
+        String choice = "Candidate 1  (10) ";
+
+        IRVPreference p = parseIRVPreference(choice);
+
+        assertEquals(10,p.getRank());
+        assertEquals("Candidate 1", p.getCandidateName());
+    }
+
     @Test
     private boolean listsEqual(List<String> list1, List<String> list2) {
         if (list1.size() != list2.size()) {
