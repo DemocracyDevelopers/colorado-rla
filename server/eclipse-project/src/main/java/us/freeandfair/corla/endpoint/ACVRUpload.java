@@ -111,8 +111,6 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
   public String endpointBody(final Request the_request, final Response the_response) {
     final CastVoteRecord newAcvr;
 
-    // NOTE: Ballot interpretation has to happen here.
-
     try {
       final SubmittedAuditCVR submission =
         Main.GSON.fromJson(the_request.body(), SubmittedAuditCVR.class);
@@ -121,6 +119,11 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
         badDataContents(the_response, "empty audit CVR upload");
       } else {
         // FIXME extract-fn: handleACVR
+        // NOTE: Ballot interpretation has to happen here.
+        // Assume that submission.my_audit_cvr (which is a CastVoteRecord) has
+        // its choices recorded as "Alice(1)", "Bob(2)", etc. Later, when the
+        // audit CVR is created (forming newAcvr), its choices will be represented
+        // without attached rankings.
         final CountyDashboard cdb =
             Persistence.getByID(Main.authentication().authenticatedCounty(the_request).id(),
                                 CountyDashboard.class);
