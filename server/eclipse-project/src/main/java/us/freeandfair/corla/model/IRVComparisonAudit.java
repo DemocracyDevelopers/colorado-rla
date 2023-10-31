@@ -7,7 +7,6 @@ package us.freeandfair.corla.model;
 import us.freeandfair.corla.query.AssertionQueries;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,7 +14,6 @@ import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
 import javax.persistence.*;
-import javax.persistence.criteria.CriteriaBuilder;
 
 
 /**
@@ -235,8 +233,9 @@ public class IRVComparisonAudit extends ComparisonAudit {
       return BigDecimal.ONE;
     }
 
-      // To complete as appropriate for IRV audits.
-      return BigDecimal.ONE;
+    // Return maximum risk across all of the audit's assertions.
+    return Collections.max(assertions.stream().map(a -> a.riskMeasurement(getAuditedSampleCount(),
+            getGamma())).collect(Collectors.toList()));
   }
 
   /**

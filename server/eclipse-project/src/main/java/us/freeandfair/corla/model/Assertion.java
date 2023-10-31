@@ -421,13 +421,17 @@ public abstract class Assertion implements PersistentEntity, Serializable {
         // If the contest has not been recorded as being on this CVR, the worst-case discrepancy in
         // this instance is a 1-vote overstatement (we treat the CVR score as being 0 in this case,
         // and if the ACVR score is -1, we get a 1-vote overstatement).
-        result = cvrInfo.map(this::computeDiscrepancyPhantomBallot).orElseGet(() -> OptionalInt.of(1));
-
+        if (cvr.recordType() == CastVoteRecord.RecordType.PHANTOM_RECORD){
+          result = OptionalInt.of(2);
+        }
+        else {
+          result = cvrInfo.map(this::computeDiscrepancyPhantomBallot).orElseGet(() -> OptionalInt.of(1));
+        }
     } else if (cvr.recordType() == CastVoteRecord.RecordType.PHANTOM_RECORD){
       // Similar to the phantom ballot, we use the worst case scenario.
       result = OptionalInt.of(2);
 
-      if(acvrInfo.isPresent()){
+      if(acvrInfo.isPresent() && acvrInfo.get().consensus() == CVRContestInfo.ConsensusValue.YES){
         // Compute ballot score for this assertion.
         int acvrScore = score(acvrInfo.get());
 
@@ -435,12 +439,12 @@ public abstract class Assertion implements PersistentEntity, Serializable {
         // phantom CVR and given ballot?
         result = OptionalInt.of(1 - acvrScore);
       }
-
     } else if (cvrInfo.isPresent() && acvrInfo.isPresent()) {
       if (acvrInfo.get().consensus() == CVRContestInfo.ConsensusValue.NO) {
         // A lack of consensus for this contest between auditors is treated as if the ballot is a
         // phantom ballot.
         result = computeDiscrepancyPhantomBallot(cvrInfo.get());
+
       } else {
         // First, determine whether there is a difference in the votes on the CVR vs the ballot.
         // If there is no difference, there is no discrepancy.
@@ -483,6 +487,29 @@ public abstract class Assertion implements PersistentEntity, Serializable {
     // the CVR gives the vote to the assertion's winner, then we could have a 2-vote
     // overstatement if the ballot gave the vote to the loser.
     return OptionalInt.of(score + 1);
+  }
+
+  /**
+   * Compute the current level of risk achieved for this assertion given a specified
+   * audited sample count and gamma value. Audit.pValueApproximation is used to compute
+   * this risk using the diluted margin of the assertion, and the recorded number of
+   * one/two vote understatements and one/two vote overstatements.
+   * @param auditedSampleCount  Number of ballots audited.
+   * @param gamma               Gamma value to use in risk computation.
+   * @return Level of risk achieved for the given assertion.
+   */
+  public BigDecimal riskMeasurement(final Integer auditedSampleCount, final BigDecimal gamma){
+    if (auditedSampleCount > 0 && dilutedMargin > 0) {
+      final BigDecimal result =  Audit.pValueApproximation(auditedSampleCount,
+              BigDecimal.valueOf(dilutedMargin), gamma, my_one_vote_under_count,
+              my_two_vote_under_count, my_one_vote_over_count, my_two_vote_over_count);
+
+      return result.setScale(3, BigDecimal.ROUND_HALF_UP);
+
+    } else {
+      // Full risk (100%) when nothing is known
+      return BigDecimal.ONE;
+    }
   }
 
   /**
