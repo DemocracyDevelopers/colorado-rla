@@ -575,6 +575,8 @@ public class DominionCVRExportParser {
           // Throw an exception if it can't be parsed, _not_ if it's merely an invalid IRV preference list.
           if (co.description().equalsIgnoreCase(ContestType.IRV.toString())) {
             try {
+              // Currently deciding to log both the raw and (later, same as plurality) the interpreted IRV votes.
+              LOGGER.debug("Raw IRV vote: "+votes);
               contest_info.add(new CVRContestInfo(co, null, null,
                                                                  IRVVoteToValidInterpretationAsSortedList(votes)));
             } catch (IRVParsingException e) {
