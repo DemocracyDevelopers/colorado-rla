@@ -687,6 +687,35 @@ public class NEBAssertionTest {
     }
 
     @Test()
+    public void testRecordDiscrepancy6() {
+        NEBAssertion neb = new NEBAssertion("Board of Tax and Estimation", "Alice", "Bob",
+                50, 5000, 100);
+
+        final CVRContestInfo cvrInfo = new CVRContestInfo(contest, "",
+                CVRContestInfo.ConsensusValue.YES, Arrays.asList("Bob", "Wendy"));
+
+        final CVRContestInfo acvrInfo = new CVRContestInfo(contest, "",
+                CVRContestInfo.ConsensusValue.YES, Arrays.asList("Bob", "Wendy"));
+
+        final CastVoteRecord cvr = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED, Instant.now(),
+                16L, 1, 1, 1, "Batch1",
+                1, "1-Batch1-1", null, List.of(cvrInfo));
+
+        final CastVoteRecord acvr = new CastVoteRecord(CastVoteRecord.RecordType.AUDITOR_ENTERED, Instant.now(),
+                16L, 1, 1, 1, "Batch1",
+                1, "1-Batch1-1", null, List.of(acvrInfo));
+
+        final OptionalInt discrepancy = neb.computeDiscrepancy(cvr, acvr);
+        assertFalse(discrepancy.isPresent());
+        neb.recordDiscrepancy(new CVRAuditInfo(cvr));
+        assertEquals(Integer.valueOf(0), neb.my_two_vote_over_count);
+        assertEquals(Integer.valueOf(0), neb.my_one_vote_over_count);
+        assertEquals(Integer.valueOf(0), neb.my_one_vote_under_count);
+        assertEquals(Integer.valueOf(0), neb.my_two_vote_under_count);
+        assertEquals(Integer.valueOf(0), neb.my_other_count);
+    }
+
+    @Test()
     public void testRemoveDiscrepancy1() {
         NEBAssertion neb = new NEBAssertion("Board of Tax and Estimation", "Alice", "Bob",
                 50, 5000, 100);
@@ -864,6 +893,45 @@ public class NEBAssertionTest {
         neb.recordDiscrepancy(cvr_info);
         assertEquals(Integer.valueOf(0), neb.my_two_vote_over_count);
         assertEquals(Integer.valueOf(1), neb.my_one_vote_over_count);
+        assertEquals(Integer.valueOf(0), neb.my_one_vote_under_count);
+        assertEquals(Integer.valueOf(0), neb.my_two_vote_under_count);
+        assertEquals(Integer.valueOf(0), neb.my_other_count);
+
+        neb.removeDiscrepancy(cvr_info);
+        assertEquals(Integer.valueOf(0), neb.my_two_vote_over_count);
+        assertEquals(Integer.valueOf(0), neb.my_one_vote_over_count);
+        assertEquals(Integer.valueOf(0), neb.my_one_vote_under_count);
+        assertEquals(Integer.valueOf(0), neb.my_two_vote_under_count);
+        assertEquals(Integer.valueOf(0), neb.my_other_count);
+    }
+
+    @Test()
+    public void testRemoveDiscrepancy6() {
+        NEBAssertion neb = new NEBAssertion("Board of Tax and Estimation", "Alice", "Bob",
+                50, 5000, 100);
+
+        final CVRContestInfo cvrInfo = new CVRContestInfo(contest, "",
+                CVRContestInfo.ConsensusValue.YES, Arrays.asList("Alice", "Wendy"));
+
+        final CVRContestInfo acvrInfo = new CVRContestInfo(contest, "",
+                CVRContestInfo.ConsensusValue.YES, Arrays.asList("Alice", "Wendy"));
+
+        final CastVoteRecord cvr = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED, Instant.now(),
+                16L, 1, 1, 1, "Batch1",
+                1, "1-Batch1-1", null, List.of(cvrInfo));
+
+        final CastVoteRecord acvr = new CastVoteRecord(CastVoteRecord.RecordType.AUDITOR_ENTERED, Instant.now(),
+                16L, 1, 1, 1, "Batch1",
+                1, "1-Batch1-1", null, List.of(acvrInfo));
+
+        final OptionalInt discrepancy = neb.computeDiscrepancy(cvr, acvr);
+        assertFalse(discrepancy.isPresent());
+        assertEquals(0, neb.cvrDiscrepancy.size());
+
+        final CVRAuditInfo cvr_info = new CVRAuditInfo(cvr);
+        neb.recordDiscrepancy(cvr_info);
+        assertEquals(Integer.valueOf(0), neb.my_two_vote_over_count);
+        assertEquals(Integer.valueOf(0), neb.my_one_vote_over_count);
         assertEquals(Integer.valueOf(0), neb.my_one_vote_under_count);
         assertEquals(Integer.valueOf(0), neb.my_two_vote_under_count);
         assertEquals(Integer.valueOf(0), neb.my_other_count);
