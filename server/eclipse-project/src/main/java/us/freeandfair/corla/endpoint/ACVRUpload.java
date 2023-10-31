@@ -91,7 +91,7 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
   }
 
   /** build new acvr **/
-  public CastVoteRecord buildNewAcvr(final SubmittedAuditCVR submission,
+  public static CastVoteRecord buildNewAcvr(final SubmittedAuditCVR submission,
                                      final CastVoteRecord cvr,
                                      final CountyDashboard cdb) throws IRVParsingException {
     final CastVoteRecord s = submission.auditCVR();
@@ -113,7 +113,7 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
   /* Iterates through the uploaded Cast Vote Record and, for each IRV contest, changes the choices
    * to one that replaces the raw IRV vote with its valid interpretation.
    */
-  private List<CVRContestInfo> interpretIRVChoicesInACVR(List<CVRContestInfo> oldCVRChoices) throws IRVParsingException {
+  private static List<CVRContestInfo> interpretIRVChoicesInACVR(List<CVRContestInfo> oldCVRChoices) throws IRVParsingException {
     List<CVRContestInfo> newCVRChoices = new ArrayList<>();
 
     for ( CVRContestInfo ci : oldCVRChoices ) {
@@ -127,7 +127,7 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
       }
     }
 
-    return null;
+    return newCVRChoices;
   }
   /**
    * {@inheritDoc}
