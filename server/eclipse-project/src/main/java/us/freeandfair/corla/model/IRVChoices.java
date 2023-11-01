@@ -1,6 +1,7 @@
 package us.freeandfair.corla.model;
 
 import org.apache.commons.lang3.StringUtils;
+import us.freeandfair.corla.util.IRVParsingException;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,8 +26,6 @@ public class IRVChoices {
 
 
     // Build a new ballot from the string of CandidateName(rank) strings in the colorado-rla database.
-    // FIXME probably almost everywhere that calls this now, will instead want to be called on an ordered list
-    // of choices.
     public IRVChoices(String sanitizedChoices) {
         ArrayList<IRVPreference> mutableChoices = new ArrayList<>();
 
@@ -152,13 +151,13 @@ public class IRVChoices {
      * and ending with the lowest.
      * Throws an exception if called on an invalid vote.
      */
-    public List<String> AsSortedList() {
+    public List<String> AsSortedList() throws IRVParsingException {
         // Neither of these calls should ever be made.
         if ( !IsValid() ) {
-            throw new RuntimeException("Attempt to call AsSortedList on invalid vote: "+choices);
+            throw new IRVParsingException("Attempt to call AsSortedList on invalid vote: "+choices);
         }
         if (! IsSorted(choices)) {
-            throw new RuntimeException("Attempt to call AsSortedList on unsorted choices.");
+            throw new IRVParsingException("Attempt to call AsSortedList on unsorted choices.");
         }
 
         return choices.stream().map(IRVPreference::getCandidateName).collect(Collectors.toUnmodifiableList());
