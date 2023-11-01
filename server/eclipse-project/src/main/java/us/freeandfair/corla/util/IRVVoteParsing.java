@@ -1,6 +1,7 @@
 package us.freeandfair.corla.util;
 
 import us.freeandfair.corla.model.Choice;
+import us.freeandfair.corla.model.IRVBallotInterpretationDuplicatesBeforeOvervotes;
 import us.freeandfair.corla.model.IRVChoices;
 import us.freeandfair.corla.model.IRVPreference;
 
@@ -23,6 +24,21 @@ public class IRVVoteParsing {
        }
 
        return new IRVChoices(choices);
+    }
+
+    /* Takes a list of candidate 'names' which are expected to be real candidate names with an IRV rank
+     * in parentheses, applies the valid interpretation rules, and
+     * returns a list of names only, sorted by preference order (highest preference first).
+     * Exception is thrown only if it can't be parsed, not if the preference list isn't valid.
+     */
+    public static List<String> IRVVoteToValidInterpretationAsSortedList(final List<String> votes) throws IRVParsingException {
+        IRVChoices choices = parseIRVVote(votes);
+
+        IRVChoices validInterpretation =
+                IRVBallotInterpretationDuplicatesBeforeOvervotes.InterpretValidIntent(choices);
+
+        return validInterpretation.AsSortedList();
+
     }
 
     /* Takes a list of candidate 'names' which are expected to be real candidate names with an IRV rank
@@ -161,10 +177,11 @@ public class IRVVoteParsing {
 
         // Look for digits in parentheses at the end of the string.
         String regexp ="\\((\\d+\\))$";
+        String trimmed = nameAndPref.trim();
 
         try {
-            String vote = nameAndPref.split(regexp)[0];
-            String rank1 = nameAndPref.replace(vote, "");
+            String vote = trimmed.split(regexp)[0];
+            String rank1 = trimmed.replace(vote, "");
                     String rank2 = rank1.trim().split("[\\(\\)]")[1];
 
             return new IRVPreference(Integer.parseInt(rank2), vote.trim());

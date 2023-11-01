@@ -12,8 +12,11 @@
 package us.freeandfair.corla.endpoint;
 
 import static us.freeandfair.corla.asm.ASMEvent.AuditBoardDashboardEvent.*;
+import static us.freeandfair.corla.util.IRVVoteParsing.IRVVoteToValidInterpretationAsSortedList;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.PersistenceException;
 
@@ -28,10 +31,13 @@ import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.controller.ComparisonAuditController;
 import us.freeandfair.corla.json.SubmittedAuditCVR;
+import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
+import us.freeandfair.corla.model.ContestType;
 import us.freeandfair.corla.model.CountyDashboard;
 import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.util.IRVParsingException;
 
 /**
  * The "audit CVR upload" endpoint.
@@ -85,16 +91,17 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
   }
 
   /** build new acvr **/
-  public CastVoteRecord buildNewAcvr(final SubmittedAuditCVR submission,
+  public static CastVoteRecord buildNewAcvr(final SubmittedAuditCVR submission,
                                      final CastVoteRecord cvr,
-                                     final CountyDashboard cdb) {
+                                     final CountyDashboard cdb) throws IRVParsingException {
     final CastVoteRecord s = submission.auditCVR();
+    final List<CVRContestInfo> contestInfo =  interpretIRVChoicesInACVR(s.contestInfo());
     final CastVoteRecord newAcvr =
       new CastVoteRecord(RecordType.AUDITOR_ENTERED,
                          Instant.now(),
                          s.countyID(), s.cvrNumber(), null, s.scannerID(),
                          s.batchID(), s.recordID(), s.imprintedID(),
-                         s.ballotType(), s.contestInfo());
+                         s.ballotType(), contestInfo);
     newAcvr.setAuditBoardIndex(submission.getAuditBoardIndex());
     newAcvr.setCvrId(submission.cvrID());
     newAcvr.setRoundNumber(cdb.currentRound().number());
@@ -103,6 +110,25 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
     return newAcvr;
   }
 
+  /* Iterates through the uploaded Cast Vote Record and, for each IRV contest, changes the choices
+   * to one that replaces the raw IRV vote with its valid interpretation.
+   */
+  private static List<CVRContestInfo> interpretIRVChoicesInACVR(List<CVRContestInfo> oldCVRChoices) throws IRVParsingException {
+    List<CVRContestInfo> newCVRChoices = new ArrayList<>();
+
+    for ( CVRContestInfo ci : oldCVRChoices ) {
+      // For IRV, make new IRV choices as an ordered list without parenthesized ranks.
+      if( ci.contest().description().equalsIgnoreCase(ContestType.IRV.toString()) ) {
+        List<String> newIRVChoices =IRVVoteToValidInterpretationAsSortedList(ci.choices());
+        newCVRChoices.add( new CVRContestInfo(ci.contest(), ci.comment(), ci.consensus(), newIRVChoices));
+      } else {
+        // for plurality, just keep it as it is
+        newCVRChoices.add(ci);
+      }
+    }
+
+    return newCVRChoices;
+  }
   /**
    * {@inheritDoc}
    */
@@ -119,11 +145,6 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
         badDataContents(the_response, "empty audit CVR upload");
       } else {
         // FIXME extract-fn: handleACVR
-        // NOTE: Ballot interpretation has to happen here.
-        // Assume that submission.my_audit_cvr (which is a CastVoteRecord) has
-        // its choices recorded as "Alice(1)", "Bob(2)", etc. Later, when the
-        // audit CVR is created (forming newAcvr), its choices will be represented
-        // without attached rankings.
         final CountyDashboard cdb =
             Persistence.getByID(Main.authentication().authenticatedCounty(the_request).id(),
                                 CountyDashboard.class);
@@ -202,6 +223,9 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
     } catch (final PersistenceException e) {
       LOGGER.error("could not save audit CVR");
       serverError(the_response, "Unable to save audit CVR");
+    } catch (IRVParsingException e ) {
+      LOGGER.error("could not parse audit CVR");
+      serverError(the_response, "Unable to parse audit CVR");
     }
     return my_endpoint_result.get();
   }
