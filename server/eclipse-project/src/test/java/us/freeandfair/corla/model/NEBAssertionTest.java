@@ -2,13 +2,16 @@ package us.freeandfair.corla.model;
 
 
 import org.testng.annotations.Test;
+import us.freeandfair.corla.math.Audit;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.OptionalInt;
 
+import static java.lang.Math.pow;
 import static org.junit.Assert.*;
 
 public class NEBAssertionTest {
@@ -942,5 +945,207 @@ public class NEBAssertionTest {
         assertEquals(Integer.valueOf(0), neb.my_one_vote_under_count);
         assertEquals(Integer.valueOf(0), neb.my_two_vote_under_count);
         assertEquals(Integer.valueOf(0), neb.my_other_count);
+    }
+
+    @Test()
+    public void testRiskComputation1() {
+        NEBAssertion neb = new NEBAssertion("Board of Tax and Estimation", "Alice", "Bob",
+                50, 5000, 100);
+
+        neb.my_one_vote_over_count = 0;
+        neb.my_two_vote_over_count = 1;
+        neb.my_one_vote_under_count = 0;
+        neb.my_two_vote_under_count = 0;
+
+        final double gamma = 1.03905;
+        final double dilutedMargin = 50.0/5000.0;
+        final double U = (2*gamma)/dilutedMargin;
+        final int auditedSample = 1000;
+        double risk = pow(1 - 1/U, auditedSample) * pow(1 - 1/(2*gamma), 0) * pow(1 - 1/gamma, -1) *
+                pow(1 + 1/(2*gamma), 0) * pow(1 + 1/gamma, 0);
+
+        BigDecimal computedRisk = neb.riskMeasurement(auditedSample, BigDecimal.valueOf(gamma));
+        assertEquals(BigDecimal.valueOf(risk).setScale(3, BigDecimal.ROUND_HALF_UP), computedRisk);
+    }
+
+    @Test()
+    public void testRiskComputation2() {
+        NEBAssertion neb = new NEBAssertion("Board of Tax and Estimation", "Alice", "Bob",
+                50, 5000, 100);
+
+        neb.my_one_vote_over_count = 1;
+        neb.my_two_vote_over_count = 0;
+        neb.my_one_vote_under_count = 0;
+        neb.my_two_vote_under_count = 0;
+
+        final double gamma = 1.03905;
+        final double dilutedMargin = 50.0/5000.0;
+        final double U = (2*gamma)/dilutedMargin;
+        final int auditedSample = 1000;
+        double risk = pow(1 - 1/U, auditedSample) * pow(1 - 1/(2*gamma), -1) * pow(1 - 1/gamma, 0) *
+                pow(1 + 1/(2*gamma), 0) * pow(1 + 1/gamma, 0);
+
+        BigDecimal computedRisk = neb.riskMeasurement(auditedSample, BigDecimal.valueOf(gamma));
+        assertEquals(BigDecimal.valueOf(risk).setScale(3, BigDecimal.ROUND_HALF_UP), computedRisk);
+    }
+
+    @Test()
+    public void testRiskComputation3() {
+        NEBAssertion neb = new NEBAssertion("Board of Tax and Estimation", "Alice", "Bob",
+                50, 5000, 100);
+
+        neb.my_one_vote_over_count = 0;
+        neb.my_two_vote_over_count = 0;
+        neb.my_one_vote_under_count = 1;
+        neb.my_two_vote_under_count = 0;
+
+        final double gamma = 1.03905;
+        final double dilutedMargin = 50.0/5000.0;
+        final double U = (2*gamma)/dilutedMargin;
+        final int auditedSample = 1000;
+        double risk = pow(1 - 1/U, auditedSample) * pow(1 - 1/(2*gamma), 0) * pow(1 - 1/gamma, 0) *
+                pow(1 + 1/(2*gamma), -1) * pow(1 + 1/gamma, 0);
+
+        BigDecimal computedRisk = neb.riskMeasurement(auditedSample, BigDecimal.valueOf(gamma));
+        assertEquals(BigDecimal.valueOf(risk).setScale(3, BigDecimal.ROUND_HALF_UP), computedRisk);
+    }
+
+    @Test()
+    public void testRiskComputation4() {
+        NEBAssertion neb = new NEBAssertion("Board of Tax and Estimation", "Alice", "Bob",
+                50, 5000, 100);
+
+        neb.my_one_vote_over_count = 0;
+        neb.my_two_vote_over_count = 0;
+        neb.my_one_vote_under_count = 0;
+        neb.my_two_vote_under_count = 1;
+
+        final double gamma = 1.03905;
+        final double dilutedMargin = 50.0/5000.0;
+        final double U = (2*gamma)/dilutedMargin;
+        final int auditedSample = 1000;
+        double risk = pow(1 - 1/U, auditedSample) * pow(1 - 1/(2*gamma), 0) * pow(1 - 1/gamma, 0) *
+                pow(1 + 1/(2*gamma), 0) * pow(1 + 1/gamma, -1);
+
+        BigDecimal computedRisk = neb.riskMeasurement(auditedSample, BigDecimal.valueOf(gamma));
+        assertEquals(BigDecimal.valueOf(risk).setScale(3, BigDecimal.ROUND_HALF_UP), computedRisk);
+    }
+
+    @Test()
+    public void testRiskComputation5() {
+        NEBAssertion neb = new NEBAssertion("Board of Tax and Estimation", "Alice", "Bob",
+                50, 5000, 100);
+
+        neb.my_one_vote_over_count = 1;
+        neb.my_two_vote_over_count = 1;
+        neb.my_one_vote_under_count = 0;
+        neb.my_two_vote_under_count = 0;
+
+        final double gamma = 1.03905;
+        final double dilutedMargin = 50.0/5000.0;
+        final double U = (2*gamma)/dilutedMargin;
+        final int auditedSample = 1000;
+        double risk = pow(1 - 1/U, auditedSample) * pow(1 - 1/(2*gamma), -1) * pow(1 - 1/gamma, -1) *
+                pow(1 + 1/(2*gamma), 0) * pow(1 + 1/gamma, 0);
+
+        BigDecimal computedRisk = neb.riskMeasurement(auditedSample, BigDecimal.valueOf(gamma));
+        assertEquals(BigDecimal.valueOf(risk).setScale(3, BigDecimal.ROUND_HALF_UP), computedRisk);
+    }
+
+    @Test()
+    public void testRiskComputation6() {
+        NEBAssertion neb = new NEBAssertion("Board of Tax and Estimation", "Alice", "Bob",
+                50, 5000, 100);
+
+        neb.my_one_vote_over_count = 0;
+        neb.my_two_vote_over_count = 0;
+        neb.my_one_vote_under_count = 1;
+        neb.my_two_vote_under_count = 1;
+
+        final double gamma = 1.03905;
+        final double dilutedMargin = 50.0/5000.0;
+        final double U = (2*gamma)/dilutedMargin;
+        final int auditedSample = 1000;
+        double risk = pow(1 - 1/U, auditedSample) * pow(1 - 1/(2*gamma), 0) * pow(1 - 1/gamma, 0) *
+                pow(1 + 1/(2*gamma), -1) * pow(1 + 1/gamma, -1);
+
+        BigDecimal computedRisk = neb.riskMeasurement(auditedSample, BigDecimal.valueOf(gamma));
+        assertEquals(BigDecimal.valueOf(risk).setScale(3, BigDecimal.ROUND_HALF_UP), computedRisk);
+    }
+
+    @Test()
+    public void testRiskComputation7() {
+        NEBAssertion neb = new NEBAssertion("Board of Tax and Estimation", "Alice", "Bob",
+                50, 5000, 100);
+
+        neb.my_one_vote_over_count = 1;
+        neb.my_two_vote_over_count = 1;
+        neb.my_one_vote_under_count = 1;
+        neb.my_two_vote_under_count = 1;
+
+        final double gamma = 1.03905;
+        final double dilutedMargin = 50.0/5000.0;
+        final double U = (2*gamma)/dilutedMargin;
+        final int auditedSample = 1000;
+        double risk = pow(1 - 1/U, auditedSample) * pow(1 - 1/(2*gamma), -1) * pow(1 - 1/gamma, -1) *
+                pow(1 + 1/(2*gamma), -1) * pow(1 + 1/gamma, -1);
+
+        BigDecimal computedRisk = neb.riskMeasurement(auditedSample, BigDecimal.valueOf(gamma));
+        assertEquals(BigDecimal.valueOf(risk).setScale(3, BigDecimal.ROUND_HALF_UP), computedRisk);
+    }
+
+    @Test()
+    public void testRiskComputation8() {
+        NEBAssertion neb = new NEBAssertion("Board of Tax and Estimation", "Alice", "Bob",
+                50, 5000, 100);
+
+        neb.my_one_vote_over_count = 0;
+        neb.my_two_vote_over_count = 0;
+        neb.my_one_vote_under_count = 0;
+        neb.my_two_vote_under_count = 0;
+
+        final double gamma = 1.03905;
+        final double dilutedMargin = 50.0/5000.0;
+        final double U = (2*gamma)/dilutedMargin;
+        final int auditedSample = 10;
+        double risk = pow(1 - 1/U, auditedSample) * pow(1 - 1/(2*gamma), 0) * pow(1 - 1/gamma, 0) *
+                pow(1 + 1/(2*gamma), 0) * pow(1 + 1/gamma, 0);
+
+        BigDecimal computedRisk = neb.riskMeasurement(auditedSample, BigDecimal.valueOf(gamma));
+        assertEquals(BigDecimal.valueOf(risk).setScale(3, BigDecimal.ROUND_HALF_UP), computedRisk);
+    }
+
+    @Test()
+    public void testRiskComputation9() {
+        NEBAssertion neb = new NEBAssertion("Board of Tax and Estimation", "Alice", "Bob",
+                50, 5000, 100);
+
+        neb.my_one_vote_over_count = 0;
+        neb.my_two_vote_over_count = 0;
+        neb.my_one_vote_under_count = 0;
+        neb.my_two_vote_under_count = 0;
+
+        final double gamma = 1.03905;
+        final int auditedSample = 0;
+
+        BigDecimal computedRisk = neb.riskMeasurement(auditedSample, BigDecimal.valueOf(gamma));
+        assertEquals(BigDecimal.ONE, computedRisk);
+    }
+
+    @Test()
+    public void testRiskComputation10() {
+        NEBAssertion neb = new NEBAssertion("Board of Tax and Estimation", "Alice", "Bob",
+                50, 5000, 100);
+
+        neb.my_one_vote_over_count = 1;
+        neb.my_two_vote_over_count = 0;
+        neb.my_one_vote_under_count = 0;
+        neb.my_two_vote_under_count = 0;
+
+        final double gamma = 1.03905;
+        final int auditedSample = 0;
+
+        BigDecimal computedRisk = neb.riskMeasurement(auditedSample, BigDecimal.valueOf(gamma));
+        assertEquals(BigDecimal.ONE, computedRisk);
     }
 }
