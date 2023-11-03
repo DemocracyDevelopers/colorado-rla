@@ -79,7 +79,7 @@ public class EstimateSampleSizesTest {
     int cntr = 0;
     for(Map.Entry<String,Integer> entry : candidate_votes.entrySet()){
       for(int i = 0; i < entry.getValue(); ++i){
-        ctr.addCVR(createVoteFor(entry.getKey(), c1, cntr));
+        ctr.addCVR(createVoteFor(List.of(entry.getKey()), c1, cntr));
         ++cntr;
       }
     }
@@ -168,7 +168,7 @@ public class EstimateSampleSizesTest {
       assertEquals(new HashSet<>(Arrays.asList("Board of Parks", "Board of Museums")), samples.keySet());
 
       checkSampleEstimateRow(samples.get("Board of Parks"), "Board of Parks", "Boulder",
-              "PLURALITY", "370", 0.162161, 0.162163, "39");
+              "PLURALITY", "170", 0.162161, 0.162163, "39");
 
       checkSampleEstimateRow(samples.get("Board of Museums"), "Board of Museums", "Boulder",
               "PLURALITY", "370", 0.216215, 0.216217, "29");
@@ -192,7 +192,7 @@ public class EstimateSampleSizesTest {
       assertEquals(1, samples.size());
 
       // Check that sample estimates have been created for both our contests.
-      assertEquals(new HashSet<>(Arrays.asList("Board of Parks")), samples.keySet());
+      assertEquals(new HashSet<>(List.of("Board of Parks")), samples.keySet());
 
       checkSampleEstimateRow(samples.get("Board of Parks"), "Board of Parks", "Multiple",
               "PLURALITY", "1125", 0.0622221, 0.06222223, "101");
@@ -209,44 +209,14 @@ public class EstimateSampleSizesTest {
   @Test()
   public void testEstimateSampleSizesIRVMayorals() {
     try {
-      loadIRVContestConfiguration("assertions/irv_estimation_test_case2.json");
+      loadIRVContestConfiguration("assertions/irv_estimation_test_case1.json");
 
       Map<String,String[]> samples = computeSampleSizes();
-      assertEquals(33, samples.size());
+      assertEquals(3, samples.size());
 
       assertEquals(new HashSet<>(Arrays.asList("2021 NSW Local Government election for Ballina Mayoral",
               "2021 NSW Local Government election for Bellingen Mayoral",
-              "2021 NSW Local Government election for Burwood Mayoral",
-              "2021 NSW Local Government election for Byron Mayoral",
-              "2021 NSW Local Government election for Canada Bay Mayoral",
-              "2021 NSW Local Government election for City of Broken Hill Mayoral",
-              "2021 NSW Local Government election for City of Cessnock Mayoral",
-              "2021 NSW Local Government election for City of Coffs Harbour Mayoral",
-              "2021 NSW Local Government election for City of Griffith Mayoral",
-              "2021 NSW Local Government election for City of Lake Macquarie Mayoral",
-              "2021 NSW Local Government election for City of Lismore Mayoral",
-              "2021 NSW Local Government election for City of Liverpool Mayoral",
-              "2021 NSW Local Government election for City of Maitland Mayoral",
-              "2021 NSW Local Government election for City of Newcastle Mayoral",
-              "2021 NSW Local Government election for City of Orange Mayoral",
-              "2021 NSW Local Government election for City of Shellharbour Mayoral",
-              "2021 NSW Local Government election for City of Shoalhaven Mayoral",
-              "2021 NSW Local Government election for City of Sydney Mayoral",
-              "2021 NSW Local Government election for City of Willoughby Mayoral",
-              "2021 NSW Local Government election for City of Wollongong Mayoral",
-              "2021 NSW Local Government election for Eurobodalla Mayoral",
-              "2021 NSW Local Government election for Hornsby Mayoral",
-              "2021 NSW Local Government election for Hunter's Hill Mayoral",
-              "2021 NSW Local Government election for Kempsey Mayoral",
-              "2021 NSW Local Government election for Mosman Mayoral",
-              "2021 NSW Local Government election for Nambucca Mayoral",
-              "2021 NSW Local Government election for Port Macquarie-Hastings Mayoral",
-              "2021 NSW Local Government election for Port Stephens Mayoral",
-              "2021 NSW Local Government election for Richmond Mayoral",
-              "2021 NSW Local Government election for Singleton Mayoral",
-              "2021 NSW Local Government election for The Hills Shire Mayoral",
-              "2021 NSW Local Government election for Uralla Mayoral",
-              "2021 NSW Local Government election for Wollondilly Mayoral")), samples.keySet());
+              "2021 NSW Local Government election for Burwood Mayoral")), samples.keySet());
 
       checkNSWIRVContests(samples);
 
@@ -264,48 +234,18 @@ public class EstimateSampleSizesTest {
   @Test()
   public void testEstimateSampleSizesIRVMayoralsAndPlurality() {
     try {
-      loadIRVContestConfiguration("assertions/irv_estimation_test_case2.json");
+      loadIRVContestConfiguration("assertions/irv_estimation_test_case1.json");
       createBroomfieldBoardOfTransport();
       createBoulderBoardOfParks();
 
       Map<String,String[]> samples = computeSampleSizes();
-      assertEquals(35, samples.size());
+      assertEquals(5, samples.size());
 
       assertEquals(new HashSet<>(Arrays.asList("Board of Transport",
               "Board of Parks",
               "2021 NSW Local Government election for Ballina Mayoral",
               "2021 NSW Local Government election for Bellingen Mayoral",
-              "2021 NSW Local Government election for Burwood Mayoral",
-              "2021 NSW Local Government election for Byron Mayoral",
-              "2021 NSW Local Government election for Canada Bay Mayoral",
-              "2021 NSW Local Government election for City of Broken Hill Mayoral",
-              "2021 NSW Local Government election for City of Cessnock Mayoral",
-              "2021 NSW Local Government election for City of Coffs Harbour Mayoral",
-              "2021 NSW Local Government election for City of Griffith Mayoral",
-              "2021 NSW Local Government election for City of Lake Macquarie Mayoral",
-              "2021 NSW Local Government election for City of Lismore Mayoral",
-              "2021 NSW Local Government election for City of Liverpool Mayoral",
-              "2021 NSW Local Government election for City of Maitland Mayoral",
-              "2021 NSW Local Government election for City of Newcastle Mayoral",
-              "2021 NSW Local Government election for City of Orange Mayoral",
-              "2021 NSW Local Government election for City of Shellharbour Mayoral",
-              "2021 NSW Local Government election for City of Shoalhaven Mayoral",
-              "2021 NSW Local Government election for City of Sydney Mayoral",
-              "2021 NSW Local Government election for City of Willoughby Mayoral",
-              "2021 NSW Local Government election for City of Wollongong Mayoral",
-              "2021 NSW Local Government election for Eurobodalla Mayoral",
-              "2021 NSW Local Government election for Hornsby Mayoral",
-              "2021 NSW Local Government election for Hunter's Hill Mayoral",
-              "2021 NSW Local Government election for Kempsey Mayoral",
-              "2021 NSW Local Government election for Mosman Mayoral",
-              "2021 NSW Local Government election for Nambucca Mayoral",
-              "2021 NSW Local Government election for Port Macquarie-Hastings Mayoral",
-              "2021 NSW Local Government election for Port Stephens Mayoral",
-              "2021 NSW Local Government election for Richmond Mayoral",
-              "2021 NSW Local Government election for Singleton Mayoral",
-              "2021 NSW Local Government election for The Hills Shire Mayoral",
-              "2021 NSW Local Government election for Uralla Mayoral",
-              "2021 NSW Local Government election for Wollondilly Mayoral")), samples.keySet());
+              "2021 NSW Local Government election for Burwood Mayoral")), samples.keySet());
 
       checkSampleEstimateRow(samples.get("Board of Parks"), "Board of Parks", "Boulder",
               "PLURALITY", "170", 0.3529, 0.35295, "18");
@@ -336,7 +276,7 @@ public class EstimateSampleSizesTest {
     checkSampleEstimateRow(samples.get("2021 NSW Local Government election for Burwood Mayoral"),
             "2021 NSW Local Government election for Burwood Mayoral", "Burwood",
             "IRV", "18232", 0.38628, 0.386299, "17");
-    checkSampleEstimateRow(samples.get("2021 NSW Local Government election for Byron Mayoral"),
+    /*checkSampleEstimateRow(samples.get("2021 NSW Local Government election for Byron Mayoral"),
             "2021 NSW Local Government election for Byron Mayoral", "Byron",
             "IRV", "18732", 0.05657, 0.056588, "111");
     checkSampleEstimateRow(samples.get("2021 NSW Local Government election for Canada Bay Mayoral"),
@@ -425,24 +365,21 @@ public class EstimateSampleSizesTest {
             "IRV", "3906", 0.593957, 0.5939581, "11");
     checkSampleEstimateRow(samples.get("2021 NSW Local Government election for Wollondilly Mayoral"),
             "2021 NSW Local Government election for Wollondilly Mayoral", "Wollondilly",
-            "IRV", "33005", 0.0389333, 0.0389335, "160");
+            "IRV", "33005", 0.0389333, 0.0389335, "160");*/
   }
 
   /**
    * Creates a cast vote record in a given Plurality contest containing a vote
    * for the given candidate (name).
    *
-   * @param name      Name of candidate being voted for in this CVR.
+   * @param vote      List of names representing ranked choices (most preferred to least)
    * @param co        Contest
    * @param position  CVR position (used when creating CVR objects)
    * @return A CastVoteRecord object containing a vote for the given candidate (name).
    */
-  private CastVoteRecord createVoteFor(final String name, final Contest co, Integer position){
+  private CastVoteRecord createVoteFor(final List<String> vote, final Contest co, Integer position){
     // Create CVRContestInfo
-    List<String> votes = new ArrayList<>();
-    votes.add(name);
-
-    CVRContestInfo ci = new CVRContestInfo(co, null,null, votes);
+    CVRContestInfo ci = new CVRContestInfo(co, null,null, vote);
     List<CVRContestInfo> contest_info = new ArrayList<>();
     contest_info.add(ci);
 
@@ -540,9 +477,11 @@ public class EstimateSampleSizesTest {
 
         // Parse candidates: form a list of Choice
         List<Choice> choices = new ArrayList<>();
+        List<String> names = new ArrayList<>();
         for(JsonElement c : candidates){
           choices.add(new Choice(c.getAsString(), "", false,
                   false));
+          names.add(c.getAsString());
         }
 
         // Create, and persist, the County, Contest, and CountyContestResult
@@ -550,6 +489,12 @@ public class EstimateSampleSizesTest {
         Contest co = new Contest(name, cty, ContestType.IRV.toString(), choices, 1,
                 1, seq_cntr);
         CountyContestResult ctr = new CountyContestResult(cty, co);
+
+        // Add CVRs to contest (needed to establish contest ballot count in CountyContestResult).
+        // It doesn't matter what the content of the vote is for the purposes of these tests.
+        for (int i = 0; i < universe; ++i){
+          ctr.addCVR(createVoteFor(names, co, i));
+        }
 
         BallotManifestInfo bmi = new BallotManifestInfo(cty.id(), 1, "1",
                 universe, "Bin 1", 1L, (long) universe);

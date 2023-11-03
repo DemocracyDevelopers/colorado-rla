@@ -18,6 +18,7 @@ import us.freeandfair.corla.controller.ContestCounter;
 import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.query.CountyContestResultQueries;
 import us.freeandfair.corla.util.SparkHelper;
 
 import java.io.OutputStream;
@@ -133,7 +134,13 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
 
     final String county = countyNames.size() > 1 ? "Multiple" : countyNames.get(0);
 
-    return new String[]{county, ca.getContestName(), contestType, ca.contestResult().getBallotCount().toString(),
+    // The 'ballots cast' datapoint for a contest will be the total number of ballots cast
+    // that have that contest on it. This is equal to the sum of my_contest_count in the
+    // county contest results for the contest.
+    final List<CountyContestResult> ccresults = CountyContestResultQueries.withContestName(ca.getContestName());
+    final int contestBallots = ccresults.stream().mapToInt(CountyContestResult::contestBallotCount).sum();
+
+    return new String[]{county, ca.getContestName(), contestType, Integer.toString(contestBallots),
       ca.getDilutedMargin().toString(), ca.estimatedSamplesToAudit().toString()};
   }
 

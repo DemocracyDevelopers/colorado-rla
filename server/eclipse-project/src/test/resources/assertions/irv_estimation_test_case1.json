@@ -1,0 +1,25 @@
+{
+	"contests" : [
+		{
+			"name" : "2021 NSW Local Government election for Ballina Mayoral",
+			"county" : "Ballina",
+			"candidates" : ["WILLIAMS Keith","JOHNSON Jeff","MCCARTHY Steve","JOHNSTON Eoin","CADWALLADER Sharon"],
+			"assertions" : [{"assertion":{"type":"NEB","winner":4,"loser":0},"margin":4071,"difficulty":6.610906411201179},{"assertion":{"type":"NEB","winner":4,"loser":2},"margin":6059,"difficulty":4.441822082851956},{"assertion":{"type":"NEB","winner":4,"loser":3},"margin":4836,"difficulty":5.565136476426799},{"assertion":{"type":"NEN","winner":4,"loser":1,"continuing":[1,4]},"margin":3694,"difficulty":7.285598267460747}], 
+			"universe" : 27853
+		},
+		{
+			"name" : "2021 NSW Local Government election for Bellingen Mayoral",
+			"county" : "Bellingen",
+			"candidates" : ["ALLAN Steve","WOODWARD Andrew","KING Dominic"],
+			"assertions" : [{"assertion":{"type":"NEB","winner":0,"loser":1},"margin":3167,"difficulty":2.644142721818756},{"assertion":{"type":"NEN","winner":0,"loser":2,"continuing":[0,2]},"margin":2512,"difficulty":3.3335987261146496}], 
+			"universe" : 8609
+		},
+		{
+			"name" : "2021 NSW Local Government election for Burwood Mayoral",
+			"county" : "Burwood",
+			"candidates" : ["HULL David","MURRAY Alan","CUTCHER Ned","FAKER John"],
+			"assertions" : [{"assertion":{"type":"NEB","winner":3,"loser":1},"margin":8306,"difficulty":2.1426679508788826},{"assertion":{"type":"NEB","winner":3,"loser":2},"margin":7598,"difficulty":2.342326928138984},{"assertion":{"type":"NEN","winner":3,"loser":0,"continuing":[0,3]},"margin":7043,"difficulty":2.5269061479483175}], 
+			"universe" : 18232
+		}
+	]
+}
