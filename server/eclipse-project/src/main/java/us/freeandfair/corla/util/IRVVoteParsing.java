@@ -1,7 +1,7 @@
 package us.freeandfair.corla.util;
 
 import us.freeandfair.corla.model.Choice;
-import us.freeandfair.corla.model.IRVBallotInterpretationDuplicatesBeforeOvervotes;
+import us.freeandfair.corla.model.IRVBallotInterpretation;
 import us.freeandfair.corla.model.IRVChoices;
 import us.freeandfair.corla.model.IRVPreference;
 
@@ -34,8 +34,7 @@ public class IRVVoteParsing {
     public static List<String> IRVVoteToValidInterpretationAsSortedList(final List<String> votes) throws IRVParsingException {
         IRVChoices choices = parseIRVVote(votes);
 
-        IRVChoices validInterpretation =
-                IRVBallotInterpretationDuplicatesBeforeOvervotes.InterpretValidIntent(choices);
+        IRVChoices validInterpretation = IRVBallotInterpretation.InterpretValidIntent(choices);
 
         return validInterpretation.AsSortedList();
 

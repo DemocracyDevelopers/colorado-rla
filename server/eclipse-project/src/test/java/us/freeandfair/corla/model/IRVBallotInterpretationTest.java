@@ -24,7 +24,7 @@ public class IRVBallotInterpretationTest {
         IRVChoices b = new IRVChoices("Candidate A(1),Candidate B(1),Candidate C(1),Candidate C(2),Candidate B(3)");
         String expectedInterpretation = "";
 
-        IRVChoices interpretation = IRVBallotInterpretationDuplicatesBeforeOvervotes.InterpretValidIntent(b);
+        IRVChoices interpretation = IRVBallotInterpretation.InterpretValidIntent(b);
 
         assertEquals(interpretation.toString(), expectedInterpretation);
 
@@ -35,7 +35,7 @@ public class IRVBallotInterpretationTest {
         IRVChoices b = new IRVChoices("Candidate B(1),Candidate A(2),Candidate C(2),Candidate C(3)");
         String expectedInterpretation = "Candidate B(1)";
 
-        IRVChoices interpretation = IRVBallotInterpretationDuplicatesBeforeOvervotes.InterpretValidIntent(b);
+        IRVChoices interpretation = IRVBallotInterpretation.InterpretValidIntent(b);
 
         assertEquals(interpretation.toString(), expectedInterpretation);
 
@@ -46,7 +46,7 @@ public class IRVBallotInterpretationTest {
         IRVChoices b = new IRVChoices("Candidate A(1),Candidate B(3)");
         String expectedInterpretation = "Candidate A(1)";
 
-        IRVChoices interpretation = IRVBallotInterpretationDuplicatesBeforeOvervotes.InterpretValidIntent(b);
+        IRVChoices interpretation = IRVBallotInterpretation.InterpretValidIntent(b);
 
         assertEquals(interpretation.toString(), expectedInterpretation);
 
@@ -57,7 +57,7 @@ public class IRVBallotInterpretationTest {
         IRVChoices b = new IRVChoices("Candidate A(1),Candidate A(2),Candidate B(3)");
         String expectedInterpretation = "Candidate A(1)";
 
-        IRVChoices interpretation = IRVBallotInterpretationDuplicatesBeforeOvervotes.InterpretValidIntent(b);
+        IRVChoices interpretation = IRVBallotInterpretation.InterpretValidIntent(b);
 
         assertEquals(interpretation.toString(), expectedInterpretation);
 
@@ -68,7 +68,7 @@ public class IRVBallotInterpretationTest {
         IRVChoices b = new IRVChoices("Candidate B(1),Candidate A(2),Candidate C(2),Candidate C(3)");
         String expectedInterpretation = "Candidate B(1)";
 
-        IRVChoices interpretation = IRVBallotInterpretationDuplicatesBeforeOvervotes.InterpretValidIntent(b);
+        IRVChoices interpretation = IRVBallotInterpretation.InterpretValidIntent(b);
 
         assertEquals(interpretation.toString(), expectedInterpretation);
 
@@ -79,7 +79,7 @@ public class IRVBallotInterpretationTest {
         IRVChoices b = new IRVChoices("Candidate B(1),Candidate A(2),Candidate B(2),Candidate C(3)");
         String expectedInterpretation ="Candidate B(1),Candidate A(2),Candidate C(3)";
 
-        IRVChoices interpretation = IRVBallotInterpretationDuplicatesBeforeOvervotes.InterpretValidIntent(b);
+        IRVChoices interpretation = IRVBallotInterpretation.InterpretValidIntent(b);
 
         assertEquals(interpretation.toString(), expectedInterpretation);
 

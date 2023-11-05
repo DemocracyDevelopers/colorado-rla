@@ -31,11 +31,8 @@ import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.controller.ComparisonAuditController;
 import us.freeandfair.corla.json.SubmittedAuditCVR;
-import us.freeandfair.corla.model.CVRContestInfo;
-import us.freeandfair.corla.model.CastVoteRecord;
+import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
-import us.freeandfair.corla.model.ContestType;
-import us.freeandfair.corla.model.CountyDashboard;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.util.IRVParsingException;
 
@@ -95,7 +92,7 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
                                      final CastVoteRecord cvr,
                                      final CountyDashboard cdb) throws IRVParsingException {
     final CastVoteRecord s = submission.auditCVR();
-    final List<CVRContestInfo> contestInfo =  interpretIRVChoicesInACVR(s.contestInfo());
+    final List<CVRContestInfo> contestInfo =  interpretIRVChoicesInACVR(cvr.getCvrId(), s.contestInfo());
     final CastVoteRecord newAcvr =
       new CastVoteRecord(RecordType.AUDITOR_ENTERED,
                          Instant.now(),
@@ -110,16 +107,33 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
     return newAcvr;
   }
 
-  /* Iterates through the uploaded Cast Vote Record and, for each IRV contest, changes the choices
+
+  /**
+   * Iterates through the uploaded Cast Vote Record and, for each IRV contest, changes the choices
    * to one that replaces the raw IRV vote with its valid interpretation.
+   *
+   * This method will store a record of how each IRV vote was interpreted in the database as an IRVBallotInterpretation.
+   *
+   * @param cvrID                   Identifier of the ballot whose IRV votes are being interpreted.
+   * @param oldCVRChoices           Details of the raw choices entered by auditors for each contest on the ballot.
+   * @return                        A list of new CVRContestInfo objects with valid votes for each IRV contest.
+   * @throws IRVParsingException
+   * @throws PersistenceException
    */
-  private static List<CVRContestInfo> interpretIRVChoicesInACVR(List<CVRContestInfo> oldCVRChoices) throws IRVParsingException {
+  private static List<CVRContestInfo> interpretIRVChoicesInACVR(final Long cvrID, List<CVRContestInfo> oldCVRChoices)
+          throws IRVParsingException, PersistenceException {
     List<CVRContestInfo> newCVRChoices = new ArrayList<>();
 
     for ( CVRContestInfo ci : oldCVRChoices ) {
       // For IRV, make new IRV choices as an ordered list without parenthesized ranks.
       if( ci.contest().description().equalsIgnoreCase(ContestType.IRV.toString()) ) {
         List<String> newIRVChoices =IRVVoteToValidInterpretationAsSortedList(ci.choices());
+
+        // Persist the details of the interpretation of this vote on this audited ballot.
+        final IRVBallotInterpretation interpretation = new IRVBallotInterpretation(cvrID, ci.contest().name(),
+                ci.choices(), newIRVChoices);
+        Persistence.persist(interpretation);
+
         newCVRChoices.add( new CVRContestInfo(ci.contest(), ci.comment(), ci.consensus(), newIRVChoices));
       } else {
         // for plurality, just keep it as it is

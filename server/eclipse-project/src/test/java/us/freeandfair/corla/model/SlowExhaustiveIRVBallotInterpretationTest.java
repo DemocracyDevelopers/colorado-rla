@@ -37,13 +37,13 @@ public class SlowExhaustiveIRVBallotInterpretationTest {
 
     @Test
     void testValidityOfDuplicatesBeforeOvervotes() {
-        assertTrue(ballotListValidityTest(IRVBallotInterpretationDuplicatesBeforeOvervotes::InterpretValidIntent, testVoteList1));
+        assertTrue(ballotListValidityTest(IRVBallotInterpretation::InterpretValidIntent, testVoteList1));
     }
 
     @Test
     void testValidityOfDuplicatesBeforeOvervotesExhaustively() {
         assertTrue(testValidityExhaustively(5,
-                IRVBallotInterpretationDuplicatesBeforeOvervotes::InterpretValidIntent));
+                IRVBallotInterpretation::InterpretValidIntent));
     }
 
     // Runs the ballot interpretation function on all the ballots in the input
