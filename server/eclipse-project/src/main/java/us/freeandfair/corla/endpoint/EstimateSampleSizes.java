@@ -184,16 +184,6 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
    */
   @Override
   public String endpointBody(final Request the_request, final Response the_response) {
-    if (my_asm.get().currentState() != COMPLETE_AUDIT_INFO_SET) {
-      // We can only compute preliminary sample size estimates once the ASM has
-      // reached the COMPLETE_AUDIT_INFO_SET state (and assertions have been
-      // generated for all IRV contests for which it is possible to form assertions.)
-
-      serverError(the_response, "Complete audit information has not been set");
-      return my_endpoint_result.get();
-    }
-
-    // Estimate sample sizes
     try {
       final List<String[]> samples = estimateSampleSizes();
 
