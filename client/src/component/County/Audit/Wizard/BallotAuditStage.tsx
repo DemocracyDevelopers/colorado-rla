@@ -205,7 +205,7 @@ const BallotContestMarkForm = (props: MarkFormProps) => {
             for (let i = 1; i <= ranks; i++) {
                 const newChoice: ContestChoice = {
                     description: c.description,
-                    name: c.name + i,
+                    name: c.name + '(' + i + ')',
                 };
                 newChoices.push(newChoice);
             }
