@@ -115,7 +115,7 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
       // For IRV, make new IRV choices as an ordered list without parenthesized ranks.
       if( ci.contest().description().equalsIgnoreCase(ContestType.IRV.toString()) ) {
         // Persist the details of the interpretation of this vote on this audited ballot.
-        final IRVBallotInterpretation interpretation = new IRVBallotInterpretation(cr.getCvrId(),
+        final IRVBallotInterpretation interpretation = new IRVBallotInterpretation(submission.cvrID(),
                 ci.contest().name(), ci.rawChoices(), ci.choices());
         Persistence.persist(interpretation);
       }
