@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import com.google.gson.JsonParseException;
 import org.testng.annotations.*;
 
 import us.freeandfair.corla.Main;
@@ -173,4 +174,17 @@ public class ACVRUploadTest {
     Persistence.persist(cvr);
     return cvr;
   }
+
+  /*@Test()
+  public void testJsonSubmission1(){
+      final String json_string = "{\"auditBoardIndex\":0,\"audit_cvr\":{\"ballot_type\":\"Ballot 1 - Type 1\",\"batch_id\":\"9\",\"contest_info\":[{\"choices\":[\"JOHNSTON Eoin(1)\",\"MCCARTHY Steve(2)\",\"WILLIAMS Keith(3)\",\"JOHNSON Jeff(4)\",\"CADWALLADER Sharon(5)\"],\"comment\":\"\",\"consensus\":\"YES\",\"contest\":\"572\"}],\"county_id\":1,\"cvr_number\":637,\"id\":1210,\"imprinted_id\":\"1-9-13\",\"record_id\":13,\"record_type\":\"UPLOADED\",\"scanner_id\":1,\"timestamp\":\"2023-11-09T23:30:51.136Z\"},\"cvr_id\":1210}";
+      try{
+          final SubmittedAuditCVR submission =
+                  Main.GSON.fromJson(json_string, SubmittedAuditCVR.class);
+          System.out.println(submission.toString());
+      }
+      catch(JsonParseException e){
+          System.out.println(e.getMessage());
+      }
+  }*/
 }

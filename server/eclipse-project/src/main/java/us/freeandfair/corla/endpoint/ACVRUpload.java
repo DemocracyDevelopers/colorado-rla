@@ -12,11 +12,8 @@
 package us.freeandfair.corla.endpoint;
 
 import static us.freeandfair.corla.asm.ASMEvent.AuditBoardDashboardEvent.*;
-import static us.freeandfair.corla.util.IRVVoteParsing.IRVVoteToValidInterpretationAsSortedList;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.persistence.PersistenceException;
 
@@ -90,15 +87,14 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
   /** build new acvr **/
   public static CastVoteRecord buildNewAcvr(final SubmittedAuditCVR submission,
                                      final CastVoteRecord cvr,
-                                     final CountyDashboard cdb) throws IRVParsingException {
+                                     final CountyDashboard cdb)  {
     final CastVoteRecord s = submission.auditCVR();
-    final List<CVRContestInfo> contestInfo =  interpretIRVChoicesInACVR(cvr.getCvrId(), s.contestInfo());
     final CastVoteRecord newAcvr =
       new CastVoteRecord(RecordType.AUDITOR_ENTERED,
                          Instant.now(),
                          s.countyID(), s.cvrNumber(), null, s.scannerID(),
                          s.batchID(), s.recordID(), s.imprintedID(),
-                         s.ballotType(), contestInfo);
+                         s.ballotType(), s.contestInfo());
     newAcvr.setAuditBoardIndex(submission.getAuditBoardIndex());
     newAcvr.setCvrId(submission.cvrID());
     newAcvr.setRoundNumber(cdb.currentRound().number());
@@ -107,42 +103,26 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
     return newAcvr;
   }
 
-
   /**
-   * Iterates through the uploaded Cast Vote Record and, for each IRV contest, changes the choices
-   * to one that replaces the raw IRV vote with its valid interpretation.
-   *
-   * This method will store a record of how each IRV vote was interpreted in the database as an IRVBallotInterpretation.
-   *
-   * @param cvrID                   Identifier of the ballot whose IRV votes are being interpreted.
-   * @param oldCVRChoices           Details of the raw choices entered by auditors for each contest on the ballot.
-   * @return                        A list of new CVRContestInfo objects with valid votes for each IRV contest.
-   * @throws IRVParsingException
+   * Given a submitted ACVR, record any ballot interpretations that have been made. These records
+   * indicate the raw (pre-interpreted) choices on the ballot and the revised interpreted choices.
+   * @param submission Submitted ACVR.
    * @throws PersistenceException
    */
-  private static List<CVRContestInfo> interpretIRVChoicesInACVR(final Long cvrID, List<CVRContestInfo> oldCVRChoices)
-          throws IRVParsingException, PersistenceException {
-    List<CVRContestInfo> newCVRChoices = new ArrayList<>();
-
-    for ( CVRContestInfo ci : oldCVRChoices ) {
+  private static void recordInterpretations(final SubmittedAuditCVR submission) throws PersistenceException {
+    final CastVoteRecord cr = submission.auditCVR();
+    for ( CVRContestInfo ci : cr.contestInfo() ) {
       // For IRV, make new IRV choices as an ordered list without parenthesized ranks.
       if( ci.contest().description().equalsIgnoreCase(ContestType.IRV.toString()) ) {
-        List<String> newIRVChoices =IRVVoteToValidInterpretationAsSortedList(ci.choices());
-
         // Persist the details of the interpretation of this vote on this audited ballot.
-        final IRVBallotInterpretation interpretation = new IRVBallotInterpretation(cvrID, ci.contest().name(),
-                ci.choices(), newIRVChoices);
+        final IRVBallotInterpretation interpretation = new IRVBallotInterpretation(cr.getCvrId(),
+                ci.contest().name(), ci.rawChoices(), ci.choices());
         Persistence.persist(interpretation);
-
-        newCVRChoices.add( new CVRContestInfo(ci.contest(), ci.comment(), ci.consensus(), newIRVChoices));
-      } else {
-        // for plurality, just keep it as it is
-        newCVRChoices.add(ci);
       }
     }
-
-    return newCVRChoices;
   }
+
+
   /**
    * {@inheritDoc}
    */
@@ -154,11 +134,16 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
     try {
       final SubmittedAuditCVR submission =
         Main.GSON.fromJson(the_request.body(), SubmittedAuditCVR.class);
+
       if (submission.auditCVR() == null || submission.cvrID() == null) {
         LOGGER.error("empty audit CVR upload");
         badDataContents(the_response, "empty audit CVR upload");
       } else {
         // FIXME extract-fn: handleACVR
+        // If we do not have an empty CVR upload, record any ballot interpretations
+        // that have been performed in the creation of the submitted ACVR.
+        recordInterpretations(submission);
+
         final CountyDashboard cdb =
             Persistence.getByID(Main.authentication().authenticatedCounty(the_request).id(),
                                 CountyDashboard.class);
@@ -237,10 +222,8 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
     } catch (final PersistenceException e) {
       LOGGER.error("could not save audit CVR");
       serverError(the_response, "Unable to save audit CVR");
-    } catch (IRVParsingException e ) {
-      LOGGER.error("could not parse audit CVR");
-      serverError(the_response, "Unable to parse audit CVR");
     }
+
     return my_endpoint_result.get();
   }
 }
