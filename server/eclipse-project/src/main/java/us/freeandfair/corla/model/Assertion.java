@@ -80,13 +80,13 @@ public abstract class Assertion implements PersistentEntity, Serializable {
    * Diluted margin for the assertion.
    */
   @Column(name = "diluted_margin", nullable = false)
-  protected double dilutedMargin;
+  protected double dilutedMargin = 0;
 
   /**
    * Assertion difficulty, as estimated by RAIRE.
    */
   @Column(name = "difficulty", nullable = false)
-  protected double difficulty;
+  protected double difficulty = 0;
 
   /**
    * List of candidates that the assertion assumes are `continuing' in the
@@ -95,7 +95,7 @@ public abstract class Assertion implements PersistentEntity, Serializable {
   @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "assertion_context",
           joinColumns = @JoinColumn(name = "id"))
-  protected List<String> assumedContinuing;
+  protected List<String> assumedContinuing = new ArrayList<>();
 
   /**
    * The number of samples to audit overall assuming no further overstatements.
@@ -316,7 +316,6 @@ public abstract class Assertion implements PersistentEntity, Serializable {
                   " stored in assertion for contest " + contestName);
       }
     }
-
   }
 
 
@@ -460,14 +459,16 @@ public abstract class Assertion implements PersistentEntity, Serializable {
     }
     // If we have determined there is a discrepancy, record the type in cvrDiscrepancies. If
     // we have found there is no discrepancy, ensure that any discrepancy record from a prior call to
-    // computeDiscrepancy() for this CVR is removed.
+    // computeDiscrepancy() for this CVR is removed. Note that if you
+    // try to access CVR ID vis getCvrId() on the cvr, it will be null
+    // for some inexplicable reason. So, to get the CVR ID for this
+    // audited ballot, we need to call the method on the ACVR.
     if(result.isPresent()){
-      cvrDiscrepancy.put(cvr.getCvrId(), result.getAsInt());
+      cvrDiscrepancy.put(auditedCVR.getCvrId(), result.getAsInt());
     }
     else {
-      cvrDiscrepancy.remove(cvr.getCvrId());
+      cvrDiscrepancy.remove(auditedCVR.getCvrId());
     }
-
     return result;
   }
 

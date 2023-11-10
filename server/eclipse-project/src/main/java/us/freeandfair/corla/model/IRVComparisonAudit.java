@@ -43,7 +43,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
    * in the contest.
    * TODO: Check that this is the right universe size.
    */
-  private long my_universe_size ;
+  private long my_universe_size = 0L;
 
   /**
    * Constructs a new, empty IRVComparisonAudit (solely for persistence).
@@ -120,14 +120,9 @@ public class IRVComparisonAudit extends ComparisonAudit {
   @Override
   protected void recalculateSamplesToAudit() {
     if(assertions == null){
-      // We have not yet populated our assertions list
+      // We have not associated our assertions with this audit yet.
       return;
     }
-
-    LOGGER.debug(String.format("[IRVComparisonAudit::recalculateSamplestoAudit start contestName=%s, "
-                    + " optimistic=%d, estimated=%d]",
-            contestResult().getContestName(),
-            my_optimistic_samples_to_audit, my_estimated_samples_to_audit));
 
     if(assertions.isEmpty()){
       LOGGER.debug("[IRVComparisonAudit::recalculateSamplesToAudit: no assertions in audit]");
@@ -154,12 +149,12 @@ public class IRVComparisonAudit extends ComparisonAudit {
 
       my_estimated_samples_to_audit = Collections.max(estimatedSamples);
       my_estimated_recalculate_needed = false;
-    }
 
-    LOGGER.debug(String.format("[IRVComparisonAudit::recalculateSamplestoAudit end contestName=%s, "
-                    + " optimistic=%d, estimated=%d]",
-            contestResult().getContestName(),
-            my_optimistic_samples_to_audit, my_estimated_samples_to_audit));
+      LOGGER.debug(String.format("[IRVComparisonAudit::recalculateSamplestoAudit end contestName=%s, "
+                      + " optimistic=%d, estimated=%d]",
+              contestResult().getContestName(),
+              my_optimistic_samples_to_audit, my_estimated_samples_to_audit));
+    }
   }
 
   /*
@@ -169,7 +164,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
   @Override
   public int initialSamplesToAudit() {
     if(assertions == null){
-      // We have not yet populated our assertions list
+      // We have not associated our assertions with this audit yet.
       return 0;
     }
     LOGGER.debug("[IRVComparisonAudit::initialSamplesToAudit: calling computeOptimisticSamplesToAudit]");
@@ -206,6 +201,8 @@ public class IRVComparisonAudit extends ComparisonAudit {
   @SuppressWarnings("checkstyle:magicnumber")
   public OptionalInt computeDiscrepancy(final CastVoteRecord cvr,
                                         final CastVoteRecord auditedCVR) {
+    assert assertions != null;
+
     List<Integer> discrepancies = new ArrayList<>();
     for(Assertion a : assertions){
       OptionalInt result = a.computeDiscrepancy(cvr, auditedCVR);
@@ -226,7 +223,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
   /** risk limit achieved according to math.Audit **/
   @Override
   public BigDecimal riskMeasurement() {
-    if (assertions.isEmpty()) {
+    if (assertions == null || assertions.isEmpty()) {
       // In this case, no assertions were formed for this contest, likely
       // because the contest was not auditable due to ties or assertion
       // generation was too time consuming.
@@ -253,6 +250,8 @@ public class IRVComparisonAudit extends ComparisonAudit {
   @Override
   @SuppressWarnings("checkstyle:magicnumber")
   public void removeDiscrepancy(final CVRAuditInfo the_record, final int the_type) {
+    assert assertions != null;
+
     // Iterate over the assertions for this audit, and remove 'the_count' instances of this
     // discrepancy from their tallies (if the discrepancy is relevant to the assertion).
     for (Assertion a : assertions) {
@@ -280,6 +279,8 @@ public class IRVComparisonAudit extends ComparisonAudit {
   @SuppressWarnings("checkstyle:magicnumber")
   public void recordDiscrepancy(final CVRAuditInfo the_record,
                                 final int the_type){
+    assert assertions != null;
+
     // Iterate over the assertions for this audit, and record 'the_count' instances of this
     // discrepancy toward their tallies (if the discrepancy is relevant to the assertion).
     for (Assertion a : assertions) {

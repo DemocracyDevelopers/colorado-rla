@@ -23,7 +23,11 @@ import com.google.gson.stream.JsonWriter;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
 import us.freeandfair.corla.model.Contest;
+import us.freeandfair.corla.model.ContestType;
 import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.util.IRVParsingException;
+
+import static us.freeandfair.corla.util.IRVVoteParsing.IRVVoteToValidInterpretationAsSortedList;
 
 /**
  * JSON adapter for CVR contest information.
@@ -35,6 +39,7 @@ import us.freeandfair.corla.persistence.Persistence;
 @SuppressWarnings("PMD.AtLeastOneConstructor")
 public final class CVRContestInfoJsonAdapter 
     extends TypeAdapter<CVRContestInfo> {
+
   /**
    * The "contest" string (for JSON serialization).
    */
@@ -102,16 +107,15 @@ public final class CVRContestInfoJsonAdapter
   /**
    * Checks the sanity of a contest against a set of choices.
    * 
-   * @param the_id The contest ID.
+   * @param result The contest.
    * @param the_choices The choices.
    * @return the resulting contest, if the data is sane, or null if the
    * data is invalid.
    */
-  private Contest contestSanityCheck(final Long the_id, 
+  private boolean contestSanityCheck(final Contest result,
                                      final List<String> the_choices) {
-    final Contest result = Persistence.getByID(the_id, Contest.class);
     boolean error = the_choices == null;
-    
+
     if (!error && result != null) {
       for (final String c : the_choices) {
         if (!result.isValidChoice(c)) {
@@ -119,13 +123,10 @@ public final class CVRContestInfoJsonAdapter
         }
       }
     }
-    
-    if (error) {
-      return null;
-    } else {
-      return result;
-    }
+
+    return error;
   }
+
   
   /**
    * Reads a CVR contest info object.
@@ -137,7 +138,7 @@ public final class CVRContestInfoJsonAdapter
   public CVRContestInfo read(final JsonReader the_reader) 
       throws IOException {
     boolean error = false;
-    List<String> choices = null;
+    List<String> raw_choices = null;
     long contest_id = -1;
     String comment = null;
     ConsensusValue consensus = null;
@@ -164,7 +165,7 @@ public final class CVRContestInfoJsonAdapter
           break;
           
         case CHOICES:
-          choices = readChoices(the_reader);
+          raw_choices = readChoices(the_reader);
           break;
           
         default:
@@ -175,13 +176,21 @@ public final class CVRContestInfoJsonAdapter
     the_reader.endObject();
     
     // check the sanity of the contest
-    
-    final Contest contest = contestSanityCheck(contest_id, choices);
-    
-    if (error || contest == null) {
+    final Contest result = Persistence.getByID(contest_id, Contest.class);
+    List<String> choices = raw_choices;
+    if(result.description().equalsIgnoreCase(ContestType.IRV.toString())) {
+      try{
+        choices = IRVVoteToValidInterpretationAsSortedList(raw_choices);
+      }
+      catch(IRVParsingException e){
+        throw new IOException("uploaded IRV vote could not be parsed");
+      }
+    }
+
+    if (error || contestSanityCheck(result, choices)) {
       throw new JsonSyntaxException("invalid data detected in CVR contest info");
     }
-    
-    return new CVRContestInfo(contest, comment, consensus, choices);
+
+    return new CVRContestInfo(result, comment, consensus, choices, raw_choices);
   }
 }
