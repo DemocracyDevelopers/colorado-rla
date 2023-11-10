@@ -130,18 +130,12 @@ public class ACVRUploadTest {
               "\"record_id\":1,\"record_type\":\"UPLOADED\",\"scanner_id\":1,\"timestamp\":\"2023-11-09T23:30:51.136Z\"}," +
               "\"cvr_id\":1}";
       final SubmittedAuditCVR submission2 = Main.GSON.fromJson(cinfo2, SubmittedAuditCVR.class);
-      assertEquals(submission2.auditCVR().contestInfo().get(0).choices(), List.of("Alice", "Bob"));
+      assertEquals(submission2.auditCVR().contestInfo().get(0).choices(), List.of("Alice", "Bob", "Chuan", "Diego"));
   }
 
-  /**
-   * Creates a cast vote record in a given Plurality contest containing a vote
-   * for the given candidate (name).
-   *
-   * @param name      Name of candidate being voted for in this CVR.
-   * @param co        Contest
-   * @param position  CVR position (used when creating CVR objects)
-   * @return A CastVoteRecord object containing a vote for the given candidate (name).
-   */
+
+
+  /*
   private CastVoteRecord createVoteFor(final String name, final Contest co, Integer position){
     // Create CVRContestInfo
     List<String> votes = new ArrayList<>();
@@ -164,11 +158,13 @@ public class ACVRUploadTest {
             contest_info);
     Persistence.persist(cvr);
     return cvr;
-  }
+  }*/
 
-  /*@Test()
+ /* @Test()
   public void testJsonSubmission1(){
-      final String json_string = "{\"auditBoardIndex\":0,\"audit_cvr\":{\"ballot_type\":\"Ballot 1 - Type 1\",\"batch_id\":\"9\",\"contest_info\":[{\"choices\":[\"JOHNSTON Eoin(1)\",\"MCCARTHY Steve(2)\",\"WILLIAMS Keith(3)\",\"JOHNSON Jeff(4)\",\"CADWALLADER Sharon(5)\"],\"comment\":\"\",\"consensus\":\"YES\",\"contest\":\"572\"}],\"county_id\":1,\"cvr_number\":637,\"id\":1210,\"imprinted_id\":\"1-9-13\",\"record_id\":13,\"record_type\":\"UPLOADED\",\"scanner_id\":1,\"timestamp\":\"2023-11-09T23:30:51.136Z\"},\"cvr_id\":1210}";
+      //final String json_string = "{\"auditBoardIndex\":0,\"audit_cvr\":{\"ballot_type\":\"Ballot 1 - Type 1\",\"batch_id\":\"9\",\"contest_info\":[{\"choices\":[\"JOHNSTON Eoin(1)\",\"MCCARTHY Steve(2)\",\"WILLIAMS Keith(3)\",\"JOHNSON Jeff(4)\",\"CADWALLADER Sharon(5)\"],\"comment\":\"\",\"consensus\":\"YES\",\"contest\":\"572\"}],\"county_id\":1,\"cvr_number\":637,\"id\":1210,\"imprinted_id\":\"1-9-13\",\"record_id\":13,\"record_type\":\"UPLOADED\",\"scanner_id\":1,\"timestamp\":\"2023-11-09T23:30:51.136Z\"},\"cvr_id\":1210}";
+      final String json_string = "{\"auditBoardIndex\":0,\"audit_cvr\":{\"ballot_type\":\"Ballot 1 - Type 1\",\"batch_id\":\"3\",\"contest_info\":[{\"choices\":[\"JOHNSTON Eoin(1)\",\"MCCARTHY Steve(2)\",\"WILLIAMS Keith(3)\",\"JOHNSON Jeff(4)\",\"CADWALLADER Sharon(5)\"],\"comment\":\"\",\"consensus\":\"YES\",\"contest\":\"351351\"}],\"county_id\":1,\"cvr_number\":198,\"id\":351550,\"imprinted_id\":\"1-3-42\",\"record_id\":42,\"record_type\":\"UPLOADED\",\"scanner_id\":1,\"timestamp\":\"2023-11-10T06:45:11.484Z\"},\"cvr_id\":351550}";
+
       try{
           final SubmittedAuditCVR submission =
                   Main.GSON.fromJson(json_string, SubmittedAuditCVR.class);
