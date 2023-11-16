@@ -114,8 +114,7 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
 
       // Temporary/mock up of call to RAIRE service (needs improvement!)
       final Client client = ClientBuilder.newClient();
-      WebTarget webTarget
-              = client.target("http://localhost:8080/cvr/audit");
+      WebTarget webTarget = client.target("http://localhost:8080/cvr/audit");
 
       Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
       List generic = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON), List.class);
@@ -126,7 +125,6 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
       List<AuditResponse> raireResponse = objectMapper.convertValue(generic, new TypeReference<List<AuditResponse>>() {
       });
 
-      System.out.println("Building response");
       raireResponse.forEach(auditResponse -> {
         RaireResponse result = auditResponse.getResult();
         Map<String, AssertionPermutations> solution = result.getSolution();
@@ -143,15 +141,9 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
 
       Persistence.flushAndClear();
 
-      the_response.header("Content-Type", "application/json");
-      the_response.header("Content-Disposition", "attachment; filename*=UTF-8''assertions.json");
-      final OutputStream os = SparkHelper.getRaw(the_response).getOutputStream();
-      os.write((Main.GSON.toJson(raireResponse)).getBytes(StandardCharsets.UTF_8));
-      os.close();
-      ok(the_response);
+      okJSON(the_response, Main.GSON.toJson(raireResponse));
     }
     catch(Exception e){
-      System.out.println(e.getMessage());
       LOGGER.error("Error in assertion generation", e);
       serverError(the_response, "Could not generate assertions.");
     }

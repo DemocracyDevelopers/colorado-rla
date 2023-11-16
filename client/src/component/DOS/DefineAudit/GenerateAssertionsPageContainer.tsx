@@ -13,7 +13,7 @@ import withSync from 'corla/component/withSync';
 import * as _ from 'lodash';
 
 interface ContainerProps {
-    canonicalizationComplete: boolean;
+    assertionsGenerated: boolean;
     dosState: DOS.AppState;
     history: History;
     readyToGenerate: boolean;
@@ -23,7 +23,7 @@ class GenerateAssertionsPageContainer extends React.Component<ContainerProps> {
 
     public render() {
         const {
-            canonicalizationComplete,
+            assertionsGenerated,
             dosState,
             history,
             readyToGenerate,
@@ -49,7 +49,7 @@ class GenerateAssertionsPageContainer extends React.Component<ContainerProps> {
         };
 
         const props = {
-            canonicalizationComplete,
+            assertionsGenerated,
             forward: () => history.push('/sos/audit/select-contests'),
             generate,
             readyToGenerate,
@@ -66,12 +66,16 @@ const mapStateToProps = (dosState: DOS.AppState) => {
     const canonicalChoices = dosState.canonicalChoices;
 
     const canonicalizationComplete = !_.isEmpty(canonicalChoices)
-        && !dosState.settingAuditInfo && !_.isEmpty(canonicalContests);
+        && !dosState.settingAuditInfo && !_.isEmpty(canonicalContests)
+        && !dosState.standardizingContests;
+
+    const assertionsGenerated = dosState.assertionsGenerated;
+
     const readyToGenerate = canonicalizationComplete && !dosState.generatingAssertions
-        && !dosState.assertionsGenerated;
+        && !assertionsGenerated;
 
     return {
-        canonicalizationComplete,
+        assertionsGenerated,
         dosState,
         readyToGenerate,
     };
