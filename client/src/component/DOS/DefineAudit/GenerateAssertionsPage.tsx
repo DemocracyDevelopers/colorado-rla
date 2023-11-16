@@ -15,8 +15,8 @@ const Breadcrumbs = () => (
 interface GenerateAssertionsPageProps {
     canonicalizationComplete: boolean;
     readyToGenerate: boolean;
-    forward: () => void;
-    generate: () => void;
+    forward: OnClick;
+    generate: OnClick;
 }
 
 class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps> {
@@ -27,9 +27,9 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
     public render() {
         const {
             canonicalizationComplete,
-            readyToGenerate,
-            generate,
             forward,
+            generate,
+            readyToGenerate,
         } = this.props;
 
         let main = null;
@@ -91,7 +91,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                             className='pt-breadcrumb'>
                         Generate Assertions
                     </Button>
-                    <Button onClick={ () => forward() }
+                    <Button onClick={ forward }
                             intent={ Intent.PRIMARY }
                             className='pt-breadcrumb'>
                         Next

@@ -6,76 +6,79 @@ import { History } from 'history';
 
 import generateAssertions from 'corla/action/dos/generateAssertions';
 
-import resetAudit from 'corla/action/dos/resetAudit';
 import GenerateAssertionsPage from './GenerateAssertionsPage';
 
 import withDOSState from 'corla/component/withDOSState';
-import withPoll from 'corla/component/withPoll';
+import withSync from 'corla/component/withSync';
 import * as _ from 'lodash';
 
-// The next URL path to transition to.
-const NEXT_PATH = '/sos/audit/select-contests';
-
-interface GenerateAssertionsProps {
-    asm: DOS.ASMState;
+interface ContainerProps {
     canonicalizationComplete: boolean;
-    readyToGenerate: boolean;
+    dosState: DOS.AppState;
     history: History;
+    readyToGenerate: boolean;
 }
 
-const GenerateAssertionsPageContainer = (props: GenerateAssertionsProps) => {
-    const {
-        canonicalizationComplete,
-        readyToGenerate,
-        asm,
-        history,
-    } = props;
+class GenerateAssertionsPageContainer extends React.Component<ContainerProps> {
 
-    const generate = () => {
-        generateAssertions().then(r => {
-            if (!r) {
-                alert('Assertions could not be generated');
-            }
-        }).catch(reason => {
-                alert('generateAssertions error in fetchAction ' + reason);
-        });
+    public render() {
+        const {
+            canonicalizationComplete,
+            dosState,
+            history,
+            readyToGenerate,
+        } = this.props;
 
-    };
+        if (!dosState) {
+            return <div />;
+        }
 
-    const nextPage = () => {
-        history.push(NEXT_PATH);
-    };
+        if (!dosState.asm) {
+            return <div />;
+        }
 
-    if (asm === 'DOS_AUDIT_ONGOING') {
-        return <Redirect to='/sos'/>;
+        if (dosState.asm === 'DOS_AUDIT_ONGOING') {
+            return <Redirect to='/sos' />;
+        }
+
+        const generate = async () => {
+            generateAssertions().then()
+                .catch(reason => {
+                    alert('generateAssertions error in fetchAction ' + reason);
+                });
+        };
+
+        const props = {
+            canonicalizationComplete,
+            forward: () => history.push('/sos/audit/select-contests'),
+            generate,
+            readyToGenerate,
+        };
+
+        return <GenerateAssertionsPage { ...props } />;
     }
+}
 
-    return <GenerateAssertionsPage canonicalizationComplete={canonicalizationComplete}
-                                   readyToGenerate={readyToGenerate}
-                                   forward={ nextPage }
-                                   generate={ generate } />;
+const mapStateToProps = (dosState: DOS.AppState) => {
+    if (!dosState) { return {}; }
 
-};
-
-const mapStateToProps = (state: DOS.AppState) => {
-    const canonicalContests = state.canonicalContests;
-    const canonicalChoices = state.canonicalChoices;
+    const canonicalContests = dosState.canonicalContests;
+    const canonicalChoices = dosState.canonicalChoices;
 
     const canonicalizationComplete = !_.isEmpty(canonicalChoices)
-        && !state.settingAuditInfo && !_.isEmpty(canonicalContests);
-    const readyToGenerate = canonicalizationComplete && !state.generatingAssertions
-        && !state.assertionsGenerated;
+        && !dosState.settingAuditInfo && !_.isEmpty(canonicalContests);
+    const readyToGenerate = canonicalizationComplete && !dosState.generatingAssertions
+        && !dosState.assertionsGenerated;
 
     return {
-        asm: state.asm,
         canonicalizationComplete,
+        dosState,
         readyToGenerate,
     };
 };
 
-export default withPoll(
+export default withSync(
     withDOSState(GenerateAssertionsPageContainer),
-    'DOS_SELECT_CONTESTS_POLL_START',
-    'DOS_SELECT_CONTESTS_POLL_STOP',
+    'DOS_GENERATE_ASSERTIONS_SYNC',
     mapStateToProps,
 );

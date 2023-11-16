@@ -97,12 +97,11 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
   public String endpointBody(final Request the_request, final Response the_response) {
     try {
       // Task #48: Add example call to raire connector service
-      System.out.println("Getting ContestResults");
+      // We only need a list of contest results here.
       final Map<String, ContestResult> IRVContestResults = getIRVContestResults();
 
       final Set<GenerateAssertionRequestDto> assertionRequest = new LinkedHashSet<>();
 
-      System.out.println("Building assertion request");
       // Build the request to RAIRE.
       // cr.getBallotCount() is the correct universe size here, because it represents the total number of ballots
       // (cards) cast in all counties that include this contest.
@@ -113,7 +112,6 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
                       .totalAuditableBallots(Math.toIntExact(cr.getBallotCount()))
                       .build()));
 
-      System.out.println("Call to RAIRE");
       // Temporary/mock up of call to RAIRE service (needs improvement!)
       final Client client = ClientBuilder.newClient();
       WebTarget webTarget
@@ -142,11 +140,9 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
         });
 
       });
-      System.out.println("Finished building response");
 
       Persistence.flushAndClear();
 
-      System.out.println("Forming JSON payload");
       the_response.header("Content-Type", "application/json");
       the_response.header("Content-Disposition", "attachment; filename*=UTF-8''assertions.json");
       final OutputStream os = SparkHelper.getRaw(the_response).getOutputStream();
