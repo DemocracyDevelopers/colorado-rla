@@ -15,6 +15,8 @@ declare namespace DOS {
         seed?: string;
         settingAuditInfo?: boolean;
         standardizingContests?: boolean;
+        generatingAssertions?: boolean;
+        assertionsGenerated?: boolean;
         type: 'DOS';
     }
 

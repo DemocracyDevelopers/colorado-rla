@@ -17,7 +17,7 @@ import withPoll from 'corla/component/withPoll';
 import counties from 'corla/data/counties';
 
 // The next URL path to transition to.
-const NEXT_PATH = '/sos/audit/select-contests';
+const NEXT_PATH = '/sos/audit/generate-assertions';
 
 // The previous URL path to transition to.
 // const PREV_PATH = '/sos/audit';

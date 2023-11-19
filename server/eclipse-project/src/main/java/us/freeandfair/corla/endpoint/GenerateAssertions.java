@@ -14,6 +14,8 @@ import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +33,7 @@ import us.freeandfair.corla.raire.response.AssertionResult;
 import us.freeandfair.corla.raire.response.AuditResponse;
 import us.freeandfair.corla.raire.response.RaireResponse;
 import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.util.SparkHelper;
 
 
 /**
@@ -92,94 +95,58 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
    */
   @Override
   public String endpointBody(final Request the_request, final Response the_response) {
-//    if (my_asm.get().currentState() != COMPLETE_AUDIT_INFO_SET) {
-      // We can only generate assertions when CVRs have been provided for all the contests
-      // that we want to generate assertions for.
+    try {
+      // Task #48: Add example call to raire connector service
+      // We only need a list of contest results here.
+      final Map<String, ContestResult> IRVContestResults = getIRVContestResults();
 
-      // For now, require the ASM to be in the COMPLETE_AUDIT_INFO_SET state.
+      final Set<GenerateAssertionRequestDto> assertionRequest = new LinkedHashSet<>();
 
-      // Assertions can not yet be generated when the system is in this state.
-//    }
+      // Build the request to RAIRE.
+      // cr.getBallotCount() is the correct universe size here, because it represents the total number of ballots
+      // (cards) cast in all counties that include this contest.
+      IRVContestResults.values().forEach(cr -> assertionRequest.add(
+              GenerateAssertionRequestDto.builder()
+                      .contestName(cr.getContestName())
+                      .timeProvisionForResult(10)
+                      .totalAuditableBallots(Math.toIntExact(cr.getBallotCount()))
+                      .build()));
 
-    // Note that assertions may already exist in the database for various contests. In this case,
-    // if we are generating a new set of assertions for a contests, the old ones should be replaced.
+      // Temporary/mock up of call to RAIRE service (needs improvement!)
+      final Client client = ClientBuilder.newClient();
+      WebTarget webTarget = client.target("http://localhost:8080/cvr/audit");
 
-    // For a specified set of contest IDs, call the RAIRE service to generate assertions.
-    // Assume we extract ArrayList<Long> contestIds = .... from request.
+      Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
+      List generic = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON), List.class);
+      LOGGER.info("Sent Assertion Request to RAIRE: " + assertionRequest);
+      LOGGER.info(generic);
 
-    // Task #48: Add example call to raire connector service here with contest identifiers as input.
-    final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
-
-    // The DoS Dashboard contains a set of contests to audit.
-    // It's possible that this is the right way to decide which contests to audit for the audit step;
-    // it's also possible that we should just generate the assertions for all contests anyway.
-    // final Set<ContestToAudit> cta = dosdb.contestsToAudit();
-
-    Map<String,ContestResult> IRVContestResults = getIRVContestResults();
-
-    final Set<GenerateAssertionRequestDto> assertionRequest = new LinkedHashSet<>();
-
-    // Build the request to RAIRE.
-    // cr.getBallotCount() is the correct universe size here, because it represents the total number of ballots
-    // (cards) cast in all counties that include this contest.
-    IRVContestResults.values().forEach(cr -> assertionRequest.add(
-                GenerateAssertionRequestDto.builder()
-                    .contestName(cr.getContestName())
-                    .timeProvisionForResult(10)
-                    .totalAuditableBallots(Math.toIntExact(cr.getBallotCount()))
-                    .build()));
-
-
-    final Client client = ClientBuilder.newClient();
-    WebTarget webTarget
-        = client.target("http://localhost:8080/cvr/audit");
-
-    Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-
-//    jakarta.ws.rs.core.Response response = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON), Set.class);
-    List generic = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON), List.class);
-    LOGGER.info("Sent Assertion Request to RAIRE: "+assertionRequest);
-    LOGGER.info(generic);
-
-    ObjectMapper objectMapper = new ObjectMapper();
-    List<AuditResponse> raireResponse = objectMapper.convertValue(generic, new TypeReference<List<AuditResponse>>() { });
-    List<Assertion> responseAssertions = new ArrayList<>();
-
-    raireResponse.stream().forEach(auditResponse -> {
-      RaireResponse result = auditResponse.getResult();
-      Map<String, AssertionPermutations> solution = result.getSolution();
-      AssertionPermutations assertionPermutations = solution.get("Ok");
-      List<AssertionResult> assertions = assertionPermutations.getAssertions();
-      List<String> candidates = auditResponse.getResult().getMetadata().getCandidates();
-      Long universeSize = IRVContestResults.get(auditResponse.getContestName()).getBallotCount();
-      assertions.forEach(assertionResult -> {
-        Assertion assertion = assertionJSONToJava(assertionResult, candidates, auditResponse.getContestName(), universeSize);
-        responseAssertions.add(assertion);
-        Persistence.save(assertion);
+      ObjectMapper objectMapper = new ObjectMapper();
+      List<AuditResponse> raireResponse = objectMapper.convertValue(generic, new TypeReference<List<AuditResponse>>() {
       });
 
-    });
-    Persistence.flushAndClear();
+      raireResponse.forEach(auditResponse -> {
+        RaireResponse result = auditResponse.getResult();
+        Map<String, AssertionPermutations> solution = result.getSolution();
+        AssertionPermutations assertionPermutations = solution.get("Ok");
+        List<AssertionResult> assertions = assertionPermutations.getAssertions();
+        List<String> candidates = auditResponse.getResult().getMetadata().getCandidates();
+        Long universeSize = IRVContestResults.get(auditResponse.getContestName()).getBallotCount();
+        assertions.forEach(assertionResult -> {
+          Assertion assertion = assertionJSONToJava(assertionResult, candidates, auditResponse.getContestName(), universeSize);
+          Persistence.save(assertion);
+        });
 
-    // NOTE that for a single contest that involves multiple counties, there will be multiple
-    // entries in the list 'cta' for that contest. Contests really need to be identified by their
-    // name.
+      });
 
-    // Create NEBAssertion and NENAssertion objects for the set of assertions identified by RAIRE.
-    // (Compute diluted margins for all assertions to form that input to constructors).
+      Persistence.flushAndClear();
 
-    // Persist these assertion objects in the database.
-
-    // NOTE that we will need to expand the ASM states/events to incorporate the state
-    // in which assertions have been generated.
-    // NOTE that errors generated by RAIRE service (there are a series of types of errors) will need
-    // to be handled appropriately).
-
-    // NENAssertion testAssertion = new NENAssertion("TestContest","Winner", "Loser", 5, 1000, 0.123, List.of("Winner","Loser"));
-    // okJSON(the_response, Main.GSON.toJson(testAssertion));
-
-    // okJSON(the_response, Main.GSON.toJson(responseAssertions));
-    okJSON(the_response, Main.GSON.toJson(raireResponse));
+      okJSON(the_response, Main.GSON.toJson(raireResponse));
+    }
+    catch(Exception e){
+      LOGGER.error("Error in assertion generation", e);
+      serverError(the_response, "Could not generate assertions.");
+    }
     return my_endpoint_result.get();
   }
 
@@ -226,7 +193,7 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
         IRVContestResults.put(cr.getContestName(), cr);
         // It's not all IRV and not all plurality.
       } else if (! cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.PLURALITY.toString()))) {
-        throw new RuntimeException("EstimateSampleSizes: Contest "+cr.getContestName()+" has inconsistent plurality/IRV types.");
+        throw new RuntimeException("Contest "+cr.getContestName()+" has inconsistent plurality/IRV types.");
       }
     }
 

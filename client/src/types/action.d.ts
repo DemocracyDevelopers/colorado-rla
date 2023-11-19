@@ -38,6 +38,10 @@ declare namespace Action {
         | StandardizeContestsForAuditFail
         | StandardizeContestsForAuditNetworkFail
         | StandardizeContestsForAuditOk
+        | GenerateAssertions
+        | GenerateAssertionsFail
+        | GenerateAssertionsNetworkFail
+        | GenerateAssertionsOk
         | UpdateAcvrForm
         | UploadBallotManifestOk
         | UploadAcvrFail
@@ -208,6 +212,26 @@ declare namespace Action {
 
     interface StandardizeContestsForAuditOk {
         type: 'STANDARDIZE_CONTESTS_FOR_AUDIT_OK';
+        data: any;
+    }
+
+    interface GenerateAssertions {
+        type: 'GENERATE_ASSERTIONS';
+        data: any;
+    }
+
+    interface GenerateAssertionsFailFail {
+        type: 'GENERATE_ASSERTIONS_FAIL';
+        data: any;
+    }
+
+    interface GenerateAssertionsNetworkFail {
+        type: 'GENERATE_ASSERTIONS_NETWORK_FAIL';
+        data: any;
+    }
+
+    interface GenerateAssertionsOk {
+        type: 'GENERATE_ASSERTIONS_OK';
         data: any;
     }
 

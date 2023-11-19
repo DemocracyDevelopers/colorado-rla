@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.COMPLETE_AUDIT_INFO_SET;
+import static us.freeandfair.corla.controller.ComparisonAuditController.createAuditOfType;
 
 
 /**
@@ -96,27 +97,6 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
 
 
   /**
-   * Given a ContestResult and a risk limit, return a ComparisonAudit object appropriate to the contest.
-   *
-   * @param cr           ContestResult for contest under audit.
-   * @param riskLimit    Risk limit for the audit
-   * @return A ComparisonAudit object for the contest under audit.
-   */
-  private ComparisonAudit createAuditForSampleEstimation(final ContestResult cr, final BigDecimal riskLimit){
-
-    // Check type of contest: IRV vs Plurality. If there's a mix of IRV and plurality in one unified contest,
-    // that's an error.
-    if (cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.IRV.toString()))) {
-      return new IRVComparisonAudit(cr, riskLimit, Audit.GAMMA, cr.getAuditReason());
-    }
-    if (cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.PLURALITY.toString()))) {
-      return new ComparisonAudit(cr, riskLimit, cr.getDilutedMargin(), Audit.GAMMA, cr.getAuditReason());
-    }
-
-    throw new RuntimeException("EstimateSampleSizes: Contest "+cr.getContestName()+" has inconsistent plurality/IRV types.");
-  }
-
-  /**
    * Construct a sample size estimate data row for a comparison audit
    * @param ca     Comparison audit whose sample size is being estimated.
    * @return Array of strings defining: county name (or "Multiple if the audit crosses multiple counties);
@@ -171,7 +151,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     // could (should)? avoid doing this by directly creating ComparisonAudits without using
     // the ComparisonAuditController for the purpose of preliminary sample size estimation.
     final List<ComparisonAudit> comparisonAudits = countedCRs.stream().map(cr ->
-            createAuditForSampleEstimation(cr, dosdb.auditInfo().riskLimit()))
+            createAuditOfType(cr, dosdb.auditInfo().riskLimit()))
             .collect(Collectors.toList());
 
     // Call estimatedSamplesToAudit() on each ComparisonAudit. Create a list of rows where
@@ -202,6 +182,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
       }
     } catch (final Exception e) {
       // Not sure if this is the right kind of error.
+      LOGGER.error("Error sample size estimation", e);
       serverError(the_response, "Could not find any Comparison Audits to estimate, or sample sizes could not be estimated.");
     }
 

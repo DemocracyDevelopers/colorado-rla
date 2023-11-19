@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import com.google.gson.JsonParseException;
 import org.testng.annotations.*;
 
 import us.freeandfair.corla.Main;
@@ -55,15 +56,14 @@ public class ACVRUploadTest {
   }
 
   /**
-   * Create a Plurality contest for the given county, contest name, and with the given
-   * distribution of votes.
+   * Create an IRV contest for the given county, contest name, and candidates.
    *
    * @param county            County to which the contest belongs (name).
    * @param contest           Name of the contest.
-   * @param candidate_votes   Map between candidate name and their vote total.
+   * @param candidates        Candidates in the contest.
    * @param total             Total number of CVRs with the contest on it.
    */
-  private void createIRVContest(String county, String contest, Map<String,Integer> candidate_votes, int total){
+  private void createIRVContest(String county, String contest, List<String> candidates, int total){
     County cty = CountyQueries.fromString(county);
 
     // To do: need to add ballot manifest data.
@@ -72,39 +72,30 @@ public class ACVRUploadTest {
 
     Persistence.persist(bmi);
 
-    Set<String> candidates = candidate_votes.keySet();
     List<Choice> choices = candidates.stream().map(c -> { return new Choice(c,
             "", false, false);}).collect(Collectors.toList());
     Contest c1 = new Contest(contest, cty, "IRV", choices, 10,
             1, 0);
-
     Persistence.persist(c1);
-    CountyContestResult ctr = new CountyContestResult(cty, c1);
 
-    ctr.updateResults();
+    CountyContestResult ctr = new CountyContestResult(cty, c1);
     Persistence.persist(ctr);
   }
 
   /**
-   * Creates and persists an example Plurality election for the Boulder county called
-   * Board of Parks.
+   * Creates and persists an example IRV election for the Boulder Chess Board.
    */
   private void createBoulderChessBoard(){
-    createIRVContest("Boulder", "BoulderChessBoard",
-            Map.of("Alice", 20, "Bob", 10, "Chuan", 100, "Diego", 40,
-            "Alice(1)", 3, "Alice(2)", 4, "Bob(2)", 3,
-            "Chuan(3)", 3, "Chuan(4)",0, "Diego(4)", 3), 186);
+    createIRVContest("Boulder", "BoulderChessBoard", Arrays.asList("Alice",
+                    "Bob", "Chuan", "Diego"), 186);
   }
 
   /**
-   * Creates and persists an example Plurality election for the Broomfield county called
-   * Board of Parks.
+   * Creates and persists an example IRV election for the Broomfield Chess Board.
    */
   private void createBroomfieldChessBoard(){
-    createIRVContest("Broomfield", "BroomfieldChessBoard",
-            Map.of("Alice", 20, "Bob", 10, "Chuan", 100, "Diego", 40,
-            "Alice(1)", 3, "Alice(2)", 4, "Bob(2)", 3,
-            "Chuan(3)", 3, "Chuan(4)",0, "Diego(4)", 3), 186);
+      createIRVContest("Broomfield", "BroomfieldChessBoard", Arrays.asList("Alice",
+              "Bob", "Chuan", "Diego"), 186);
   }
 
   /**
@@ -119,37 +110,32 @@ public class ACVRUploadTest {
       Contest boulderTestContest = ContestQueries.matching("BoulderChessBoard").get(0);
       Contest broomfieldTestContest = ContestQueries.matching("BroomfieldChessBoard").get(0);
 
-      List <CVRContestInfo> contestInfoList = List.of(
-              new CVRContestInfo(boulderTestContest, "", CVRContestInfo.ConsensusValue.YES,
-                      List.of("Alice(1)", "Bob(2)", "Chuan(3)", "Diego(4)")),
-              new CVRContestInfo(broomfieldTestContest, "", CVRContestInfo.ConsensusValue.YES,
-                      List.of("Alice(1)", "Alice(2)", "Bob(2)", "Chuan(4)", "Diego(4)"))
-              );
 
-      CastVoteRecord testCVR1 = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
-              Instant.MIN, 1L, 1, 1, 1, "Batch 1",
-              1, "1-1-1", "Audit", contestInfoList );
+      final String cinfo1 = "{\"auditBoardIndex\":0,\"audit_cvr\":{\"ballot_type\":\"Ballot 1 - Type 1\"," +
+              "\"batch_id\":\"9\",\"contest_info\":[{\"choices\":[\"Alice(1)\",\"Bob(2)\",\"Chuan(3)\",\"Diego(4)\"]," +
+              "\"comment\":\"\",\"consensus\":\"YES\",\"contest\":\"" + boulderTestContest.id() + "\"}],\"county_id\":" +
+              boulderTestContest.county().id() + ",\"cvr_number\":1,\"id\":1,\"imprinted_id\":\"1-1-1\"," +
+              "\"record_id\":1,\"record_type\":\"UPLOADED\",\"scanner_id\":1,\"timestamp\":\"2023-11-09T23:30:51.136Z\"}," +
+              "\"cvr_id\":1}";
 
-      SubmittedAuditCVR testSubmittedCVR1 = new SubmittedAuditCVR(1L, testCVR1);
 
-      County testCounty = new County("c1", 1L);
-      CountyDashboard cdb = new CountyDashboard(testCounty);
-      cdb.startRound(2, 2, 0 , List.of(1L), List.of(1L));
+      final SubmittedAuditCVR submission1 = Main.GSON.fromJson(cinfo1, SubmittedAuditCVR.class);
 
-      CastVoteRecord newACVR  = buildNewAcvr( testSubmittedCVR1, testCVR1, cdb);
-      assertEquals(newACVR.contestInfo().get(0).choices(), List.of("Alice", "Bob", "Chuan", "Diego"));
-      assertEquals(newACVR.contestInfo().get(1).choices(), List.of("Alice", "Bob"));
+      assertEquals(submission1.auditCVR().contestInfo().get(0).choices(), List.of("Alice", "Bob", "Chuan", "Diego"));
+
+      final String cinfo2 = "{\"auditBoardIndex\":0,\"audit_cvr\":{\"ballot_type\":\"Ballot 1 - Type 1\"," +
+              "\"batch_id\":\"9\",\"contest_info\":[{\"choices\":[\"Alice(1)\",\"Alice(2)\",\"Bob(2)\",\"Chuan(3)\",\"Diego(4)\"]," +
+              "\"comment\":\"\",\"consensus\":\"YES\",\"contest\":\"" + broomfieldTestContest.id() + "\"}],\"county_id\":" +
+              broomfieldTestContest.county().id() + ",\"cvr_number\":1,\"id\":1,\"imprinted_id\":\"1-1-1\"," +
+              "\"record_id\":1,\"record_type\":\"UPLOADED\",\"scanner_id\":1,\"timestamp\":\"2023-11-09T23:30:51.136Z\"}," +
+              "\"cvr_id\":1}";
+      final SubmittedAuditCVR submission2 = Main.GSON.fromJson(cinfo2, SubmittedAuditCVR.class);
+      assertEquals(submission2.auditCVR().contestInfo().get(0).choices(), List.of("Alice", "Bob", "Chuan", "Diego"));
   }
 
-  /**
-   * Creates a cast vote record in a given Plurality contest containing a vote
-   * for the given candidate (name).
-   *
-   * @param name      Name of candidate being voted for in this CVR.
-   * @param co        Contest
-   * @param position  CVR position (used when creating CVR objects)
-   * @return A CastVoteRecord object containing a vote for the given candidate (name).
-   */
+
+
+  /*
   private CastVoteRecord createVoteFor(final String name, final Contest co, Integer position){
     // Create CVRContestInfo
     List<String> votes = new ArrayList<>();
@@ -172,5 +158,20 @@ public class ACVRUploadTest {
             contest_info);
     Persistence.persist(cvr);
     return cvr;
-  }
+  }*/
+
+ /* @Test()
+  public void testJsonSubmission1(){
+      //final String json_string = "{\"auditBoardIndex\":0,\"audit_cvr\":{\"ballot_type\":\"Ballot 1 - Type 1\",\"batch_id\":\"9\",\"contest_info\":[{\"choices\":[\"JOHNSTON Eoin(1)\",\"MCCARTHY Steve(2)\",\"WILLIAMS Keith(3)\",\"JOHNSON Jeff(4)\",\"CADWALLADER Sharon(5)\"],\"comment\":\"\",\"consensus\":\"YES\",\"contest\":\"572\"}],\"county_id\":1,\"cvr_number\":637,\"id\":1210,\"imprinted_id\":\"1-9-13\",\"record_id\":13,\"record_type\":\"UPLOADED\",\"scanner_id\":1,\"timestamp\":\"2023-11-09T23:30:51.136Z\"},\"cvr_id\":1210}";
+      final String json_string = "{\"auditBoardIndex\":0,\"audit_cvr\":{\"ballot_type\":\"Ballot 1 - Type 1\",\"batch_id\":\"3\",\"contest_info\":[{\"choices\":[\"JOHNSTON Eoin(1)\",\"MCCARTHY Steve(2)\",\"WILLIAMS Keith(3)\",\"JOHNSON Jeff(4)\",\"CADWALLADER Sharon(5)\"],\"comment\":\"\",\"consensus\":\"YES\",\"contest\":\"351351\"}],\"county_id\":1,\"cvr_number\":198,\"id\":351550,\"imprinted_id\":\"1-3-42\",\"record_id\":42,\"record_type\":\"UPLOADED\",\"scanner_id\":1,\"timestamp\":\"2023-11-10T06:45:11.484Z\"},\"cvr_id\":351550}";
+
+      try{
+          final SubmittedAuditCVR submission =
+                  Main.GSON.fromJson(json_string, SubmittedAuditCVR.class);
+          System.out.println(submission.toString());
+      }
+      catch(JsonParseException e){
+          System.out.println(e.getMessage());
+      }
+  }*/
 }

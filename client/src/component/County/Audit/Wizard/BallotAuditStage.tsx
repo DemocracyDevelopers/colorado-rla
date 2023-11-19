@@ -1,8 +1,8 @@
-import * as React from "react";
+import * as React from 'react';
 
 import * as _ from 'lodash';
 
-import { Button, Checkbox, EditableText, Intent, Dialog } from '@blueprintjs/core';
+import { Button, Checkbox, Dialog, EditableText, Intent } from '@blueprintjs/core';
 
 import BackButton from './BackButton';
 import WaitingForNextBallot from './WaitingForNextBallot';
@@ -18,7 +18,7 @@ interface NotFoundProps {
 
 const BallotNotFoundForm = (props: NotFoundProps) => {
 
-    const { notFound, currentBallot, } = props;
+    const { notFound, currentBallot } = props;
 
     const onClick = () => {
         if (confirm('By continuing, this ballot will be recorded as “not found”'
@@ -30,7 +30,6 @@ const BallotNotFoundForm = (props: NotFoundProps) => {
     return (
 
         <div>
-
 
             <div className='not-found-header'>Are you looking at the right ballot?</div>
             <div className='not-found-copy'>
@@ -113,6 +112,7 @@ interface ChoicesProps {
     updateBallotMarks: OnClick;
 }
 
+
 const ContestChoices = (props: ChoicesProps) => {
     const {
         choices,
@@ -190,6 +190,29 @@ const BallotContestMarkForm = (props: MarkFormProps) => {
     const acvr = countyState.acvrs![currentBallot.id];
     const contestMarks = acvr[contest.id];
 
+    const updateChoices = (candidates: ContestChoice[], desc: string): ContestChoice[] => {
+        if (desc === 'PLURALITY') {
+            return candidates;
+        }
+        // Replace each candidate 'c' in 'cands' with 'c(1)', 'c(2)', etc.
+        // For now, let's assume the number of votes on the ballot can be as high as
+        // the number of candidates. (This is not correct, but will be good enough
+        // for prototyping purposes).
+        const ranks = candidates.length;
+
+        const newChoices: ContestChoice[] = [];
+        candidates.forEach(c => {
+            for (let i = 1; i <= ranks; i++) {
+                const newChoice: ContestChoice = {
+                    description: c.description,
+                    name: c.name + '(' + i + ')',
+                };
+                newChoices.push(newChoice);
+            }
+        });
+        return newChoices;
+    };
+
     const updateComments = (comments: string) => {
         updateBallotMarks({ comments });
     };
@@ -221,7 +244,7 @@ const BallotContestMarkForm = (props: MarkFormProps) => {
             <ContestInfo contest={contest} />
             <ContestChoices
                 key={contest.id}
-                choices={choices}
+                choices={updateChoices(choices, description)}
                 marks={contestMarks}
                 noConsensus={!!contestMarks.noConsensus}
                 updateBallotMarks={updateBallotMarks}
@@ -296,19 +319,12 @@ interface BallotAuditStageState {
     showDialog: boolean;
 }
 
-
 class BallotAuditStage extends React.Component<StageProps, BallotAuditStageState> {
 
     constructor(props: StageProps) {
         super(props);
         this.state = { showDialog: true };
     }
-
-    private closeDialog = () => {
-        this.setState({ showDialog: !this.state.showDialog });
-     }
-
-
 
        public render() {
 
@@ -372,11 +388,10 @@ class BallotAuditStage extends React.Component<StageProps, BallotAuditStageState
             return <WaitingForNextBallot />;
         }
 
-
         return (
             <div className='rla-page'>
                 <div>
-                    <Dialog 
+                    <Dialog
                         isOpen={this.state.showDialog}
                     >
                         <div className='pt-dialog-body'>
@@ -390,7 +405,7 @@ class BallotAuditStage extends React.Component<StageProps, BallotAuditStageState
                         <div className='pt-dialog-footer'>
                             <div className='pt-dialog-footer-actions'>
                                 <Button intent={Intent.PRIMARY}
-                                    onClick={() =>this.closeDialog()}
+                                    onClick={() => this.closeDialog()}
                                     text='Continue' />
                             </div>
                         </div>
@@ -530,6 +545,10 @@ class BallotAuditStage extends React.Component<StageProps, BallotAuditStageState
             </div>
         );
     }
-};
+
+    private closeDialog = () => {
+        this.setState({ showDialog: !this.state.showDialog });
+     }
+}
 
 export default BallotAuditStage;

@@ -18,13 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.persistence.Column;
-import javax.persistence.Convert;
-import javax.persistence.Embeddable;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 
 import com.google.gson.annotations.JsonAdapter;
 
@@ -85,6 +79,14 @@ public class CVRContestInfo implements Serializable {
   private List<String> my_choices = new ArrayList<>();
 
   /**
+   * Raw, uninterpreted choices for this contest. These raw choices
+   * are used during ballot parsing, and are not required to be
+   * stored in the database.
+   */
+  @Transient
+  private List<String> my_raw_choices = new ArrayList<>();
+
+  /**
    * Constructs an empty CVRContestInfo, solely for persistence.
    */
   public CVRContestInfo() {
@@ -110,10 +112,41 @@ public class CVRContestInfo implements Serializable {
     my_comment = the_comment;
     my_consensus = the_consensus;
     my_choices.addAll(the_choices);
+    my_raw_choices.addAll(the_choices);
     for (final String s : my_choices) {
       if (!my_contest.isValidChoice(s)) {
         throw new IllegalArgumentException("invalid choice " + s +
                                            " for contest " + my_contest);
+      }
+    }
+  }
+
+  /**
+   * Constructs a CVR contest information record with the specified
+   * parameters.
+   *
+   * @param the_contest The contest.
+   * @param the_comment The comment.
+   * @param the_consensus The consensus value.
+   * @param the_choices The choices (after any ballot interpretation has taken place).
+   * @param the_raw_choices The choices (before any ballot interpretation has taken place).
+   * @exception IllegalArgumentException if any choice is not a valid choice
+   * for the specified contest.
+   */
+  public CVRContestInfo(final Contest the_contest, final String the_comment,
+                        final ConsensusValue the_consensus,
+                        final List<String> the_choices,
+                        final List<String> the_raw_choices) {
+    super();
+    my_contest = the_contest;
+    my_comment = the_comment;
+    my_consensus = the_consensus;
+    my_choices.addAll(the_choices);
+    my_raw_choices.addAll(the_raw_choices);
+    for (final String s : my_choices) {
+      if (!my_contest.isValidChoice(s)) {
+        throw new IllegalArgumentException("invalid choice " + s +
+                " for contest " + my_contest);
       }
     }
   }
@@ -150,6 +183,11 @@ public class CVRContestInfo implements Serializable {
   public List<String> choices() {
     return Collections.unmodifiableList(my_choices);
   }
+
+  /**
+   * @return the raw, uninterpreted, choices in this record.
+   */
+  public List<String> rawChoices() { return Collections.unmodifiableList(my_raw_choices);}
 
   /**
    * @return a String representation of this cast vote record.
