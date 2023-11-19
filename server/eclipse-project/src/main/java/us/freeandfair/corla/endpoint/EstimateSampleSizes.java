@@ -182,6 +182,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
       }
     } catch (final Exception e) {
       // Not sure if this is the right kind of error.
+      LOGGER.error("Error sample size estimation", e);
       serverError(the_response, "Could not find any Comparison Audits to estimate, or sample sizes could not be estimated.");
     }
 
