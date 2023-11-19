@@ -47,6 +47,10 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                 .catch(reason => {
                     alert('generateAssertions error in fetchAction ' + reason);
                 });
+
+            if(!dosState.assertionsGenerated) {
+                this.setState({canGenerateAssertions: true});
+            }
         };
 
         const main =
@@ -79,7 +83,6 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
 
                     <div className='control-buttons mt-default'>
                         <Button onClick={forward}
-                                disabled={!dosState.assertionsGenerated}
                                 className='pt-button pt-intent-primary'>
                             Next
                         </Button>
