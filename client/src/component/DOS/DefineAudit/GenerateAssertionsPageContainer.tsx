@@ -4,8 +4,6 @@ import { Redirect } from 'react-router-dom';
 
 import { History } from 'history';
 
-import generateAssertions from 'corla/action/dos/generateAssertions';
-
 import GenerateAssertionsPage from './GenerateAssertionsPage';
 
 import withDOSState from 'corla/component/withDOSState';
@@ -13,7 +11,6 @@ import withSync from 'corla/component/withSync';
 import * as _ from 'lodash';
 
 interface ContainerProps {
-    assertionsGenerated: boolean;
     dosState: DOS.AppState;
     history: History;
     readyToGenerate: boolean;
@@ -23,7 +20,6 @@ class GenerateAssertionsPageContainer extends React.Component<ContainerProps> {
 
     public render() {
         const {
-            assertionsGenerated,
             dosState,
             history,
             readyToGenerate,
@@ -41,17 +37,9 @@ class GenerateAssertionsPageContainer extends React.Component<ContainerProps> {
             return <Redirect to='/sos' />;
         }
 
-        const generate = async () => {
-            generateAssertions().then()
-                .catch(reason => {
-                    alert('generateAssertions error in fetchAction ' + reason);
-                });
-        };
-
         const props = {
-            assertionsGenerated,
+            dosState,
             forward: () => history.push('/sos/audit/select-contests'),
-            generate,
             readyToGenerate,
         };
 
@@ -69,13 +57,10 @@ const mapStateToProps = (dosState: DOS.AppState) => {
         && !dosState.settingAuditInfo && !_.isEmpty(canonicalContests)
         && !dosState.standardizingContests;
 
-    const assertionsGenerated = dosState.assertionsGenerated;
-
     const readyToGenerate = canonicalizationComplete && !dosState.generatingAssertions
-        && !assertionsGenerated;
+        && !dosState.assertionsGenerated;
 
     return {
-        assertionsGenerated,
         dosState,
         readyToGenerate,
     };

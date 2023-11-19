@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Breadcrumb, Button, Card, Intent } from '@blueprintjs/core';
 
+import generateAssertions from 'corla/action/dos/generateAssertions';
 import DOSLayout from 'corla/component/DOSLayout';
 
 const Breadcrumbs = () => (
@@ -13,24 +14,40 @@ const Breadcrumbs = () => (
 );
 
 interface GenerateAssertionsPageProps {
-    assertionsGenerated: boolean;
+    dosState: DOS.AppState;
     forward: OnClick;
-    generate: OnClick;
     readyToGenerate: boolean;
 }
 
-class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps> {
+interface GenerateAssertionsPageState {
+    canGenerateAssertions: boolean;
+}
+
+class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps, GenerateAssertionsPageState> {
     public constructor(props: GenerateAssertionsPageProps) {
         super(props);
+
+        this.state = {
+            canGenerateAssertions: !props.dosState.assertionsGenerated && props.readyToGenerate,
+        };
     }
 
     public render() {
         const {
-            assertionsGenerated,
+            dosState,
             forward,
-            generate,
             readyToGenerate,
         } = this.props;
+
+        const generate = async () => {
+            this.setState({canGenerateAssertions: false});
+            this.render();
+
+            generateAssertions().then()
+                .catch(reason => {
+                    alert('generateAssertions error in fetchAction ' + reason);
+                });
+        };
 
         const main =
                 <div>
@@ -40,9 +57,21 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                             Assertions will be generated for all IRV contests to
                             support opportunistic discrepancy computation.
                         </p>
+                        <p>
+                            Only click on 'Generate Assertions' once! This prototype is
+                            is not sophisticated enough to replace a contest's assertions
+                            in the database (re-generating assertions will just replicate
+                            those that already exist).
+                        </p>
+                        <p>
+                            This prototype is also not sophisticated enough to give you
+                            feedback on how assertion generation is progressing ... but
+                            once it is done either a green alert will tell you that it
+                            was successful or a red one will tell you it has failed.
+                        </p>
                     <div className='control-buttons mt-default'>
                         <Button onClick={generate}
-                                disabled={!readyToGenerate || assertionsGenerated}
+                                disabled={!this.state.canGenerateAssertions}
                                 className='pt-button pt-intent-primary'>
                             Generate Assertions
                         </Button>
@@ -50,7 +79,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
 
                     <div className='control-buttons mt-default'>
                         <Button onClick={forward}
-                                disabled={!assertionsGenerated}
+                                disabled={!dosState.assertionsGenerated}
                                 className='pt-button pt-intent-primary'>
                             Next
                         </Button>
