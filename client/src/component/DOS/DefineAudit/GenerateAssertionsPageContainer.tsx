@@ -39,7 +39,7 @@ class GenerateAssertionsPageContainer extends React.Component<ContainerProps> {
 
         const props = {
             dosState,
-            forward: () => history.push('/sos/audit/select-contests'),
+            forward: () => history.push('/sos/audit/estimate-sample-sizes'),
             readyToGenerate,
         };
 
