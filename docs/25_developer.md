@@ -192,10 +192,11 @@ Install and setup
 In order to use the Postgres database in development, one must:
 
 1. Install PostgreSQL 
-2. Create a database called "`corla`", and grant all privileges on it
+2. Create a database called "`scratch`", and grant all privileges on it
    to a user called "`corlaadmin`" with password "`corlasecret`".
-3. Initialize the "`corla`" database with test administrator data.
+3. Initialize the "`scratch`" database with test administrator data.
 
+The following instructions explain how.
 
    For example, to accomplish the above on MacOS using Homebrew, one
    issues the following commands.  Type 'corlasecret' when prompted for a password.
