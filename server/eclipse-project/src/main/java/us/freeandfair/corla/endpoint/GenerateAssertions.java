@@ -14,10 +14,9 @@ import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -33,7 +32,8 @@ import us.freeandfair.corla.raire.response.AssertionResult;
 import us.freeandfair.corla.raire.response.AuditResponse;
 import us.freeandfair.corla.raire.response.RaireResponse;
 import us.freeandfair.corla.persistence.Persistence;
-import us.freeandfair.corla.util.SparkHelper;
+
+import static us.freeandfair.corla.query.CastVoteRecordQueries.getCVRContestInfoByCountyAndContestID;
 
 
 /**
@@ -96,8 +96,6 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
   @Override
   public String endpointBody(final Request the_request, final Response the_response) {
     try {
-      // Task #48: Add example call to raire connector service
-      // We only need a list of contest results here.
       final Map<String, ContestResult> IRVContestResults = getIRVContestResults();
 
       final Set<GenerateAssertionRequestDto> assertionRequest = new LinkedHashSet<>();
@@ -109,6 +107,7 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
               GenerateAssertionRequestDto.builder()
                       .contestName(cr.getContestName())
                       .timeProvisionForResult(10)
+                      .votes(cr.getContests().stream().map(this::getVotes).flatMap(List::stream).collect(Collectors.toList()))
                       .totalAuditableBallots(Math.toIntExact(cr.getBallotCount()))
                       .build()));
 
@@ -149,6 +148,17 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
     }
     return my_endpoint_result.get();
   }
+
+  /* Retrieves all the CVRs for a given contest from the database.
+   *
+   */
+  private List<List<String>> getVotes(Contest c) {
+    var contestID = c.id();
+    var countyID = c.county().id();
+    var result = getCVRContestInfoByCountyAndContestID(countyID, contestID);
+    return result.map(CVRContestInfo::choices).collect(Collectors.toList());
+  }
+
 
   private Assertion assertionJSONToJava(AssertionResult assertionResult, List<String> candidates, String contestName, Long universeSize) {
     String winner = candidates.get(assertionResult.getAssertion().getWinner());

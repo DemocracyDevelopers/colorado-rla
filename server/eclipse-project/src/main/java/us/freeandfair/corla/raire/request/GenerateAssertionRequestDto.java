@@ -5,12 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class GenerateAssertionRequestDto {
   private String contestName;
+  private List<List<String>> votes;
   private Integer totalAuditableBallots;
   private Integer timeProvisionForResult;
 }
