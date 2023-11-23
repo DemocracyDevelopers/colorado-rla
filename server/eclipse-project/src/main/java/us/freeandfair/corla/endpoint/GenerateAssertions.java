@@ -101,38 +101,48 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
   @Override
   public String endpointBody(final Request the_request, final Response the_response) {
     try {
-      final Map<String, ContestResult> IRVContestResults = getIRVContestResults();
-
-      final Set<GenerateAssertionRequestDto> assertionRequest = new LinkedHashSet<>();
-
-      // Build the request to RAIRE.
-      // cr.getBallotCount() is the correct universe size here, because it represents the total number of ballots
-      // (cards) cast in all counties that include this contest.
-      IRVContestResults.values().forEach(cr -> assertionRequest.add(
-              GenerateAssertionRequestDto.builder()
-                      .contestName(cr.getContestName())
-                      .timeProvisionForResult(10)
-                      .candidates(getCandidates(cr))
-                      .votes(cr.getContests().stream().map(this::getVotes).flatMap(List::stream).collect(Collectors.toList()))
-                      .totalAuditableBallots(Math.toIntExact(cr.getBallotCount()))
-                      .build()));
-
       // Temporary/mock up of call to RAIRE service (needs improvement!)
       // TODO: Deal appropriately with the case where no raire_url is set.
       final Client client = ClientBuilder.newClient();
       var raire_url = Main.properties().getProperty(RAIRE_URL, "");
       WebTarget webTarget = client.target(raire_url);
 
-      Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-      List generic = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON), List.class);
-      LOGGER.info("Sent Assertion Request to RAIRE: " + assertionRequest);
-      LOGGER.info(generic);
-
       ObjectMapper objectMapper = new ObjectMapper();
-      List<AuditResponse> raireResponse = objectMapper.convertValue(generic, new TypeReference<List<AuditResponse>>() {
-      });
 
-      raireResponse.forEach(auditResponse -> {
+      final Map<String, ContestResult> IRVContestResults = getIRVContestResults();
+      final Set<GenerateAssertionRequestDto> assertionRequest = new LinkedHashSet<>();
+      List<AuditResponse> raireResponses = new ArrayList<>();
+
+      // Build the request to RAIRE.
+      // cr.getBallotCount() is the correct universe size here, because it represents the total number of ballots
+      // (cards) cast in all counties that include this contest.
+      IRVContestResults.values().forEach(cr -> {
+
+        // build the RAIRE request for this IRV contest.
+        GenerateAssertionRequestDto request =
+                GenerateAssertionRequestDto.builder()
+                        .contestName(cr.getContestName())
+                        .timeProvisionForResult(10)
+                        .candidates(getCandidates(cr))
+                        .votes(cr.getContests().stream().map(this::getVotes).flatMap(List::stream).collect(Collectors.toList()))
+                        .totalAuditableBallots(Math.toIntExact(cr.getBallotCount()))
+                        .build();
+
+        // Send it to the RAIRE service.
+        Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
+        List generic = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON), List.class);
+        LOGGER.info("Sent Assertion Request to RAIRE: " + assertionRequest);
+        LOGGER.info(generic);
+
+        // Read the response and add it to the list of responses.
+        AuditResponse raireResponse = objectMapper.convertValue(generic, new TypeReference<AuditResponse>() {
+        });
+        raireResponses.add(raireResponse);
+
+    });
+
+      // Iterate through all the responses and store the assertions in the database.
+      raireResponses.forEach(auditResponse -> {
         RaireResponse result = auditResponse.getResult();
         Map<String, AssertionPermutations> solution = result.getSolution();
         AssertionPermutations assertionPermutations = solution.get("Ok");
@@ -148,7 +158,8 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
 
       Persistence.flushAndClear();
 
-      okJSON(the_response, Main.GSON.toJson(raireResponse));
+      // Return all the RAIRE responses to the endpoint.
+      okJSON(the_response, Main.GSON.toJson(raireResponses));
     }
     catch(Exception e){
       LOGGER.error("Error in assertion generation", e);
