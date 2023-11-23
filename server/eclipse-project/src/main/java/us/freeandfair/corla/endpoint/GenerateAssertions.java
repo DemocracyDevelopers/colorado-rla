@@ -49,6 +49,11 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
   public static final Logger LOGGER = LogManager.getLogger(GenerateAssertions.class);
 
   /**
+   * Class-wide logger
+   */
+  public static final String RAIRE_URL = "raire_url";
+
+  /**
    * The event to return for this endpoint.
    */
   private final ThreadLocal<ASMEvent> my_event = new ThreadLocal<ASMEvent>();
@@ -107,13 +112,16 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
               GenerateAssertionRequestDto.builder()
                       .contestName(cr.getContestName())
                       .timeProvisionForResult(10)
+                      .candidates(getCandidates(cr))
                       .votes(cr.getContests().stream().map(this::getVotes).flatMap(List::stream).collect(Collectors.toList()))
                       .totalAuditableBallots(Math.toIntExact(cr.getBallotCount()))
                       .build()));
 
       // Temporary/mock up of call to RAIRE service (needs improvement!)
+      // TODO: Deal appropriately with the case where no raire_url is set.
       final Client client = ClientBuilder.newClient();
-      WebTarget webTarget = client.target("http://localhost:8080/cvr/audit");
+      var raire_url = Main.properties().getProperty(RAIRE_URL, "");
+      WebTarget webTarget = client.target(raire_url);
 
       Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
       List generic = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON), List.class);
@@ -149,7 +157,20 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
     return my_endpoint_result.get();
   }
 
-  /* Retrieves all the CVRs for a given contest from the database.
+  /* Gets all the choice names (i.e. candidate names) for a given contest from the database.
+   *
+   */
+  private List<String> getCandidates(ContestResult cr) {
+    Set<String> candidates = new HashSet<>();
+    List<List<Choice>> listOfListsOfChoices = cr.getContests().stream().map(Contest::choices).collect(Collectors.toList());
+    listOfListsOfChoices.forEach( cl   -> {
+        cl.stream().map(c -> candidates.add(c.name()));
+    });
+
+    return  new ArrayList<>(candidates);
+  }
+
+  /* Gets all the votes for a given contest from the database, in a form that the RAIRE service can understand.
    *
    */
   private List<List<String>> getVotes(Contest c) {

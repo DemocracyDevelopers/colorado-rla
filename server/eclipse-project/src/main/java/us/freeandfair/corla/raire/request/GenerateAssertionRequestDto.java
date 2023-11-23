@@ -13,6 +13,7 @@ import java.util.List;
 @Builder
 public class GenerateAssertionRequestDto {
   private String contestName;
+  private List<String> candidates;
   private List<List<String>> votes;
   private Integer totalAuditableBallots;
   private Integer timeProvisionForResult;
