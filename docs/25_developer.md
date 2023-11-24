@@ -240,6 +240,7 @@ at this stage, create all its tables and such automatically.
 hibernate.url = jdbc:postgresql://localhost:5432/scratch?reWriteBatchedInserts=true&disableColumnSantiser=true
 ```
 
+
 5. Edit server/eclipse-project/pom.xml to comment out the parent pom.xml:
 ```
 <!-- Comment out Colorado parent pom.xml.
@@ -250,7 +251,20 @@ hibernate.url = jdbc:postgresql://localhost:5432/scratch?reWriteBatchedInserts=t
         </parent>
 -->
 ```
-6. Remember to tell git not to push your changes to any of these files:
+
+### Raire setup
+
+5. Raire is present as a submodule of colorado-rla to allow for deserialization. You need to compile the submodule. Some IDEs will do this automatically, others need explicit instructions:
+    - right-click on `raire-java/pom.xml` (the sub-project pom.xml) and add it as a Maven project,
+    - right-click on `raire-service/pom.xml` (the parent project pom.xml) and Maven -> reload.
+
+If you are compiling from the command line, you might need to follow the instructions for [multi-module maven projects](https://www.baeldung.com/maven-multi-module). (Note this has not been tested.)
+
+6. If you are running the [raire-service](https://github.com/DemocracyDevelopers/raire-service) anywhere other than locally, you will need to change the 
+`raire_url` field in `/server/eclipse-project/src/test/resources/test.properties` and `/server/eclipse-project/src/main/resources/us/freeandfair/corla/default.properties` to
+wherever you are running raire.
+
+7. Remember to tell git not to push your changes to any of these files:
 
 ```
 git update-index --assume-unchanged server/eclipse-project/src/test/resources/test.properties
@@ -259,19 +273,19 @@ git update-index --assume-unchanged server/eclipse-project/pom.xml
 ```
 
 ### Compiling and running
-7. Build the server with tests turned off. In the server/eclipse-project directory:
+8. Build the server with tests turned off. In the server/eclipse-project directory:
 ```
 mvn package -DskipTests
 ```
 
-8. Run the server (to create all the database tables). Recall that
+9. Run the server (to create all the database tables). Recall that
    this is accomplished by either running the server in Eclipse using
    the Run button or running it from a command line using a command
    akin to 
 ``` 
 java -jar ./target/corla-server-[VERSION]-SNAPSHOT.jar
 ```
-9. Load test authentication credentials into the database, by
+10. Load test authentication credentials into the database, by
    executing the SQL in `corla-test-credentials.psql` (found in the
    `test` directory of the repository). cd into the project directory before running this command.
    command on OS X:
@@ -286,7 +300,7 @@ psql -U corlaadmin -h localhost -d scratch -a -f ./test/corla-test-credentials.p
 
 When prompted for the password, enter `corlasecret`. 
 
-10. Now everything should be working. Note that the .jar is expected to hang when working.
+11. Now everything should be working. Note that the .jar is expected to hang when working.
 
 You can [build and run the client](https://github.com/DemocracyDevelopers/colorado-rla/blob/master/docs/15_installation.md), which will be available at [http://localhost:3000](http://localhost:3000). Use the credentials from `corla-test-credentials.psql` to log in. For example, `stateadmin1` is a state administrator. Log in with no password. `123` seems to work as a response to the grid challenge.
 
