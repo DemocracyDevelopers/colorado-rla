@@ -36,6 +36,7 @@ import us.freeandfair.corla.persistence.Persistence;
 
 import static us.freeandfair.corla.query.CastVoteRecordQueries.getMatching;
 
+import au.org.democracydevelopers.raire.RaireSolution;
 
 /**
  * Generates assertions by: collecting the set of contests (by ID) for which assertions should ; be
@@ -112,7 +113,7 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
 
       final Map<String, ContestResult> IRVContestResults = getIRVContestResults();
       // final Set<GenerateAssertionRequestDto> assertionRequest = new LinkedHashSet<>();
-      List<AuditResponse> raireResponses = new ArrayList<>();
+      List<RaireSolution> raireResponses = new ArrayList<>();
 
       // Build the request to RAIRE.
       // cr.getBallotCount() is the correct universe size here, because it represents the total number of ballots
@@ -136,7 +137,7 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
         LOGGER.info(generic);
 
         // Read the response and add it to the list of responses.
-        AuditResponse raireResponse = objectMapper.convertValue(generic, new TypeReference<AuditResponse>() {
+        RaireSolution raireResponse = objectMapper.convertValue(generic, new TypeReference<RaireSolution>() {
         });
         raireResponses.add(raireResponse);
 
