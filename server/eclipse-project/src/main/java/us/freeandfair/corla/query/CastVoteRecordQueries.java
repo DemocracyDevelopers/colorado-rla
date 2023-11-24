@@ -160,45 +160,6 @@ public final class CastVoteRecordQueries {
   }
 
   /**
-   * Obtain a stream of CastVoteRecord objects with the specified county, contestID
-   * Note that (countyID, contestID) should be an index of CVRContestInfo.
-   *
-   * @param the_county The county.
-   * @param the_contest The contest ID.
-   * @return the stream of CastVoteRecord objects, or null if one could not be
-   *         acquired.
-   * @exception IllegalStateException if this method is called outside a
-   *              transaction.
-   */
-  @SuppressWarnings("PMD.AvoidDuplicateLiterals")
-  public static Stream<CVRContestInfo> getCVRContestInfoByCountyAndContestID(final Long the_county, final Long the_contest) {
-    Stream<CVRContestInfo> result = null;
-
-    try {
-      final Session s = Persistence.currentSession();
-      final CriteriaBuilder cb = s.getCriteriaBuilder();
-      final CriteriaQuery<CVRContestInfo> cq = cb.createQuery(CVRContestInfo.class);
-      final Root<CVRContestInfo> root = cq.from(CVRContestInfo.class);
-      final List<Predicate> conjuncts = new ArrayList<Predicate>();
-      conjuncts.add(cb.equal(root.get("county_id"), the_county));
-      conjuncts.add(cb.equal(root.get("contest_id"), the_contest));
-      // conjuncts.add(cb.equal(root.get(RECORD_TYPE), the_type));
-      cq.select(root).where(cb.and(conjuncts.toArray(new Predicate[conjuncts.size()])));
-      final Query<CVRContestInfo> query = s.createQuery(cq);
-      result = query.stream();
-    } catch (final PersistenceException e) {
-      Main.LOGGER.error(COULD_NOT_QUERY_DATABASE);
-    }
-    if (result == null) {
-      Main.LOGGER.debug("found no CVRs for county " + the_county
-              + ", contestID " + the_contest);
-    } else {
-      Main.LOGGER.debug("query succeeded, returning CVR stream");
-    }
-    return result;
-  }
-
-  /**
   /**
    * Obtain a stream of CastVoteRecord objects with the specified county and
    * type, ordered by their sequence number.

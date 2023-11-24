@@ -16,6 +16,7 @@ import jakarta.ws.rs.core.MediaType;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.LogManager;
@@ -33,7 +34,7 @@ import us.freeandfair.corla.raire.response.AuditResponse;
 import us.freeandfair.corla.raire.response.RaireResponse;
 import us.freeandfair.corla.persistence.Persistence;
 
-import static us.freeandfair.corla.query.CastVoteRecordQueries.getCVRContestInfoByCountyAndContestID;
+import static us.freeandfair.corla.query.CastVoteRecordQueries.getMatching;
 
 
 /**
@@ -110,7 +111,7 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
       ObjectMapper objectMapper = new ObjectMapper();
 
       final Map<String, ContestResult> IRVContestResults = getIRVContestResults();
-      final Set<GenerateAssertionRequestDto> assertionRequest = new LinkedHashSet<>();
+      // final Set<GenerateAssertionRequestDto> assertionRequest = new LinkedHashSet<>();
       List<AuditResponse> raireResponses = new ArrayList<>();
 
       // Build the request to RAIRE.
@@ -119,12 +120,12 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
       IRVContestResults.values().forEach(cr -> {
 
         // build the RAIRE request for this IRV contest.
-        GenerateAssertionRequestDto request =
+        GenerateAssertionRequestDto assertionRequest =
                 GenerateAssertionRequestDto.builder()
                         .contestName(cr.getContestName())
                         .timeProvisionForResult(10)
                         .candidates(getCandidates(cr))
-                        .votes(cr.getContests().stream().map(this::getVotes).flatMap(List::stream).collect(Collectors.toList()))
+                        .votes(getVotes(cr))
                         .totalAuditableBallots(Math.toIntExact(cr.getBallotCount()))
                         .build();
 
@@ -172,23 +173,23 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
    *
    */
   private List<String> getCandidates(ContestResult cr) {
-    Set<String> candidates = new HashSet<>();
-    List<List<Choice>> listOfListsOfChoices = cr.getContests().stream().map(Contest::choices).collect(Collectors.toList());
-    listOfListsOfChoices.forEach( cl   -> {
-        cl.stream().map(c -> candidates.add(c.name()));
-    });
-
-    return  new ArrayList<>(candidates);
+    return cr.getContests().stream().flatMap(c -> c.choices().stream().map(Choice::name)).distinct().collect(Collectors.toList());
   }
 
   /* Gets all the votes for a given contest from the database, in a form that the RAIRE service can understand.
    *
    */
-  private List<List<String>> getVotes(Contest c) {
-    var contestID = c.id();
-    var countyID = c.county().id();
-    var result = getCVRContestInfoByCountyAndContestID(countyID, contestID);
-    return result.map(CVRContestInfo::choices).collect(Collectors.toList());
+  private List<List<String>> getVotes(ContestResult c) {
+
+    Set<Long> countyIDs = c.countyIDs();
+    Stream<CastVoteRecord> CVRs = countyIDs.stream()
+            .map(countyID -> getMatching(countyID, CastVoteRecord.RecordType.UPLOADED))
+            .flatMap(s ->s);
+
+    Stream<Optional<CVRContestInfo>> contestInfos = CVRs.map(cvr -> cvr.contestInfoForContestResult(c));
+
+    // Only use the ones that are present for this contest.
+    return contestInfos.flatMap(Optional::stream).map(CVRContestInfo::choices).collect(Collectors.toList());
   }
 
 
