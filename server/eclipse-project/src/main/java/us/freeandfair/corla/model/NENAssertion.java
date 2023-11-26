@@ -7,6 +7,8 @@
 package us.freeandfair.corla.model;
 
 
+import au.org.democracydevelopers.raire.assertions.AssertionAndDifficulty;
+
 import javax.persistence.*;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -36,8 +38,7 @@ public class NENAssertion extends Assertion {
     super(contestName, winner, loser, margin, universeSize, difficulty, assumedContinuing);
   }
 
-
-  /**
+    /**
    * {@inheritDoc}
    */
   @Override

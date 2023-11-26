@@ -5,6 +5,10 @@
 
 package us.freeandfair.corla.endpoint;
 
+import au.org.democracydevelopers.raire.assertions.AssertionAndDifficulty;
+import au.org.democracydevelopers.raire.assertions.NotEliminatedBefore;
+import au.org.democracydevelopers.raire.assertions.NotEliminatedNext;
+import au.org.democracydevelopers.raire.assertions.RaireAssertion;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.client.Client;
@@ -28,10 +32,9 @@ import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.controller.ContestCounter;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.raire.request.GenerateAssertionRequestDto;
-import us.freeandfair.corla.raire.response.AssertionPermutations;
-import us.freeandfair.corla.raire.response.AssertionResult;
-import us.freeandfair.corla.raire.response.AuditResponse;
-import us.freeandfair.corla.raire.response.RaireResponse;
+// import us.freeandfair.corla.raire.response.AssertionPermutations;
+//import us.freeandfair.corla.raire.response.AssertionResult;
+// import us.freeandfair.corla.raire.response.RaireResponse;
 import us.freeandfair.corla.persistence.Persistence;
 
 import static us.freeandfair.corla.query.CastVoteRecordQueries.getMatching;
@@ -51,9 +54,14 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
   public static final Logger LOGGER = LogManager.getLogger(GenerateAssertions.class);
 
   /**
-   * Class-wide logger
+   * Identify RAIRE service URL from config.
    */
-  public static final String RAIRE_URL = "raire_url";
+  private static final String RAIRE_URL = "raire_url";
+
+  /**
+   * The time given to RAIRE for timeouts.
+   */
+  private static final int COMPUTE_TIME = 10;
 
   /**
    * The event to return for this endpoint.
@@ -112,7 +120,7 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
       ObjectMapper objectMapper = new ObjectMapper();
 
       final Map<String, ContestResult> IRVContestResults = getIRVContestResults();
-      // final Set<GenerateAssertionRequestDto> assertionRequest = new LinkedHashSet<>();
+
       List<RaireSolution> raireResponses = new ArrayList<>();
 
       // Build the request to RAIRE.
@@ -121,11 +129,12 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
       IRVContestResults.values().forEach(cr -> {
 
         // build the RAIRE request for this IRV contest.
+        var candidatesList = getCandidates(cr);
         GenerateAssertionRequestDto assertionRequest =
                 GenerateAssertionRequestDto.builder()
                         .contestName(cr.getContestName())
-                        .timeProvisionForResult(10)
-                        .candidates(getCandidates(cr))
+                        .timeProvisionForResult(COMPUTE_TIME)
+                        .candidates(candidatesList)
                         .votes(getVotes(cr))
                         .totalAuditableBallots(Math.toIntExact(cr.getBallotCount()))
                         .build();
@@ -136,25 +145,23 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
         LOGGER.info("Sent Assertion Request to RAIRE: " + assertionRequest);
         LOGGER.info(generic);
 
-        // Read the response and add it to the list of responses.
-        RaireSolution raireResponse = objectMapper.convertValue(generic, new TypeReference<RaireSolution>() {
-        });
+        // Get the response, add it to the list for download.
+        RaireSolution raireResponse = objectMapper.convertValue(generic, new TypeReference<RaireSolution>() {});
         raireResponses.add(raireResponse);
 
-    });
+        // deserialize and store the assertions in the database.
+        if(raireResponse.solution.Err == null) {
+            assert raireResponse.solution.Ok != null;
+            AssertionAndDifficulty[] assertionsWithDifficulty = raireResponse.solution.Ok.assertions;
+            for(var assertionWD : assertionsWithDifficulty) {
+              Assertion assertion = makeStoreable(assertionWD, cr, candidatesList) ;
+              Persistence.save(assertion);
+          }
+        } else {
+          // TODO : Figure out how to show errors to the user.
 
-      // Iterate through all the responses and store the assertions in the database.
-      raireResponses.forEach(auditResponse -> {
-        RaireResponse result = auditResponse.getResult();
-        Map<String, AssertionPermutations> solution = result.getSolution();
-        AssertionPermutations assertionPermutations = solution.get("Ok");
-        List<AssertionResult> assertions = assertionPermutations.getAssertions();
-        List<String> candidates = auditResponse.getResult().getMetadata().getCandidates();
-        Long universeSize = IRVContestResults.get(auditResponse.getContestName()).getBallotCount();
-        assertions.forEach(assertionResult -> {
-          Assertion assertion = assertionJSONToJava(assertionResult, candidates, auditResponse.getContestName(), universeSize);
-          Persistence.save(assertion);
-        });
+          LOGGER.info("Received error from RAIRE: " + raireResponse.solution.Err);
+        }
 
       });
 
@@ -169,6 +176,7 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
     }
     return my_endpoint_result.get();
   }
+
 
   /* Gets all the choice names (i.e. candidate names) for a given contest from the database.
    *
@@ -193,31 +201,26 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
     return contestInfos.flatMap(Optional::stream).map(CVRContestInfo::choices).collect(Collectors.toList());
   }
 
+  // Convert the type of assertion received from RAIRE into the form colorado-rla needs to store in the database.
+  private Assertion makeStoreable(AssertionAndDifficulty assertionWD, ContestResult cr, List<String> candidates) {
+    String contestName = cr.getContestName();
+    RaireAssertion assertion = assertionWD.assertion;
 
-  private Assertion assertionJSONToJava(AssertionResult assertionResult, List<String> candidates, String contestName, Long universeSize) {
-    String winner = candidates.get(assertionResult.getAssertion().getWinner());
-    String loser = candidates.get(assertionResult.getAssertion().getLoser());
-    Integer[] continuing = assertionResult.getAssertion().getContinuing();
-    Integer margin = assertionResult.getMargin();
-    double difficulty = assertionResult.getDifficulty();
-
-    Assertion assertion;
-
-    // NEB assertions. There should be no 'assumed continuing' candidates.
-    if (StringUtils.equalsIgnoreCase("NEB", assertionResult.getAssertion().getType()) &&
-            (continuing == null || continuing.length == 0))  {
-      assertion = new NEBAssertion(contestName, winner, loser, margin, universeSize, difficulty);
-    }
-    // NEN assertion. 'assumed continuing' should be non-null. Empty is fine.
-    else if (StringUtils.equalsIgnoreCase("NEN", assertionResult.getAssertion().getType()) &&
-            continuing != null) {
-      List<String> continuingByName = Arrays.stream(continuing).map(candidates::get).collect(Collectors.toList());
-      assertion = new NENAssertion(contestName, winner, loser, margin, universeSize, difficulty, continuingByName);
+    if(assertionWD.assertion.getClass() == NotEliminatedBefore.class) {
+      NotEliminatedBefore nebAssertion = (NotEliminatedBefore) assertion;
+      String winnerName = candidates.get(nebAssertion.winner);
+      String loserName = candidates.get(nebAssertion.loser);
+      return new NEBAssertion(contestName, winnerName, loserName, assertionWD.margin, cr.getBallotCount(), assertionWD.difficulty);
+    } else if (assertionWD.assertion.getClass() == NotEliminatedNext.class) {
+      NotEliminatedNext nenAssertion = (NotEliminatedNext) assertion;
+      String winnerName = candidates.get(nenAssertion.winner);
+      String loserName = candidates.get(nenAssertion.loser);
+      List<String> continuingByName = Arrays.stream(nenAssertion.continuing).mapToObj(candidates::get).collect(Collectors.toList());
+      return new NENAssertion(contestName, winnerName, loserName, assertionWD.margin, cr.getBallotCount(),
+              assertionWD.difficulty, continuingByName);
     } else {
-      throw new IllegalStateException("Illegal Assertion: "+assertionResult.getAssertion());
+      throw new IllegalStateException("Illegal Assertion: "+assertion);
     }
-    return assertion;
-
   }
 
   // Collects all the ContestResults for which all contests are IRV. Throws an exception if any ContestResults
