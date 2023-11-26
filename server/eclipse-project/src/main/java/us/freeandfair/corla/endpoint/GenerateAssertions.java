@@ -141,12 +141,12 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
 
         // Send it to the RAIRE service.
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-        List generic = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON), List.class);
+        var response = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON), RaireSolution.class);
         LOGGER.info("Sent Assertion Request to RAIRE: " + assertionRequest);
-        LOGGER.info(generic);
+        LOGGER.info(response);
 
         // Get the response, add it to the list for download.
-        RaireSolution raireResponse = objectMapper.convertValue(generic, new TypeReference<RaireSolution>() {});
+        RaireSolution raireResponse = objectMapper.convertValue(response, new TypeReference<RaireSolution>() {});
         raireResponses.add(raireResponse);
 
         // deserialize and store the assertions in the database.
