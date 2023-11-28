@@ -6,12 +6,7 @@
 
 package us.freeandfair.corla.model;
 
-
-import au.org.democracydevelopers.raire.assertions.AssertionAndDifficulty;
-
 import javax.persistence.*;
-import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.List;
 import java.util.stream.Collectors;
 

@@ -9,8 +9,6 @@ import au.org.democracydevelopers.raire.assertions.AssertionAndDifficulty;
 import au.org.democracydevelopers.raire.assertions.NotEliminatedBefore;
 import au.org.democracydevelopers.raire.assertions.NotEliminatedNext;
 import au.org.democracydevelopers.raire.assertions.RaireAssertion;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
@@ -31,9 +29,6 @@ import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.controller.ContestCounter;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.raire.request.GenerateAssertionRequestDto;
-// import us.freeandfair.corla.raire.response.AssertionPermutations;
-//import us.freeandfair.corla.raire.response.AssertionResult;
-// import us.freeandfair.corla.raire.response.RaireResponse;
 import us.freeandfair.corla.persistence.Persistence;
 
 import static us.freeandfair.corla.query.CastVoteRecordQueries.getMatching;
@@ -41,9 +36,13 @@ import static us.freeandfair.corla.query.CastVoteRecordQueries.getMatching;
 import au.org.democracydevelopers.raire.RaireSolution;
 
 /**
- * Generates assertions by: collecting the set of contests (by ID) for which assertions should ; be
- * generated; calling the RAIRE service to form assertions for those contests; storing the generated
- * assertions (returned from the RAIRE service in JSON) into the database.
+ * Generates assertions by:
+ *  - collecting the set of contests (by ID) for which assertions should be generated,
+ *  - retrieving the votes for all those contests,
+ *  - converting them into the integer-based vote format RAIRE expects,
+ *  - calling the RAIRE service to form assertions for those contests,
+ *  - converting the assertions into candidate-name-based form,
+ *  - storing the assertions into the database.
  */
 public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
 
@@ -178,15 +177,17 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
   }
 
 
-  /* Gets all the choice names (i.e. candidate names) for a given contest from the database.
-   *
+  /* Get all the choice names (i.e. candidate names) for a given contest from the database.
+   * @param cr  The ContestResult for the contest
+   * @return the list of choices (i.e. candidate names) for the contest.
    */
   private List<String> getCandidates(ContestResult cr) {
     return cr.getContests().stream().flatMap(c -> c.choices().stream().map(Choice::name)).distinct().collect(Collectors.toList());
   }
 
   /* Gets all the votes for a given contest from the database, in a form that the RAIRE service can understand.
-   *
+   * @param cr  The ContestResult for the contest
+   * @return the votes, in the form of a list of preference-ordered choices (i.e. candidate name strings)
    */
   private List<List<String>> getVotes(ContestResult c) {
 
@@ -201,7 +202,15 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
     return contestInfos.flatMap(Optional::stream).map(CVRContestInfo::choices).collect(Collectors.toList());
   }
 
-  // Convert the type of assertion received from RAIRE into the form colorado-rla needs to store in the database.
+  /* Convert the type of assertion received from RAIRE into the form colorado-rla needs
+   * to store in the database.
+   * @param assertionWD  The assertion (with RAIRE's estimated difficulty attached, which we don't use)
+   * @param contestName  The contest name
+   * @param ballotCount  The total number of ballots in the universe
+   * @param candidates   The ordered list of candidate names, with respect to which the assertion IDs are written.
+   * @return either an NEBAssertion or an NENAssertion, matching the type of assertion that was passed. This will
+   *         have the input assertion's candidate ID's converted into names according to their index in @param candidates.
+   */
   private Assertion makeStoreable(AssertionAndDifficulty assertionWD, String contestName, Integer ballotCount, List<String> candidates) {
     RaireAssertion assertion = assertionWD.assertion;
 
@@ -222,8 +231,10 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
     }
   }
 
-  // Collects all the ContestResults for which all contests are IRV. Throws an exception if any ContestResults
-  // have a mix of IRV and plurality.
+  /* Collects all the ContestResults for which all contests are IRV.
+   * @return A list of ContestResults for the IRV contests.
+   * Throws an exception if any ContestResults have a mix of IRV and plurality.
+   */
   private List<ContestResult> getIRVContestResults() {
 
     // Get the ContestResults grouped by Contest name - this will give us accurate universe sizes.

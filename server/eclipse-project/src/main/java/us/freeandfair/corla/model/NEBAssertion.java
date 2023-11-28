@@ -5,10 +5,6 @@
 
 package us.freeandfair.corla.model;
 
-
-import au.org.democracydevelopers.raire.assertions.AssertionAndDifficulty;
-import au.org.democracydevelopers.raire.assertions.NotEliminatedBefore;
-
 import javax.persistence.*;
 import java.util.*;
 
