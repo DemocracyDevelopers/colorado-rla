@@ -5,12 +5,8 @@
 
 package us.freeandfair.corla.model;
 
-
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.OptionalInt;
+import java.util.*;
 
 
 /**
@@ -35,8 +31,6 @@ public class NEBAssertion extends Assertion  {
                       double difficulty) {
     super(contestName, winner, loser, margin, universeSize, difficulty,  new ArrayList<>());
   }
-
-
 
   /**
    * {@inheritDoc}

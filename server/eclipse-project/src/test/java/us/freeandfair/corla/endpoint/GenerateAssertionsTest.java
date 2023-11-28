@@ -34,9 +34,7 @@ public class GenerateAssertionsTest {
 //  }
 
   @Test()
-  public void testEstimateSampleSizesSimplePlurality() {
-    // For testing sample size estimation endpoint, we need a series of CountyContestResult's
-    // in the database, their associated Counties and Contests, a DoSDashboard with audit info.
+  public void testAssertionGenerationEndpointWithTrivialExample() {
     GenerateAssertions generateAssertions = new GenerateAssertions();
     generateAssertions.endpointBody(null, null);
   }

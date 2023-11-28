@@ -39,10 +39,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import us.freeandfair.corla.Main;
+import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.model.Tribute;
+import us.freeandfair.corla.util.Pair;
 
 /**
  * Queries having to do with CastVoteRecord entities.
@@ -157,6 +159,7 @@ public final class CastVoteRecordQueries {
     return result;
   }
 
+  /**
   /**
    * Obtain a stream of CastVoteRecord objects with the specified county and
    * type, ordered by their sequence number.
