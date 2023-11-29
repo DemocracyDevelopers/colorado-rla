@@ -12,24 +12,18 @@ import org.apache.log4j.Logger;
 import spark.Request;
 import spark.Response;
 
-import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.controller.ContestCounter;
-import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CountyContestResultQueries;
 import us.freeandfair.corla.util.SparkHelper;
 
 import java.io.OutputStream;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.COMPLETE_AUDIT_INFO_SET;
 import static us.freeandfair.corla.controller.ComparisonAuditController.createAuditOfType;
 
 

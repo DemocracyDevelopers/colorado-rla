@@ -8,6 +8,8 @@
 
 package us.freeandfair.corla.model;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import us.freeandfair.corla.math.Audit;
@@ -25,6 +27,13 @@ import java.math.BigDecimal;
 @Table(name = "assertion")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "assertion_type")
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "@type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = NEBAssertion.class, name = "NEB"),
+        @JsonSubTypes.Type(value = NENAssertion.class, name = "NEN")
+})
 public abstract class Assertion implements PersistentEntity, Serializable {
 
   /**

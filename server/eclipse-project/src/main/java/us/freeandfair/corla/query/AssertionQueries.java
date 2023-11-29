@@ -45,6 +45,22 @@ public final class AssertionQueries {
   }
 
   /**
+   * Collect all assertions in the database.
+   *
+   * @return the list of assertions defined for some contest in the database
+   */
+  public static List<Assertion> allAssertions() {
+    final Session s = Persistence.currentSession();
+    final TypedQuery<Assertion> q =
+            s.createQuery("select ca from Assertion ca ", Assertion.class);
+    try {
+      return q.getResultList();
+    } catch (javax.persistence.NoResultException e ) {
+      return new ArrayList<>();
+    }
+  }
+
+  /**
    * Obtain the Assertions for the specified contest name.
    *
    * @param contestName      The contest name

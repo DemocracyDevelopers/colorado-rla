@@ -29,6 +29,7 @@ us.freeandfair.corla.endpoint.DeleteFile
 us.freeandfair.corla.endpoint.DoSDashboardASMState
 us.freeandfair.corla.endpoint.DoSDashboardRefresh
 us.freeandfair.corla.endpoint.EstimateSampleSizes
+us.freeandfair.corla.endpoint.ExportAssertions
 us.freeandfair.corla.endpoint.FileDownload
 us.freeandfair.corla.endpoint.FileUpload
 us.freeandfair.corla.endpoint.GenerateAssertions

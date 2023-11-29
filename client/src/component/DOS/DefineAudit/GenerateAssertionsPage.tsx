@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Breadcrumb, Button, Card, Intent } from '@blueprintjs/core';
 
+import exportAssertions from 'corla/action/dos/exportAssertions';
 import generateAssertions from 'corla/action/dos/generateAssertions';
 import DOSLayout from 'corla/component/DOSLayout';
 
@@ -73,11 +74,22 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                             once it is done either a green alert will tell you that it
                             was successful or a red one will tell you it has failed.
                         </p>
+                        <p>
+                            Then click on 'Export Assertions' and the generated assertions
+                            will be exported to a JSON file and automatically downloaded.
+                        </p>
                     <div className='control-buttons mt-default'>
                         <Button onClick={generate}
                                 disabled={!this.state.canGenerateAssertions}
                                 className='pt-button pt-intent-primary'>
                             Generate Assertions
+                        </Button>
+                    </div>
+
+                    <div className='control-buttons mt-default'>
+                        <Button onClick={exportAssertions}
+                                className='pt-button pt-intent-primary'>
+                            Export Assertions
                         </Button>
                     </div>
 

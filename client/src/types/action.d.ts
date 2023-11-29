@@ -220,7 +220,7 @@ declare namespace Action {
         data: any;
     }
 
-    interface GenerateAssertionsFailFail {
+    interface GenerateAssertionsFail {
         type: 'GENERATE_ASSERTIONS_FAIL';
         data: any;
     }
