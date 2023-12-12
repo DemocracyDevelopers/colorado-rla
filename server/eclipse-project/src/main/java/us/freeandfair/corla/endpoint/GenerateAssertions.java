@@ -8,7 +8,7 @@ package us.freeandfair.corla.endpoint;
 import au.org.democracydevelopers.raire.assertions.AssertionAndDifficulty;
 import au.org.democracydevelopers.raire.assertions.NotEliminatedBefore;
 import au.org.democracydevelopers.raire.assertions.NotEliminatedNext;
-import au.org.democracydevelopers.raire.assertions.RaireAssertion;
+// import au.org.democracydevelopers.raire.assertions.RaireAssertion;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
@@ -212,7 +212,7 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
    *         have the input assertion's candidate ID's converted into names according to their index in @param candidates.
    */
   private Assertion makeStoreable(AssertionAndDifficulty assertionWD, String contestName, Integer ballotCount, List<String> candidates) {
-    RaireAssertion assertion = assertionWD.assertion;
+    au.org.democracydevelopers.raire.assertions.Assertion assertion = assertionWD.assertion;
 
     if(assertionWD.assertion.getClass() == NotEliminatedBefore.class) {
       NotEliminatedBefore nebAssertion = (NotEliminatedBefore) assertion;
