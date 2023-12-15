@@ -164,7 +164,7 @@ public class IRVVoteParsing {
         } catch (IRVParsingException e) {
             // It's OK to have an IRVParsing exception here - it just means that it's not an IRV choice,
             // and hence definitely not an IRV write-in.
-            return true;
+            return false;
         }
     }
 
