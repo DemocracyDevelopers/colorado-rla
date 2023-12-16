@@ -212,7 +212,7 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
    *         have the input assertion's candidate ID's converted into names according to their index in @param candidates.
    */
   private Assertion makeStoreable(AssertionAndDifficulty assertionWD, String contestName, Integer ballotCount, List<String> candidates) {
-    au.org.democracydevelopers.raire.assertions.Assertion assertion = assertionWD.assertion;
+    au.org.democracydevelopers.raire.assertions.RaireAssertion assertion = assertionWD.assertion;
 
     if(assertionWD.assertion.getClass() == NotEliminatedBefore.class) {
       NotEliminatedBefore nebAssertion = (NotEliminatedBefore) assertion;
