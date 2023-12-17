@@ -473,10 +473,12 @@ public abstract class Assertion implements PersistentEntity, Serializable {
     // for some inexplicable reason. So, to get the CVR ID for this
     // audited ballot, we need to call the method on the ACVR.
     if(result.isPresent()){
-      cvrDiscrepancy.put(auditedCVR.getCvrId(), result.getAsInt());
+      LOGGER.info(String.format("[Assertion::computeDiscrepancy CVR ID %d discrepancy %d]",
+              cvr.id(), result.getAsInt()));
+      cvrDiscrepancy.put(cvr.id(), result.getAsInt());
     }
     else {
-      cvrDiscrepancy.remove(auditedCVR.getCvrId());
+      cvrDiscrepancy.remove(cvr.id());
     }
     return result;
   }
