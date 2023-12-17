@@ -281,15 +281,22 @@ public class IRVComparisonAudit extends ComparisonAudit {
                                 final int the_type){
     assert assertions != null;
 
-    // Iterate over the assertions for this audit, and record 'the_count' instances of this
-    // discrepancy toward their tallies (if the discrepancy is relevant to the assertion).
-    for (Assertion a : assertions) {
-      a.recordDiscrepancy(the_record);
+    // Only do things if this CVR is relevant to this ComparisonAudit.
+    // Note that I have included the call to super inside this if...
+    // However, the super implementation does not seem to exclude irrelevant items
+    // from the my_discrepancies map. I suspect that may be a bug in the superclass implementation.
+    if (the_record != null && isCovering(the_record.cvr().id())) {
+
+      // Iterate over the assertions for this audit, and record 'the_count' instances of this
+      // discrepancy toward their tallies (if the discrepancy is relevant to the assertion).
+      for (Assertion a : assertions) {
+        a.recordDiscrepancy(the_record);
+      }
     }
 
-    // Update the tallies of discrepancies for reporting purposes, and the flag for
-    // indicating that a sample size recalculation is needed.
-    super.recordDiscrepancy(the_record, the_type);
+      // Update the tallies of discrepancies for reporting purposes, and the flag for
+      // indicating that a sample size recalculation is needed.
+      super.recordDiscrepancy(the_record, the_type);
   }
 
 }
