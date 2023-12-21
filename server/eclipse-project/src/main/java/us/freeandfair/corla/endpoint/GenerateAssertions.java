@@ -191,15 +191,8 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
    */
   private List<List<String>> getVotes(ContestResult c) {
 
-    Set<Long> countyIDs = c.countyIDs();
-    Stream<CastVoteRecord> CVRs = countyIDs.stream()
-            .map(countyID -> getMatching(countyID, CastVoteRecord.RecordType.UPLOADED))
-            .flatMap(s ->s);
-
-    Stream<Optional<CVRContestInfo>> contestInfos = CVRs.map(cvr -> cvr.contestInfoForContestResult(c));
-
-    // Only use the ones that are present for this contest.
-    return contestInfos.flatMap(Optional::stream).map(CVRContestInfo::choices).collect(Collectors.toList());
+    return c.getContests().stream().flatMap(contest -> (getMatching(contest.county().id(), contest.id())
+            .stream())).collect(Collectors.toList());
   }
 
   /* Convert the type of assertion received from RAIRE into the form colorado-rla needs

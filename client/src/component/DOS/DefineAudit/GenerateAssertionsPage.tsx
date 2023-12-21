@@ -49,9 +49,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                     alert('generateAssertions error in fetchAction ' + reason);
                 });
 
-            if(!dosState.assertionsGenerated) {
-                this.setState({canGenerateAssertions: true});
-            }
+            this.setState({canGenerateAssertions: true});
         };
 
         const main =
