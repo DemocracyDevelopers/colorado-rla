@@ -5,7 +5,6 @@
 
 package us.freeandfair.corla.endpoint;
 
-import au.org.democracydevelopers.raire.RaireSolution;
 import au.org.democracydevelopers.raire.assertions.AssertionAndDifficulty;
 import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.MediaType;
@@ -16,17 +15,20 @@ import spark.Response;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.model.*;
+import us.freeandfair.corla.query.ContestQueries;
 import us.freeandfair.corla.raire.requesttoraire.RequestByContestName;
-import us.freeandfair.corla.raire.requestfromclient.RequestByContestNameOnly;
 import us.freeandfair.corla.raire.responsefromraire.GetAssertionResponse;
+import us.freeandfair.corla.util.IRVContestCollector;
 
 /**
- *
+ * Finds all IRV contests by name, queries the raire-service and returns the assertions as json.
  */
 public class ExportAssertions extends AbstractDoSDashboardEndpoint {
     /**
@@ -38,6 +40,11 @@ public class ExportAssertions extends AbstractDoSDashboardEndpoint {
      * Identify RAIRE service URL from config.
      */
     private static final String RAIRE_URL = "raire_url";
+
+    /**
+     * Identify RAIRE service URL from config.
+     */
+    private static final String RAIRE_ENDPOINT = "/get-assertions";
 
     /**
      * The event to return for this endpoint.
@@ -89,60 +96,49 @@ public class ExportAssertions extends AbstractDoSDashboardEndpoint {
      */
     @Override
     public String endpointBody(final Request the_request, final Response the_response) {
-        /*
         try {
             // Temporary/mock up of call to RAIRE service (needs improvement!)
             // TODO: Deal appropriately with the case where no raire_url is set or client fails to init.
             final Client client = ClientBuilder.newClient();
-            var raire_url = Main.properties().getProperty(RAIRE_URL, "");
+            var raire_url = Main.properties().getProperty(RAIRE_URL, "")+RAIRE_ENDPOINT;
             WebTarget webTarget = client.target(raire_url);
 
-            // Build the requests to RAIRE, using each IRV contest name as retrieved from the database.
-            // FIXME Just a single test one for now.
-            final RequestByContestNameOnly request =
-                    Main.GSON.fromJson(the_request.body(), RequestByContestNameOnly.class);
-            List<String> candidates = new ArrayList<>();
-            BigDecimal riskLimit = BigDecimal.valueOf(0.03); // FIXME
-            RequestByContestName assertionRequest = new RequestByContestName(
-                    request.getContestName(),
-                    candidates,
-                    riskLimit
-            );
+            // Use the DoS Dashboard to get the risk limit.
+            final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
+            BigDecimal riskLimit = dosdb.auditInfo().riskLimit();
 
-            // Send it to the RAIRE service.
-            Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-            var response = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON), GetAssertionResponse.class);
-            LOGGER.info("Sent Assertion Request to RAIRE: " + assertionRequest);
-            LOGGER.info(response);
+            // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
+            // collating the responses.
+            List<GetAssertionResponse> raireResponses = new ArrayList<>();
+            final List<ContestResult> IRVContestResults = IRVContestCollector.getIRVContestResults();
+            IRVContestResults.forEach(cr -> {
 
+                        List<String> candidates = new ArrayList<>(Stream.concat(cr.getWinners().stream(), cr.getLosers().stream()).collect(Collectors.toSet()));
+                        String contestName = cr.getContestName();
+                        RequestByContestName assertionRequest = new RequestByContestName(
+                                contestName,
+                                candidates,
+                                riskLimit
+                        );
 
-                // deserialize and store the assertions in the database.
-                if(response.solution.Err == null) {
-                    assert response.solution.Ok != null;
-                    AssertionAndDifficulty[] assertionsWithDifficulty = response.solution.Ok.assertions;
-                    for(var assertionWD : assertionsWithDifficulty) {
-                        Assertion assertion = makeStoreable(assertionWD, assertionRequest.getContestName(),
-                                assertionRequest.getTotalAuditableBallots(), assertionRequest.getCandidates()) ;
-                        Persistence.save(assertion);
+                        // Send it to the RAIRE service.
+                        Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
+                        var response = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON), GetAssertionResponse.class);
+                        LOGGER.info("Sent Assertion Request to RAIRE: " + assertionRequest);
+                        LOGGER.info(response);
+
+                        // Collect the response.
+                        raireResponses.add(response);
+
                     }
-                } else {
-                    // TODO : Discuss  how to show errors to the user.
-
-                    LOGGER.info("Received error from RAIRE: " + response.solution.Err);
-                }
-
-            }
-
-            Persistence.flushAndClear();
+            );
 
             // Return all the RAIRE responses to the endpoint.
             okJSON(the_response, Main.GSON.toJson(raireResponses));
+        } catch (Exception e) {
+            LOGGER.error("Error in assertion export", e);
+            serverError(the_response, "Could not retrieve assertions.");
         }
-        catch(Exception e){
-            LOGGER.error("Error in assertion generation", e);
-            serverError(the_response, "Could not generate assertions.");
-        }
-         */
         return my_endpoint_result.get();
     }
 }

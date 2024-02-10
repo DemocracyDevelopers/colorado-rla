@@ -31,8 +31,10 @@ import us.freeandfair.corla.raire.requesttoraire.GenerateAssertionRequestDto;
 import us.freeandfair.corla.persistence.Persistence;
 
 import static us.freeandfair.corla.query.CastVoteRecordQueries.getMatching;
+import static us.freeandfair.corla.util.IRVContestCollector.getIRVContestResults;
 
 import au.org.democracydevelopers.raire.RaireSolution;
+import us.freeandfair.corla.util.IRVContestCollector;
 
 /**
  * Generates assertions by:
@@ -55,6 +57,11 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
    */
   private static final String RAIRE_URL = "raire_url";
 
+  /**
+   * Identify RAIRE service URL from config.
+   */
+
+  private static final String RAIRE_ENDPOINT = "/cvr/audit";
   /**
    * The time given to RAIRE for timeouts.
    */
@@ -111,10 +118,10 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
       // Temporary/mock up of call to RAIRE service (needs improvement!)
       // TODO: Deal appropriately with the case where no raire_url is set or client fails to init.
       final Client client = ClientBuilder.newClient();
-      var raire_url = Main.properties().getProperty(RAIRE_URL, "");
+      String raire_url = Main.properties().getProperty(RAIRE_URL, "")+RAIRE_ENDPOINT;
       WebTarget webTarget = client.target(raire_url);
 
-      final List<ContestResult> IRVContestResults = getIRVContestResults();
+      final List<ContestResult> IRVContestResults = IRVContestCollector.getIRVContestResults();
 
       List<RaireSolution> raireResponses = new ArrayList<>();
 
@@ -223,29 +230,5 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
     }
   }
 
-  /* Collects all the ContestResults for which all contests are IRV.
-   * @return A list of ContestResults for the IRV contests.
-   * Throws an exception if any ContestResults have a mix of IRV and plurality.
-   */
-  private List<ContestResult> getIRVContestResults() {
 
-    // Get the ContestResults grouped by Contest name - this will give us accurate universe sizes.
-    final List<ContestResult> countedCRs = ContestCounter.countAllContests().stream().peek(cr ->
-            cr.setAuditReason(AuditReason.OPPORTUNISTIC_BENEFITS)).collect(Collectors.toList());
-
-    final List<ContestResult> IRVContestResults = new ArrayList<>();
-
-    for (ContestResult cr : countedCRs) {
-
-      // If it's all IRV, keep it.
-      if (cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.IRV.toString()))) {
-        IRVContestResults.add(cr);
-        // It's not all IRV and not all plurality.
-      } else if (! cr.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.PLURALITY.toString()))) {
-        throw new RuntimeException("Contest "+cr.getContestName()+" has inconsistent plurality/IRV types.");
-      }
-    }
-
-    return IRVContestResults;
-  }
 }
