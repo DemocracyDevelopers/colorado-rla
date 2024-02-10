@@ -58,4 +58,86 @@ public class ContestQueriesTest {
     assertEquals(choices, contests.get(0).choices());
   }
 
+  /*
+   * Test that a plurality contest is NOT included in the IRV list.
+   */
+  @Test()
+  public void testGetIRVNoPlurality() {
+    County cty = CountyQueries.fromString("Boulder");
+
+    List<String> candidates = Arrays.asList("Alice", "Bob", "Chuan", "Diego");
+
+    List<Choice> choices = candidates.stream().map(c -> { return new Choice(c,
+            "", false, false);}).collect(Collectors.toList());
+
+    Contest c1 = new Contest("Board of Works", cty, "PLURALITY", choices, 1,
+            1, 0);
+
+    Persistence.saveOrUpdate(c1);
+    Persistence.flushAndClear();
+
+    List<Contest> contests = ContestQueries.getAllIRV();
+    List<String> contestNames = contests.stream().map(Contest::name).collect(Collectors.toList());
+    assert(!contestNames.contains(c1.name()));
+
+    List<String> contestNamesFromDBQuery = ContestQueries.getDistinctIRVNames();
+    assert(!contestNamesFromDBQuery.contains(c1.name()));
+  }
+
+  /*
+   * Test that an IRV contest is included in the IRV list.
+   */
+  @Test()
+  public void testGetIRVIncludesIRV() {
+    County cty = CountyQueries.fromString("Boulder");
+
+    List<String> candidates = Arrays.asList("Alice", "Bob", "Chuan", "Diego");
+
+    List<Choice> choices = candidates.stream().map(c -> { return new Choice(c,
+            "", false, false);}).collect(Collectors.toList());
+
+    Contest c1 = new Contest("Tree committee", cty, "IRV", choices, 1,
+            1, 0);
+
+    Persistence.saveOrUpdate(c1);
+    Persistence.flushAndClear();
+
+    List<Contest> contests = ContestQueries.getAllIRV();
+    List<String> contestNames = contests.stream().map(Contest::name).collect(Collectors.toList());
+    assert(contestNames.contains(c1.name()));
+
+    List<String> contestNamesFromDBQuery = ContestQueries.getDistinctIRVNames();
+    assert(contestNamesFromDBQuery.contains(c1.name()));
+  }
+
+  /*
+   * Test that duplicate IRV contest names are removed when all IRV contests are queried.
+   */
+  @Test()
+  public void testGetIRVRemovesDuplicates() {
+    County cty = CountyQueries.fromString("Boulder");
+    County cty2 = CountyQueries.fromString("Arapahoe");
+
+    List<String> candidates = Arrays.asList("Alice", "Bob", "Chuan", "Diego");
+
+    List<Choice> choices = candidates.stream().map(c -> { return new Choice(c,
+            "", false, false);}).collect(Collectors.toList());
+
+    Contest c1 = new Contest("Tree committee", cty, "IRV", choices, 1,
+            1, 0);
+    Contest c2 = new Contest("Tree committee", cty2, "IRV", choices, 1,
+            1, 0);
+
+    Persistence.saveOrUpdate(c1);
+    Persistence.saveOrUpdate(c2);
+    Persistence.flushAndClear();
+
+    List<Contest> contests = ContestQueries.getAllIRV();
+    List<String> contestNames = contests.stream().map(Contest::name).collect(Collectors.toList());
+    assert(contestNames.contains(c1.name()));
+
+    List<String> contestNamesFromDBQuery = ContestQueries.getDistinctIRVNames();
+    List<String> treeCommitteeMatches = contestNamesFromDBQuery.stream().filter(n -> n.equals("Tree committee")).collect(Collectors.toList());
+    assert(treeCommitteeMatches.size() == 1);
+  }
 }

@@ -18,7 +18,6 @@ import jakarta.ws.rs.core.MediaType;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -28,7 +27,7 @@ import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.controller.ContestCounter;
 import us.freeandfair.corla.model.*;
-import us.freeandfair.corla.raire.request.GenerateAssertionRequestDto;
+import us.freeandfair.corla.raire.requesttoraire.GenerateAssertionRequestDto;
 import us.freeandfair.corla.persistence.Persistence;
 
 import static us.freeandfair.corla.query.CastVoteRecordQueries.getMatching;

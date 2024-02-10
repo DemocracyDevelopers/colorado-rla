@@ -1,6 +1,5 @@
-package us.freeandfair.corla.raire.response;
+package us.freeandfair.corla.raire.responsefromraire;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;

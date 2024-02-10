@@ -1,4 +1,4 @@
-package us.freeandfair.corla.raire.request;
+package us.freeandfair.corla.raire.requesttoraire;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

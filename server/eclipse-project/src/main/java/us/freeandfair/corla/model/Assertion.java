@@ -164,6 +164,13 @@ public abstract class Assertion implements PersistentEntity, Serializable {
   protected Integer my_other_count = 0;
 
   /**
+   * Current risk measurement
+   * Initialize at 1 because, when we have no audit info, we assume maximum risk.
+   */
+  @Column(nullable = false)
+  private BigDecimal my_current_risk = BigDecimal.valueOf(1);
+
+  /**
    * Creates an Assertion for a specific contest. The assertion has a given winner, loser,
    * margin, and list of candidates that are assumed to be continuing in the assertion's
    * context.
@@ -481,6 +488,14 @@ public abstract class Assertion implements PersistentEntity, Serializable {
       cvrDiscrepancy.remove(cvr.id());
     }
     return result;
+  }
+
+  /**
+   * Updates the local value of the estimated risk for this assertion.
+   * @param auditedSampleCount The number of ballots sampled so far.
+   */
+  public void updateRiskMeasurement(final Integer auditedSampleCount) {
+    my_current_risk = riskMeasurement(auditedSampleCount  , Audit.GAMMA);
   }
 
   /**
