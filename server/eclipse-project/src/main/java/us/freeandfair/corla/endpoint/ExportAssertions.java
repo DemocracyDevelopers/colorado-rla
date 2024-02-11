@@ -14,9 +14,11 @@ import spark.Request;
 import spark.Response;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.io.OutputStream;
 
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
@@ -25,6 +27,7 @@ import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.query.ContestQueries;
 import us.freeandfair.corla.raire.requesttoraire.RequestByContestName;
 import us.freeandfair.corla.raire.responsefromraire.GetAssertionResponse;
+import us.freeandfair.corla.util.SparkHelper;
 import us.freeandfair.corla.util.IRVContestCollector;
 
 /**
@@ -133,8 +136,15 @@ public class ExportAssertions extends AbstractDoSDashboardEndpoint {
                     }
             );
 
-            // Return all the RAIRE responses to the endpoint.
-            okJSON(the_response, Main.GSON.toJson(raireResponses));
+            // Return all the RAIRE responses to the endpoint as a file.
+            the_response.header("Content-Type", "application/json");
+            the_response.header("Content-Disposition", "attachment; filename*=UTF-8''assertions.json");
+            final OutputStream os = SparkHelper.getRaw(the_response).getOutputStream();
+            os.write(Main.GSON.toJson(raireResponses).getBytes(StandardCharsets.UTF_8));
+            os.close();
+            ok(the_response);
+
+            // okJSON(the_response, Main.GSON.toJson(raireResponses));
         } catch (Exception e) {
             LOGGER.error("Error in assertion export", e);
             serverError(the_response, "Could not retrieve assertions.");
