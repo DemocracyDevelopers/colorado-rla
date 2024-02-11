@@ -14,6 +14,8 @@ package us.freeandfair.corla.raire.responsefromraire;
 
 import au.org.democracydevelopers.raire.algorithm.RaireResult;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.beans.ConstructorProperties;
 import java.util.Map;
@@ -38,15 +40,17 @@ public class GetAssertionResponse {
     }
 
     public static class GetAssertionResultOrError {
+
+        // The JsonNode here is actually a raire-java::RaireResult, but we're just outputting it as a json string.
         @JsonInclude(JsonInclude.Include.NON_NULL)
-        public final String Ok;
+        public final JsonNode Ok;
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public final GetAssertionError Err;
 
         /** Only used by the Jackson serialization which can only have one constructor annotated :-( */
         @ConstructorProperties({"Ok","Err"})
-        public GetAssertionResultOrError(String Ok, GetAssertionError Err) { this.Ok=Ok; this.Err=Err;}
-        public GetAssertionResultOrError(String Ok) { this.Ok=Ok; this.Err=null;}
+        public GetAssertionResultOrError(JsonNode Ok, GetAssertionError Err) { this.Ok=Ok; this.Err=Err;}
+        public GetAssertionResultOrError(JsonNode Ok) { this.Ok=Ok; this.Err=null;}
         public GetAssertionResultOrError(GetAssertionError Err) { this.Ok=null; this.Err=Err;}
     }
 
