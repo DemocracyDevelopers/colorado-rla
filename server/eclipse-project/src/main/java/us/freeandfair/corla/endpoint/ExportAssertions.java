@@ -5,7 +5,7 @@
 
 package us.freeandfair.corla.endpoint;
 
-import au.org.democracydevelopers.raire.assertions.AssertionAndDifficulty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.log4j.LogManager;
@@ -24,7 +24,6 @@ import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.model.*;
-import us.freeandfair.corla.query.ContestQueries;
 import us.freeandfair.corla.raire.requesttoraire.RequestByContestName;
 import us.freeandfair.corla.raire.responsefromraire.GetAssertionResponse;
 import us.freeandfair.corla.util.SparkHelper;
@@ -116,6 +115,7 @@ public class ExportAssertions extends AbstractDoSDashboardEndpoint {
             final List<ContestResult> IRVContestResults = IRVContestCollector.getIRVContestResults();
             IRVContestResults.forEach(cr -> {
 
+                        // Make the request.
                         List<String> candidates = new ArrayList<>(Stream.concat(cr.getWinners().stream(), cr.getLosers().stream()).collect(Collectors.toSet()));
                         String contestName = cr.getContestName();
                         RequestByContestName assertionRequest = new RequestByContestName(
@@ -137,14 +137,17 @@ public class ExportAssertions extends AbstractDoSDashboardEndpoint {
             );
 
             // Return all the RAIRE responses to the endpoint as a file.
+            // This is a little fiddly because we have the RetrievedRaireResponse as a string inside a more
+            // complex json structure.
             the_response.header("Content-Type", "application/json");
             the_response.header("Content-Disposition", "attachment; filename*=UTF-8''assertions.json");
             final OutputStream os = SparkHelper.getRaw(the_response).getOutputStream();
-            os.write(Main.GSON.toJson(raireResponses).getBytes(StandardCharsets.UTF_8));
+            ObjectMapper objectMapper = new ObjectMapper();
+            String output = objectMapper.writeValueAsString(raireResponses);
+            os.write(output.getBytes(StandardCharsets.UTF_8));
             os.close();
             ok(the_response);
 
-            // okJSON(the_response, Main.GSON.toJson(raireResponses));
         } catch (Exception e) {
             LOGGER.error("Error in assertion export", e);
             serverError(the_response, "Could not retrieve assertions.");

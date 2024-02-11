@@ -12,9 +12,7 @@
 
 package us.freeandfair.corla.raire.responsefromraire;
 
-import au.org.democracydevelopers.raire.algorithm.RaireResult;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.beans.ConstructorProperties;
@@ -41,7 +39,7 @@ public class GetAssertionResponse {
 
     public static class GetAssertionResultOrError {
 
-        // The JsonNode here is actually a raire-java::RaireResult, but we're just outputting it as a json string.
+        // The JsonNode here is actually a raire-service::RetrievedRaireResult, but we're just outputting it as a json string.
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public final JsonNode Ok;
         @JsonInclude(JsonInclude.Include.NON_NULL)
