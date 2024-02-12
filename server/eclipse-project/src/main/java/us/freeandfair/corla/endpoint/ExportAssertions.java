@@ -46,7 +46,7 @@ public class ExportAssertions extends AbstractDoSDashboardEndpoint {
     /**
      * Identify RAIRE service URL from config.
      */
-    private static final String RAIRE_ENDPOINT = "/get-assertions";
+    private static final String RAIRE_ENDPOINT = "/raire/get-assertions";
 
     /**
      * The event to return for this endpoint.
