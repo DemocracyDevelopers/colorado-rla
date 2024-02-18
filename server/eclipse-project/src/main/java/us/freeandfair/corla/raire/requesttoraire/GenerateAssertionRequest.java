@@ -7,14 +7,18 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * The request data structure for Raire's generate-assertion endpoint.
+ * Matches the data in raire-service::ContestRequestByIDs
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class GenerateAssertionRequestDto {
+public class GenerateAssertionRequest {
   private String contestName;
-  private List<String> candidates;
-  private List<List<String>> votes;
-  private Integer totalAuditableBallots;
+  private int totalAuditableBallots;
   private Integer timeProvisionForResult;
+  private List<String> candidates;
+  private List<CountyAndContestID> countyAndContestIDs;
 }

@@ -5,10 +5,6 @@
 
 package us.freeandfair.corla.endpoint;
 
-import au.org.democracydevelopers.raire.assertions.AssertionAndDifficulty;
-import au.org.democracydevelopers.raire.assertions.NotEliminatedBefore;
-import au.org.democracydevelopers.raire.assertions.NotEliminatedNext;
-// import au.org.democracydevelopers.raire.assertions.RaireAssertion;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
@@ -25,25 +21,21 @@ import spark.Request;
 import spark.Response;
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
-import us.freeandfair.corla.controller.ContestCounter;
 import us.freeandfair.corla.model.*;
-import us.freeandfair.corla.raire.requesttoraire.GenerateAssertionRequestDto;
-import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.raire.requesttoraire.CountyAndContestID;
+import us.freeandfair.corla.raire.requesttoraire.GenerateAssertionRequest;
 
 import static us.freeandfair.corla.query.CastVoteRecordQueries.getMatching;
-import static us.freeandfair.corla.util.IRVContestCollector.getIRVContestResults;
 
-import au.org.democracydevelopers.raire.RaireSolution;
+import us.freeandfair.corla.raire.responsefromraire.GenerateAssertionsResponse;
 import us.freeandfair.corla.util.IRVContestCollector;
 
 /**
  * Generates assertions by:
  *  - collecting the set of contests (by ID) for which assertions should be generated,
- *  - retrieving the votes for all those contests,
- *  - converting them into the integer-based vote format RAIRE expects,
+ *  - gathering their (countyID, contestID) pairs and other relevant data,
  *  - calling the RAIRE service to form assertions for those contests,
- *  - converting the assertions into candidate-name-based form,
- *  - storing the assertions into the database.
+ *  - returning RAIRE's summary responses.
  */
 public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
 
@@ -61,7 +53,7 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
    * Identify RAIRE service URL from config.
    */
 
-  private static final String RAIRE_ENDPOINT = "/cvr/audit";
+  private static final String RAIRE_ENDPOINT = "/raire/generate-assertions";
   /**
    * The time given to RAIRE for timeouts.
    */
@@ -123,7 +115,7 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
 
       final List<ContestResult> IRVContestResults = IRVContestCollector.getIRVContestResults();
 
-      List<RaireSolution> raireResponses = new ArrayList<>();
+      List<GenerateAssertionsResponse> raireResponses = new ArrayList<>();
 
       // Build the requests to RAIRE.
       // cr.getBallotCount() is the correct universe size here, because it represents the total number of ballots
@@ -131,46 +123,32 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
       //
       // Note: We considered making this a parallel stream because the database access is by far the slowest part.
       // However, the database did not seem to respond well to multiple read attempts.
-      List<GenerateAssertionRequestDto> assertionRequests
+      List<GenerateAssertionRequest> assertionRequests
         = IRVContestResults.stream().map(cr ->
 
                 // build the RAIRE request for this IRV contest.
-                        GenerateAssertionRequestDto.builder()
+                        GenerateAssertionRequest.builder()
                                 .contestName(cr.getContestName())
                                 .timeProvisionForResult(COMPUTE_TIME)
                                 .candidates(getCandidates(cr))
-                                .votes(getVotes(cr))
                                 .totalAuditableBallots(Math.toIntExact(cr.getBallotCount()))
+                                .countyAndContestIDs(buildCountyAndContestIDList(cr))
                                 .build()
               ).collect(Collectors.toList());
 
-      for(GenerateAssertionRequestDto assertionRequest : assertionRequests ) {
+      for(GenerateAssertionRequest assertionRequest : assertionRequests ) {
         // Send it to the RAIRE service.
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-        var response = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON), RaireSolution.class);
+        var response = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON),
+                GenerateAssertionsResponse.class);
         LOGGER.info("Sent Assertion Request to RAIRE: " + assertionRequest);
-        LOGGER.info(response);
+        LOGGER.info("Received response: "+response);
 
         raireResponses.add(response);
 
         // deserialize and store the assertions in the database.
-        if(response.solution.Err == null) {
-            assert response.solution.Ok != null;
-            AssertionAndDifficulty[] assertionsWithDifficulty = response.solution.Ok.assertions;
-            for(var assertionWD : assertionsWithDifficulty) {
-              Assertion assertion = makeStoreable(assertionWD, assertionRequest.getContestName(),
-                      assertionRequest.getTotalAuditableBallots(), assertionRequest.getCandidates()) ;
-              Persistence.save(assertion);
-          }
-        } else {
-          // TODO : Discuss  how to show errors to the user.
-
-          LOGGER.info("Received error from RAIRE: " + response.solution.Err);
-        }
 
       }
-
-      Persistence.flushAndClear();
 
       // Return all the RAIRE responses to the endpoint.
       okJSON(the_response, Main.GSON.toJson(raireResponses));
@@ -182,6 +160,15 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
     return my_endpoint_result.get();
   }
 
+  /**
+   *
+   * @param cr The Contest Result
+   * @return   Its list of (countyID, contestID) pairs in a CountyAndContestID structure.
+   */
+  private List<CountyAndContestID> buildCountyAndContestIDList(ContestResult cr) {
+    return cr.getContests().stream().map(contest ->
+            new CountyAndContestID(contest.county().id(), contest.id())).collect(Collectors.toList());
+  }
 
   /* Get all the choice names (i.e. candidate names) for a given contest from the database.
    * @param cr  The ContestResult for the contest
@@ -190,45 +177,4 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
   private List<String> getCandidates(ContestResult cr) {
     return cr.getContests().stream().flatMap(c -> c.choices().stream().map(Choice::name)).distinct().collect(Collectors.toList());
   }
-
-  /* Gets all the votes for a given contest from the database, in a form that the RAIRE service can understand.
-   * @param cr  The ContestResult for the contest
-   * @return the votes, in the form of a list of preference-ordered choices (i.e. candidate name strings)
-   */
-  private List<List<String>> getVotes(ContestResult c) {
-
-    return c.getContests().stream().flatMap(contest -> (getMatching(contest.county().id(), contest.id())
-            .stream())).collect(Collectors.toList());
-  }
-
-  /* Convert the type of assertion received from RAIRE into the form colorado-rla needs
-   * to store in the database.
-   * @param assertionWD  The assertion (with RAIRE's estimated difficulty attached, which we don't use)
-   * @param contestName  The contest name
-   * @param ballotCount  The total number of ballots in the universe
-   * @param candidates   The ordered list of candidate names, with respect to which the assertion IDs are written.
-   * @return either an NEBAssertion or an NENAssertion, matching the type of assertion that was passed. This will
-   *         have the input assertion's candidate ID's converted into names according to their index in @param candidates.
-   */
-  private Assertion makeStoreable(AssertionAndDifficulty assertionWD, String contestName, Integer ballotCount, List<String> candidates) {
-    au.org.democracydevelopers.raire.assertions.Assertion assertion = assertionWD.assertion;
-
-    if(assertionWD.assertion.getClass() == NotEliminatedBefore.class) {
-      NotEliminatedBefore nebAssertion = (NotEliminatedBefore) assertion;
-      String winnerName = candidates.get(nebAssertion.winner);
-      String loserName = candidates.get(nebAssertion.loser);
-      return new NEBAssertion(contestName, winnerName, loserName, assertionWD.margin, ballotCount, assertionWD.difficulty);
-    } else if (assertionWD.assertion.getClass() == NotEliminatedNext.class) {
-      NotEliminatedNext nenAssertion = (NotEliminatedNext) assertion;
-      String winnerName = candidates.get(nenAssertion.winner);
-      String loserName = candidates.get(nenAssertion.loser);
-      List<String> continuingByName = Arrays.stream(nenAssertion.continuing).mapToObj(candidates::get).collect(Collectors.toList());
-      return new NENAssertion(contestName, winnerName, loserName, assertionWD.margin, ballotCount,
-              assertionWD.difficulty, continuingByName);
-    } else {
-      throw new IllegalStateException("Illegal Assertion: "+assertion);
-    }
-  }
-
-
 }

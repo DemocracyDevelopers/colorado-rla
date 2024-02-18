@@ -5,6 +5,7 @@
 
 package us.freeandfair.corla.endpoint;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.MediaType;
@@ -14,11 +15,12 @@ import spark.Request;
 import spark.Response;
 
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.io.OutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
@@ -136,16 +138,23 @@ public class ExportAssertions extends AbstractDoSDashboardEndpoint {
                     }
             );
 
-            // Return all the RAIRE responses to the endpoint as a file.
+            // Return all the RAIRE responses to the endpoint as a zip file.
             // This is a little fiddly because we have the RetrievedRaireResponse as a string inside a more
             // complex json structure.
-            the_response.header("Content-Type", "application/json");
-            the_response.header("Content-Disposition", "attachment; filename*=UTF-8''assertions.json");
+            the_response.header("Content-Type", "application/zip");
+            the_response.header("Content-Disposition", "attachment; filename*=UTF-8''assertions.zip");
             final OutputStream os = SparkHelper.getRaw(the_response).getOutputStream();
+
+            final ZipOutputStream zos = new ZipOutputStream(os);
             ObjectMapper objectMapper = new ObjectMapper();
-            String output = objectMapper.writeValueAsString(raireResponses);
-            os.write(output.getBytes(StandardCharsets.UTF_8));
-            os.close();
+            objectMapper.getFactory().disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+            for (GetAssertionResponse raireResponse : raireResponses) {
+                zos.putNextEntry(new ZipEntry(raireResponse.metadata.get("contest").toString() + "_assertions.json"));
+                objectMapper.writeValue(zos, raireResponse);
+                zos.closeEntry();
+            }
+
+            zos.close();
             ok(the_response);
 
         } catch (Exception e) {
