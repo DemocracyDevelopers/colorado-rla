@@ -1,4 +1,4 @@
-package us.freeandfair.corla.raire.response;
+package us.freeandfair.corla.raire.responsefromraire;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

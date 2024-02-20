@@ -1,4 +1,4 @@
-package us.freeandfair.corla.raire.response;
+package us.freeandfair.corla.raire.responsefromraire;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
