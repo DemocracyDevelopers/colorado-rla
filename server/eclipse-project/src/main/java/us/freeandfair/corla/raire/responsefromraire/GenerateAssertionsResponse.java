@@ -28,7 +28,7 @@ public class GenerateAssertionsResponse {
     }
 
 
-    /// A wrapper around the raire-java Error type. Exactly one of the fields will be null.
+    // A wrapper around the raire-java Error type. Exactly one of the fields will be null.
     // Also incorporates errors from the service, e.g. malformed input.
     public static class GenerateAssertionsResultOrError {
         @JsonInclude(JsonInclude.Include.NON_NULL)
