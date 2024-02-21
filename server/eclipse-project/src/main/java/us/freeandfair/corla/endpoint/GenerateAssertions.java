@@ -25,8 +25,6 @@ import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.raire.requesttoraire.CountyAndContestID;
 import us.freeandfair.corla.raire.requesttoraire.GenerateAssertionRequest;
 
-import static us.freeandfair.corla.query.CastVoteRecordQueries.getMatching;
-
 import us.freeandfair.corla.raire.responsefromraire.GenerateAssertionsResponse;
 import us.freeandfair.corla.util.IRVContestCollector;
 

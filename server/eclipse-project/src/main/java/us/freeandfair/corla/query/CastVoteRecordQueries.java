@@ -39,8 +39,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import us.freeandfair.corla.Main;
-import us.freeandfair.corla.model.Assertion;
-import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.persistence.Persistence;
@@ -233,35 +231,6 @@ public final class CastVoteRecordQueries {
       Main.LOGGER.debug("query succeeded, returning CVR stream");
     }
     return result;
-  }
-
-  /**
-   * Retrieve all CVRContestInfos matching a given countyId and contestId
-   *
-   * @param countyId
-   * @param contestId
-   * @return A list of all CVRContestInfos for the given countyId and contestId.
-   */
-  public static List<List<String>>getMatching(final Long countyId, final Long contestId) {
-
-    final Session s = Persistence.currentSession();
-    final StringListConverter conv = new StringListConverter();
-
-    final Query q =
-        s.createNativeQuery("select ci.choices from cvr_contest_info ci " +
-                    " where ci.county_id = :county_id " +
-                    " and ci.contest_id = :contest_id")
-                    .setParameter("county_id", countyId)
-                    .setParameter("contest_id", contestId);
-
-    try {
-      return (List<List<String>>) q.getResultList().stream()
-              .map(l -> conv.convertToEntityAttribute(l.toString())).collect(Collectors.toList());
-
-    } catch (javax.persistence.NoResultException e ) {
-      return new ArrayList<>();
-    }
-
   }
 
   /**
