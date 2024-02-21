@@ -1,3 +1,0 @@
-[submodule "server/eclipse-project/raire-java"]
-	path = server/eclipse-project/raire-java
-	url = git@github.com:DemocracyDevelopers/raire-java.git
