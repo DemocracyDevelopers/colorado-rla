@@ -15,6 +15,8 @@ import java.util.stream.Collectors;
 
 import javax.persistence.*;
 
+import static java.util.Collections.max;
+
 
 /**
  * A class representing the state of a single audited IRV contest for
@@ -114,8 +116,9 @@ public class IRVComparisonAudit extends ComparisonAudit {
 
   /**
    * Recalculates the overall numbers of ballots to audit, setting this
-   * object's `my_optimistic_samples_to_audit` and
-   * `my_estimates_samples_to_audit` fields.
+   * object's `my_optimistic_samples_to_audit`,
+   * `my_estimates_samples_to_audit` and
+   * `my_risk_estimate` fields.
    */
   @Override
   protected void recalculateSamplesToAudit() {
@@ -138,7 +141,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
         List<Integer> optimisticSamples = assertions.stream().map(a ->
                 a.computeOptimisticSamplesToAudit(getRiskLimit())).collect(Collectors.toList());
 
-        my_optimistic_samples_to_audit = Collections.max(optimisticSamples);
+        my_optimistic_samples_to_audit = max(optimisticSamples);
         my_optimistic_recalculate_needed = false;
       }
 
@@ -147,13 +150,17 @@ public class IRVComparisonAudit extends ComparisonAudit {
       List<Integer> estimatedSamples = assertions.stream().map(a -> a.computeEstimatedSamplesToAudit(getRiskLimit(),
               getAuditedSampleCount())).collect(Collectors.toList());
 
-      my_estimated_samples_to_audit = Collections.max(estimatedSamples);
+      my_estimated_samples_to_audit = max(estimatedSamples);
       my_estimated_recalculate_needed = false;
 
+      // Tell each assertion to update its risk calculation.
+      BigDecimal risk = max(assertions.stream()
+              .map(a -> a.updateRiskMeasurement(getAuditedSampleCount())).collect(Collectors.toList()));
+
       LOGGER.debug(String.format("[IRVComparisonAudit::recalculateSamplestoAudit end contestName=%s, "
-                      + " optimistic=%d, estimated=%d]",
+                      + " optimistic=%d, estimated=%d, risk=%f]",
               contestResult().getContestName(),
-              my_optimistic_samples_to_audit, my_estimated_samples_to_audit));
+              my_optimistic_samples_to_audit, my_estimated_samples_to_audit, risk));
     }
   }
 
@@ -176,7 +183,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
       List<Integer> optimisticSamples = assertions.stream().map(a ->
               a.computeOptimisticSamplesToAudit(getRiskLimit())).collect(Collectors.toList());
 
-      return Collections.max(optimisticSamples);
+      return max(optimisticSamples);
     }
   }
 
@@ -216,7 +223,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
       return OptionalInt.empty();
     }
     else{
-      return OptionalInt.of(Collections.max(discrepancies));
+      return OptionalInt.of(max(discrepancies));
     }
   }
 
@@ -231,7 +238,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
     }
 
     // Return maximum risk across all of the audit's assertions.
-    return Collections.max(assertions.stream().map(a -> a.riskMeasurement(getAuditedSampleCount(),
+    return max(assertions.stream().map(a -> a.riskMeasurement(getAuditedSampleCount(),
             getGamma())).collect(Collectors.toList()));
   }
 

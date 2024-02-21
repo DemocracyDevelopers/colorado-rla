@@ -493,9 +493,11 @@ public abstract class Assertion implements PersistentEntity, Serializable {
   /**
    * Updates the local value of the estimated risk for this assertion.
    * @param auditedSampleCount The number of ballots sampled so far.
+   * @return the new risk estimate.
    */
-  public void updateRiskMeasurement(final Integer auditedSampleCount) {
-    my_current_risk = riskMeasurement(auditedSampleCount  , Audit.GAMMA);
+  public BigDecimal updateRiskMeasurement(final Integer auditedSampleCount) {
+    my_current_risk = riskMeasurement(auditedSampleCount, Audit.GAMMA);
+    return my_current_risk;
   }
 
   /**
