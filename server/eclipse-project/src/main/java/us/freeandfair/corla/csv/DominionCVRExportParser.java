@@ -41,9 +41,9 @@ import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CountyContestResultQueries;
 import us.freeandfair.corla.util.DBExceptionUtil;
 import us.freeandfair.corla.util.ExponentialBackoffHelper;
-import us.freeandfair.corla.util.IRVParsingException;
+import au.org.democracydevelopers.util.IRVParsingException;
 
-import static us.freeandfair.corla.util.IRVVoteParsing.*;
+import static au.org.democracydevelopers.util.IRVVoteParsing.*;
 
 /**
  * Parser for Dominion CVR export files.

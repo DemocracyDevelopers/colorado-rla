@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Set;
 
+import au.org.democracydevelopers.model.IRVComparisonAudit;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 

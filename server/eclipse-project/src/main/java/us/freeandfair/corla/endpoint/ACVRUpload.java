@@ -11,6 +11,7 @@
 
 package us.freeandfair.corla.endpoint;
 
+import static au.org.democracydevelopers.util.IRVVoteParsing.recordInterpretations;
 import static us.freeandfair.corla.asm.ASMEvent.AuditBoardDashboardEvent.*;
 
 import java.time.Instant;
@@ -31,7 +32,6 @@ import us.freeandfair.corla.json.SubmittedAuditCVR;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.persistence.Persistence;
-import us.freeandfair.corla.util.IRVParsingException;
 
 /**
  * The "audit CVR upload" endpoint.
@@ -103,24 +103,6 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
     return newAcvr;
   }
 
-  /**
-   * Given a submitted ACVR, record any ballot interpretations that have been made. These records
-   * indicate the raw (pre-interpreted) choices on the ballot and the revised interpreted choices.
-   * @param submission Submitted ACVR.
-   * @throws PersistenceException
-   */
-  private static void recordInterpretations(final SubmittedAuditCVR submission) throws PersistenceException {
-    final CastVoteRecord cr = submission.auditCVR();
-    for ( CVRContestInfo ci : cr.contestInfo() ) {
-      // For IRV, make new IRV choices as an ordered list without parenthesized ranks.
-      if( ci.contest().description().equalsIgnoreCase(ContestType.IRV.toString()) ) {
-        // Persist the details of the interpretation of this vote on this audited ballot.
-        final IRVBallotInterpretation interpretation = new IRVBallotInterpretation(submission.cvrID(),
-                ci.contest().name(), ci.rawChoices(), ci.choices());
-        Persistence.persist(interpretation);
-      }
-    }
-  }
 
 
   /**

@@ -25,9 +25,9 @@ import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
 import us.freeandfair.corla.model.Contest;
 import us.freeandfair.corla.model.ContestType;
 import us.freeandfair.corla.persistence.Persistence;
-import us.freeandfair.corla.util.IRVParsingException;
+import au.org.democracydevelopers.util.IRVParsingException;
 
-import static us.freeandfair.corla.util.IRVVoteParsing.IRVVoteToValidInterpretationAsSortedList;
+import static au.org.democracydevelopers.util.IRVVoteParsing.IRVVoteToValidInterpretationAsSortedList;
 
 /**
  * JSON adapter for CVR contest information.
