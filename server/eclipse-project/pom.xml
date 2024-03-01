@@ -1,3 +1,4 @@
+
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
@@ -172,11 +173,6 @@
 	</build>
 	<dependencies>
 		<dependency>
-			<groupId>au.org.democracydevelopers</groupId>
-			<artifactId>raire-java</artifactId>
-			<version>1.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
 			<groupId>com.sparkjava</groupId>
 			<artifactId>spark-core</artifactId>
 			<version>2.6.0</version>
@@ -186,12 +182,6 @@
 			<artifactId>jersey-media-json-jackson</artifactId>
 			<version>3.1.3</version>
 		</dependency>
-    <dependency>
-      <groupId>org.glassfish.jersey.core</groupId>
-      <artifactId>jersey-client</artifactId>
-      <version>3.1.3</version>
-    </dependency>
-
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
@@ -253,6 +243,7 @@
 			<version>1.10.0</version>
 		</dependency>
     <dependency>
+		<!-- Remove -->
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <version>1.18.30</version>
@@ -325,12 +316,5 @@
 			<artifactId>maven-site-plugin</artifactId>
 			<version>3.7.1</version>
 		</dependency>
-        <dependency>
-            <groupId>au.org.democracydevelopers</groupId>
-            <artifactId>raire-java</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-
     </dependencies>
 </project>

@@ -10,5 +10,8 @@
         <module name="corla-server" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="raire-java" target="11" />
+    </bytecodeTargetLevel>
   </component>
 </project>
