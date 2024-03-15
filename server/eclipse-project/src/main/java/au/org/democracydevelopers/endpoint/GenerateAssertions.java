@@ -24,7 +24,7 @@ import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.endpoint.AbstractDoSDashboardEndpoint;
 import us.freeandfair.corla.model.*;
 import au.org.democracydevelopers.raire.requesttoraire.CountyAndContestID;
-import au.org.democracydevelopers.raire.requesttoraire.GenerateAssertionRequest;
+import au.org.democracydevelopers.raire.requesttoraire.GenerateAssertionsRequest;
 
 import au.org.democracydevelopers.raire.responsefromraire.GenerateAssertionsResponse;
 import au.org.democracydevelopers.util.IRVContestCollector;
@@ -122,11 +122,11 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
       //
       // Note: We considered making this a parallel stream because the database access is by far the slowest part.
       // However, the database did not seem to respond well to multiple read attempts.
-      List<GenerateAssertionRequest> assertionRequests
+      List<GenerateAssertionsRequest> assertionRequests
         = IRVContestResults.stream().map(cr ->
 
                 // build the RAIRE request for this IRV contest.
-                        GenerateAssertionRequest.builder()
+                        GenerateAssertionsRequest.builder()
                                 .contestName(cr.getContestName())
                                 .timeProvisionForResult(COMPUTE_TIME)
                                 .candidates(getCandidates(cr))
@@ -135,7 +135,7 @@ public class GenerateAssertions extends AbstractDoSDashboardEndpoint {
                                 .build()
               ).collect(Collectors.toList());
 
-      for(GenerateAssertionRequest assertionRequest : assertionRequests ) {
+      for(GenerateAssertionsRequest assertionRequest : assertionRequests ) {
         // Send it to the RAIRE service.
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         var response = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON),

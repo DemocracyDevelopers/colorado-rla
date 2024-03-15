@@ -27,8 +27,8 @@ import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.endpoint.AbstractDoSDashboardEndpoint;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.model.*;
-import au.org.democracydevelopers.raire.requesttoraire.RequestByContestName;
-import au.org.democracydevelopers.raire.responsefromraire.GetAssertionResponse;
+import au.org.democracydevelopers.raire.requesttoraire.GetAssertionsRequest;
+import au.org.democracydevelopers.raire.responsefromraire.GetAssertionsResponse;
 import us.freeandfair.corla.util.SparkHelper;
 import au.org.democracydevelopers.util.IRVContestCollector;
 
@@ -114,14 +114,14 @@ public class ExportAssertions extends AbstractDoSDashboardEndpoint {
 
             // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
             // collating the responses.
-            List<GetAssertionResponse> raireResponses = new ArrayList<>();
+            List<GetAssertionsResponse> raireResponses = new ArrayList<>();
             final List<ContestResult> IRVContestResults = IRVContestCollector.getIRVContestResults();
             IRVContestResults.forEach(cr -> {
 
                         // Make the request.
                         List<String> candidates = new ArrayList<>(Stream.concat(cr.getWinners().stream(), cr.getLosers().stream()).collect(Collectors.toSet()));
                         String contestName = cr.getContestName();
-                        RequestByContestName assertionRequest = new RequestByContestName(
+                        GetAssertionsRequest assertionRequest = new GetAssertionsRequest(
                                 contestName,
                                 candidates,
                                 riskLimit
@@ -129,7 +129,7 @@ public class ExportAssertions extends AbstractDoSDashboardEndpoint {
 
                         // Send it to the RAIRE service.
                         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-                        var response = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON), GetAssertionResponse.class);
+                        var response = invocationBuilder.post(Entity.entity(assertionRequest, MediaType.APPLICATION_JSON), GetAssertionsResponse.class);
                         LOGGER.info("Sent Assertion Request to RAIRE: " + assertionRequest);
                         LOGGER.info(response);
 
@@ -149,7 +149,7 @@ public class ExportAssertions extends AbstractDoSDashboardEndpoint {
             final ZipOutputStream zos = new ZipOutputStream(os);
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.getFactory().disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
-            for (GetAssertionResponse raireResponse : raireResponses) {
+            for (GetAssertionsResponse raireResponse : raireResponses) {
                 zos.putNextEntry(new ZipEntry(raireResponse.metadata.get("contest").toString() + "_assertions.json"));
                 objectMapper.writeValue(zos, raireResponse);
                 zos.closeEntry();
