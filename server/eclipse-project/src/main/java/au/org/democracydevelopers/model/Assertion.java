@@ -55,7 +55,7 @@ public abstract class Assertion implements PersistentEntity, Serializable {
    */
   @Id
   @Column(updatable = false, nullable = false)
-  @GeneratedValue(strategy = GenerationType.SEQUENCE)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   /**
@@ -107,6 +107,7 @@ public abstract class Assertion implements PersistentEntity, Serializable {
   @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "assertion_context",
           joinColumns = @JoinColumn(name = "id"))
+  @Column(name = "assumed_continuing", nullable = false)
   protected List<String> assumedContinuing = new ArrayList<>();
 
   /**
@@ -125,8 +126,10 @@ public abstract class Assertion implements PersistentEntity, Serializable {
    * to the ID of the CVR that is involved in the discrepancy, and "discrepancy" the value of the
    * discrepancy from -2 to 2.
    */
-  @Convert(converter = LongIntegerMapConverter.class)
-  @Column(columnDefinition = "text")
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(name = "assertion_discrepancies", joinColumns = @JoinColumn(name = "id"))
+  @MapKeyColumn(name = "cvr_id")
+  @Column(name = "discrepancy", nullable = false)
   protected Map<Long,Integer> cvrDiscrepancy = new HashMap<>();
 
   /**
