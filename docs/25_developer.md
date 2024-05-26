@@ -30,6 +30,7 @@ History
   Kiniry.
 * Fourth draft with updates for phase-2 delivery, 24 August 2017 by
   Joe Kiniry.
+* Updates 2 August 2023 by Vanessa Teague.
 
 Platform and Programming Languages
 ----------------------------------
@@ -183,50 +184,138 @@ the build system.*
 
 *TBD: Describe [Spark](http://sparkjava.com/) and its use.*
 
+Install and setup
+-----------------
+
 ### Data Persistence
 
 In order to use the Postgres database in development, one must:
 
-1. Install PostgreSQL (`brew install postgres` on MacOS, `apt-get
-   install postgresql` on many Linux distributions, or whatever is
-   appropriate) and start it running.
+1. Install PostgreSQL 
 2. Create a database called "`corla`", and grant all privileges on it
-   to a user called "`corla`" with password "`corla`".
+   to a user called "`corlaadmin`" with password "`corlasecret`".
 3. Initialize the "`corla`" database with test administrator data.
+
+The following instructions explain how.
+
    For example, to accomplish the above on MacOS using Homebrew, one
-   issues the following commands:
+   issues the following commands.  Type 'corlasecret' when prompted for a password.
+
 ```
 brew install postgres
-createuser -P corla
-createdb -O corla corla
+createuser -P corlaadmin
+createdb -O corlaadmin corla
 ```
-On Linux, one would replace the first command with something akin to
-`sudo apt-get install postgresql`.
+alternatively you can use following commands to create new corla db. (Usually password for 
+user postgres is postgres unless you changed it at installation time)
 
+```
+psql -U postgres
+create database corla with owner postgres;
+\c corla
+grant all on schema public to corlaadmin;
+```
+
+On Linux, 
+
+```
+sudo apt install postgresql
+sudo -u postgres createuser -P corlaadmin
+sudo -u postgres createdb -O corlaadmin corla
+```
+
+
+and in order to give "`corlaadmin`" appropriate privileges:
+```
+sudo -u postgres psql
+postgres=# GRANT ALL PRIVILEGES ON DATABASE "corla" TO corlaadmin;
+```
+and whatever is equivalent on MacOS.
+ 
 That's it. If the database is there the server will use it and will,
 at this stage, create all its tables and such automatically.
-4. Run the server (to create all the database tables). Recall that
+
+### Local setup
+4. If you are running postgres locally, you will need to change the 
+`hibernate.url` field in `/server/eclipse-project/src/test/resources/test.properties` and `/server/eclipse-project/src/main/resources/us/freeandfair/corla/default.properties` to
+```
+hibernate.url = jdbc:postgresql://localhost:5432/corla?reWriteBatchedInserts=true&disableColumnSantiser=true
+```
+(This has already been done on the main branch of Democracy Developers' fork, as has the step 
+below. If you are running the database elsewhere, you obviously need to update the urls 
+appropriately.)
+
+5. Edit server/eclipse-project/pom.xml to comment out the parent pom.xml:
+```
+<!-- Comment out Colorado parent pom.xml.
+        <parent>
+                <groupId>us.co.state.sos</groupId>
+                <artifactId>sos-parent-pom</artifactId>
+                <version>2.0.21</version>
+        </parent>
+-->
+```
+
+6. If you are running the [raire-service](https://github.com/DemocracyDevelopers/raire-service) anywhere other than locally, you will need to change the 
+`raire_url` field in `/server/eclipse-project/src/test/resources/test.properties` and `/server/eclipse-project/src/main/resources/us/freeandfair/corla/default.properties` to
+wherever you are running raire.
+
+7. Remember to tell git not to push your changes to any of these files:
+
+```
+git update-index --assume-unchanged server/eclipse-project/src/test/resources/test.properties
+git update-index --assume-unchanged server/eclipse-project/src/main/resources/us/freeandfair/corla/default.properties
+git update-index --assume-unchanged server/eclipse-project/pom.xml
+```
+
+### Compiling and running
+8. Build the server with tests turned off. In the server/eclipse-project directory:
+```
+mvn package -DskipTests
+```
+
+9. Run the server (to create all the database tables). Recall that
    this is accomplished by either running the server in Eclipse using
    the Run button or running it from a command line using a command
-   akin to `java -jar colorado_rla-VERSION-shaded.jar`.
-5. Load test authentication credentials into the database, by
+   akin to 
+``` 
+java -jar ./target/corla-server-[VERSION]-SNAPSHOT.jar
+```
+10. Load test authentication credentials into the database, by
    executing the SQL in `corla-test-credentials.psql` (found in the
-   `test` directory of the repository). This can be done with the
-   following command on OS X:
+   `test` directory of the repository). cd into the project directory before running this command.
+   command on OS X:
+   
 ```
-psql -U corla -d corla -a -f corla-test-credentials.psql
+psql -U corlaadmin -d corla -a -f ./test/corla-test-credentials.psql
 ```
-   or the following command on Linux:
+   command on Linux:
 ```
-psql -U corla -h localhost -d corla -a -f corla-test-credentials.psql
+psql -U corlaadmin -h localhost -d corla -a -f ./test/corla-test-credentials.psql
 ```
+
+When prompted for the password, enter `corlasecret`. 
+
+11. Now everything should be working. Note that the .jar is expected to hang when working.
+
+You can [build and run the client](https://github.com/DemocracyDevelopers/colorado-rla/blob/master/docs/15_installation.md), which will be available at [http://localhost:3000](http://localhost:3000). Use the credentials from `corla-test-credentials.psql` to log in. For example, `stateadmin1` is a state administrator. Log in with no password. `123` seems to work as a response to the grid challenge.
+
+### After the first run
+
+From now on, you should be able to build the .jar with the tests:
+
+```
+mvn package
+
+```
+
 
 If you need to delete the database---perhaps because due to a recent
 merge the DB schema has evolved---use the `dropdb corla` command and
 then recreate the DB following the steps above.
 
 There are helpful scripts for automating these actions located in the
-`server/eclipse_project/script` directory.
+`server/eclipse_project/script` directory. [VT: Note I have not updated these since changing the above.]
 
 *TBD: Describe the [Hibernate ORM](http://hibernate.org/orm/) and its
 use.*
