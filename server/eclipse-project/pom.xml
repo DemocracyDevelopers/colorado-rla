@@ -203,7 +203,7 @@
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-			<version>42.1.4</version>
+			<version>42.2.27</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
@@ -243,7 +243,7 @@
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-core</artifactId>
-			<version>5.2.10.Final</version>
+			<version>5.6.15.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.testng</groupId>
@@ -254,7 +254,7 @@
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-c3p0</artifactId>
-			<version>5.2.10.Final</version>
+			<version>5.6.15.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-fileupload</groupId>
@@ -264,12 +264,12 @@
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-java8</artifactId>
-			<version>5.2.10.Final</version>
+			<version>5.6.15.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-ehcache</artifactId>
-			<version>5.2.10.Final</version>
+			<version>5.6.15.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.obermuhlner</groupId>
