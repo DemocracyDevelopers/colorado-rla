@@ -65,6 +65,7 @@ public class IRVPreference implements Comparable<IRVPreference> {
       rank = Integer.parseInt(rankString.strip());
 
       // If we got nonsense values, we didn't parse it properly.
+      // TODO logging and proper error messages.
       if(candidateName.isBlank() || rank <= 0) {
         throw new IRVParsingException("Couldn't parse candidate-preference: " + nameWithRank);
       }
