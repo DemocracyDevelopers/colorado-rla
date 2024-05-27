@@ -73,7 +73,9 @@ public class IRVPreference implements Comparable<IRVPreference> {
     }
   }
 
-  // We only care about whether the rank is lower than the other rank, regardless of candidate name.
+  /** Comparator, by rank. We only care about whether the rank is lower than the other rank,
+   * regardless of candidate name
+   */
   @Override
   public int compareTo(IRVPreference preference) {
     return this.rank.compareTo(preference.rank);
