@@ -102,12 +102,18 @@ public class IRVChoices {
     return candidateNames.stream().map(candidateNamesSet::add).reduce(true, Boolean::logicalAnd);
   }
 
-  // TODO consider whether we ever do anything other than immediately strip off the parenthesized
-  // preferences. Should we instead simply return a list of Strings in preference order?
-  public IRVChoices InterpretValidIntent() {
+  /**
+   * Applies validation rules in the order specified in CO Election Rules [8 CCR 1505-1]
+   * https://www.sos.state.co.us/pubs/rule_making/CurrentRules/8CCR1505-1/Rule26.pdf
+   * to produce a valid IRV vote, and returns that valid IRV vote as an ordered list of candidate
+   * names, with the highest-preference candidate first.
+   * @return the implied valid IRV preferences, as an ordered list of candidate names with the
+   * most-preferred first.
+   */
+  public List<String> GetValidIntent() {
     IRVChoices i3 = this.ApplyRule3();
     IRVChoices i1 = i3.ApplyRule1();
-    return i1.ApplyRule2();
+    return i1.ApplyRule2().choices.stream().map(c -> c.candidateName).collect(Collectors.toList());
   }
 
   /**
