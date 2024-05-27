@@ -21,5 +21,65 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.vote;
 
-public class IRVPreference {
+/**
+ * A single IRV rank-name pair, part of an IRV vote (which may have several rank-name pairs).
+ * The constructor parses the name-rank pair in the format expected in CO CVRs, that is,
+ * name(rank), where the rank is a positive integer.
+ * The comparator compares them by rank, ignoring the name.
+ */
+public class IRVPreference implements Comparable<IRVPreference> {
+
+  public final Integer rank;
+  public final String candidateName;
+
+  /**
+   * All args constructor
+   * @param r the selected rank (a positive integer)
+   * @param name the candidate's name
+   */
+  public IRVPreference(Integer r, String name) {
+    rank = r;
+    candidateName = name;
+  }
+
+  /**
+   * Constructor from a csv string indicating an IRV choice: candidate name with parenthesized rank.
+   * @param nameWithRank - a string expected to be of the form "name(rank)".
+   * @throws IRVParsingException if the string cannot be parsed in the "name(digits)" pattern.
+   */
+  public IRVPreference(String nameWithRank) throws IRVParsingException {
+    // Look for digits in parentheses at the end of the string.
+    String regexp ="\\((\\s*\\d+\\s*\\))\\s*$";
+    // Use strip() instead of trim() for unicode awareness.
+    String trimmed = nameWithRank.strip();
+
+    try {
+      // Split the string into name ([0]) and rank ([1]). Take the first element as candidate name.
+      String name = trimmed.split(regexp)[0];
+      // Remove exactly the candidate-name substring, from the original trimmed string.
+      String rankWithParentheses = trimmed.replace(name, "");
+      // Get rid of the parentheses - just take the digits inside.
+      String rankString = rankWithParentheses.trim().split("[\\(\\)]")[1];
+
+      candidateName = name.trim();
+      rank = Integer.parseInt(rankString.strip());
+
+      // If we got nonsense values, we didn't parse it properly.
+      if(candidateName.isBlank() || rank <= 0) {
+        throw new IRVParsingException("Couldn't parse candidate-preference: " + nameWithRank);
+      }
+    } catch (NumberFormatException | IndexOutOfBoundsException e2) {
+      throw new IRVParsingException("Couldn't parse candidate-preference: " + nameWithRank);
+    }
+  }
+
+  // We only care about whether the rank is lower than the other rank, regardless of candidate name.
+  @Override
+  public int compareTo(IRVPreference preference) {
+    return this.rank.compareTo(preference.rank);
+  }
+
+  public String toString() {
+    return candidateName+"("+rank+")";
+  }
 }
