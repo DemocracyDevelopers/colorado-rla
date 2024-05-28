@@ -21,6 +21,9 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.vote;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 /**
  * A single IRV rank-name pair, part of an IRV vote (which may have several rank-name pairs).
  * The constructor parses the name-rank pair in the format expected in CO CVRs, that is,
@@ -28,6 +31,11 @@ package au.org.democracydevelopers.corla.model.vote;
  * The comparator compares them by rank, ignoring the name.
  */
 public class IRVPreference implements Comparable<IRVPreference> {
+
+  /**
+   * Class-wide logger
+   */
+  public static final Logger LOGGER = LogManager.getLogger(IRVPreference.class);
 
   public final Integer rank;
   public final String candidateName;
@@ -48,29 +56,30 @@ public class IRVPreference implements Comparable<IRVPreference> {
    * @throws IRVParsingException if the string cannot be parsed in the "name(digits)" pattern.
    */
   public IRVPreference(String nameWithRank) throws IRVParsingException {
-    // Look for digits in parentheses at the end of the string.
-    String regexp ="\\((\\s*\\d+\\s*\\))\\s*$";
     // Use strip() instead of trim() for unicode awareness.
     String trimmed = nameWithRank.strip();
 
     try {
+      // Look for digits in parentheses at the end of the string.
       // Split the string into name ([0]) and rank ([1]). Take the first element as candidate name.
-      String name = trimmed.split(regexp)[0];
+      String name = trimmed.split("\\((\\s*\\d+\\s*\\))\\s*$")[0];
       // Remove exactly the candidate-name substring, from the original trimmed string.
       String rankWithParentheses = trimmed.replace(name, "");
       // Get rid of the parentheses - just take the digits inside.
-      String rankString = rankWithParentheses.trim().split("[\\(\\)]")[1];
+      String rankString = rankWithParentheses.trim().split("[()]")[1];
 
       candidateName = name.trim();
       rank = Integer.parseInt(rankString.strip());
 
       // If we got nonsense values, we didn't parse it properly.
-      // TODO logging and proper error messages.
       if(candidateName.isBlank() || rank <= 0) {
-        throw new IRVParsingException("Couldn't parse candidate-preference: " + nameWithRank);
+        throw new IRVParsingException();
       }
-    } catch (NumberFormatException | IndexOutOfBoundsException e2) {
-      throw new IRVParsingException("Couldn't parse candidate-preference: " + nameWithRank);
+    } catch (NumberFormatException | IndexOutOfBoundsException | IRVParsingException e) {
+      final String prefix = "[IRVChoices constructor]";
+      final String errorMessage = "Couldn't parse candidate-preference: ";
+      LOGGER.error(String.format("%s %s %s", prefix, errorMessage, nameWithRank), e);
+      throw new IRVParsingException(errorMessage + nameWithRank);
     }
   }
 
