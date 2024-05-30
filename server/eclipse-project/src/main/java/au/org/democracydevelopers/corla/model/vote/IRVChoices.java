@@ -29,18 +29,25 @@ import java.util.stream.Collectors;
 
 
 /**
- * A ballot is a list of (rank, candidate name) pairs. This data structure allows ballots to be
- * invalid, that is, with repeated candidate names or repeated preferences.
- * The constructor will parse a ballot that comes as a comma-separated string of the form
- * "name1(p1), name2(p2), ..." where p1, p2... are (positive integer) preferences.
- * It stores them sorted by preference, with skips or duplicates allowed.
- * The main algorithms in this class implement valid ballot interpretation for Colorado's IRV rules
+ * This class represents one voter's choices in one IRV contest, that is, one IRV vote.
+ * Each IRV choice has both a candidate name and a rank (preference) - this is represented as
+ * an IRVPreference object. So a vote (a single IRVChoices object) is a list of such IRVPreferences.
+ * This data structure allows votes to be invalid, that is, with repeated candidate names or
+ * skipped or repeated preferences.
+ * The constructor will parse a vote that comes as a comma-separated string of the form
+ * "name1(p1),name2(p2), ..." where p1, p2... are (positive integer) ranks. It stores them sorted
+ * by rank, with skips or duplicates allowed.
+ * An IRVChoices object may represent an invalid vote, but it implies a unique valid interpretation
+ * as specified in Colorado's IRV rules
  * (<a href="https://www.sos.state.co.us/pubs/rule_making/CurrentRules/8CCR1505-1/Rule26.pdf">...</a>)
  * which describe how to deal with repeated candidates, or skipped or repeated preferences.
+ * The main algorithms in this class implement valid vote interpretation for Colorado's IRV rules.
  * The order of application of the rules follows Colorado's Guide to Voter Intent -
  * Determination of Voter Intent for Colorado Elections, 2023 addendum for Instant Runoff Voting
  * (IRV), available at
  * <a href="https://assets.bouldercounty.gov/wp-content/uploads/2023/11/Voter-Intent-Guide-IRV-Addendum-2023.pdf">...</a>
+ * TODO This may be updated soon - updated ref to CDOS rather than Boulder when official CDOS
+ * version becomes available.
  * Main methods:
  * - IsValid(): checks whether the choices are a valid IRV vote (without skipped or repeated
  * preferences, or repeated candidates).
@@ -55,19 +62,24 @@ public class IRVChoices {
   public static final Logger LOGGER = LogManager.getLogger(IRVChoices.class);
 
   /**
-   * choices is always sorted by preference, from highest preference (i.e. lowest number) to lowest
+   * choices are always sorted by preference, from highest preference (i.e. lowest number) to lowest
    * preference (i.e. highest number). Repeated candidates and repeated or skipped preferences are
-   * allowed. choices are final and immutable.
+   * allowed. Choices are final and immutable.
    */
   private final List<IRVPreference> choices;
 
-  public int getLength() {
+  /**
+   * The number of IRV choices, as given to the constructor, before any duplicates, skipped
+   * preferences or overvotes are removed.
+   * @return the number of choices in the raw IRV vote.
+   */
+  public int getRawChoicesCount() {
     return choices.size();
   }
 
   /**
-   * Constructor - takes a list of IRVPreferences.
-   *
+   * Constructor - takes a list of IRVPreferences (ranked candidates) representing a vote, sorts
+   * this list by rank (most to least preferred), then stores in an unmodifiable list.
    * @param mutableChoices a list of IRVPreferences, which need not be valid - repeats or skipped
    *                       preferences are allowed.
    */
@@ -81,20 +93,29 @@ public class IRVChoices {
 
   /**
    * Constructor - takes IRV preferences as a string of the kind stored in the corla database,
-   * of the form "name1(p1), name2(p2), ..."
-   * Parses each individual preference into an IRVPreference and then calls the previous
-   * constructor.
-   *
+   * of the form "name1(p1),name2(p2), ..."
+   * Parses each individual preference into an IRVPreference to make a list of IRVPreferences, and
+   * then calls the other constructor, which sorts the list by rank (most to least preferred), then
+   * stores in an unmodifiable list.
    * @param sanitizedChoices the IRV preferences as a string, which need not be a valid IRV vote -
    *                         repeats or skipped preferences are allowed.
+   * @throws IRVParsingException if one of the comma-separated substrings cannot be parsed as a
+   *                             name(rank). This could happen for example if called on a
+   *                             plurality vote.
    */
   public IRVChoices(String sanitizedChoices) throws IRVParsingException {
     this(parseChoices(sanitizedChoices));
   }
 
   /**
-   * Check whether the ballot is a valid list of preferences without repeats of candidate names
+   * Check whether the vote is a valid list of preferences without repeats of candidate names
    * or ranks and without skipped or invalid preferences.
+   * This first checks that the preference list contains no repeats and no items outside the range
+   * of [1,...,choices.size]. The preference list must therefore be a valid permutation of all the
+   * numbers from 1 to choices.size.
+   * The second part checks that no candidate names have been repeated. (Note that skipping
+   * candidates is fine.) This function does _not_ check that the candidate names correspond to the
+   * available choices for the contest - that will be caught by raire-java.
    */
   public boolean IsValid() {
     final String prefix = "[IsValid]";
@@ -117,14 +138,14 @@ public class IRVChoices {
 
     // Now check for repeat candidate names.
     Set<String> candidateNamesSet = new HashSet<>();
-    List<String> candidateNames = choices.stream().map(c -> c.candidateName).collect(Collectors.toList());
 
     // Set::add returns false if the item is already present, in which case this returns false.
     // (Repeated candidate names are invalid.)
-    boolean isValid = candidateNames.stream().map(candidateNamesSet::add)
-        .reduce(true, Boolean::logicalAnd);
-    LOGGER.debug(String.format("%s vote %s is%s valid.", prefix, choices, isValid ? "" : " not"));
-    return isValid;
+    boolean noDuplicates = choices.stream()
+        .map(c -> candidateNamesSet.add(c.candidateName)).reduce(true, Boolean::logicalAnd);
+    LOGGER.debug(String.format("%s vote %s is%s valid.", prefix, choices,
+        noDuplicates ? "" : " not"));
+    return noDuplicates;
   }
 
   /**
@@ -132,18 +153,27 @@ public class IRVChoices {
    * <a href="https://www.sos.state.co.us/pubs/rule_making/CurrentRules/8CCR1505-1/Rule26.pdf">...</a>
    * to produce a valid IRV vote, and returns that valid IRV vote as an ordered list of candidate
    * names, with the highest-preference candidate first.
-   *
+   * The order of application of the rules follows Colorado's Guide to Voter Intent -
+   * Determination of Voter Intent for Colorado Elections, 2023 addendum for Instant Runoff Voting
+   * (IRV), available at
+   * <a href="https://assets.bouldercounty.gov/wp-content/uploads/2023/11/Voter-Intent-Guide-IRV-Addendum-2023.pdf">...</a>
+   * TODO This may be updated soon - updated ref to CDOS rather than Boulder when official CDOS
+   * version becomes available.
+   * This specifies that candidate duplicates (Rule 26.7.3) should be removed before overvotes
+   * (Rule 26.7.1). The order of skipped preferences (Rule 26.7.2) does not matter.
+   * If the IRV vote is already valid, it will be returned as an ordered list of candidate names
+   * in preference order (highest preference first).
    * @return the implied valid IRV preferences, as an ordered list of candidate names with the
-   * most-preferred first.
+   *         most-preferred first.
    */
   public List<String> GetValidIntent() {
     final String prefix = "[GetValidIntent]";
     LOGGER.debug(String.format("%s getting valid interpretation of vote %s.", prefix,
         choices.toString()));
 
-    IRVChoices noDuplicates = this.ApplyRule3();
-    IRVChoices noOvervotes = noDuplicates.ApplyRule1();
-    List<String> valid = noOvervotes.ApplyRule2().choices.stream().map(c -> c.candidateName)
+    IRVChoices noDuplicates = this.Rule_26_7_3_Duplicates();
+    IRVChoices noOvervotes = noDuplicates.Rule_26_7_1_Overvotes();
+    List<String> valid = noOvervotes.Rule_26_7_2_Skips().choices.stream().map(c -> c.candidateName)
         .collect(Collectors.toList());
 
     LOGGER.debug(String.format("%s valid interpretation is %s.", prefix, valid));
@@ -153,49 +183,87 @@ public class IRVChoices {
   /**
    * Applies Rule 26.7.1 from
    * <a href="https://www.sos.state.co.us/pubs/rule_making/CurrentRules/8CCR1505-1/Rule26.pdf">...</a>
-   * Returns new updated ballot.
+   * Returns new updated vote.
    * This is the rule that identifies overvotes (i.e. repeated ranks) and removes all
    * subsequent preferences.
    */
-  public IRVChoices ApplyRule1() {
+  public IRVChoices Rule_26_7_1_Overvotes() {
+    final String prefix = "[Rule_26_7_1_Overvotes]";
 
-    assert IsSorted(choices) : "Error: Trying to apply Rule 1 to unsorted preferences.";
-
-    List<IRVPreference> mutableChoices = new ArrayList<>(choices);
-    for (int i = 0; i < mutableChoices.size() - 1; i++) {
-      if ((mutableChoices.get(i)).compareTo(mutableChoices.get(i + 1)) == 0) {
-        // We found an overvote. Skip from this item.
-        mutableChoices.subList(i, mutableChoices.size()).clear();
-        break;
-      }
+    // These rules should be applied only to sorted choices.
+    if(!IsSorted(choices)) {
+      final String msg = String.format("%s Rule 26.7.1 (overvote removal) called on unsorted " +
+          "choices: %s.", prefix, choices);
+      LOGGER.error(msg);
+      throw new RuntimeException(msg);
     }
 
-    return new IRVChoices(mutableChoices);
+    // If there is at most one choice, it cannot be a repeated rank.
+    if(choices.size() <= 1) {
+      return new IRVChoices(choices);
+    }
+
+    // Keep adding IRVPreferences until we encounter a repeated rank, at which point break the
+    // loop, hence dropping everything afterwards. The array indexing is checking that there is
+    // another item after the current one.
+    ListIterator<IRVPreference> i = choices.listIterator();
+    i.next();
+    List<IRVPreference> nonRepeatedChoices = new ArrayList<>();
+    while(i.hasNext() && choices.get(i.previousIndex()).rank != i.next().rank) {
+      nonRepeatedChoices.add(choices.get(i.previousIndex()));
+    }
+
+    // If we got to the end of the list without noticing a duplicate, add the last one.
+    if(!i.hasNext()) {
+      nonRepeatedChoices.add(choices.get(i.previousIndex()));
+    }
+
+    return new IRVChoices(nonRepeatedChoices);
   }
 
   /**
    * Applies Rule 26.7.2 from
    * <a href="https://www.sos.state.co.us/pubs/rule_making/CurrentRules/8CCR1505-1/Rule26.pdf">...</a>
    * This removes everything from the skipped preference onwards.
-   * Returns new updated ballot.
+   * Returns new updated vote.
+   * Note: I was tempted to optimize this to check whether choices[i] > i+1 for any i. Although that
+   * would certainly flag any invalid vote, it would not immediately flag all votes that had skipped
+   * preferences. For example, Alice(1),Bob(2),Chuan(2),Diego(4) skips a preference (3) but does
+   * not at any point have an index for which the preference exceeds the position in the list. I
+   * believe that under CO's current rules it wouldn't matter - the distinction is relevant only
+   * when a repeated preference precedes the skipped one, and CO treats both of those cases the
+   * same anyway. However, I have left it as it is, looking for actual skipped preference numbers
+   * regardless of array position, in case anyone chooses to adapt this code to other IRV rules.
+   * In particular, this implementation will remove Diego(4) in the example above, but will _not_
+   * remove Bob(2),Chuan(2).
    */
-  public IRVChoices ApplyRule2() {
+  public IRVChoices Rule_26_7_2_Skips() {
+    final String prefix = "[Rule_26_7_2_Skips]";
 
-    assert IsSorted(choices) : "Error: Trying to apply Rule 2 to unsorted preferences.";
+    // These rules should be applied only to sorted choices.
+    if(!IsSorted(choices)) {
+      final String msg = String.format("%s Rule 26.7.2 (skipped rank removal) called on unsorted " +
+          "choices: %s.", prefix, choices);
+      LOGGER.error(msg);
+      throw new RuntimeException(msg);
+    }
 
-    // If the first element is not rank 1, the ballot is effectively blank.
-    if (!choices.isEmpty() && choices.get(0).rank != 1) {
+    // If the vote is empty, return empty. If the first element is not rank 1, the vote is
+    // effectively empty.
+    if (choices.isEmpty() || choices.get(0).rank != 1) {
       return new IRVChoices(new ArrayList<>());
     }
 
-    List<IRVPreference> mutableChoices = new ArrayList<>(choices);
+    // The first element's rank is 1 - include it.
+    List<IRVPreference> mutableChoices = new ArrayList<>(Collections.singletonList(choices.get(0)));
 
-    for (int i = 0; i < mutableChoices.size() - 1; i++) {
-      if ((mutableChoices.get(i + 1)).rank > mutableChoices.get(i).rank + 1) {
-        // We found a skipped rank. Skip from the _next_ item.
-        mutableChoices.subList(i + 1, mutableChoices.size()).clear();
-        break;
-      }
+    ListIterator<IRVPreference> i = choices.listIterator();
+    i.next();
+
+    // Collect choices as long as the next rank is no greater than the previous rank plus 1.
+    // If there's one that is greater than that, break the loop, hence dropping everything after it.
+    while(i.hasNext() && choices.get(i.previousIndex()).rank + 1 >= i.next().rank) {
+      mutableChoices.add(choices.get(i.previousIndex()));
     }
 
     return new IRVChoices(mutableChoices);
@@ -204,19 +272,32 @@ public class IRVChoices {
   /**
    * Applies Rule 26.7.3 from
    * <a href="https://www.sos.state.co.us/pubs/rule_making/CurrentRules/8CCR1505-1/Rule26.pdf">...</a>
-   * This removes duplicated preferences for the same candidates.
-   * Returns new updated ballot.
+   * This removes duplicated preferences for the same candidates, leaving only the most-preferred
+   * mention (i.e. the lowest number) for each candidate.
+   * Returns new updated vote.
    */
-  public IRVChoices ApplyRule3() {
+  public IRVChoices Rule_26_7_3_Duplicates() {
+    final String prefix = "[Rule_26_7_3_Duplicates]";
 
-    assert IsSorted(choices) : "Error: Trying to apply Rule 3 to unsorted preferences.";
+    // These rules should be applied only to sorted choices.
+    if(!IsSorted(choices)) {
+      final String msg = String.format("%s Rule 26.7.3 (duplicate candidate removal) called on " +
+          "unsorted choices: %s.", prefix, choices);
+      LOGGER.error(msg);
+      throw new RuntimeException(msg);
+    }
 
     HashSet<String> candidates = new HashSet<>();
     List<IRVPreference> mutableChoices = new ArrayList<>();
 
+    // Iterate through the choices in increasing order of preference, maintaining a set of
+    // candidates who have been encountered already. A candidate encountered for the first time is
+    // added to the encountered-candidates set, and also that mention of them is added to the vote.
+    // Subsequent mentions of an already-encountered candidate are ignored.
     for (IRVPreference choice : choices) {
       if (!candidates.contains(choice.candidateName)) {
-        // This candidate hasn't been mentioned before. Add it to both the vote and the set of mentioned candidates.
+        // This candidate hasn't been mentioned before. Add it to both the vote and the set of
+        // mentioned candidates.
         mutableChoices.add(choice);
         candidates.add(choice.candidateName);
       }

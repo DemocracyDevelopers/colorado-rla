@@ -37,7 +37,7 @@ public class IRVPreference implements Comparable<IRVPreference> {
    */
   public static final Logger LOGGER = LogManager.getLogger(IRVPreference.class);
 
-  public final Integer rank;
+  public final int rank;
   public final String candidateName;
 
   /**
@@ -45,7 +45,7 @@ public class IRVPreference implements Comparable<IRVPreference> {
    * @param r the selected rank (a positive integer)
    * @param name the candidate's name
    */
-  public IRVPreference(Integer r, String name) {
+  public IRVPreference(int r, String name) {
     rank = r;
     candidateName = name;
   }
@@ -88,7 +88,7 @@ public class IRVPreference implements Comparable<IRVPreference> {
    */
   @Override
   public int compareTo(IRVPreference preference) {
-    return this.rank.compareTo(preference.rank);
+    return Integer.compare(rank, preference.rank);
   }
 
   public String toString() {

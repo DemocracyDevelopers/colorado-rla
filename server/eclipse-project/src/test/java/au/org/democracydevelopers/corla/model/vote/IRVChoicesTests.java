@@ -199,8 +199,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule1Test1");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2)");
-    IRVChoices i = b.ApplyRule1();
-    assertEquals(2, i.getLength());
+    IRVChoices i = b.Rule_26_7_1_Overvotes();
+    assertEquals(2, i.getRawChoicesCount());
   }
 
   /**
@@ -213,8 +213,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule1Test2");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(1)");
-    IRVChoices i = b.ApplyRule1();
-    assertEquals(0, i.getLength());
+    IRVChoices i = b.Rule_26_7_1_Overvotes();
+    assertEquals(0, i.getRawChoicesCount());
   }
 
   /**
@@ -227,8 +227,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule1Test3");
 
     IRVChoices b = new IRVChoices("Alice(2),Alice(1)");
-    IRVChoices i = b.ApplyRule1();
-    assertEquals(2, i.getLength());
+    IRVChoices i = b.Rule_26_7_1_Overvotes();
+    assertEquals(2, i.getRawChoicesCount());
   }
 
   /**
@@ -241,9 +241,9 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule1Test4");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(2)");
-    IRVChoices i = b.ApplyRule1();
-    assertEquals(1, i.getLength());
-    assertEquals("Alice",i.GetValidIntent().get(0));
+    IRVChoices i = b.Rule_26_7_1_Overvotes();
+    assertEquals(1, i.getRawChoicesCount());
+    assertEquals("Alice(1)",i.GetValidIntent().get(0));
   }
 
   /**
@@ -256,8 +256,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule1Test5");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(2),Diego(3)");
-    IRVChoices i = b.ApplyRule1();
-    assertEquals(1, i.getLength());
+    IRVChoices i = b.Rule_26_7_1_Overvotes();
+    assertEquals(1, i.getRawChoicesCount());
     assertEquals("Alice",i.GetValidIntent().get(0));
   }
 
@@ -271,8 +271,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule1Test6");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(3),Diego(3)");
-    IRVChoices i = b.ApplyRule1();
-    assertEquals(2, i.getLength());
+    IRVChoices i = b.Rule_26_7_1_Overvotes();
+    assertEquals(2, i.getRawChoicesCount());
     assertEquals("Alice",i.GetValidIntent().get(0));
     assertEquals("Bob",i.GetValidIntent().get(1));
   }
@@ -287,8 +287,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule2Test1");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2)");
-    IRVChoices i2 = b.ApplyRule2();
-    assertEquals(2, i2.getLength());
+    IRVChoices i2 = b.Rule_26_7_2_Skips();
+    assertEquals(2, i2.getRawChoicesCount());
   }
 
   /**
@@ -301,8 +301,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule2Test2");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(1)");
-    IRVChoices i2 = b.ApplyRule2();
-    assertEquals(2, i2.getLength());
+    IRVChoices i2 = b.Rule_26_7_2_Skips();
+    assertEquals(2, i2.getRawChoicesCount());
   }
 
   /**
@@ -315,8 +315,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule2Test3");
 
     IRVChoices b = new IRVChoices("Alice(2),Alice(1)");
-    IRVChoices i2 = b.ApplyRule2();
-    assertEquals(2, i2.getLength());
+    IRVChoices i2 = b.Rule_26_7_2_Skips();
+    assertEquals(2, i2.getRawChoicesCount());
   }
 
   /**
@@ -329,8 +329,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule2Test4");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(3)");
-    IRVChoices i2 = b.ApplyRule2();
-    assertEquals(3, i2.getLength());
+    IRVChoices i2 = b.Rule_26_7_2_Skips();
+    assertEquals(3, i2.getRawChoicesCount());
   }
 
   /**
@@ -343,8 +343,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule2Test5");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(3)");
-    IRVChoices i2 = b.ApplyRule2();
-    assertEquals(1, i2.getLength());
+    IRVChoices i2 = b.Rule_26_7_2_Skips();
+    assertEquals(1, i2.getRawChoicesCount());
     assertEquals("Alice",i2.GetValidIntent().get(0));
   }
 
@@ -358,8 +358,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule2Test6");
 
     IRVChoices b = new IRVChoices("Bob(2),Chuan(3)");
-    IRVChoices i2 = b.ApplyRule2();
-    assertEquals(0, i2.getLength());
+    IRVChoices i2 = b.Rule_26_7_2_Skips();
+    assertEquals(0, i2.getRawChoicesCount());
   }
 
   /**
@@ -372,8 +372,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule2Test7");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(4)");
-    IRVChoices i2 = b.ApplyRule2();
-    assertEquals(2, i2.getLength());
+    IRVChoices i2 = b.Rule_26_7_2_Skips();
+    assertEquals(2, i2.getRawChoicesCount());
     assertEquals("Alice",i2.GetValidIntent().get(0));
     assertEquals("Bob",i2.GetValidIntent().get(1));
   }
@@ -388,8 +388,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule2Test8");
 
     IRVChoices b = new IRVChoices("Alice(3),Bob(2),Chuan(4)");
-    IRVChoices i2 = b.ApplyRule2();
-    assertEquals(0, i2.getLength());
+    IRVChoices i2 = b.Rule_26_7_2_Skips();
+    assertEquals(0, i2.getRawChoicesCount());
   }
 
   /**
@@ -402,9 +402,9 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule1AndRule2Test1");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(2),Diego(4)");
-    IRVChoices i = b.ApplyRule1();
-    IRVChoices i2 = i.ApplyRule2();
-    assertEquals(1, i2.getLength());
+    IRVChoices i = b.Rule_26_7_1_Overvotes();
+    IRVChoices i2 = i.Rule_26_7_2_Skips();
+    assertEquals(1, i2.getRawChoicesCount());
     assertEquals("Alice",i2.GetValidIntent().get(0));
   }
 
@@ -417,9 +417,9 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule1AndRule2Test2");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(2),Diego(4)");
-    IRVChoices i2 = b.ApplyRule2();
-    IRVChoices i1 = i2.ApplyRule1();
-    assertEquals(1, i1.getLength());
+    IRVChoices i2 = b.Rule_26_7_2_Skips();
+    IRVChoices i1 = i2.Rule_26_7_1_Overvotes();
+    assertEquals(1, i1.getRawChoicesCount());
     assertEquals("Alice",i2.GetValidIntent().get(0));
   }
 
@@ -433,8 +433,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule3Test1");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2)");
-    IRVChoices i3 = b.ApplyRule3();
-    assertEquals(2, i3.getLength());
+    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
+    assertEquals(2, i3.getRawChoicesCount());
   }
 
   /**
@@ -447,8 +447,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule3Test2");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(1)");
-    IRVChoices i3 = b.ApplyRule3();
-    assertEquals(1, i3.getLength());
+    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
+    assertEquals(1, i3.getRawChoicesCount());
     assertEquals("Alice",i3.GetValidIntent().get(0));
   }
 
@@ -462,8 +462,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule3Test3");
 
     IRVChoices b = new IRVChoices("Alice(2),Alice(1)");
-    IRVChoices i3 = b.ApplyRule3();
-    assertEquals(1, i3.getLength());
+    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
+    assertEquals(1, i3.getRawChoicesCount());
     assertEquals("Alice",i3.GetValidIntent().get(0));
   }
 
@@ -477,8 +477,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule3Test4");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(3)");
-    IRVChoices i3 = b.ApplyRule3();
-    assertEquals(3, i3.getLength());
+    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
+    assertEquals(3, i3.getRawChoicesCount());
   }
 
   /**
@@ -491,8 +491,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule3Test5");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(3)");
-    IRVChoices i3 = b.ApplyRule3();
-    assertEquals(2, i3.getLength());
+    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
+    assertEquals(2, i3.getRawChoicesCount());
   }
 
   /**
@@ -505,8 +505,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule3Test6");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2)");
-    IRVChoices i3 = b.ApplyRule3();
-    assertEquals(2, i3.getLength());
+    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
+    assertEquals(2, i3.getRawChoicesCount());
     assertEquals("Alice",i3.GetValidIntent().get(0));
     assertEquals("Bob",i3.GetValidIntent().get(1));
   }
@@ -522,8 +522,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule3Test7");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2),Chuan(4),Bob(3)");
-    IRVChoices i3 = b.ApplyRule3();
-    assertEquals(3, i3.getLength());
+    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
+    assertEquals(3, i3.getRawChoicesCount());
     assertEquals("Alice",i3.GetValidIntent().get(0));
     assertEquals("Bob",i3.GetValidIntent().get(1));
 
@@ -536,8 +536,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule3Test8");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Alice(4)");
-    IRVChoices i3 = b.ApplyRule3();
-    assertEquals(1, i3.getLength());
+    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
+    assertEquals(1, i3.getRawChoicesCount());
   }
 
   @Test
@@ -545,9 +545,9 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule3AndRule2Test1");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2)");
-    IRVChoices i3 = b.ApplyRule3();
-    IRVChoices i2 = i3.ApplyRule2();
-    assertEquals(2, i2.getLength());
+    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
+    IRVChoices i2 = i3.Rule_26_7_2_Skips();
+    assertEquals(2, i2.getRawChoicesCount());
     assertTrue(i2.IsValid());
   }
 
@@ -556,9 +556,9 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule3AndRule2Test3");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(3)");
-    IRVChoices i3 = b.ApplyRule3();
-    IRVChoices i2 = i3.ApplyRule2();
-    assertEquals(1, i2.getLength());
+    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
+    IRVChoices i2 = i3.Rule_26_7_2_Skips();
+    assertEquals(1, i2.getRawChoicesCount());
     assertTrue(i2.IsValid());
   }
 
@@ -567,9 +567,9 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule2AndRule3Test1");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2)");
-    IRVChoices i2 = b.ApplyRule2();
-    IRVChoices i3 = i2.ApplyRule3();
-    assertEquals(2, i3.getLength());
+    IRVChoices i2 = b.Rule_26_7_2_Skips();
+    IRVChoices i3 = i2.Rule_26_7_3_Duplicates();
+    assertEquals(2, i3.getRawChoicesCount());
     assertTrue(i3.IsValid());
   }
 
@@ -578,9 +578,9 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule2AndRule3Test3");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(3)");
-    IRVChoices i2 = b.ApplyRule2();
-    IRVChoices i3 = i2.ApplyRule3();
-    assertEquals(2, i3.getLength());
+    IRVChoices i2 = b.Rule_26_7_2_Skips();
+    IRVChoices i3 = i2.Rule_26_7_3_Duplicates();
+    assertEquals(2, i3.getRawChoicesCount());
     assertFalse(i3.IsValid());
   }
 
@@ -589,9 +589,9 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule1AndRule3Test1");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2)");
-    IRVChoices i1 = b.ApplyRule1();
-    IRVChoices i3 = i1.ApplyRule3();
-    assertEquals(1, i3.getLength());
+    IRVChoices i1 = b.Rule_26_7_1_Overvotes();
+    IRVChoices i3 = i1.Rule_26_7_3_Duplicates();
+    assertEquals(1, i3.getRawChoicesCount());
     assertTrue(i3.IsValid());
   }
 
@@ -600,9 +600,9 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"applyRule3AndRule1Test1");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2)");
-    IRVChoices i3 = b.ApplyRule3();
-    IRVChoices i1 = i3.ApplyRule1();
-    assertEquals(2, i1.getLength());
+    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
+    IRVChoices i1 = i3.Rule_26_7_1_Overvotes();
+    assertEquals(2, i1.getRawChoicesCount());
     assertTrue(i1.IsValid());
   }
 
