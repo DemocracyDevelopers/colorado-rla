@@ -130,33 +130,27 @@ public class IRVChoices {
    */
   public boolean IsValid() {
     final String prefix = "[IsValid]";
-    LOGGER.debug(String.format("%s interpreting validity for vote %s.", prefix,
-        choices.toString()));
+    LOGGER.debug(String.format("%s interpreting validity for vote %s.", prefix, choices.toString()));
 
-    // Test for a perfect integer sequence of length choices.size(), by filling in the i-th element
-    // when i is read. preferencesInOrder[i-1] is true if we've encountered preference i - if
-    // we encounter it again, or encounter an out-of-bounds preference, return false.
-    boolean[] preferencesInOrder = new boolean[choices.size()];
-    for (IRVPreference p : choices) {
-      // If this preference is out of bounds or already used, the preference list is invalid
-      if (p.rank < 1 || p.rank > choices.size() || preferencesInOrder[p.rank - 1]) {
+    // This method should be applied only to sorted choices.
+    if (ChoicesAreUnsorted()) {
+      final String msg = String.format("%s IsValid called on unsorted choices: %s.", prefix, choices);
+      LOGGER.error(msg);
+      throw new RuntimeException(msg);
+    }
+
+    // Test for a perfect sorted integer sequence of length choices.size(), by checking whether
+    // each element matches the expected value.
+    Set<String> candidateNamesSet = new HashSet<>();
+    for (int i=0 ; i < choices.size() ; i++) {
+      if (choices.get(i).rank != i + 1 || !candidateNamesSet.add(choices.get(i).candidateName))  {
         LOGGER.debug(String.format("%s vote %s is not valid.", prefix, choices));
         return false;
       }
-      // Otherwise, it's fine so far. Remember that we've seen this preference.
-      preferencesInOrder[p.rank - 1] = true;
     }
 
-    // Now check for repeat candidate names.
-    Set<String> candidateNamesSet = new HashSet<>();
-
-    // Set::add returns false if the item is already present, in which case this returns false.
-    // (Repeated candidate names are invalid.)
-    boolean noDuplicates = choices.stream()
-        .map(c -> candidateNamesSet.add(c.candidateName)).reduce(true, Boolean::logicalAnd);
-    LOGGER.debug(String.format("%s vote %s is%s valid.", prefix, choices,
-        noDuplicates ? "" : " not"));
-    return noDuplicates;
+    LOGGER.debug(String.format("%s vote %s is valid.", prefix, choices));
+    return true;
   }
 
   /**
@@ -219,6 +213,8 @@ public class IRVChoices {
 
     // Iterate through the list - at any time, if the current rank is equal to the next rank, break
     // and drop those choices and all subsequent ones.
+    // We use the explicit control over array index to deal appropriately with the comparison
+    // between adjacent items and the need to remove both if they have equal rank.
     List<IRVPreference> nonRepeatedChoices = new ArrayList<>(choices);
     for (int i = 0; i < nonRepeatedChoices.size() - 1; i++) {
       if ((nonRepeatedChoices.get(i)).compareTo(nonRepeatedChoices.get(i + 1)) == 0) {
@@ -270,6 +266,8 @@ public class IRVChoices {
 
     // Iterate through the list - at any time, if we find a rank that is more than one greater than
     // the rank beforehand, break and drop all subsequent choices.
+    // We use the explicit control over array index to deal appropriately with the comparison
+    // between adjacent items and the need to remove the second if there is a skipped rank.
     for (int i = 0; i < mutableChoices.size() - 1; i++) {
       if ((mutableChoices.get(i + 1)).rank > mutableChoices.get(i).rank + 1) {
         // We found a skipped rank. Skip from the _next_ item.
