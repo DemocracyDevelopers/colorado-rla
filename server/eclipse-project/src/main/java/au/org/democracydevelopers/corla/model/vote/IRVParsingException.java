@@ -21,6 +21,12 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.vote;
 
+/**
+ * This exception communicates that there has been a failure to parse a CVR choice as a valid IRV
+ * preference. For example, "Alice(2)" should parse correctly (it's a second preference for Alice),
+ * but names with no preferences, negative preferences, unmatched parentheses and other syntactic
+ * errors will throw this exception when IRVPreference tries to parse them.
+ */
 public class IRVParsingException extends Exception {
   // Parameterless Constructor
   public IRVParsingException() {}

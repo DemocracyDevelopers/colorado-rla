@@ -341,11 +341,11 @@ public class IRVChoices {
   }
 
   /**
-   * Check whether the preferences are sorted. It's debatable whether this function is needed,
-   * because the choices are immutable and are sorted in the constructor. It is only here to
-   * protect against subsequent development errors, since the application of ballot validity rules
-   * is critically dependent on the assumption that the choices are sorted.
-   * @return true if the preferences are in ascending order (highest preference / lowest number
+   * Check whether the preferences are sorted in non-descending order. It's debatable whether this
+   * function is needed, because the choices are immutable and are sorted in the constructor. It is
+   * here only to protect against subsequent development errors, since the application of ballot
+   * validity rules is critically dependent on the assumption that the choices are sorted.
+   * @return true if the preferences are in non-descending order (highest preference / lowest number
    * first)
    */
   private boolean ChoicesAreUnsorted() {
