@@ -14,12 +14,18 @@ package us.freeandfair.corla.json;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
+import au.org.democracydevelopers.corla.model.ContestType;
+import au.org.democracydevelopers.corla.model.vote.IRVChoices;
+import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
+import org.apache.log4j.LogManager;
+import us.freeandfair.corla.asm.AbstractStateMachine;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
 import us.freeandfair.corla.model.Contest;
@@ -35,6 +41,13 @@ import us.freeandfair.corla.persistence.Persistence;
 @SuppressWarnings("PMD.AtLeastOneConstructor")
 public final class CVRContestInfoJsonAdapter 
     extends TypeAdapter<CVRContestInfo> {
+
+  /**
+   * Class-wide logger
+   */
+  public static final org.apache.log4j.Logger LOGGER =
+      LogManager.getLogger(CVRContestInfoJsonAdapter.class);
+
   /**
    * The "contest" string (for JSON serialization).
    */
@@ -136,6 +149,7 @@ public final class CVRContestInfoJsonAdapter
   @Override
   public CVRContestInfo read(final JsonReader the_reader) 
       throws IOException {
+    String preface = "[read]";
     boolean error = false;
     List<String> choices = null;
     long contest_id = -1;
@@ -175,9 +189,27 @@ public final class CVRContestInfoJsonAdapter
     the_reader.endObject();
     
     // check the sanity of the contest
-    
-    final Contest contest = contestSanityCheck(contest_id, choices);
-    
+    final Contest currentContest = Persistence.getByID(contest_id, Contest.class);
+    Contest contest; // This is only used to check for null.
+
+    // For IRV contests, first check whether the choices can be parsed as a list of IRV
+    // preferences. Duplicates, overvotes and skipped ranks are OK, but strings that can't be
+    // parsed as name(rank) will throw an exception.
+    // Then conduct the sanity check (which checks whether the candidate names are the expected
+    // names for this contest) on just the names (with preferences removed).
+    if(currentContest.description().equalsIgnoreCase(ContestType.IRV.toString())) {
+      try {
+        IRVChoices parsedChoices = new IRVChoices(choices.toArray(String[]::new));
+        contest = contestSanityCheck(contest_id, parsedChoices.getCandidateNames());
+      } catch (IRVParsingException e) {
+        LOGGER.error(String.format("%s %s", preface, e.getMessage()));
+        throw new IOException("uploaded IRV vote could not be parsed");
+      }
+      // For plurality, just do the sanity check directly on the choices.
+    } else {
+      contest = contestSanityCheck(contest_id, choices);
+    }
+
     if (error || contest == null) {
       throw new JsonSyntaxException("invalid data detected in CVR contest info");
     }

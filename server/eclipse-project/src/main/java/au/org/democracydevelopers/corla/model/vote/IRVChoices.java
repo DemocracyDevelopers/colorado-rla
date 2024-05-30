@@ -112,9 +112,28 @@ public class IRVChoices {
    * @throws IRVParsingException if one of the comma-separated substrings cannot be parsed as a
    *                             name(rank). This could happen for example if called on a
    *                             plurality vote.
+   * TODO Note we are currently not using this outside tests - it's possible the List<String>
+   *   constructor is the only one we need.
    */
   public IRVChoices(String sanitizedChoices) throws IRVParsingException {
-    this(parseChoices(sanitizedChoices));
+    this(parseChoices(sanitizedChoices.trim().split(",")));
+  }
+
+  /**
+   * Constructor - takes IRV preferences as a list of strings of the kind stored in the corla
+   * database, * of the form ["name1(p1)","name2(p2)", ...]
+   * Parses each individual preference into an IRVPreference to make a list of IRVPreferences, and
+   * then calls the other constructor, which sorts the list by rank (most to least preferred), then
+   * stores in an unmodifiable list.
+   *
+   * @param choices the IRV preferences as a list of strings, which need not be a valid IRV vote -
+   *                repeats or skipped preferences are allowed.
+   * @throws IRVParsingException if one of the comma-separated substrings cannot be parsed as a
+   *                             name(rank). This could happen for example if called on a
+   *                             plurality vote.
+   */
+  public IRVChoices(String[] choices) throws IRVParsingException {
+    this(parseChoices(choices));
   }
 
   /**
@@ -187,6 +206,13 @@ public class IRVChoices {
         .choices.stream().map(c -> c.candidateName).collect(Collectors.toList());
     LOGGER.debug(String.format("%s valid interpretation is %s.", prefix, valid));
     return valid;
+  }
+
+  /**
+   * Return the list of candidate names, without the ranks.
+   */
+  public List<String> getCandidateNames() {
+    return choices.stream().map(c -> c.candidateName).collect(Collectors.toList());
   }
 
   /**
@@ -263,7 +289,7 @@ public class IRVChoices {
     // If the choices are blank, return blank. If the first element is not rank 1, the vote is
     // effectively blank.
     if (choices.isEmpty() || choices.get(0).rank != 1) {
-      return new IRVChoices(new ArrayList<>());
+      return new IRVChoices(new ArrayList<IRVPreference>());
     }
 
     List<IRVPreference> mutableChoices = new ArrayList<>(choices);
@@ -324,17 +350,17 @@ public class IRVChoices {
    * preference for validity (a nonempty string, followed by a positive integer in parentheses) but
    * does _not_ check whether the vote is valid - repeated and skipped preferences are allowed.
    *
-   * @param sanitizedChoices a string describing the IRV vote, in the form "name1(p1),name2(p2),..."
+   * @param sanitizedChoices an array of strings describing the IRV vote, in the form ["name1
+   *                         (p1)", "name2(p2)",...]
    * @return the same information as a list of IRVPreference objects.
    * @throws IRVParsingException if any of the strings cannot be parsed as an IRVPreference.
    */
-  private static List<IRVPreference> parseChoices(String sanitizedChoices) throws IRVParsingException {
+  private static List<IRVPreference> parseChoices(String[] sanitizedChoices)
+      throws IRVParsingException {
     ArrayList<IRVPreference> mutableChoices = new ArrayList<>();
 
-    String[] preferences = sanitizedChoices.trim().split(",");
-
-    for (String preference : preferences) {
-      mutableChoices.add(new IRVPreference(preference));
+    for (String choice : sanitizedChoices) {
+      mutableChoices.add(new IRVPreference(choice));
     }
 
     return mutableChoices;
