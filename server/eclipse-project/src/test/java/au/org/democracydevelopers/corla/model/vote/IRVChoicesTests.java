@@ -63,7 +63,7 @@ public class IRVChoicesTests {
 
     IRVChoices b = new IRVChoices("Candidate A(1),Candidate B(1),Candidate C(1),Candidate C(2),Candidate B(3)");
     List<String> expected = new ArrayList<>();
-    List<String> validInterpretation = b.GetValidIntent();
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
     assertEqualListsOfStrings(expected, validInterpretation);
   }
 
@@ -77,7 +77,7 @@ public class IRVChoicesTests {
 
     IRVChoices b = new IRVChoices("Candidate B(1),Candidate A(2),Candidate C(2),Candidate C(3)");
     List<String> expected = List.of("Candidate B");
-    List<String> validInterpretation = b.GetValidIntent();
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
     assertEqualListsOfStrings(expected, validInterpretation);
   }
 
@@ -91,7 +91,7 @@ public class IRVChoicesTests {
 
     IRVChoices b = new IRVChoices("Candidate A(1),Candidate B(3)");
     List<String> expected = List.of("Candidate A");
-    List<String> validInterpretation = b.GetValidIntent();
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
     assertEqualListsOfStrings(expected, validInterpretation);
   }
 
@@ -105,7 +105,7 @@ public class IRVChoicesTests {
 
     IRVChoices b = new IRVChoices("Candidate A(1),Candidate A(2),Candidate B(3)");
     List<String> expected = List.of("Candidate A");
-    List<String> validInterpretation = b.GetValidIntent();
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
     assertEqualListsOfStrings(expected, validInterpretation);
   }
 
@@ -119,7 +119,7 @@ public class IRVChoicesTests {
 
     IRVChoices b = new IRVChoices("Candidate B(1),Candidate A(2),Candidate C(2),Candidate C(3)");
     List<String> expected = List.of("Candidate B");
-    List<String> validInterpretation = b.GetValidIntent();
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
     assertEqualListsOfStrings(expected, validInterpretation);
   }
 
@@ -134,7 +134,7 @@ public class IRVChoicesTests {
 
     IRVChoices b = new IRVChoices("Candidate B(1),Candidate A(2),Candidate B(2),Candidate C(3)");
     List<String> expected = List.of("Candidate B", "Candidate A", "Candidate C");
-    List<String> validInterpretation = b.GetValidIntent();
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
     assertEqualListsOfStrings(expected, validInterpretation);
   }
 
@@ -243,7 +243,7 @@ public class IRVChoicesTests {
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(2)");
     IRVChoices i = b.Rule_26_7_1_Overvotes();
     assertEquals(1, i.getRawChoicesCount());
-    assertEquals("Alice(1)",i.GetValidIntent().get(0));
+    assertEquals("Alice",i.GetValidIntentAsOrderedList().get(0));
   }
 
   /**
@@ -258,7 +258,7 @@ public class IRVChoicesTests {
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(2),Diego(3)");
     IRVChoices i = b.Rule_26_7_1_Overvotes();
     assertEquals(1, i.getRawChoicesCount());
-    assertEquals("Alice",i.GetValidIntent().get(0));
+    assertEquals("Alice",i.GetValidIntentAsOrderedList().get(0));
   }
 
   /**
@@ -273,8 +273,8 @@ public class IRVChoicesTests {
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(3),Diego(3)");
     IRVChoices i = b.Rule_26_7_1_Overvotes();
     assertEquals(2, i.getRawChoicesCount());
-    assertEquals("Alice",i.GetValidIntent().get(0));
-    assertEquals("Bob",i.GetValidIntent().get(1));
+    assertEquals("Alice",i.GetValidIntentAsOrderedList().get(0));
+    assertEquals("Bob",i.GetValidIntentAsOrderedList().get(1));
   }
 
   /**
@@ -345,7 +345,7 @@ public class IRVChoicesTests {
     IRVChoices b = new IRVChoices("Alice(1),Bob(3)");
     IRVChoices i2 = b.Rule_26_7_2_Skips();
     assertEquals(1, i2.getRawChoicesCount());
-    assertEquals("Alice",i2.GetValidIntent().get(0));
+    assertEquals("Alice",i2.GetValidIntentAsOrderedList().get(0));
   }
 
   /**
@@ -374,8 +374,8 @@ public class IRVChoicesTests {
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(4)");
     IRVChoices i2 = b.Rule_26_7_2_Skips();
     assertEquals(2, i2.getRawChoicesCount());
-    assertEquals("Alice",i2.GetValidIntent().get(0));
-    assertEquals("Bob",i2.GetValidIntent().get(1));
+    assertEquals("Alice",i2.GetValidIntentAsOrderedList().get(0));
+    assertEquals("Bob",i2.GetValidIntentAsOrderedList().get(1));
   }
 
   /**
@@ -405,7 +405,7 @@ public class IRVChoicesTests {
     IRVChoices i = b.Rule_26_7_1_Overvotes();
     IRVChoices i2 = i.Rule_26_7_2_Skips();
     assertEquals(1, i2.getRawChoicesCount());
-    assertEquals("Alice",i2.GetValidIntent().get(0));
+    assertEquals("Alice",i2.GetValidIntentAsOrderedList().get(0));
   }
 
   /**
@@ -420,7 +420,7 @@ public class IRVChoicesTests {
     IRVChoices i2 = b.Rule_26_7_2_Skips();
     IRVChoices i1 = i2.Rule_26_7_1_Overvotes();
     assertEquals(1, i1.getRawChoicesCount());
-    assertEquals("Alice",i2.GetValidIntent().get(0));
+    assertEquals("Alice",i2.GetValidIntentAsOrderedList().get(0));
   }
 
   /**
@@ -449,7 +449,7 @@ public class IRVChoicesTests {
     IRVChoices b = new IRVChoices("Alice(1),Alice(1)");
     IRVChoices i3 = b.Rule_26_7_3_Duplicates();
     assertEquals(1, i3.getRawChoicesCount());
-    assertEquals("Alice",i3.GetValidIntent().get(0));
+    assertEquals("Alice",i3.GetValidIntentAsOrderedList().get(0));
   }
 
   /**
@@ -464,7 +464,7 @@ public class IRVChoicesTests {
     IRVChoices b = new IRVChoices("Alice(2),Alice(1)");
     IRVChoices i3 = b.Rule_26_7_3_Duplicates();
     assertEquals(1, i3.getRawChoicesCount());
-    assertEquals("Alice",i3.GetValidIntent().get(0));
+    assertEquals("Alice",i3.GetValidIntentAsOrderedList().get(0));
   }
 
   /**
@@ -507,8 +507,8 @@ public class IRVChoicesTests {
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2)");
     IRVChoices i3 = b.Rule_26_7_3_Duplicates();
     assertEquals(2, i3.getRawChoicesCount());
-    assertEquals("Alice",i3.GetValidIntent().get(0));
-    assertEquals("Bob",i3.GetValidIntent().get(1));
+    assertEquals("Alice",i3.GetValidIntentAsOrderedList().get(0));
+    assertEquals("Bob",i3.GetValidIntentAsOrderedList().get(1));
   }
 
   /**
@@ -524,11 +524,11 @@ public class IRVChoicesTests {
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2),Chuan(4),Bob(3)");
     IRVChoices i3 = b.Rule_26_7_3_Duplicates();
     assertEquals(3, i3.getRawChoicesCount());
-    assertEquals("Alice",i3.GetValidIntent().get(0));
-    assertEquals("Bob",i3.GetValidIntent().get(1));
+    assertEquals("Alice",i3.GetValidIntentAsOrderedList().get(0));
+    assertEquals("Bob",i3.GetValidIntentAsOrderedList().get(1));
 
     exception.expect(IndexOutOfBoundsException.class);
-    i3.GetValidIntent().get(2);
+    i3.GetValidIntentAsOrderedList().get(2);
   }
 
   @Test
