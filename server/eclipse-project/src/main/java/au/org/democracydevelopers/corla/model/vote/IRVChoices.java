@@ -78,6 +78,7 @@ public class IRVChoices {
   /**
    * The number of IRV choices, as given to the constructor, before any duplicates, skipped
    * preferences or overvotes are removed.
+   *
    * @return the number of choices in the raw IRV vote.
    */
   public int getRawChoicesCount() {
@@ -87,6 +88,7 @@ public class IRVChoices {
   /**
    * Constructor - takes a list of IRVPreferences (ranked candidates) representing a vote, sorts
    * this list by rank (most to least preferred), then stores in an unmodifiable list.
+   *
    * @param mutableChoices a list of IRVPreferences, which need not be valid - repeats or skipped
    *                       preferences are allowed.
    */
@@ -104,6 +106,7 @@ public class IRVChoices {
    * Parses each individual preference into an IRVPreference to make a list of IRVPreferences, and
    * then calls the other constructor, which sorts the list by rank (most to least preferred), then
    * stores in an unmodifiable list.
+   *
    * @param sanitizedChoices the IRV preferences as a string, which need not be a valid IRV vote -
    *                         repeats or skipped preferences are allowed.
    * @throws IRVParsingException if one of the comma-separated substrings cannot be parsed as a
@@ -171,8 +174,9 @@ public class IRVChoices {
    * (Rule 26.7.1). The order of skipped preferences (Rule 26.7.2) does not matter.
    * If the IRV vote is already valid, it will be returned as an ordered list of candidate names
    * in preference order (highest preference first).
+   *
    * @return the implied valid IRV preferences, as an ordered list of candidate names with the
-   *         most-preferred first.
+   * most-preferred first.
    */
   public List<String> GetValidIntentAsOrderedList() {
     final String prefix = "[GetValidIntentAsOrderedList]";
@@ -180,14 +184,14 @@ public class IRVChoices {
         choices.toString()));
 
     List<String> valid = this.Rule_26_7_3_Duplicates().Rule_26_7_1_Overvotes().Rule_26_7_2_Skips()
-            .choices.stream().map(c -> c.candidateName).collect(Collectors.toList());
+        .choices.stream().map(c -> c.candidateName).collect(Collectors.toList());
     LOGGER.debug(String.format("%s valid interpretation is %s.", prefix, valid));
     return valid;
   }
 
   /**
-   * Print as a human-readable string. This will include explicit preferences in parentheses.
-   * Intended for votes that may not be valid, e.g. "Alice(1),Bob(1),Chuan(3)".
+   * Return this vote as a human-readable string. This will include explicit preferences in
+   * parentheses. The method can be used irrespective of whether the vote is valid or invalid.
    */
   public String toString() {
     return choices.stream().map(IRVPreference::toString).collect(Collectors.joining(","));
@@ -199,13 +203,14 @@ public class IRVChoices {
    * This is the rule that identifies overvotes (i.e. repeated ranks) and removes all
    * subsequent preferences.
    * For example, "Alice(1),"Bob(2)","Chuan(2)" will convert to "Alice(1)".
+   *
    * @return new updated vote, with overvotes and all subsequent choices removed.
    */
   private IRVChoices Rule_26_7_1_Overvotes() {
     final String prefix = "[Rule_26_7_1_Overvotes]";
 
     // These rules should be applied only to sorted choices.
-    if(IsUnsorted(choices)) {
+    if (ChoicesAreUnsorted()) {
       final String msg = String.format("%s Rule 26.7.1 (overvote removal) called on unsorted " +
           "choices: %s.", prefix, choices);
       LOGGER.error(msg);
@@ -241,13 +246,14 @@ public class IRVChoices {
    * regardless of array position, in case anyone chooses to adapt this code to other IRV rules.
    * In particular, this implementation will remove Diego(4) in the example above, but will _not_
    * remove Bob(2),Chuan(2).
+   *
    * @return new updated vote, with every choice following a skipped rank removed.
    */
   private IRVChoices Rule_26_7_2_Skips() {
     final String prefix = "[Rule_26_7_2_Skips]";
 
     // These rules should be applied only to sorted choices.
-    if(IsUnsorted(choices)) {
+    if (ChoicesAreUnsorted()) {
       final String msg = String.format("%s Rule 26.7.2 (skipped rank removal) called on unsorted " +
           "choices: %s.", prefix, choices);
       LOGGER.error(msg);
@@ -278,8 +284,8 @@ public class IRVChoices {
   /**
    * Applies Rule 26.7.3 from
    * <a href="https://www.sos.state.co.us/pubs/rule_making/CurrentRules/8CCR1505-1/Rule26.pdf">...</a>
-   * This removes duplicated preferences for the same candidates, leaving only the most-preferred
-   * mention (i.e. the lowest number) for each candidate.
+   * This removes repeat mentions of the same candidate, leaving only the most-preferred rank
+   * (i.e. the lowest number) for each candidate.
    * For example, "Alice(1),Alice(2),Bob(2)" will convert to "Alice(1),Bob(2)".
    * @return new updated vote, with all but the highest-rank mention of each candidate removed.
    */
@@ -287,7 +293,7 @@ public class IRVChoices {
     final String prefix = "[Rule_26_7_3_Duplicates]";
 
     // These rules should be applied only to sorted choices.
-    if(IsUnsorted(choices)) {
+    if (ChoicesAreUnsorted()) {
       final String msg = String.format("%s Rule 26.7.3 (duplicate candidate removal) called on " +
           "unsorted choices: %s.", prefix, choices);
       LOGGER.error(msg);
@@ -335,13 +341,14 @@ public class IRVChoices {
   }
 
   /**
-   * Check whether the preferences are sorted.
-   *
-   * @param choices a list of IRV preferences
+   * Check whether the preferences are sorted. It's debatable whether this function is needed,
+   * because the choices are immutable and are sorted in the constructor. It is only here to
+   * protect against subsequent development errors, since the application of ballot validity rules
+   * is critically dependent on the assumption that the choices are sorted.
    * @return true if the preferences are in ascending order (highest preference / lowest number
    * first)
    */
-  private boolean IsUnsorted(List<IRVPreference> choices) {
+  private boolean ChoicesAreUnsorted() {
     for (int i = 0; i < choices.size() - 1; i++) {
       if ((choices.get(i)).compareTo(choices.get(i + 1)) > 0) {
         return true;
