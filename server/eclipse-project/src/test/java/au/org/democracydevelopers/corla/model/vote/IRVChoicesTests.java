@@ -28,7 +28,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.testng.AssertJUnit.*;
@@ -40,7 +39,9 @@ import static org.testng.AssertJUnit.*;
  * Determination of Voter Intent for Colorado Elections, 2023 addendum for Instant Runoff Voting
  * (IRV), available at
  * <a href="https://assets.bouldercounty.gov/wp-content/uploads/2023/11/Voter-Intent-Guide-IRV-Addendum-2023.pdf">...</a>
- * Examples are taken directly from the Guide.
+ * TODO This may be updated soon - updated ref to CDOS rather than Boulder when official CDOS
+ * version becomes available.
+ * Examples are taken directly from the Guide, with example numbers (if given) from there.
  */
 public class IRVChoicesTests {
 
@@ -53,22 +54,22 @@ public class IRVChoicesTests {
   public final ExpectedException exception = ExpectedException.none();
 
   /**
-   * Using the DuplicatesBeforeOvervotes function and testing against the
-   * specific examples in the Guide.
-   * This has a repeated first preference and should hence have empty valid interpretation.
+   * Testing GetValidIntent against Example 1 in the Guide. This removes duplicates before
+   * overvotes.
+   * The vote has a repeated first preference and should hence have empty valid interpretation.
    */
   @Test
   public void Example1OvervotesNoValidRankings() throws IRVParsingException {
     testUtils.log(LOGGER, "Example1OvervotesNoValidRankings");
 
     IRVChoices b = new IRVChoices("Candidate A(1),Candidate B(1),Candidate C(1),Candidate C(2),Candidate B(3)");
-    List<String> expected = new ArrayList<>();
     List<String> validInterpretation = b.GetValidIntentAsOrderedList();
-    assertEqualListsOfStrings(expected, validInterpretation);
+    assertEquals(0, validInterpretation.size());
   }
 
   /**
-   * Second preference is duplicated, so only the first is valid.
+   * Testing GetValidIntent against Example 1 in the Guide. This removes duplicates before
+   * overvotes. Second preference is duplicated, so only the first is valid.
    * @throws IRVParsingException never
    */
   @Test
@@ -76,13 +77,13 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"Example2OvervoteWithValidRankings");
 
     IRVChoices b = new IRVChoices("Candidate B(1),Candidate A(2),Candidate C(2),Candidate C(3)");
-    List<String> expected = List.of("Candidate B");
     List<String> validInterpretation = b.GetValidIntentAsOrderedList();
-    assertEqualListsOfStrings(expected, validInterpretation);
+    assertEqualListsOfStrings(List.of("Candidate B"), validInterpretation);
   }
 
   /**
-   * Preference 2 is skipped, so everything afterwards is ignored.
+   * Example 1 of skipped rankings, from the Guide. Preference 2 is skipped, so everything
+   * 'afterwards is ignored.
    * @throws IRVParsingException never
    */
   @Test
@@ -90,13 +91,13 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"Example1SkippedRankings");
 
     IRVChoices b = new IRVChoices("Candidate A(1),Candidate B(3)");
-    List<String> expected = List.of("Candidate A");
     List<String> validInterpretation = b.GetValidIntentAsOrderedList();
-    assertEqualListsOfStrings(expected, validInterpretation);
+    assertEqualListsOfStrings(List.of("Candidate A"), validInterpretation);
   }
 
   /**
-   * Candidate A has duplicate preferences, so only the first counts. This causes preference 2 to
+   * Example 1 of duplicates, i.e. duplicate mentions of a given candidate, from the Guide.
+   * Candidate A has duplicate mentions, so only the first counts. This causes preference 2 to
    * be skipped, so everything later is ignored.
    */
   @Test
@@ -104,13 +105,14 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"Example1DuplicateRankings");
 
     IRVChoices b = new IRVChoices("Candidate A(1),Candidate A(2),Candidate B(3)");
-    List<String> expected = List.of("Candidate A");
     List<String> validInterpretation = b.GetValidIntentAsOrderedList();
-    assertEqualListsOfStrings(expected, validInterpretation);
+    assertEqualListsOfStrings(List.of("Candidate A"), validInterpretation);
   }
 
   /**
-   * Preference 2 is overvoted, so only the first preference counts.
+   * Example 1 of duplicates-then-overvotes, from the Guide.
+   * Candidate C is duplicated, but after the duplicate mention of C is removed, rank 2 is
+   * still overvoted, so only the first preference counts.
    * @throws IRVParsingException never
    */
   @Test
@@ -118,14 +120,14 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"Example1DuplicatesAndOvervotes");
 
     IRVChoices b = new IRVChoices("Candidate B(1),Candidate A(2),Candidate C(2),Candidate C(3)");
-    List<String> expected = List.of("Candidate B");
     List<String> validInterpretation = b.GetValidIntentAsOrderedList();
-    assertEqualListsOfStrings(expected, validInterpretation);
+    assertEqualListsOfStrings(List.of("Candidate B"), validInterpretation);
   }
 
   /**
-   * Duplicates are removed before overvotes, so the preference for CandidateB(2) is removed
-   * (it duplicates B(1)), hence leaving no overvote for preference 2.
+   * Example 2 of duplicates-then-overvotes, from the Guide.
+   * The preference for Candidate B(2) is removed (it duplicates B(1)), hence leaving no overvote
+   * for preference 2.
    * @throws IRVParsingException never
    */
   @Test
@@ -133,9 +135,8 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"Example2DuplicatesAndOvervotes");
 
     IRVChoices b = new IRVChoices("Candidate B(1),Candidate A(2),Candidate B(2),Candidate C(3)");
-    List<String> expected = List.of("Candidate B", "Candidate A", "Candidate C");
     List<String> validInterpretation = b.GetValidIntentAsOrderedList();
-    assertEqualListsOfStrings(expected, validInterpretation);
+    assertEqualListsOfStrings(List.of("Candidate B", "Candidate A", "Candidate C"), validInterpretation);
   }
 
   /**
@@ -190,192 +191,128 @@ public class IRVChoicesTests {
     }
 
   /**
-   * Test rule 1 - removing overvotes (repeated preferences).
-   * Not applicable.
+   * The valid interpretation of a valid vote is just the same vote.
    * @throws IRVParsingException never
    */
   @Test
-  public void applyRule1Test1() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule1Test1");
+  public void validVoteIsUnchanged() throws IRVParsingException {
+    testUtils.log(LOGGER, "validVoteIsUnchanged");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2)");
-    IRVChoices i = b.Rule_26_7_1_Overvotes();
-    assertEquals(2, i.getRawChoicesCount());
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
+    assertEqualListsOfStrings(List.of("Alice","Bob"), validInterpretation);
   }
 
   /**
-   * Test rule 1 - removing overvotes (repeated preferences).
+   * The valid interpretation of a valid vote is just the same vote.
+   * @throws IRVParsingException never
+   */
+  @Test
+  public void validThreeChoiceVoteIsUnchanged() throws IRVParsingException {
+    testUtils.log(LOGGER,"validThreeChoiceVoteIsUnchanged");
+
+    IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(3)");
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
+    assertEqualListsOfStrings(List.of("Alice","Bob","Chuan"), validInterpretation);
+  }
+
+  /**
+   * Test rule 26.7.1 - removing overvotes (repeated preferences).
    * Removes everything.
    * @throws IRVParsingException never
    */
   @Test
-  public void applyRule1Test2() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule1Test2");
+  public void removeOvervotesTest1() throws IRVParsingException {
+    testUtils.log(LOGGER,"removeOvervotesTest1");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(1)");
-    IRVChoices i = b.Rule_26_7_1_Overvotes();
-    assertEquals(0, i.getRawChoicesCount());
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
+    assertEquals(0, validInterpretation.size());
   }
 
   /**
-   * Test rule 1 - removing overvotes (repeated preferences).
-   * No change (though this vote is invalid for other reasons).
-   * @throws IRVParsingException never
-   */
-  @Test
-  public void applyRule1Test3() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule1Test3");
-
-    IRVChoices b = new IRVChoices("Alice(2),Alice(1)");
-    IRVChoices i = b.Rule_26_7_1_Overvotes();
-    assertEquals(2, i.getRawChoicesCount());
-  }
-
-  /**
-   * Test rule 1 - removing overvotes (repeated preferences).
+   * Test rule 26.7.1 - removing overvotes (repeated preferences).
    * Removes repeat 2nd preference.
    * @throws IRVParsingException never
    */
   @Test
-  public void applyRule1Test4() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule1Test4");
+  public void removeOvervotesTest2() throws IRVParsingException {
+    testUtils.log(LOGGER,"removeOvervotesTest2");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(2)");
-    IRVChoices i = b.Rule_26_7_1_Overvotes();
-    assertEquals(1, i.getRawChoicesCount());
-    assertEquals("Alice",i.GetValidIntentAsOrderedList().get(0));
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
+    assertEquals("Alice",validInterpretation.get(0));
   }
 
   /**
-   * Test rule 1 - removing overvotes (repeated preferences).
+   * Test rule 26.7.1 - removing overvotes (repeated preferences).
    * Removes repeat 2nd preference and the subsequent preference.
    * @throws IRVParsingException never
    */
   @Test
-  public void applyRule1Test5() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule1Test5");
+  public void removeOvervotesTest3() throws IRVParsingException {
+    testUtils.log(LOGGER,"removeOvervotesTest3");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(2),Diego(3)");
-    IRVChoices i = b.Rule_26_7_1_Overvotes();
-    assertEquals(1, i.getRawChoicesCount());
-    assertEquals("Alice",i.GetValidIntentAsOrderedList().get(0));
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
+    assertEquals("Alice",validInterpretation.get(0));
   }
 
   /**
-   * Test rule 1 - removing overvotes (repeated preferences).
+   * Test rule 26.7.1 - removing overvotes (repeated preferences).
    * Removes repeat 3rd preference.
    * @throws IRVParsingException never
    */
   @Test
-  public void applyRule1Test6() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule1Test6");
+  public void removeOvervotesTest4() throws IRVParsingException {
+    testUtils.log(LOGGER,"removeOvervotesTest4");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(3),Diego(3)");
-    IRVChoices i = b.Rule_26_7_1_Overvotes();
-    assertEquals(2, i.getRawChoicesCount());
-    assertEquals("Alice",i.GetValidIntentAsOrderedList().get(0));
-    assertEquals("Bob",i.GetValidIntentAsOrderedList().get(1));
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
+    assertEquals("Alice",validInterpretation.get(0));
+    assertEquals("Bob",validInterpretation.get(1));
   }
 
   /**
-   * Test rule 2 - removing skipped rankings.
-   * Not applicable.
-   * @throws IRVParsingException never
-   */
-  @Test
-  public void applyRule2Test1() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule2Test1");
-
-    IRVChoices b = new IRVChoices("Alice(1),Bob(2)");
-    IRVChoices i2 = b.Rule_26_7_2_Skips();
-    assertEquals(2, i2.getRawChoicesCount());
-  }
-
-  /**
-   * Test rule 2 - removing skipped rankings.
-   * Not applicable (though this vote is invalid for other reasons).
-   * @throws IRVParsingException never
-   */
-  @Test
-  public void applyRule2Test2() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule2Test2");
-
-    IRVChoices b = new IRVChoices("Alice(1),Alice(1)");
-    IRVChoices i2 = b.Rule_26_7_2_Skips();
-    assertEquals(2, i2.getRawChoicesCount());
-  }
-
-  /**
-   * Test rule 2 - removing skipped rankings.
-   * Not applicable (though this vote is invalid for other reasons).
-   * @throws IRVParsingException never
-   */
-  @Test
-  public void applyRule2Test3() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule2Test3");
-
-    IRVChoices b = new IRVChoices("Alice(2),Alice(1)");
-    IRVChoices i2 = b.Rule_26_7_2_Skips();
-    assertEquals(2, i2.getRawChoicesCount());
-  }
-
-  /**
-   * Test rule 2 - removing skipped rankings.
-   * Not applicable.
-   * @throws IRVParsingException never
-   */
-  @Test
-  public void applyRule2Test4() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule2Test4");
-
-    IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(3)");
-    IRVChoices i2 = b.Rule_26_7_2_Skips();
-    assertEquals(3, i2.getRawChoicesCount());
-  }
-
-  /**
-   * Test rule 2 - removing skipped rankings.
+   * Test rule 26.7.2 - removing skipped rankings.
    * Removes all but the first preference.
    * @throws IRVParsingException never
    */
   @Test
-  public void applyRule2Test5() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule2Test5");
+  public void removeSkipsTest1() throws IRVParsingException {
+    testUtils.log(LOGGER,"removeSkipsTest1");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(3)");
-    IRVChoices i2 = b.Rule_26_7_2_Skips();
-    assertEquals(1, i2.getRawChoicesCount());
-    assertEquals("Alice",i2.GetValidIntentAsOrderedList().get(0));
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
+    assertEqualListsOfStrings(List.of("Alice"),validInterpretation);
   }
 
   /**
-   * Test rule 2 - removing skipped rankings.
+   * Test rule 26.7.2 - removing skipped rankings.
    * First rank skipped - remove all.
    * @throws IRVParsingException never
    */
   @Test
-  public void applyRule2Test6() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule2Test6");
+  public void removeSkipsTest2() throws IRVParsingException {
+    testUtils.log(LOGGER,"removeSkipsTest2");
 
     IRVChoices b = new IRVChoices("Bob(2),Chuan(3)");
-    IRVChoices i2 = b.Rule_26_7_2_Skips();
-    assertEquals(0, i2.getRawChoicesCount());
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
+    assertEquals(0,validInterpretation.size());
   }
 
   /**
-   * Test rule 2 - removing skipped rankings.
+   * Test rule 26.7.2 - removing skipped rankings.
    * Third rank skipped - remove the 4th.
    * @throws IRVParsingException never
    */
   @Test
-  public void applyRule2Test7() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule2Test7");
+  public void removeSkipsTest3() throws IRVParsingException {
+    testUtils.log(LOGGER,"removeSkipsTest3");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(4)");
-    IRVChoices i2 = b.Rule_26_7_2_Skips();
-    assertEquals(2, i2.getRawChoicesCount());
-    assertEquals("Alice",i2.GetValidIntentAsOrderedList().get(0));
-    assertEquals("Bob",i2.GetValidIntentAsOrderedList().get(1));
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
+    assertEqualListsOfStrings(List.of("Alice","Bob"),validInterpretation);
   }
 
   /**
@@ -384,226 +321,97 @@ public class IRVChoicesTests {
    * @throws IRVParsingException never
    */
   @Test
-  public void applyRule2Test8() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule2Test8");
+  public void removeSkipsTest4() throws IRVParsingException {
+    testUtils.log(LOGGER,"removeSkipsTest4");
 
     IRVChoices b = new IRVChoices("Alice(3),Bob(2),Chuan(4)");
-    IRVChoices i2 = b.Rule_26_7_2_Skips();
-    assertEquals(0, i2.getRawChoicesCount());
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
+    assertEquals(0, validInterpretation.size());
   }
 
   /**
-   * Apply rule 1 and then rule 2.
+   * Combination of overvotes and skips.
    * The overvoted second rank is removed, then everything afterwards.
    * @throws IRVParsingException never
    */
   @Test
-  public void applyRule1AndRule2Test1() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule1AndRule2Test1");
+  public void overvotesAndSkipsTest1() throws IRVParsingException {
+    testUtils.log(LOGGER,"overvotesAndSkipsTest1");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(2),Diego(4)");
-    IRVChoices i = b.Rule_26_7_1_Overvotes();
-    IRVChoices i2 = i.Rule_26_7_2_Skips();
-    assertEquals(1, i2.getRawChoicesCount());
-    assertEquals("Alice",i2.GetValidIntentAsOrderedList().get(0));
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
+    assertEqualListsOfStrings(List.of("Alice"), validInterpretation);
   }
 
   /**
-   * Apply rule 2 and then rule 1. Same result.
+   * Apply rule 26.7.3 - removing all but the highest expressed preference for a given candidate.
+   * Result is a single valid 1st preference for Alice.
    * @throws IRVParsingException never
    */
   @Test
-  public void applyRule1AndRule2Test2() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule1AndRule2Test2");
-
-    IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(2),Diego(4)");
-    IRVChoices i2 = b.Rule_26_7_2_Skips();
-    IRVChoices i1 = i2.Rule_26_7_1_Overvotes();
-    assertEquals(1, i1.getRawChoicesCount());
-    assertEquals("Alice",i2.GetValidIntentAsOrderedList().get(0));
-  }
-
-  /**
-   * Apply rule 3 - removing all but the highest expressed preference for a given candidate.
-   * Not applicable.
-   * @throws IRVParsingException never
-   */
-  @Test
-  public void applyRule3Test1() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule3Test1");
-
-    IRVChoices b = new IRVChoices("Alice(1),Bob(2)");
-    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
-    assertEquals(2, i3.getRawChoicesCount());
-  }
-
-  /**
-   * Apply rule 3 - removing all but the highest expressed preference for a given candidate.
-   * Result is a single valid 1st preference.
-   * @throws IRVParsingException never
-   */
-  @Test
-  public void applyRule3Test2() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule3Test2");
-
-    IRVChoices b = new IRVChoices("Alice(1),Alice(1)");
-    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
-    assertEquals(1, i3.getRawChoicesCount());
-    assertEquals("Alice",i3.GetValidIntentAsOrderedList().get(0));
-  }
-
-  /**
-   * Apply rule 3 - removing all but the highest expressed preference for a given candidate.
-   * Result is a single valid 1st preference.
-   * @throws IRVParsingException never
-   */
-  @Test
-  public void applyRule3Test3() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule3Test3");
+  public void duplicateCandidatesTest1() throws IRVParsingException {
+    testUtils.log(LOGGER,"duplicateCandidatesTest1");
 
     IRVChoices b = new IRVChoices("Alice(2),Alice(1)");
-    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
-    assertEquals(1, i3.getRawChoicesCount());
-    assertEquals("Alice",i3.GetValidIntentAsOrderedList().get(0));
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
+    assertEqualListsOfStrings(List.of("Alice"), validInterpretation);
   }
 
   /**
-   * Apply rule 3 - removing all but the highest expressed preference for a given candidate.
-   * Not applicable.
-   * @throws IRVParsingException never
-   */
-  @Test
-  public void applyRule3Test4() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule3Test4");
-
-    IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(3)");
-    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
-    assertEquals(3, i3.getRawChoicesCount());
-  }
-
-  /**
-   * Apply rule 3 - removing all but the highest expressed preference for a given candidate.
-   * Not applicable (though the vote is invalid for other reasons).
-   * @throws IRVParsingException never
-   */
-  @Test
-  public void applyRule3Test5() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule3Test5");
-
-    IRVChoices b = new IRVChoices("Alice(1),Bob(3)");
-    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
-    assertEquals(2, i3.getRawChoicesCount());
-  }
-
-  /**
-   * Apply rule 3 - removing all but the highest expressed preference for a given candidate.
+   * Apply rule 26.7.3 - removing all but the highest expressed preference for a given candidate.
    * The second preference for Alice is removed, leaving two valid preferences.
    * @throws IRVParsingException never
    */
   @Test
-  public void applyRule3Test6() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule3Test6");
+  public void duplicateCandidatesTest2() throws IRVParsingException {
+    testUtils.log(LOGGER,"duplicateCandidatesTest2");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2)");
-    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
-    assertEquals(2, i3.getRawChoicesCount());
-    assertEquals("Alice",i3.GetValidIntentAsOrderedList().get(0));
-    assertEquals("Bob",i3.GetValidIntentAsOrderedList().get(1));
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
+    assertEqualListsOfStrings(List.of("Alice","Bob"), validInterpretation);
   }
 
   /**
-   * Apply rule 3 - removing all but the highest expressed preference for a given candidate.
+   * Apply rule 26.7.3 - removing all but the highest expressed preference for a given candidate.
    * The second preference for Alice and third preference for Bob are removed, leaving a vote
-   * that is invalid for other reasons.
+   * that is invalid for other reasons - the 4th preference is then dropped.
    * @throws IRVParsingException never
    */
   @Test
-  public void applyRule3Test7() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule3Test7");
+  public void duplicateCandidatesTest3() throws IRVParsingException {
+    testUtils.log(LOGGER,"duplicateCandidatesTest3");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2),Chuan(4),Bob(3)");
-    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
-    assertEquals(3, i3.getRawChoicesCount());
-    assertEquals("Alice",i3.GetValidIntentAsOrderedList().get(0));
-    assertEquals("Bob",i3.GetValidIntentAsOrderedList().get(1));
-
-    exception.expect(IndexOutOfBoundsException.class);
-    i3.GetValidIntentAsOrderedList().get(2);
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
+    assertEqualListsOfStrings(List.of("Alice","Bob"), validInterpretation);
   }
 
+  /**
+   * Apply rule 26.7.3 - removing all but the highest expressed preference for a given candidate.
+   * Only the first expressed preference for Alice is retained.
+   * @throws IRVParsingException never
+   */
   @Test
-  public void applyRule3Test8() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule3Test8");
+  public void duplicateCandidatesTest4() throws IRVParsingException {
+    testUtils.log(LOGGER,"duplicateCandidatesTest4");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Alice(4)");
-    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
-    assertEquals(1, i3.getRawChoicesCount());
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
+    assertEqualListsOfStrings(List.of("Alice"), validInterpretation);
   }
 
+  /**
+   * Apply rule 26.7.3 - removing all but the highest expressed preference for a given candidate.
+   * Alice(2) is removed, leaving a skipped 2nd rank, so then the later (3rd) rank is also dropped.
+   * @throws IRVParsingException never
+   */
   @Test
-  public void applyRule3AndRule2Test1() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule3AndRule2Test1");
-
-    IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2)");
-    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
-    IRVChoices i2 = i3.Rule_26_7_2_Skips();
-    assertEquals(2, i2.getRawChoicesCount());
-    assertTrue(i2.IsValid());
-  }
-
-  @Test
-  public void applyRule3AndRule2Test3() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule3AndRule2Test3");
+  public void duplicateCandidatesTest5() throws IRVParsingException {
+    testUtils.log(LOGGER,"duplicateCandidatesTest5");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(3)");
-    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
-    IRVChoices i2 = i3.Rule_26_7_2_Skips();
-    assertEquals(1, i2.getRawChoicesCount());
-    assertTrue(i2.IsValid());
-  }
-
-  @Test
-  public void applyRule2AndRule3Test1() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule2AndRule3Test1");
-
-    IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2)");
-    IRVChoices i2 = b.Rule_26_7_2_Skips();
-    IRVChoices i3 = i2.Rule_26_7_3_Duplicates();
-    assertEquals(2, i3.getRawChoicesCount());
-    assertTrue(i3.IsValid());
-  }
-
-  @Test
-  public void applyRule2AndRule3Test3() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule2AndRule3Test3");
-
-    IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(3)");
-    IRVChoices i2 = b.Rule_26_7_2_Skips();
-    IRVChoices i3 = i2.Rule_26_7_3_Duplicates();
-    assertEquals(2, i3.getRawChoicesCount());
-    assertFalse(i3.IsValid());
-  }
-
-  @Test
-  public void applyRule1AndRule3Test1() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule1AndRule3Test1");
-
-    IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2)");
-    IRVChoices i1 = b.Rule_26_7_1_Overvotes();
-    IRVChoices i3 = i1.Rule_26_7_3_Duplicates();
-    assertEquals(1, i3.getRawChoicesCount());
-    assertTrue(i3.IsValid());
-  }
-
-  @Test
-  public void applyRule3AndRule1Test1() throws IRVParsingException {
-    testUtils.log(LOGGER,"applyRule3AndRule1Test1");
-
-    IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2)");
-    IRVChoices i3 = b.Rule_26_7_3_Duplicates();
-    IRVChoices i1 = i3.Rule_26_7_1_Overvotes();
-    assertEquals(2, i1.getRawChoicesCount());
-    assertTrue(i1.IsValid());
+    List<String> validInterpretation = b.GetValidIntentAsOrderedList();
+    assertEqualListsOfStrings(List.of("Alice"), validInterpretation);
   }
 
   /**

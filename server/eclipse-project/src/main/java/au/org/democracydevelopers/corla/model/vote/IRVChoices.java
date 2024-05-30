@@ -186,6 +186,14 @@ public class IRVChoices {
   }
 
   /**
+   * Print as a human-readable string. This will include explicit preferences in parentheses.
+   * Intended for votes that may not be valid, e.g. "Alice(1),Bob(1),Chuan(3)".
+   */
+  public String toString() {
+    return choices.stream().map(IRVPreference::toString).collect(Collectors.joining(","));
+  }
+
+  /**
    * Applies Rule 26.7.1 from
    * <a href="https://www.sos.state.co.us/pubs/rule_making/CurrentRules/8CCR1505-1/Rule26.pdf">...</a>
    * This is the rule that identifies overvotes (i.e. repeated ranks) and removes all
@@ -193,7 +201,7 @@ public class IRVChoices {
    * For example, "Alice(1),"Bob(2)","Chuan(2)" will convert to "Alice(1)".
    * @return new updated vote, with overvotes and all subsequent choices removed.
    */
-  public IRVChoices Rule_26_7_1_Overvotes() {
+  private IRVChoices Rule_26_7_1_Overvotes() {
     final String prefix = "[Rule_26_7_1_Overvotes]";
 
     // These rules should be applied only to sorted choices.
@@ -235,7 +243,7 @@ public class IRVChoices {
    * remove Bob(2),Chuan(2).
    * @return new updated vote, with every choice following a skipped rank removed.
    */
-  public IRVChoices Rule_26_7_2_Skips() {
+  private IRVChoices Rule_26_7_2_Skips() {
     final String prefix = "[Rule_26_7_2_Skips]";
 
     // These rules should be applied only to sorted choices.
@@ -275,7 +283,7 @@ public class IRVChoices {
    * For example, "Alice(1),Alice(2),Bob(2)" will convert to "Alice(1),Bob(2)".
    * @return new updated vote, with all but the highest-rank mention of each candidate removed.
    */
-  public IRVChoices Rule_26_7_3_Duplicates() {
+  private IRVChoices Rule_26_7_3_Duplicates() {
     final String prefix = "[Rule_26_7_3_Duplicates]";
 
     // These rules should be applied only to sorted choices.
@@ -303,14 +311,6 @@ public class IRVChoices {
     }
 
     return new IRVChoices(mutableChoices);
-  }
-
-  /**
-   * Print as a human-readable string. This will include explicit preferences in parentheses.
-   * Intended for votes that may not be valid, e.g. "Alice(1),Bob(1),Chuan(3)".
-   */
-  public String toString() {
-    return choices.stream().map(IRVPreference::toString).collect(Collectors.joining(","));
   }
 
   /**
