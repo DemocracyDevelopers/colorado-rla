@@ -21,5 +21,87 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.vote;
 
-public class IRVPreference {
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
+/**
+ * A single IRV name-rank pair, part of an IRV vote (which may have several name-rank pairs).
+ * The constructor parses the name-rank pair in the format expected in CO CVRs, that is,
+ * name(rank), where the rank is a positive integer.
+ * The comparator compares them by rank, ignoring the name.
+ */
+public class IRVPreference implements Comparable<IRVPreference> {
+
+  /**
+   * Class-wide logger
+   */
+  public static final Logger LOGGER = LogManager.getLogger(IRVPreference.class);
+
+  public final int rank;
+  public final String candidateName;
+
+  /**
+   * All args constructor
+   * Constructs an IRVPreference with the given rank and candidate name.
+   * @param r the selected rank (a positive integer)
+   * @param name the candidate's name
+   */
+  public IRVPreference(int r, String name) {
+    rank = r;
+    candidateName = name;
+  }
+
+  /**
+   * Constructor from a csv string indicating an IRV choice: candidate name with parenthesized rank.
+   * Extracts the name and rank of an IRV preference, provided as a string, and constructs an
+   * IRVPreference. The given string should contain a candidate name followed by a parenthesized
+   * rank.
+   * @param nameWithRank - a string expected to be of the form "name(rank)".
+   * @throws IRVParsingException if the string cannot be parsed in the "name(digits)" pattern.
+   */
+  public IRVPreference(String nameWithRank) throws IRVParsingException {
+    // Use strip() instead of trim() for unicode awareness.
+    String trimmed = nameWithRank.strip();
+
+    try {
+      // Look for digits in parentheses at the end of the string.
+      // Split the string into name ([0]) and rank ([1]). Take the first element as candidate name.
+      String name = trimmed.split("\\((\\s*\\d+\\s*\\))\\s*$")[0];
+      // Remove exactly the candidate-name substring, from the original trimmed string.
+      String rankWithParentheses = trimmed.replace(name, "");
+      // Get rid of the parentheses - just take the digits inside.
+      String rankString = rankWithParentheses.trim().split("[()]")[1];
+
+      candidateName = name.trim();
+      rank = Integer.parseInt(rankString.strip());
+
+      // If we got nonsense values, we didn't parse it properly.
+      if(candidateName.isBlank() || rank <= 0) {
+        throw new IRVParsingException();
+      }
+    } catch (NumberFormatException | IndexOutOfBoundsException | IRVParsingException e) {
+      final String prefix = "[IRVChoices constructor]";
+      final String errorMessage = "Couldn't parse candidate-preference: ";
+      LOGGER.error(String.format("%s %s %s", prefix, errorMessage, nameWithRank), e);
+      throw new IRVParsingException(errorMessage + nameWithRank);
+    }
+  }
+
+  /**
+   * Compares this, and the given IRVPreference 'preference', in terms of rank. This comparison
+   * does not consider the candidate names of the two preferences, only their integer ranks.
+   */
+  @Override
+  public int compareTo(IRVPreference preference) {
+    return Integer.compare(rank, preference.rank);
+  }
+
+  /**
+   * Returns the IRVPreference as a human-readable string with the candidate name followed by the
+   * rank in parentheses, e.g. "Diego(1)".
+   * @return
+   */
+  public String toString() {
+    return candidateName+"("+rank+")";
+  }
 }
