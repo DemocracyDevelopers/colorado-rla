@@ -25,7 +25,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 /**
- * A single IRV rank-name pair, part of an IRV vote (which may have several rank-name pairs).
+ * A single IRV name-rank pair, part of an IRV vote (which may have several name-rank pairs).
  * The constructor parses the name-rank pair in the format expected in CO CVRs, that is,
  * name(rank), where the rank is a positive integer.
  * The comparator compares them by rank, ignoring the name.
@@ -42,6 +42,7 @@ public class IRVPreference implements Comparable<IRVPreference> {
 
   /**
    * All args constructor
+   * Constructs an IRVPreference with the given rank and candidate name.
    * @param r the selected rank (a positive integer)
    * @param name the candidate's name
    */
@@ -52,6 +53,9 @@ public class IRVPreference implements Comparable<IRVPreference> {
 
   /**
    * Constructor from a csv string indicating an IRV choice: candidate name with parenthesized rank.
+   * Extracts the name and rank of an IRV preference, provided as a string, and constructs an
+   * IRVPreference. The given string should contain a candidate name followed by a parenthesized
+   * rank.
    * @param nameWithRank - a string expected to be of the form "name(rank)".
    * @throws IRVParsingException if the string cannot be parsed in the "name(digits)" pattern.
    */
@@ -83,14 +87,20 @@ public class IRVPreference implements Comparable<IRVPreference> {
     }
   }
 
-  /** Comparator, by rank. We only care about whether the rank is lower than the other rank,
-   * regardless of candidate name
+  /**
+   * Compares this, and the given IRVPreference 'preference', in terms of rank. This comparison
+   * does not consider the candidate names of the two preferences, only their integer ranks.
    */
   @Override
   public int compareTo(IRVPreference preference) {
     return Integer.compare(rank, preference.rank);
   }
 
+  /**
+   * Returns the IRVPreference as a human-readable string with the candidate name followed by the
+   * rank in parentheses, e.g. "Diego(1)".
+   * @return
+   */
   public String toString() {
     return candidateName+"("+rank+")";
   }
