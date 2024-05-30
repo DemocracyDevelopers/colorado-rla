@@ -210,7 +210,8 @@ public class IRVChoicesTests {
 
   /**
    * Test rule 26.7.1 - removing overvotes (repeated preferences).
-   * Removes everything.
+   * The duplicates-before-overvotes rule means that the duplicate mention of Alice will be removed,
+   * leaving "Alice(1)", which is valid.
    * @throws IRVParsingException never
    */
   @Test
@@ -218,7 +219,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeOvervotesTest1");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(1)");
-    assertEquals(0, b.GetValidIntentAsOrderedList().size());
+    assertEqualListsOfStrings(List.of("Alice"), b.GetValidIntentAsOrderedList());
   }
 
   /**
