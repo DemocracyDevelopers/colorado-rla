@@ -121,7 +121,7 @@ public class IRVChoices {
 
   /**
    * Constructor - takes IRV preferences as a list of strings of the kind stored in the corla
-   * database, * of the form ["name1(p1)","name2(p2)", ...]
+   * database, of the form ["name1(p1)","name2(p2)", ...]
    * Parses each individual preference into an IRVPreference to make a list of IRVPreferences, and
    * then calls the other constructor, which sorts the list by rank (most to least preferred), then
    * stores in an unmodifiable list.
