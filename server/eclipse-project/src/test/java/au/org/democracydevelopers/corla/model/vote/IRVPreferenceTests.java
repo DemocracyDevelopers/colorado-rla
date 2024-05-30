@@ -46,6 +46,10 @@ public class IRVPreferenceTests {
   @Rule
   public final ExpectedException exception = ExpectedException.none();
 
+  /**
+   * Ordinary two-digit rank.
+   * @throws IRVParsingException never.
+   */
   @Test
   public void parseTwoDigitPreferences() throws IRVParsingException {
     testUtils.log(LOGGER, "parseTwoDigitPreferences");
@@ -53,10 +57,14 @@ public class IRVPreferenceTests {
 
     IRVPreference p = new IRVPreference(choice);
 
-    assertEquals(10, (int) p.rank);
+    assertEquals(10, p.rank);
     assertEquals("Alice", p.candidateName);
   }
 
+  /**
+   * Whitespace and digit in the candidate name.
+   * @throws IRVParsingException never.
+   */
   @Test
   public void parseTwoDigitPreferences2() throws IRVParsingException {
     testUtils.log(LOGGER, "parseTwoDigitPreferences2");
@@ -65,10 +73,14 @@ public class IRVPreferenceTests {
 
     IRVPreference p = new IRVPreference(choice);
 
-    assertEquals(10,(int) p.rank);
+    assertEquals(10, p.rank);
     assertEquals("Candidate 1", p.candidateName);
   }
 
+  /**
+   * Two-digit rank; whitespace after parentheses.
+   * @throws IRVParsingException never.
+   */
   @Test
   public void parseTwoDigitPreferences2WithSpace() throws IRVParsingException {
     testUtils.log(LOGGER, "parseTwoDigitPreferences2WithSpace");
@@ -77,10 +89,14 @@ public class IRVPreferenceTests {
 
     IRVPreference p = new IRVPreference(choice);
 
-    assertEquals(10,(int) p.rank);
+    assertEquals(10, p.rank);
     assertEquals("Candidate 1", p.candidateName);
   }
 
+  /**
+   * Two-digit rank; whitespace before and after parentheses.
+   * @throws IRVParsingException never.
+   */
   @Test
   public void parseTwoDigitPreferences2WithOtherSpace() throws IRVParsingException {
     testUtils.log(LOGGER, "parseTwoDigitPreferences2WithOtherSpace");
@@ -89,10 +105,14 @@ public class IRVPreferenceTests {
 
     IRVPreference p = new IRVPreference(choice);
 
-    assertEquals(10, (int) p.rank);
+    assertEquals(10, p.rank);
     assertEquals("Candidate 1", p.candidateName);
   }
 
+  /**
+   * Candidate name contains a digit in parentheses.
+   * @throws IRVParsingException never.
+   */
   @Test
   public void parseCandidateNameWithParentheses() throws IRVParsingException {
     testUtils.log(LOGGER, "parseCandidateNameWithParentheses");
@@ -101,10 +121,14 @@ public class IRVPreferenceTests {
 
     IRVPreference p = new IRVPreference(choice);
 
-    assertEquals(10, (int) p.rank);
+    assertEquals(10, p.rank);
     assertEquals("Henry(8)", p.candidateName);
   }
 
+  /**
+   * Whitespace inside and after parentheses.
+   * @throws IRVParsingException never.
+   */
   @Test
   public void parseWhiteSpaceInsideParentheses() throws IRVParsingException {
     testUtils.log(LOGGER, "parseWhiteSpaceInsideParentheses");
@@ -113,10 +137,14 @@ public class IRVPreferenceTests {
 
     IRVPreference p = new IRVPreference(choice);
 
-    assertEquals(10, (int) p.rank);
+    assertEquals(10, p.rank);
     assertEquals("Henry", p.candidateName);
   }
 
+  /**
+   * Parentheses but no rank. This is an error.
+   * @throws IRVParsingException and checks it is thrown.
+   */
   @Test
   public void parseChoiceWithEmptyParenthesesThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithEmptyParenthesesThrowsException");
@@ -129,6 +157,10 @@ public class IRVPreferenceTests {
   }
 
 
+  /**
+   * Nested parentheses. This is an error.
+   * @throws IRVParsingException and checks it is thrown.
+   */
   @Test
   public void parseChoiceWithNestedParenthesesThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithNestedParenthesesThrowsException");
@@ -139,6 +171,10 @@ public class IRVPreferenceTests {
     new IRVPreference(choice);
   }
 
+  /**
+   * A rank of 0, which is not allowed. This is an error.
+   * @throws IRVParsingException and checks that it is thrown.
+   */
   @Test
   public void parseChoiceWithZeroPreferenceThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithZeroPreferenceThrowsException");
@@ -149,6 +185,10 @@ public class IRVPreferenceTests {
     new IRVPreference(choice);
   }
 
+  /**
+   * A negative rank, which is not allowed. This is an error.
+   * @throws IRVParsingException and checks it is thrown.
+   */
   @Test
   public void parseChoiceWithNegativePreferenceThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithNegativePreferenceThrowsException");
@@ -159,6 +199,10 @@ public class IRVPreferenceTests {
     new IRVPreference(choice);
   }
 
+  /**
+   * A non-integer rank, which is not allowed. This is an error.
+   * @throws IRVParsingException and checks it is thrown.
+   */
   @Test
   public void parseChoiceWithFractionalPreferenceThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithFractionalPreferenceThrowsException");
@@ -169,6 +213,10 @@ public class IRVPreferenceTests {
     new IRVPreference(choice);
   }
 
+  /**
+   * A non-numerical rank, which is not allowed. This is an error.
+   * @throws IRVParsingException and checks it is thrown.
+   */
   @Test
   public void parseChoiceWithStringPreferenceThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithStringPreferenceThrowsException");
@@ -179,6 +227,10 @@ public class IRVPreferenceTests {
     new IRVPreference(choice);
   }
 
+  /**
+   * No rank, and no parentheses, which is not allowed. This is an error.
+   * @throws IRVParsingException and checks it is thrown.
+   */
   @Test
   public void parseChoiceWithNoParenthesesThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithNoParenthesesThrowsException");
@@ -189,6 +241,10 @@ public class IRVPreferenceTests {
     new IRVPreference(choice);
   }
 
+  /**
+   * All-whitespace candidate name. This is an error.
+   * @throws IRVParsingException and checks it is thrown.
+   */
   @Test
   public void parseChoiceWithWhiteSpaceNameThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithWhiteSpaceNameThrowsException");
