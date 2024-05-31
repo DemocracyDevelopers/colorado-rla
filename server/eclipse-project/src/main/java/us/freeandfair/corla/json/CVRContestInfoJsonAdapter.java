@@ -155,7 +155,7 @@ public final class CVRContestInfoJsonAdapter
     long contest_id = -1;
     String comment = null;
     ConsensusValue consensus = null;
-    
+
     the_reader.beginObject();
     while (the_reader.hasNext()) {
       final String name = the_reader.nextName();
@@ -163,12 +163,12 @@ public final class CVRContestInfoJsonAdapter
         case CONTEST:
           contest_id = the_reader.nextLong();
           break;
-        
+
         case COMMENT:
         case COMMENTS:
           comment = the_reader.nextString();
           break;
-          
+
         case CONSENSUS:
           try {
             consensus = ConsensusValue.valueOf(the_reader.nextString());
@@ -176,18 +176,18 @@ public final class CVRContestInfoJsonAdapter
             // assume undefined consensus, because enum value was invalid
           }
           break;
-          
+
         case CHOICES:
           choices = readChoices(the_reader);
           break;
-          
+
         default:
           error = true;
           break;
       }
     }
     the_reader.endObject();
-    
+
     // check the sanity of these choices for this contest. This means checking whether they can be
     // parsed properly at all and, if so, whether the choices (candidate names or yes/no options)
     // are the ones expected for this contest. For plurality, we expect plain choices that exactly
@@ -212,34 +212,38 @@ public final class CVRContestInfoJsonAdapter
     // opposite order, first getting _all_ the mentioned candidates (as choicesForSanityChecking),
     // sanity checking them, and then doing valid IRV interpretation afterwards, producing
     // interpretedChoices, which is returned in the CVRContestInfo.
+
     List<String> choicesForSanityChecking;
     List<String> interpretedChoices;
-
-    if(currentContest.description().equalsIgnoreCase(ContestType.IRV.toString())) {
-      try {
+    try {
+      // For IRV, the choices for sanity checking (which includes all mentioned candidates) are
+      // different from the valid interpreted list (which omits everything after skipped or repeated
+      // prefernces).
+      if (currentContest.description().equalsIgnoreCase(ContestType.IRV.toString())) {
         IRVChoices parsedChoices = new IRVChoices(choices.toArray(String[]::new));
         choicesForSanityChecking = parsedChoices.getCandidateNames();
         interpretedChoices = parsedChoices.GetValidIntentAsOrderedList();
-      } catch (IRVParsingException e) {
-        LOGGER.error(String.format("%s %s", preface, e.getMessage()));
-        throw new IOException("uploaded IRV vote could not be parsed");
+        // For plurality, just do the sanity check directly on the choices.
+      } else {
+        choicesForSanityChecking = choices;
+        interpretedChoices = choices;
       }
-      // For plurality, just do the sanity check directly on the choices.
-    } else {
-      choicesForSanityChecking = choices;
-      interpretedChoices = choices;
+
+      Contest contest = contestSanityCheck(contest_id, choicesForSanityChecking);
+
+      if (error || contest == null) {
+        throw new JsonSyntaxException("invalid data detected in CVR contest info");
+      }
+
+      // TODO In the prototype, this function returns a CVRContestInfo with the raw choices
+      // included as a parameter, which is then transiently stored. We may do that again, but I am
+      // leaving it out for now pending a final decision on how we store IRV Ballot interpretations.
+      // See https://github.com/orgs/DemocracyDevelopers/projects/1/views/7?pane=issue&itemId=64821658
+      return new CVRContestInfo(contest, comment, consensus, interpretedChoices);
+
+    } catch (IRVParsingException e) {
+      LOGGER.error(String.format("%s %s", preface, e.getMessage()));
+      throw new IOException("uploaded IRV vote could not be parsed");
     }
-
-    Contest contest = contestSanityCheck(contest_id, choicesForSanityChecking);
-
-    if (error || contest == null) {
-      throw new JsonSyntaxException("invalid data detected in CVR contest info");
-    }
-
-    // TODO In the prototype, this function returns a CVRContestInfo with the raw choices
-    // included as a parameter, which is then transiently stored. We may do that again, but I am
-    // leaving it out for now pending a final decision on how we store IRV Ballot interpretations.
-    // See https://github.com/orgs/DemocracyDevelopers/projects/1/views/7?pane=issue&itemId=64821658
-    return new CVRContestInfo(contest, comment, consensus, interpretedChoices);
   }
 }
