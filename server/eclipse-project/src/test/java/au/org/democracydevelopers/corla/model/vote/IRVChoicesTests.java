@@ -272,7 +272,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeOvervotesTest4");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(1)");
-    assertEqualListsOfStrings(List.of(), b.GetValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of(), b.getValidIntentAsOrderedList());
   }
 
   /**

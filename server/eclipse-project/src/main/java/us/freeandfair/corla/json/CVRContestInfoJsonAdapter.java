@@ -222,7 +222,7 @@ public final class CVRContestInfoJsonAdapter
       if (currentContest.description().equalsIgnoreCase(ContestType.IRV.toString())) {
         IRVChoices parsedChoices = new IRVChoices(choices);
         choicesForSanityChecking = parsedChoices.getCandidateNames();
-        interpretedChoices = parsedChoices.GetValidIntentAsOrderedList();
+        interpretedChoices = parsedChoices.getValidIntentAsOrderedList();
         // For plurality, just do the sanity check directly on the choices.
       } else {
         choicesForSanityChecking = choices;

@@ -108,7 +108,7 @@ public class IRVChoices {
     }
 
     // This constructor should be applied only to sorted choices.
-    if (ChoicesAreUnsorted()) {
+    if (choicesAreUnsorted()) {
       final String msg = String.format("%s called on unsorted choices: %s.", prefix, choices);
       LOGGER.error(msg);
       throw new RuntimeException(msg);
