@@ -82,7 +82,7 @@ public class IRVChoicesTests {
 
   /**
    * Example 1 of skipped rankings, from the Guide. Preference 2 is skipped, so everything
-   * 'afterwards is ignored.
+   * afterwards is ignored.
    * @throws IRVParsingException never
    */
   @Test
