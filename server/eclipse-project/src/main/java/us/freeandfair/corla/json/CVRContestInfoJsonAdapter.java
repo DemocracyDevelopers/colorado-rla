@@ -149,7 +149,7 @@ public final class CVRContestInfoJsonAdapter
   @Override
   public CVRContestInfo read(final JsonReader the_reader) 
       throws IOException {
-    String preface = "[read]";
+    final String prefix = "[read]";
     boolean error = false;
     List<String> choices = null;
     long contest_id = -1;
@@ -218,7 +218,7 @@ public final class CVRContestInfoJsonAdapter
     try {
       // For IRV, the choices for sanity checking (which includes all mentioned candidates) are
       // different from the valid interpreted list (which omits everything after skipped or repeated
-      // prefernces).
+      // preferences).
       if (currentContest.description().equalsIgnoreCase(ContestType.IRV.toString())) {
         IRVChoices parsedChoices = new IRVChoices(choices);
         choicesForSanityChecking = parsedChoices.getCandidateNames();
@@ -232,7 +232,9 @@ public final class CVRContestInfoJsonAdapter
       Contest contest = contestSanityCheck(contest_id, choicesForSanityChecking);
 
       if (error || contest == null) {
-        throw new JsonSyntaxException("invalid data detected in CVR contest info");
+        final String msg = "invalid data detected in CVR contest info";
+        LOGGER.error(String.format("%s %s", prefix, msg));
+        throw new JsonSyntaxException(msg);
       }
 
       // TODO In the prototype, this function returns a CVRContestInfo with the raw choices
@@ -242,8 +244,9 @@ public final class CVRContestInfoJsonAdapter
       return new CVRContestInfo(contest, comment, consensus, interpretedChoices);
 
     } catch (IRVParsingException e) {
-      LOGGER.error(String.format("%s %s", preface, e.getMessage()));
-      throw new IOException("uploaded IRV vote could not be parsed");
+      final String msg = "uploaded IRV vote could not be parsed.";
+      LOGGER.error(String.format("%s %s", prefix, msg+" "+e.getMessage()));
+      throw new IOException(msg+" "+e.getMessage());
     }
   }
 }

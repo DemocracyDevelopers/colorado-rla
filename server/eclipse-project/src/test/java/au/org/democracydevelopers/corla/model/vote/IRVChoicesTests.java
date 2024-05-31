@@ -262,6 +262,19 @@ public class IRVChoicesTests {
   }
 
   /**
+   * Test rule 26.7.1 - removing overvotes (repeated preferences).
+   * Removes repeated 1st preference, leaving nothing.
+   * @throws IRVParsingException never
+   */
+  @Test
+  public void removeOvervotesTest5() throws IRVParsingException {
+    testUtils.log(LOGGER,"removeOvervotesTest4");
+
+    IRVChoices b = new IRVChoices("Alice(1),Bob(1)");
+    assertEqualListsOfStrings(List.of(), b.GetValidIntentAsOrderedList());
+  }
+
+  /**
    * Test rule 26.7.2 - removing skipped rankings.
    * Removes all but the first preference.
    * @throws IRVParsingException never

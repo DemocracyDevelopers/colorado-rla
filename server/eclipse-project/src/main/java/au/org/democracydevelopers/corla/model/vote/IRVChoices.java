@@ -92,13 +92,20 @@ public class IRVChoices {
    * choices (overvotes, skipped preferences, repeated candidate names).
    * @param sortedChoices a list of IRVPreferences, which need not be valid - repeats or skipped
    *                      preferences are allowed.
+   * @param firstDropped  the first index of the sorted choices to omit. If this is 1, we get an
+   *                      empty choices list.
    */
   private IRVChoices(List<IRVPreference> sortedChoices, int firstDropped) {
     final String prefix = "[IRVChoices constructor]";
     LOGGER.debug(String.format("%s interpreting IRV Preferences %s", prefix, sortedChoices));
 
-    sortedChoices.subList(firstDropped, sortedChoices.size()).clear();
-    choices = Collections.unmodifiableList(sortedChoices);
+    if(firstDropped < sortedChoices.size()) {
+      // If firstDropped is inside the list, return the sublist (firstDropped is excluded)
+      choices = Collections.unmodifiableList(sortedChoices.subList(0, firstDropped));
+    } else {
+      // If firstDropped is off the end of the list, just return the whole list.
+      choices = Collections.unmodifiableList(sortedChoices);
+    }
 
     // This constructor should be applied only to sorted choices.
     if (ChoicesAreUnsorted()) {
@@ -135,8 +142,7 @@ public class IRVChoices {
    * stores in an unmodifiable list.
    *
    * @param rawChoices the IRV preferences as a list of strings, which need not be a valid IRV
-   *                   vote -
-   *                repeats or skipped preferences are allowed.
+   *                   vote - repeats or skipped preferences are allowed.
    * @throws IRVParsingException if one of the comma-separated substrings cannot be parsed as a
    *                             name(rank). This could happen for example if called on a
    *                             plurality vote.
@@ -303,7 +309,7 @@ public class IRVChoices {
     // If the choices are blank, return blank. If the first element is not rank 1, the vote is
     // effectively blank.
     if (choices.isEmpty() || choices.get(0).rank != 1) {
-      return new IRVChoices(new ArrayList<IRVPreference>(),0);
+      return new IRVChoices(new ArrayList<IRVPreference>(),1);
     }
 
     List<IRVPreference> nonSkipChoices = new ArrayList<>(choices);
