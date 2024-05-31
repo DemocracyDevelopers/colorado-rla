@@ -194,17 +194,30 @@ public final class CVRContestInfoJsonAdapter
     // match the valid choices; for IRV we expect something of the form "name(rank)" where "name"
     // is a valid choice.
     final Contest currentContest = Persistence.getByID(contest_id, Contest.class);
-    Contest contest;
 
     // For IRV contests, first check whether the choices can be parsed as a list of IRV
     // preferences. Duplicates, overvotes and skipped ranks are OK, but strings that can't be
     // parsed as name(rank) will throw an exception.
     // Then conduct the sanity check (which checks whether the candidate names are the expected
     // names for this contest) on just the names (with preferences removed).
+    //
+    // Note: a more succinct, but actually incorrect, way to do this would have been to get the
+    // IRV vote valid intent as
+    // List<String> validInOrder = new IRVChoices(choices).getValidIntentAsOrderedList();
+    // and then call contestSanityCheck on that. However, this would mean that invalid candidate
+    // selections that had been omitted as part of IRV valid interpretation would not be flagged.
+    // For example, a vote like [valid_candidate(1),invalid_candidate(3)] would first have the
+    // 3rd preference omitted (because preference 2 was skipped), and then have only
+    // [valid_candidate(1)] sanity-checked. The below implementation deliberately does this in the
+    // opposite order, first getting _all_ the mentioned candidates, sanity checking them, and then
+    // doing valid IRV interpretation afterwards.
+    Contest contest;
+    List<String> interpretedChoices;
     if(currentContest.description().equalsIgnoreCase(ContestType.IRV.toString())) {
       try {
         IRVChoices parsedChoices = new IRVChoices(choices.toArray(String[]::new));
         contest = contestSanityCheck(contest_id, parsedChoices.getCandidateNames());
+        interpretedChoices = parsedChoices.GetValidIntentAsOrderedList();
       } catch (IRVParsingException e) {
         LOGGER.error(String.format("%s %s", preface, e.getMessage()));
         throw new IOException("uploaded IRV vote could not be parsed");
@@ -212,12 +225,17 @@ public final class CVRContestInfoJsonAdapter
       // For plurality, just do the sanity check directly on the choices.
     } else {
       contest = contestSanityCheck(contest_id, choices);
+      interpretedChoices = choices;
     }
 
     if (error || contest == null) {
       throw new JsonSyntaxException("invalid data detected in CVR contest info");
     }
-    
-    return new CVRContestInfo(contest, comment, consensus, choices);
+
+    // TODO In the prototype, this function returns a CVRContestInfo with the raw choices
+    // included as a parameter, which is then transiently stored. We may do that again, but I am
+    // leaving it out for now pending a final decision on how we store IRV Ballot interpretations.
+    // See https://github.com/orgs/DemocracyDevelopers/projects/1/views/7?pane=issue&itemId=64821658
+    return new CVRContestInfo(contest, comment, consensus, interpretedChoices);
   }
 }
