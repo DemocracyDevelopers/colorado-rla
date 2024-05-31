@@ -209,14 +209,16 @@ public final class CVRContestInfoJsonAdapter
     // For example, a vote like [valid_candidate(1),invalid_candidate(3)] would first have the
     // 3rd preference omitted (because preference 2 was skipped), and then have only
     // [valid_candidate(1)] sanity-checked. The below implementation deliberately does this in the
-    // opposite order, first getting _all_ the mentioned candidates, sanity checking them, and then
-    // doing valid IRV interpretation afterwards.
-    Contest contest;
+    // opposite order, first getting _all_ the mentioned candidates (as choicesForSanityChecking),
+    // sanity checking them, and then doing valid IRV interpretation afterwards, producing
+    // interpretedChoices, which is returned in the CVRContestInfo.
+    List<String> choicesForSanityChecking;
     List<String> interpretedChoices;
+
     if(currentContest.description().equalsIgnoreCase(ContestType.IRV.toString())) {
       try {
         IRVChoices parsedChoices = new IRVChoices(choices.toArray(String[]::new));
-        contest = contestSanityCheck(contest_id, parsedChoices.getCandidateNames());
+        choicesForSanityChecking = parsedChoices.getCandidateNames();
         interpretedChoices = parsedChoices.GetValidIntentAsOrderedList();
       } catch (IRVParsingException e) {
         LOGGER.error(String.format("%s %s", preface, e.getMessage()));
@@ -224,9 +226,11 @@ public final class CVRContestInfoJsonAdapter
       }
       // For plurality, just do the sanity check directly on the choices.
     } else {
-      contest = contestSanityCheck(contest_id, choices);
+      choicesForSanityChecking = choices;
       interpretedChoices = choices;
     }
+
+    Contest contest = contestSanityCheck(contest_id, choicesForSanityChecking);
 
     if (error || contest == null) {
       throw new JsonSyntaxException("invalid data detected in CVR contest info");
