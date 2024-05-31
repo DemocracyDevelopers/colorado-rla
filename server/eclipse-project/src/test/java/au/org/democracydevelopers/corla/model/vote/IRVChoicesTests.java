@@ -54,7 +54,7 @@ public class IRVChoicesTests {
   public final ExpectedException exception = ExpectedException.none();
 
   /**
-   * Testing GetValidIntent against Example 1 in the Guide. This removes duplicates before
+   * Testing getValidIntent against Example 1 in the Guide. This removes duplicates before
    * overvotes.
    * The vote has a repeated first preference and should hence have empty valid interpretation.
    */
@@ -63,11 +63,11 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER, "Example1OvervotesNoValidRankings");
 
     IRVChoices b = new IRVChoices("Candidate A(1),Candidate B(1),Candidate C(1),Candidate C(2),Candidate B(3)");
-    assertEquals(0, b.GetValidIntentAsOrderedList().size());
+    assertEquals(0, b.getValidIntentAsOrderedList().size());
   }
 
   /**
-   * Testing GetValidIntent against Example 1 in the Guide. This removes duplicates before
+   * Testing getValidIntent against Example 1 in the Guide. This removes duplicates before
    * overvotes. Second preference is duplicated, so only the first is valid.
    * @throws IRVParsingException never
    */
@@ -76,7 +76,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"Example2OvervoteWithValidRankings");
 
     IRVChoices b = new IRVChoices("Candidate B(1),Candidate A(2),Candidate C(2),Candidate C(3)");
-    assertEqualListsOfStrings(List.of("Candidate B"), b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Candidate B"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -89,7 +89,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"Example1SkippedRankings");
 
     IRVChoices b = new IRVChoices("Candidate A(1),Candidate B(3)");
-    assertEqualListsOfStrings(List.of("Candidate A"), b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Candidate A"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -102,7 +102,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"Example1DuplicateRankings");
 
     IRVChoices b = new IRVChoices("Candidate A(1),Candidate A(2),Candidate B(3)");
-    assertEqualListsOfStrings(List.of("Candidate A"), b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Candidate A"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -116,7 +116,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"Example1DuplicatesAndOvervotes");
 
     IRVChoices b = new IRVChoices("Candidate B(1),Candidate A(2),Candidate C(2),Candidate C(3)");
-    assertEqualListsOfStrings(List.of("Candidate B"), b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Candidate B"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -130,7 +130,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"Example2DuplicatesAndOvervotes");
 
     IRVChoices b = new IRVChoices("Candidate B(1),Candidate A(2),Candidate B(2),Candidate C(3)");
-    assertEqualListsOfStrings(List.of("Candidate B", "Candidate A", "Candidate C"), b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Candidate B", "Candidate A", "Candidate C"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -145,16 +145,16 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"testValidBallots");
 
     IRVChoices b = new IRVChoices("Alice(1)");
-    assertTrue(b.IsValid());
+    assertTrue(b.isValid());
 
     b = new IRVChoices("Alice(1),Bob(2)");
-    assertTrue(b.IsValid());
+    assertTrue(b.isValid());
 
     b = new IRVChoices("Alice(1),Chuan(3),Bob(2)");
-    assertTrue(b.IsValid());
+    assertTrue(b.isValid());
 
     b = new IRVChoices("Diego(4),Alice(1),Chuan(3),Bob(2)");
-    assertTrue(b.IsValid());
+    assertTrue(b.isValid());
   }
 
   /**
@@ -166,22 +166,22 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"testInvalidBallot");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(1)");
-    assertFalse(b.IsValid());
+    assertFalse(b.isValid());
 
     b = new IRVChoices("Alice(1),Alice(2)");
-    assertFalse(b.IsValid());
+    assertFalse(b.isValid());
 
     b = new IRVChoices("Alice(1),Bob(1)");
-    assertFalse(b.IsValid());
+    assertFalse(b.isValid());
 
     b = new IRVChoices("Alice(1),Bob(3)");
-    assertFalse(b.IsValid());
+    assertFalse(b.isValid());
 
     b = new IRVChoices("Alice(2),Bob(2)");
-    assertFalse(b.IsValid());
+    assertFalse(b.isValid());
 
     b = new IRVChoices("Alice(2),Bob(3)");
-    assertFalse(b.IsValid());
+    assertFalse(b.isValid());
     }
 
   /**
@@ -193,7 +193,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER, "validVoteIsUnchanged");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2)");
-    assertEqualListsOfStrings(List.of("Alice","Bob"), b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Alice","Bob"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -205,7 +205,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"validThreeChoiceVoteIsUnchanged");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(3)");
-    assertEqualListsOfStrings(List.of("Alice","Bob","Chuan"), b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Alice","Bob","Chuan"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -219,7 +219,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeOvervotesTest1");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(1)");
-    assertEqualListsOfStrings(List.of("Alice"), b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Alice"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -232,7 +232,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeOvervotesTest2");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(2)");
-    assertEquals("Alice",b.GetValidIntentAsOrderedList().get(0));
+    assertEquals("Alice",b.getValidIntentAsOrderedList().get(0));
   }
 
   /**
@@ -245,7 +245,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeOvervotesTest3");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(2),Diego(3)");
-    assertEquals("Alice",b.GetValidIntentAsOrderedList().get(0));
+    assertEquals("Alice",b.getValidIntentAsOrderedList().get(0));
   }
 
   /**
@@ -258,7 +258,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeOvervotesTest4");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(3),Diego(3)");
-    assertEqualListsOfStrings(List.of("Alice","Bob"), b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Alice","Bob"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -271,7 +271,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeSkipsTest1");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(3)");
-    assertEqualListsOfStrings(List.of("Alice"),b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Alice"),b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -284,7 +284,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeSkipsTest2");
 
     IRVChoices b = new IRVChoices("Bob(2),Chuan(3)");
-    assertEquals(0,b.GetValidIntentAsOrderedList().size());
+    assertEquals(0,b.getValidIntentAsOrderedList().size());
   }
 
   /**
@@ -297,7 +297,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeSkipsTest3");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(4)");
-    assertEqualListsOfStrings(List.of("Alice","Bob"),b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Alice","Bob"),b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -310,7 +310,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeSkipsTest4");
 
     IRVChoices b = new IRVChoices("Alice(3),Bob(2),Chuan(4)");
-    assertEquals(0, b.GetValidIntentAsOrderedList().size());
+    assertEquals(0, b.getValidIntentAsOrderedList().size());
   }
 
   /**
@@ -323,7 +323,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"overvotesAndSkipsTest1");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(2),Diego(4)");
-    assertEqualListsOfStrings(List.of("Alice"), b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Alice"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -336,7 +336,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"duplicateCandidatesTest1");
 
     IRVChoices b = new IRVChoices("Alice(2),Alice(1)");
-    assertEqualListsOfStrings(List.of("Alice"), b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Alice"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -349,7 +349,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"duplicateCandidatesTest2");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2)");
-    assertEqualListsOfStrings(List.of("Alice","Bob"), b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Alice","Bob"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -363,7 +363,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"duplicateCandidatesTest3");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2),Chuan(4),Bob(3)");
-    assertEqualListsOfStrings(List.of("Alice","Bob"), b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Alice","Bob"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -376,7 +376,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"duplicateCandidatesTest4");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Alice(4)");
-    assertEqualListsOfStrings(List.of("Alice"), b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Alice"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -389,7 +389,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"duplicateCandidatesTest5");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(3)");
-    assertEqualListsOfStrings(List.of("Alice"), b.GetValidIntentAsOrderedList());
+    assertEqualListsOfStrings(List.of("Alice"), b.getValidIntentAsOrderedList());
   }
 
   /**

@@ -49,17 +49,17 @@ import java.util.stream.Collectors;
  * TODO This may be updated soon - updated ref to CDOS rather than Boulder when official CDOS
  * version becomes available.
  * Main methods:
- * - IsValid(): checks whether the choices are a valid IRV vote (without skipped or repeated
+ * - isValid(): checks whether the choices are a valid IRV vote (without skipped or repeated
  *   preferences, or repeated candidates).
- * - Rule_26_7_1_Overvotes(): applies Colorado's IRV rule 26.7.1 - removing overvotes (i.e.
+ * - rule_26_7_1_Overvotes(): applies Colorado's IRV rule 26.7.1 - removing overvotes (i.e.
  *   repeated ranks) and all subsequent choices.
- * - Rule_26_7_2_Skips(): applies Colorado's IRV rule 26.7.2 - removing all choices after a
+ * - rule_26_7_2_Skips(): applies Colorado's IRV rule 26.7.2 - removing all choices after a
  *   skipped rank.
- * - Rule_26_7_3_Duplicates(): applies Colorado's IRV rule 26.7.3 - removing all but the highest
+ * - rule_26_7_3_Duplicates(): applies Colorado's IRV rule 26.7.3 - removing all but the highest
  *   rank for a given candidate, if that candidate is mentioned with duplicate ranks.
- * - ValidInterpretation(): applies Colorado's IRV rules and returns the valid interpretation, as
- *   an ordered list of candidate names with the highest preference first. In particular, it applies
- *   Rule_26_7_3_Duplicates() before Rule_26_7_1_Overvotes() as required.
+ * - getValidIntentAsOrderedList(): applies Colorado's IRV rules and returns the valid
+ *   interpretation, as an ordered list of candidate names with the highest preference first. In
+ *   particular, it applies Rule_26_7_3_Duplicates() before Rule_26_7_1_Overvotes() as required.
  */
 public class IRVChoices {
 
