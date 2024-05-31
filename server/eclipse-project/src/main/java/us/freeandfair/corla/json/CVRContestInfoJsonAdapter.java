@@ -220,7 +220,7 @@ public final class CVRContestInfoJsonAdapter
       // different from the valid interpreted list (which omits everything after skipped or repeated
       // prefernces).
       if (currentContest.description().equalsIgnoreCase(ContestType.IRV.toString())) {
-        IRVChoices parsedChoices = new IRVChoices(choices.toArray(String[]::new));
+        IRVChoices parsedChoices = new IRVChoices(choices);
         choicesForSanityChecking = parsedChoices.getCandidateNames();
         interpretedChoices = parsedChoices.GetValidIntentAsOrderedList();
         // For plurality, just do the sanity check directly on the choices.
