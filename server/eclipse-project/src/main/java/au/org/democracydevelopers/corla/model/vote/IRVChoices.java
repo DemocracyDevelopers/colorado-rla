@@ -128,12 +128,12 @@ public class IRVChoices {
    * available choices for the contest - that will be caught by a different validity check on
    * upload.
    */
-  public boolean IsValid() {
+  public boolean isValid() {
     final String prefix = "[IsValid]";
     LOGGER.debug(String.format("%s interpreting validity for vote %s.", prefix, choices.toString()));
 
     // This method should be applied only to sorted choices.
-    if (ChoicesAreUnsorted()) {
+    if (choicesAreUnsorted()) {
       final String msg = String.format("%s IsValid called on unsorted choices: %s.", prefix, choices);
       LOGGER.error(msg);
       throw new RuntimeException(msg);
@@ -172,12 +172,12 @@ public class IRVChoices {
    * @return the implied valid IRV preferences, as an ordered list of candidate names with the
    * most-preferred first.
    */
-  public List<String> GetValidIntentAsOrderedList() {
+  public List<String> getValidIntentAsOrderedList() {
     final String prefix = "[GetValidIntentAsOrderedList]";
     LOGGER.debug(String.format("%s getting valid interpretation of vote %s.", prefix,
         choices.toString()));
 
-    List<String> valid = this.Rule_26_7_3_Duplicates().Rule_26_7_1_Overvotes().Rule_26_7_2_Skips()
+    List<String> valid = this.rule_26_7_3_Duplicates().rule_26_7_1_Overvotes().rule_26_7_2_Skips()
         .choices.stream().map(c -> c.candidateName).collect(Collectors.toList());
     LOGGER.debug(String.format("%s valid interpretation is %s.", prefix, valid));
     return valid;
@@ -200,11 +200,11 @@ public class IRVChoices {
    *
    * @return new updated vote, with overvotes and all subsequent choices removed.
    */
-  private IRVChoices Rule_26_7_1_Overvotes() {
+  private IRVChoices rule_26_7_1_Overvotes() {
     final String prefix = "[Rule_26_7_1_Overvotes]";
 
     // These rules should be applied only to sorted choices.
-    if (ChoicesAreUnsorted()) {
+    if (choicesAreUnsorted()) {
       final String msg = String.format("%s Rule 26.7.1 (overvote removal) called on unsorted " +
           "choices: %s.", prefix, choices);
       LOGGER.error(msg);
@@ -245,11 +245,11 @@ public class IRVChoices {
    *
    * @return new updated vote, with every choice following a skipped rank removed.
    */
-  private IRVChoices Rule_26_7_2_Skips() {
+  private IRVChoices rule_26_7_2_Skips() {
     final String prefix = "[Rule_26_7_2_Skips]";
 
     // These rules should be applied only to sorted choices.
-    if (ChoicesAreUnsorted()) {
+    if (choicesAreUnsorted()) {
       final String msg = String.format("%s Rule 26.7.2 (skipped rank removal) called on unsorted " +
           "choices: %s.", prefix, choices);
       LOGGER.error(msg);
@@ -287,11 +287,11 @@ public class IRVChoices {
    * For example, "Alice(1),Alice(2),Bob(2)" will convert to "Alice(1),Bob(2)".
    * @return new updated vote, with all but the highest-rank mention of each candidate removed.
    */
-  private IRVChoices Rule_26_7_3_Duplicates() {
+  private IRVChoices rule_26_7_3_Duplicates() {
     final String prefix = "[Rule_26_7_3_Duplicates]";
 
     // These rules should be applied only to sorted choices.
-    if (ChoicesAreUnsorted()) {
+    if (choicesAreUnsorted()) {
       final String msg = String.format("%s Rule 26.7.3 (duplicate candidate removal) called on " +
           "unsorted choices: %s.", prefix, choices);
       LOGGER.error(msg);
@@ -346,7 +346,7 @@ public class IRVChoices {
    * @return true if the preferences are in non-descending order (highest preference / lowest number
    * first)
    */
-  private boolean ChoicesAreUnsorted() {
+  private boolean choicesAreUnsorted() {
     for (int i = 0; i < choices.size() - 1; i++) {
       if ((choices.get(i)).compareTo(choices.get(i + 1)) > 0) {
         return true;
