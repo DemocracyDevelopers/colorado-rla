@@ -22,6 +22,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.model.vote;
 
 import au.org.democracydevelopers.corla.testUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.junit.Rule;
@@ -76,7 +77,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"Example2OvervoteWithValidRankings");
 
     IRVChoices b = new IRVChoices("Candidate B(1),Candidate A(2),Candidate C(2),Candidate C(3)");
-    assertEqualListsOfStrings(List.of("Candidate B"), b.getValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of("Candidate B"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -89,7 +90,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"Example1SkippedRankings");
 
     IRVChoices b = new IRVChoices("Candidate A(1),Candidate B(3)");
-    assertEqualListsOfStrings(List.of("Candidate A"), b.getValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of("Candidate A"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -102,7 +103,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"Example1DuplicateRankings");
 
     IRVChoices b = new IRVChoices("Candidate A(1),Candidate A(2),Candidate B(3)");
-    assertEqualListsOfStrings(List.of("Candidate A"), b.getValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of("Candidate A"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -116,7 +117,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"Example1DuplicatesAndOvervotes");
 
     IRVChoices b = new IRVChoices("Candidate B(1),Candidate A(2),Candidate C(2),Candidate C(3)");
-    assertEqualListsOfStrings(List.of("Candidate B"), b.getValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of("Candidate B"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -130,7 +131,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"Example2DuplicatesAndOvervotes");
 
     IRVChoices b = new IRVChoices("Candidate B(1),Candidate A(2),Candidate B(2),Candidate C(3)");
-    assertEqualListsOfStrings(List.of("Candidate B", "Candidate A", "Candidate C"), b.getValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of("Candidate B", "Candidate A", "Candidate C"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -193,7 +194,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER, "validVoteIsUnchanged");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2)");
-    assertEqualListsOfStrings(List.of("Alice","Bob"), b.getValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of("Alice","Bob"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -205,7 +206,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"validThreeChoiceVoteIsUnchanged");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(3)");
-    assertEqualListsOfStrings(List.of("Alice","Bob","Chuan"), b.getValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of("Alice","Bob","Chuan"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -219,7 +220,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeOvervotesTest1");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(1)");
-    assertEqualListsOfStrings(List.of("Alice"), b.getValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of("Alice"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -258,7 +259,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeOvervotesTest4");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(3),Diego(3)");
-    assertEqualListsOfStrings(List.of("Alice","Bob"), b.getValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of("Alice","Bob"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -271,7 +272,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeSkipsTest1");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(3)");
-    assertEqualListsOfStrings(List.of("Alice"),b.getValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of("Alice"),b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -297,7 +298,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeSkipsTest3");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(4)");
-    assertEqualListsOfStrings(List.of("Alice","Bob"),b.getValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of("Alice","Bob"),b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -323,7 +324,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"overvotesAndSkipsTest1");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(2),Diego(4)");
-    assertEqualListsOfStrings(List.of("Alice"), b.getValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of("Alice"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -336,7 +337,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"duplicateCandidatesTest1");
 
     IRVChoices b = new IRVChoices("Alice(2),Alice(1)");
-    assertEqualListsOfStrings(List.of("Alice"), b.getValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of("Alice"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -349,7 +350,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"duplicateCandidatesTest2");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2)");
-    assertEqualListsOfStrings(List.of("Alice","Bob"), b.getValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of("Alice","Bob"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -363,7 +364,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"duplicateCandidatesTest3");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(2),Chuan(4),Bob(3)");
-    assertEqualListsOfStrings(List.of("Alice","Bob"), b.getValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of("Alice","Bob"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -376,7 +377,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"duplicateCandidatesTest4");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Alice(4)");
-    assertEqualListsOfStrings(List.of("Alice"), b.getValidIntentAsOrderedList());
+    CollectionUtils.isEqualCollection(List.of("Alice"), b.getValidIntentAsOrderedList());
   }
 
   /**
@@ -389,21 +390,6 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"duplicateCandidatesTest5");
 
     IRVChoices b = new IRVChoices("Alice(1),Alice(2),Bob(3)");
-    assertEqualListsOfStrings(List.of("Alice"), b.getValidIntentAsOrderedList());
-  }
-
-  /**
-   * Check that two lists of strings are identical.
-   *
-   * @param l1 a list of strings
-   * @param l2 another list of strings
-   */
-  private void assertEqualListsOfStrings(List<String> l1, List<String> l2) {
-
-    assertEquals(l1.size(), l2.size());
-
-    for (int i = 0; i < l1.size(); i++) {
-      assertEquals(l1.get(i), l2.get(i));
-    }
+    CollectionUtils.isEqualCollection(List.of("Alice"), b.getValidIntentAsOrderedList());
   }
 }
