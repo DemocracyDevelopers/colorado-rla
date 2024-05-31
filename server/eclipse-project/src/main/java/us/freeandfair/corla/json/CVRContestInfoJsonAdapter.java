@@ -188,9 +188,13 @@ public final class CVRContestInfoJsonAdapter
     }
     the_reader.endObject();
     
-    // check the sanity of the contest
+    // check the sanity of these choices for this contest. This means checking whether they can be
+    // parsed properly at all and, if so, whether the choices (candidate names or yes/no options)
+    // are the ones expected for this contest. For plurality, we expect plain choices that exactly
+    // match the valid choices; for IRV we expect something of the form "name(rank)" where "name"
+    // is a valid choice.
     final Contest currentContest = Persistence.getByID(contest_id, Contest.class);
-    Contest contest; // This is only used to check for null.
+    Contest contest;
 
     // For IRV contests, first check whether the choices can be parsed as a list of IRV
     // preferences. Duplicates, overvotes and skipped ranks are OK, but strings that can't be
