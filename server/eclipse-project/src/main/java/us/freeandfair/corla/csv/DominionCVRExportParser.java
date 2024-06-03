@@ -694,7 +694,7 @@ public class DominionCVRExportParser {
    * Makes a comma-separated string of the specified collection of
    * strings.
    *
-   * @param the_list The list.
+   * @param the_strings The list.
    * @return the comma-separated string.
    */
   private String stringList(final Collection<String> the_strings) {
