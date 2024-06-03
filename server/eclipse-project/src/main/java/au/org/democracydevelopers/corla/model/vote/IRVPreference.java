@@ -21,8 +21,12 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.vote;
 
+import org.apache.commons.csv.CSVRecord;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A single IRV name-rank pair, part of an IRV vote (which may have several name-rank pairs).
@@ -88,6 +92,61 @@ public class IRVPreference implements Comparable<IRVPreference> {
   }
 
   /**
+   * Checks whether a CSVRecord contains a sequence of choices as expected for IRV - it should be
+   * a sequence of name(rank) choices, starting with preference 1 and going up to irvVotesAllowed,
+   * and for each preference, it should contain all the same choices. For example,
+   * Alice(1), Bob(1), Chuan(1), Alice(2), Bob(2), Chuan(2), Alice(3), Bob(3), Chuan(3) is valid,
+   * but any rearrangement of those items, or anything that omits some rank or candidate included
+   * elsewhere, is invalid.
+   * @param theLine the CSV line (basically a list of Strings)
+   * @param startIndex the first index for this contest's choices.
+   * @param index the first index for the next contest's choices.
+   * @param irvVotesAllowed The number of ranks allowed (which matches the number expected in the
+   *                       csv).
+   * @throws IRVParsingException if either an individual choice can't be parsed as name(rank), or
+   *                             the overall collection of choices doesn't fit the pattern above.
+   */
+  public static void validateIRVChoiceHeaders(CSVRecord theLine, int startIndex, int index,
+                                        int irvVotesAllowed) throws IRVParsingException {
+    final String prefix = "[valicateIRVChoiceHeaders] ";
+
+    // Find all the plain candidate names by removing (1) from the first preference headers.
+    List<String> candidates = new ArrayList<>();
+    // As long as the options are of the form name(1), add the name to the candidate list.
+    for (int i = startIndex ; i < index && new IRVPreference(theLine.get(i)).rank == 1 ; i++ ) {
+      candidates.add(new IRVPreference(theLine.get(i)).candidateName);
+    }
+
+    // If there are not an integer multiple of the number of candidates, it is definitely wrong.
+    // TODO clarify whether we should enforce the irvVotesAllowed if that is different from the
+    // number of ranks in the csv file. At the moment, it is enforced, and the csv is rejected if
+    // they don't match. If this changes, this function should probably return the actual max rank,
+    // which should propagate through as votes_allowed.
+    int numCands = candidates.size();
+    int maxRank = (index - startIndex)/numCands;
+    if((index - startIndex) != numCands*maxRank || maxRank != irvVotesAllowed) {
+      final String msg = "Invalid IRV choices header: ";
+      LOGGER.error(String.format("%s %s", prefix, msg+theLine));
+      throw new IRVParsingException(msg+theLine);
+    }
+
+    // Now check that, for every other rank, we get the same list of candidates.
+    // Run through all the possible ranks that should fit between startIndex and index;
+    // For each candidate with that rank, check that the corresponding candidate in the inital
+    // (first preference) list has the same name.
+    for (int rank =2; rank <= maxRank ; rank++) {
+      for (int i = startIndex+((rank-1)*numCands) ; i < startIndex+rank*numCands ; i++ ) {
+        IRVPreference irvPref = new IRVPreference(theLine.get(i));
+        if(rank != irvPref.rank || !candidates.get(i).equals(irvPref.candidateName)) {
+          final String msg = "Unexpected choice in IRV header: ";
+          LOGGER.error(String.format("%s %s", prefix, msg+theLine.get(i)));
+          throw new IRVParsingException(msg+theLine.get(i));
+        }
+      }
+    }
+  }
+
+  /**
    * Compares this, and the given IRVPreference 'preference', in terms of rank. This comparison
    * does not consider the candidate names of the two preferences, only their integer ranks.
    */
@@ -97,9 +156,8 @@ public class IRVPreference implements Comparable<IRVPreference> {
   }
 
   /**
-   * Returns the IRVPreference as a human-readable string with the candidate name followed by the
+   * @return the IRVPreference as a human-readable string with the candidate name followed by the
    * rank in parentheses, e.g. "Diego(1)".
-   * @return
    */
   public String toString() {
     return candidateName+"("+rank+")";

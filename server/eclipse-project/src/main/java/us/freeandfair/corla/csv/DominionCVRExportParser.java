@@ -18,11 +18,12 @@ import java.util.*;
 import javax.persistence.PersistenceException;
 
 import au.org.democracydevelopers.corla.model.ContestType;
+import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
+import au.org.democracydevelopers.corla.model.vote.IRVPreference;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.WordUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -38,6 +39,8 @@ import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CountyContestResultQueries;
 import us.freeandfair.corla.util.DBExceptionUtil;
 import us.freeandfair.corla.util.ExponentialBackoffHelper;
+
+import static au.org.democracydevelopers.corla.model.vote.IRVPreference.validateIRVChoiceHeaders;
 
 /**
  * Parser for Dominion CVR export files.
@@ -318,6 +321,7 @@ public class DominionCVRExportParser {
     do {
       final String c = the_line.get(index);
       int count = 0;
+      int startIndex = index;
       while (index < the_line.size() &&
              c.equals(the_line.get(index))) {
         index = index + 1;
@@ -344,6 +348,7 @@ public class DominionCVRExportParser {
           the_contest_types.put(contestName, ContestType.IRV);
           // Each real choice (i.e. candidate name) is repeated 'irvVotesAllowed' times, e.g.
           // Alice(1), Alice(2), etc. We just want to record the number of real choices.
+          validateIRVChoiceHeaders(the_line, startIndex, index, irvVotesAllowed);
           the_choice_counts.put(contestName, count / irvVotesAllowed);
           the_votes_allowed.put(contestName, irvVotesAllowed);
 
@@ -358,6 +363,11 @@ public class DominionCVRExportParser {
       } catch (NumberFormatException e) {
         // We parsed the header OK, but the values were not as expected.
         final String msg = "Unexpected or uninterpretable numbers in header: ";
+        LOGGER.error(String.format("%s %s", prefix, msg+c));
+        throw new RuntimeException(msg+c);
+      } catch (IRVParsingException e) {
+        // The IRV headers don't follow the right pattern of name(rank) values.
+        final String msg = "IRV choices do not follow the expected pattern: ";
         LOGGER.error(String.format("%s %s", prefix, msg+c));
         throw new RuntimeException(msg+c);
       }
@@ -399,17 +409,19 @@ public class DominionCVRExportParser {
   /**
    * Create contest and result objects for use later in parsing.
    *
-   * @param choiceLine The CSV line containing the choice information.
+   * @param choiceLine      The CSV line containing the choice information.
    * @param explanationLine The CSV line containing the choice explanations.
-   * @param contestNames The list of contest names.
-   * @param votesAllowed The table of votes allowed values.
-   * @param choiceCounts The table of contest choice counts.
+   * @param contestNames    The list of contest names.
+   * @param votesAllowed    The table of votes allowed values.
+   * @param choiceCounts    The table of contest choice counts.
+   * @param contestTypes    The table of contest types (PLURALITY or IRV)
    */
   private Result addContests(final CSVRecord choiceLine,
-                           final CSVRecord explanationLine,
-                           final List<String> contestNames,
-                           final Map<String, Integer> votesAllowed,
-                           final Map<String, Integer> choiceCounts) {
+                             final CSVRecord explanationLine,
+                             final List<String> contestNames,
+                             final Map<String, Integer> votesAllowed,
+                             final Map<String, Integer> choiceCounts,
+                             final Map<String, ContestType> contestTypes) {
     final Result result = new Result();
     int index = my_first_contest_column;
     int contest_count = 0;
@@ -418,47 +430,97 @@ public class DominionCVRExportParser {
       final List<Choice> choices = new ArrayList<Choice>();
       final int end = index + choiceCounts.get(contestName);
       boolean isWriteIn = false;
+      boolean isIRV = contestTypes.get(contestName).equals(ContestType.IRV);
 
-      while (index < end) {
-        String choice =choiceLine.get(index).trim();
-        final String explanation = explanationLine.get(index).trim();
-        // "Write-in" is a fictitious candidate that denotes the beginning of
-        // the list of qualified write-in candidates
-        final boolean isFictitious = "Write-in".equalsIgnoreCase(choice);
-        choices.add(new Choice(choice, explanation, isWriteIn, isFictitious));
-        if (isFictitious) {
-          // consider all subsequent choices in this contest to be qualified
-          // write-in candidates
-          isWriteIn = true;
-        }
-        index = index + 1;
-      }
-      // now that we have all the choices, we can create a Contest object for
-      // this contest (note the empty contest description at the moment, below,
-      // as that's not in the CVR files and may not actually be used)
-      // note that we're using the "Vote For" number as the number of winners
-      // allowed as well, because the Dominion format doesn't give us that
-      // separately
-      final Contest c = new Contest(contestName, my_county, "", choices,
-                                    votesAllowed.get(contestName), votesAllowed.get(contestName),
-                                    contest_count);
-      LOGGER.debug(String.format("[addContests: county=%s, contest=%s", my_county.name(), c));
-
-      contest_count = contest_count + 1;
       try {
-        Persistence.saveOrUpdate(c);
-        final CountyContestResult r = CountyContestResultQueries.matching(my_county, c);
-        my_contests.add(c);
-        my_results.add(r);
-      } catch (PersistenceException pe) {
+        while (index < end) {
+          String choice;
+          if (isIRV) {
+            // If it is IRV, ignore the rank in parentheses and extract the candidate name.
+            choice = new IRVPreference(choiceLine.get(index)).candidateName;
+          } else {
+            // Plurality - just use the candidate/choice name as is.
+            choice = choiceLine.get(index).strip();
+          }
+          final String explanation = explanationLine.get(index).trim();
+          // "Write-in" is a fictitious candidate that denotes the beginning of
+          // the list of qualified write-in candidates
+          final boolean isFictitious = nameIsWriteIn(choice, contestTypes.get(contestName));
+          choices.add(new Choice(choice, explanation, isWriteIn, isFictitious));
+          if (isFictitious) {
+            // consider all subsequent choices in this contest to be qualified
+            // write-in candidates
+            isWriteIn = true;
+          }
+          index = index + 1;
+        }
+
+        // Winners allowed is always 1 for IRV, but is assumed to be equal to votesAllowed for
+        // plurality, because the Dominion format doesn't give us that separately.
+        int winnersAllowed = isIRV ? 1 : votesAllowed.get(contestName);
+
+        final Contest c = new Contest(contestName, my_county, contestTypes.get(contestName).toString(),
+            choices, votesAllowed.get(contestName), winnersAllowed, contest_count);
+
+        LOGGER.debug(String.format("[addContests: county=%s, contest=%s", my_county.name(), c));
+
+        // If we've just finished a plurality contest header, index is already at the right place
+        // for the next contest.
+        // If we've just finished the 1st-preference IRV choices, e.g. "Alice(1), Bob(1), Chuan(1)",
+        // index will now be pointed at the beginning of the IRV 2nd preferences, e.g.
+        // "Alice(2), Bob(2), Chuan(2)", so we have to advance it to the next contest. There is a
+        // complete list of choices for each of the ranks allowed other than 1, so add
+        // (number of choices)*(ranks allowed -1).
+        index = index + (isIRV ? choices.size() * (votesAllowed.get(contestName) - 1) : 0);
+        contest_count = contest_count + 1;
+        try {
+          Persistence.saveOrUpdate(c);
+          final CountyContestResult r = CountyContestResultQueries.matching(my_county, c);
+          my_contests.add(c);
+          my_results.add(r);
+        } catch (PersistenceException pe) {
+          result.success = false;
+          result.errorMessage = StringUtils.abbreviate(DBExceptionUtil.getConstraintFailureReason(pe), 250);
+          result.errorRowContent = StringUtils.abbreviate("Error adding " + c.shortToString(), 250);
+          return result;
+        }
+      } catch (IRVParsingException e) {
         result.success = false;
-        result.errorMessage = StringUtils.abbreviate(DBExceptionUtil.getConstraintFailureReason(pe),250);
-        result.errorRowContent = StringUtils.abbreviate("Error adding " + c.shortToString(),250) ;
-        return result ;
+        result.errorMessage = e.getMessage();
+        result.errorRowContent = "Error doing IRV parsing for "+choiceLine.get(index);
+        return result;
       }
     }
     result.success = true ;
     return result ;
+  }
+
+  /**
+   * Checks whether a contest choice is "Write-in" or various other spellings. Note this is not the
+   * same as _being_ a write-in candidate - we are looking for the fictitious candidate who
+   * indicates the beginning of the write-ins.  If it is a plurality contest, we look for expected
+   * write-in strings such as "Write-in", "WRITEIN", "write_in", etc.
+   * If it is an IRV contest, we parse it as candidate_name(rank) and check whether candidate_name
+   * matches an expected write-in string.
+   * @param choice the candidate name (possibly with a rank in parentheses, if IRV).
+   * @param contestType PLURALITY or IRV.
+   * @return true if it matches some variation on "Write-in", allowing '-', '_', empty space or
+   *         whitespace between (any capitalization of) "Write" and any capitalization of "in".
+   * @throws IRVParsingException if the contestType is IRV but the choice cannot be parsed as
+   *                             name(rank).
+   */
+  private boolean nameIsWriteIn(String choice, ContestType contestType) throws IRVParsingException {
+    // The upper case matches "WRITE" [something] "IN", where the something can be 0 or more of
+    // '-', '_', space or tab.
+    String writeInRegexp = "WRITE[-_ \t]*IN";
+
+    // If it's IRV, ignore the rank in parentheses and just check the name.
+    if(contestType == ContestType.IRV) {
+      return (new IRVPreference(choice).candidateName.toUpperCase()).matches(writeInRegexp);
+    } else {
+      // If it's plurality, just match the name directly.
+      return choice.toUpperCase().matches(writeInRegexp);
+    }
   }
 
   /**
@@ -790,8 +852,8 @@ public class DominionCVRExportParser {
     if (headerResult.success == false) {
       return headerResult;
     } else {
-      Result addContestResult =addContests(choice_line, expl_line, contest_names,
-                                           contest_votes_allowed, contest_choice_counts);
+      Result addContestResult = addContests(choice_line, expl_line, contest_names,
+          contest_votes_allowed, contest_choice_counts, contest_types);
       if (!addContestResult.success) {
         return addContestResult ;
       }
