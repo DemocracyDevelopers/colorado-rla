@@ -18,6 +18,7 @@ import java.util.*;
 import javax.persistence.PersistenceException;
 
 import au.org.democracydevelopers.corla.model.ContestType;
+import au.org.democracydevelopers.corla.model.vote.IRVChoices;
 import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
 import au.org.democracydevelopers.corla.model.vote.IRVPreference;
 import org.apache.commons.csv.CSVFormat;
@@ -40,7 +41,8 @@ import us.freeandfair.corla.query.CountyContestResultQueries;
 import us.freeandfair.corla.util.DBExceptionUtil;
 import us.freeandfair.corla.util.ExponentialBackoffHelper;
 
-import static au.org.democracydevelopers.corla.model.vote.IRVPreference.validateIRVChoiceHeaders;
+import static au.org.democracydevelopers.corla.model.vote.IRVPreference.generateAllIRVPreferences;
+import static au.org.democracydevelopers.corla.model.vote.IRVPreference.validateIRVPreferenceHeaders;
 
 /**
  * Parser for Dominion CVR export files.
@@ -348,7 +350,7 @@ public class DominionCVRExportParser {
           the_contest_types.put(contestName, ContestType.IRV);
           // Each real choice (i.e. candidate name) is repeated 'irvVotesAllowed' times, e.g.
           // Alice(1), Alice(2), etc. We just want to record the number of real choices.
-          validateIRVChoiceHeaders(the_line, startIndex, index, irvVotesAllowed);
+          validateIRVPreferenceHeaders(the_line, startIndex, index, irvVotesAllowed);
           the_choice_counts.put(contestName, count / irvVotesAllowed);
           the_votes_allowed.put(contestName, irvVotesAllowed);
 
@@ -626,6 +628,7 @@ public class DominionCVRExportParser {
     final String ballot_type =
       stripEqualQuotes(the_line.get(my_columns.get(BALLOT_TYPE_HEADER)));
     final List<CVRContestInfo> contest_info = new ArrayList<CVRContestInfo>();
+    final String prefix = "[extractCVR] ";
 
     // for each contest, see if choices exist on the CVR; "0" or "1" are
     // votes or absences of votes; "" means that the contest is not in this style
@@ -633,8 +636,16 @@ public class DominionCVRExportParser {
     for (final Contest co : my_contests) {
       boolean present = false;
       final List<String> votes = new ArrayList<String>();
-      //FIXME set choices = co.choices() for plurality, generateIRVChoices(co.ranksAllowed) for IRV.
-      for (final Choice ch : co.choices()) {
+      boolean isIRV = co.description().equals(ContestType.IRV.toString());
+
+      List<Choice> choices;
+      if(isIRV) {
+        choices = generateAllIRVPreferences(co.choices(), co.votesAllowed());
+      } else {
+        choices = co.choices();
+      }
+
+      for (final Choice ch : choices) {
         final String mark_string = the_line.get(index);
         final boolean p = !mark_string.isEmpty();
         final boolean mark = "1".equals(mark_string);
@@ -645,13 +656,25 @@ public class DominionCVRExportParser {
         index = index + 1;
       }
       // if this contest was on the ballot, add it to the votes
+      try {
       if (present) {
-        // FIXME try to get valid interpretation of IRV votes; catch error and throw it with info.
-        // set finalVotes = votes for plurality; finalVotes = getValidInterpretation(votes) for IRV.
-        // log (for now the IRV vote and the valid interpretation.
-        // TODO think about whether we should also store the raw vote in the database if applicable.
-        // TODO refine this part when we know whether we should reject votes with invalid IRV votes.
-        contest_info.add(new CVRContestInfo(co, null, null, votes));
+        if(isIRV) {
+            // If it is IRV, convert it into an ordered list of names (without parentheses), then
+            // store.
+            IRVChoices irvVotes = new IRVChoices(votes);
+            List<String> orderedChoices = irvVotes.getValidIntentAsOrderedList();
+            String msg = "IRV interpretation: ";
+            LOGGER.debug(String.format("%s %s", prefix, msg+irvVotes+" to "+orderedChoices));
+            contest_info.add(new CVRContestInfo(co, null, null, orderedChoices));
+
+          // TODO think about whether we should also store the raw vote in the database if applicable.
+          // TODO refine this part when we know whether we should reject votes with invalid IRV votes.
+        } else {
+          contest_info.add(new CVRContestInfo(co, null, null, votes));
+        }
+      }
+      } catch (IRVParsingException e) {
+        throw new RuntimeException(e);
       }
     }
 

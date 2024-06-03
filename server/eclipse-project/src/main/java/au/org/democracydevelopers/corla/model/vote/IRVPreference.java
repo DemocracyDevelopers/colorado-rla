@@ -24,6 +24,7 @@ package au.org.democracydevelopers.corla.model.vote;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import us.freeandfair.corla.model.Choice;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -106,8 +107,8 @@ public class IRVPreference implements Comparable<IRVPreference> {
    * @throws IRVParsingException if either an individual choice can't be parsed as name(rank), or
    *                             the overall collection of choices doesn't fit the pattern above.
    */
-  public static void validateIRVChoiceHeaders(CSVRecord theLine, int startIndex, int index,
-                                        int irvVotesAllowed) throws IRVParsingException {
+  public static void validateIRVPreferenceHeaders(CSVRecord theLine, int startIndex, int index,
+                                                  int irvVotesAllowed) throws IRVParsingException {
     final String prefix = "[valicateIRVChoiceHeaders] ";
 
     // Find all the plain candidate names by removing (1) from the first preference headers.
@@ -144,6 +145,31 @@ public class IRVPreference implements Comparable<IRVPreference> {
         }
       }
     }
+  }
+
+  /**
+   * This is the almost-inverse of validateIRVPreferenceHeaders. Given a list of (plain-name)
+   * choices, and a number of allowed ranks, it generates the complete list of all name(rank)
+   * strings, by iterating through ranks from 1 to maxRank and, within each rank, iterating through
+   * all names.
+   * @param choices the list of candidate names.
+   * @param maxRank the maximum allowed rank. (Minimum is always 1.)
+   * @return a list of IRV choices in the expected pattern, e.g.
+   * Alice(1), Bob(1), Chuan(1), Alice(2), Bob(2), Chuan(2), Alice(3), Bob(3), Chuan(3) is valid,
+   */
+  public static List<Choice> generateAllIRVPreferences(List<Choice> choices, int maxRank) {
+    List<Choice> allPrefs = new ArrayList<>();
+    for(int rank = 1 ; rank <= maxRank ; rank++) {
+      for (Choice c : choices) {
+        allPrefs.add(new Choice(
+            c.name()+"("+rank+")",
+            c.description(),
+            c.qualifiedWriteIn(),
+            c.fictitious()
+        ));
+      }
+    }
+    return allPrefs;
   }
 
   /**
