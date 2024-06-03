@@ -668,7 +668,8 @@ public class DominionCVRExportParser {
             contest_info.add(new CVRContestInfo(co, null, null, orderedChoices));
 
           // TODO think about whether we should also store the raw vote in the database if applicable.
-          // TODO refine this part when we know whether we should reject votes with invalid IRV votes.
+          // TODO refine this part when we know whether we should reject csvs with invalid IRV
+          //  votes.
         } else {
           contest_info.add(new CVRContestInfo(co, null, null, votes));
         }
