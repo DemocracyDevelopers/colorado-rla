@@ -505,6 +505,7 @@ public class DominionCVRExportParser {
     for (final Contest co : my_contests) {
       boolean present = false;
       final List<String> votes = new ArrayList<String>();
+      //FIXME set choices = co.choices() for plurality, generateIRVChoices(co.ranksAllowed) for IRV.
       for (final Choice ch : co.choices()) {
         final String mark_string = the_line.get(index);
         final boolean p = !mark_string.isEmpty();
@@ -517,6 +518,11 @@ public class DominionCVRExportParser {
       }
       // if this contest was on the ballot, add it to the votes
       if (present) {
+        // FIXME try to get valid interpretation of IRV votes; catch error and throw it with info.
+        // set finalVotes = votes for plurality; finalVotes = getValidInterpretation(votes) for IRV.
+        // log (for now the IRV vote and the valid interpretation.
+        // TODO think about whether we should also store the raw vote in the database if applicable.
+        // TODO refine this part when we know whether we should reject votes with invalid IRV votes.
         contest_info.add(new CVRContestInfo(co, null, null, votes));
       }
     }
