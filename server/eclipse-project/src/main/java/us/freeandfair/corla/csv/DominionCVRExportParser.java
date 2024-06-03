@@ -13,20 +13,11 @@ package us.freeandfair.corla.csv;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.PersistenceException;
 
+import au.org.democracydevelopers.corla.model.ContestType;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -151,6 +142,22 @@ public class DominionCVRExportParser {
       CVR_NUMBER_HEADER, TABULATOR_NUMBER_HEADER, BATCH_ID_HEADER,
       RECORD_ID_HEADER, IMPRINTED_ID_HEADER, BALLOT_TYPE_HEADER
       };
+
+  /**
+   * The string indicating how many votes are permitted, for plurality.
+   */
+  private static final String PLURALITY_VOTE_FOR = "(Vote For=";
+
+  /**
+   * The string indicating how many votes are permitted, for IRV.
+   */
+  private static final String IRV_VOTE_FOR = "(Number of ranks=";
+
+  /**
+   * The string indicating how many winners are being selected, for IRV.
+   * We only audit when there is one winner.
+   */
+  private static final String IRV_WINNERS_ALLOWED = "(Number of positions=";
 
   /**
    * The parser to be used.
@@ -303,7 +310,10 @@ public class DominionCVRExportParser {
   private void updateContestStructures(final CSVRecord the_line,
                                        final List<String> the_names,
                                        final Map<String, Integer> the_votes_allowed,
-                                       final Map<String, Integer> the_choice_counts) {
+                                       final Map<String, Integer> the_choice_counts,
+                                       final Map<String, ContestType> the_contest_types) {
+    final String prefix = "[updateContestStructures] ";
+
     int index = my_first_contest_column;
     do {
       final String c = the_line.get(index);
@@ -313,21 +323,77 @@ public class DominionCVRExportParser {
         index = index + 1;
         count = count + 1;
       }
-      // get the contest name and "(Vote For=" number
-      String cn = c.substring(0, c.indexOf("(Vote For="));
-      final String vf = c.replace(cn, "").replace("(Vote For=", "").replace(")", "");
-      // clean up the contest name (we used it to get the number, before cleaning)
-      cn = cn.trim();
-      int ms = 1; // this is our default maximum selections
+
       try {
-        ms = Integer.parseInt(vf);
-      } catch (final NumberFormatException e) {
-        // ignored
+        int pluralityVotesAllowed = extractPositiveInteger(c, PLURALITY_VOTE_FOR, ")");
+        int irvVotesAllowed = extractPositiveInteger(c, IRV_VOTE_FOR, ")");
+        int irvWinners = extractPositiveInteger(c, IRV_WINNERS_ALLOWED, ")");
+
+        // If it worked as expected for plurality parsing, this is a plurality contest.
+        if(pluralityVotesAllowed > 0 && irvVotesAllowed == -1 && irvWinners == -1) {
+          String contestName = c.substring(0, c.indexOf(PLURALITY_VOTE_FOR)).strip();
+          the_names.add(contestName);
+          the_contest_types.put(contestName, ContestType.PLURALITY);
+          the_choice_counts.put(contestName, count);
+          the_votes_allowed.put(contestName, pluralityVotesAllowed);
+
+        // If it worked as expected for IRV parsing, this is an IRV contest.
+        } else if(pluralityVotesAllowed == -1 && irvVotesAllowed > 0 && irvWinners == 1) {
+          String contestName = c.substring(0, c.indexOf(IRV_WINNERS_ALLOWED)).strip();
+          the_names.add(contestName);
+          the_contest_types.put(contestName, ContestType.IRV);
+          // Each real choice (i.e. candidate name) is repeated 'irvVotesAllowed' times, e.g.
+          // Alice(1), Alice(2), etc. We just want to record the number of real choices.
+          the_choice_counts.put(contestName, count / irvVotesAllowed);
+          the_votes_allowed.put(contestName, irvVotesAllowed);
+
+        // TODO Clarify whether we should accept, though not audit, an STV contest, as below,
+        // } else if (pluralityVotesAllowed == -1 && irvVotesAllowed > 0 && irvWinners > 1) {
+        } else {
+          // The header didn't have the keywords we expected, or we couldn't parse the integers.
+          final String msg = "Could not parse header: ";
+          LOGGER.error(String.format("%s %s", prefix, msg+c));
+          throw new RuntimeException(msg+c);
+        }
+      } catch (NumberFormatException e) {
+        // We parsed the header OK, but the values were not as expected.
+        final String msg = "Unexpected or uninterpretable numbers in header: ";
+        LOGGER.error(String.format("%s %s", prefix, msg+c));
+        throw new RuntimeException(msg+c);
       }
-      the_names.add(cn);
-      the_choice_counts.put(cn, count);
-      the_votes_allowed.put(cn, ms);
+
     } while (index < the_line.size());
+
+    LOGGER.debug(String.format("%s %s", prefix, "Successfully parsed headers: "+the_line));
+  }
+
+  /**
+   * Parses and returns a positive integer that occurs in the whole string, between indicatorString
+   * and endString. For example, if wholeString is "[contestname] (Vote For=3)", a call to
+   * getIntegerAfter(wholestring, "VoteFor=", ")") will return 3.
+   * @param wholeString The string from which to extract the value.
+   * @param indicator The substring that indicates the value is next.
+   * @param endString The string that should follow the value.
+   * @return the positive integer between indicatorString and endString, or
+   *         -1 if indicatorString is not present in wholeString.
+   * @throws NumberFormatException if indicatorString appears in wholeString, but what follows
+   *         between it and endString cannot be parsed as a positive integer.
+   */
+  private int extractPositiveInteger(String wholeString, String indicator, String endString)
+      throws NumberFormatException {
+    final String prefix = "[extractPositiveInteger] ";
+
+    // The index we expect the integer to start.
+    int intIndex = wholeString.indexOf(indicator)+indicator.length();
+    String intString = wholeString.substring(intIndex, wholeString.indexOf(endString, intIndex));
+    final int val = Integer.parseInt(intString.strip());
+    if(val > 0) {
+      return val;
+    }
+
+    String msg = "Could not parse header: ";
+    LOGGER.error(String.format("%s %s", prefix, msg+wholeString));
+    throw new NumberFormatException(String.format("%s %s", prefix, msg+wholeString));
   }
 
   /**
@@ -710,12 +776,13 @@ public class DominionCVRExportParser {
     final List<String> contest_names = new ArrayList<String>();
     final Map<String, Integer> contest_votes_allowed = new HashMap<String, Integer>();
     final Map<String, Integer> contest_choice_counts = new HashMap<String, Integer>();
+    final Map<String, ContestType> contest_types = new HashMap<>();
 
     // we expect the second line to be a list of contest names, each appearing once
     // for each choice in the contest
 
     updateContestStructures(contest_line, contest_names, contest_votes_allowed,
-                            contest_choice_counts);
+                            contest_choice_counts, contest_types);
 
 
     headerResult = processHeaders(expl_line);
