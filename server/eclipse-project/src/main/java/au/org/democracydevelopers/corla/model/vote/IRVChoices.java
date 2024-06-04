@@ -92,7 +92,7 @@ public class IRVChoices {
    * choices (overvotes, skipped preferences, repeated candidate names).
    * @param sortedChoices a list of IRVPreferences, which need not be valid - repeats or skipped
    *                      preferences are allowed.
-   * @param firstDropped  the first index of the sorted choices to omit. If this is 1, we get an
+   * @param firstDropped  the first index of the sorted choices to omit. If this is 0, we get an
    *                      empty choices list.
    */
   private IRVChoices(List<IRVPreference> sortedChoices, int firstDropped) {
@@ -305,7 +305,7 @@ public class IRVChoices {
     // If the choices are blank, return blank. If the first element is not rank 1, the vote is
     // effectively blank.
     if (choices.isEmpty() || choices.get(0).rank != 1) {
-      return new IRVChoices(new ArrayList<IRVPreference>(),1);
+      return new IRVChoices(new ArrayList<>(),1);
     }
 
     List<IRVPreference> nonSkipChoices = new ArrayList<>(choices);
