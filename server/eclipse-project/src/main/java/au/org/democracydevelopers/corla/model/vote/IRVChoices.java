@@ -305,7 +305,7 @@ public class IRVChoices {
     // If the choices are blank, return blank. If the first element is not rank 1, the vote is
     // effectively blank.
     if (choices.isEmpty() || choices.get(0).rank != 1) {
-      return new IRVChoices(new ArrayList<>(),1);
+      return new IRVChoices(new ArrayList<>(),0);
     }
 
     List<IRVPreference> nonSkipChoices = new ArrayList<>(choices);

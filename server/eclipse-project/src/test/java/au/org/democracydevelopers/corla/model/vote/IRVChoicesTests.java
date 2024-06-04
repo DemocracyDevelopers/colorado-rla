@@ -315,7 +315,7 @@ public class IRVChoicesTests {
   }
 
   /**
-   * Test rule 2 - removing skipped rankings.
+   * Test rule 26.7.2 - removing skipped rankings.
    * First rank skipped - remove all.
    * @throws IRVParsingException never
    */
@@ -324,6 +324,19 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeSkipsTest4");
 
     IRVChoices b = new IRVChoices("Alice(3),Bob(2),Chuan(4)");
+    assertEquals(0, b.getValidIntentAsOrderedList().size());
+  }
+
+  /**
+   * Test rule 26.7.2 - removing skipped rankings.
+   * First rank is not 1 - remove all.
+   * @throws IRVParsingException never
+   */
+  @Test
+  public void removeSkipsTest5() throws IRVParsingException {
+    testUtils.log(LOGGER,"removeSkipsTest4");
+
+    IRVChoices b = new IRVChoices("Alice(3)");
     assertEquals(0, b.getValidIntentAsOrderedList().size());
   }
 
