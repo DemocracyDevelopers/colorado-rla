@@ -156,7 +156,7 @@ public class DominionCVRExportParser {
   /**
    * The string indicating how many votes are permitted, for IRV.
    */
-  private static final String IRV_VOTE_FOR = "(Number of ranks=";
+  private static final String IRV_VOTE_FOR = "Number of ranks=";
 
   /**
    * The string indicating how many winners are being selected, for IRV.
@@ -333,7 +333,7 @@ public class DominionCVRExportParser {
       try {
         int pluralityVotesAllowed = extractPositiveInteger(c, PLURALITY_VOTE_FOR, ")");
         int irvVotesAllowed = extractPositiveInteger(c, IRV_VOTE_FOR, ")");
-        int irvWinners = extractPositiveInteger(c, IRV_WINNERS_ALLOWED, ")");
+        int irvWinners = extractPositiveInteger(c, IRV_WINNERS_ALLOWED, ",");
 
         // If it worked as expected for plurality parsing, this is a plurality contest.
         if(pluralityVotesAllowed > 0 && irvVotesAllowed == -1 && irvWinners == -1) {
@@ -344,20 +344,21 @@ public class DominionCVRExportParser {
           the_votes_allowed.put(contestName, pluralityVotesAllowed);
 
         // If it worked as expected for IRV parsing, this is an IRV contest.
-        } else if(pluralityVotesAllowed == -1 && irvVotesAllowed > 0 && irvWinners == 1) {
+        } else if(pluralityVotesAllowed == -1 && irvVotesAllowed > 0 && irvWinners == 1
+            // We expect the count to be the real number of choices times the number of ranks.
+            && count % irvVotesAllowed == 0) {
           String contestName = c.substring(0, c.indexOf(IRV_WINNERS_ALLOWED)).strip();
           the_names.add(contestName);
           the_contest_types.put(contestName, ContestType.IRV);
           // Each real choice (i.e. candidate name) is repeated 'irvVotesAllowed' times, e.g.
           // Alice(1), Alice(2), etc. We just want to record the number of real choices.
-          validateIRVPreferenceHeaders(the_line, startIndex, index, irvVotesAllowed);
           the_choice_counts.put(contestName, count / irvVotesAllowed);
           the_votes_allowed.put(contestName, irvVotesAllowed);
 
         // TODO Clarify whether we should accept, though not audit, an STV contest, as below,
         // } else if (pluralityVotesAllowed == -1 && irvVotesAllowed > 0 && irvWinners > 1) {
         } else {
-          // The header didn't have the keywords we expected, or we couldn't parse the integers.
+          // The header didn't have the keywords we expected.
           final String msg = "Could not parse header: ";
           LOGGER.error(String.format("%s %s", prefix, msg+c));
           throw new RuntimeException(msg+c);
@@ -365,11 +366,6 @@ public class DominionCVRExportParser {
       } catch (NumberFormatException e) {
         // We parsed the header OK, but the values were not as expected.
         final String msg = "Unexpected or uninterpretable numbers in header: ";
-        LOGGER.error(String.format("%s %s", prefix, msg+c));
-        throw new RuntimeException(msg+c);
-      } catch (IRVParsingException e) {
-        // The IRV headers don't follow the right pattern of name(rank) values.
-        final String msg = "IRV choices do not follow the expected pattern: ";
         LOGGER.error(String.format("%s %s", prefix, msg+c));
         throw new RuntimeException(msg+c);
       }
@@ -394,6 +390,11 @@ public class DominionCVRExportParser {
   private int extractPositiveInteger(String wholeString, String indicator, String endString)
       throws NumberFormatException {
     final String prefix = "[extractPositiveInteger] ";
+
+    // If the indicator is not present, return -1.
+    if(!wholeString.contains(indicator)) {
+      return -1;
+    }
 
     // The index we expect the integer to start.
     int intIndex = wholeString.indexOf(indicator)+indicator.length();
@@ -435,6 +436,12 @@ public class DominionCVRExportParser {
       boolean isIRV = contestTypes.get(contestName).equals(ContestType.IRV);
 
       try {
+        if (isIRV) {
+          // Ensure that the IRV choices have the expected form, iterating through all ranks and
+          // all candidates for each rank.
+          validateIRVPreferenceHeaders(choiceLine, index, choiceCounts.get(contestName),
+              votesAllowed.get(contestName));
+        }
         while (index < end) {
           String choice;
           if (isIRV) {
@@ -447,7 +454,7 @@ public class DominionCVRExportParser {
           final String explanation = explanationLine.get(index).trim();
           // "Write-in" is a fictitious candidate that denotes the beginning of
           // the list of qualified write-in candidates
-          final boolean isFictitious = nameIsWriteIn(choice, contestTypes.get(contestName));
+          final boolean isFictitious = choice.toUpperCase().matches("WRITE[-_ \t]*IN");
           choices.add(new Choice(choice, explanation, isWriteIn, isFictitious));
           if (isFictitious) {
             // consider all subsequent choices in this contest to be qualified

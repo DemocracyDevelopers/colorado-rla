@@ -22,6 +22,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.model.vote;
 
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import us.freeandfair.corla.model.Choice;
@@ -101,48 +102,50 @@ public class IRVPreference implements Comparable<IRVPreference> {
    * elsewhere, is invalid.
    * @param theLine the CSV line (basically a list of Strings)
    * @param startIndex the first index for this contest's choices.
-   * @param index the first index for the next contest's choices.
-   * @param irvVotesAllowed The number of ranks allowed (which matches the number expected in the
+   * @param numChoices the number of choices (candidates).
+   * @param maxRank The number of ranks allowed (which matches the number expected in the
    *                       csv).
    * @throws IRVParsingException if either an individual choice can't be parsed as name(rank), or
    *                             the overall collection of choices doesn't fit the pattern above.
    */
-  public static void validateIRVPreferenceHeaders(CSVRecord theLine, int startIndex, int index,
-                                                  int irvVotesAllowed) throws IRVParsingException {
+  public static void validateIRVPreferenceHeaders(CSVRecord theLine, int startIndex, int numChoices,
+                                                  int maxRank) throws IRVParsingException {
     final String prefix = "[valicateIRVChoiceHeaders] ";
 
-    // Find all the plain candidate names by removing (1) from the first preference headers.
-    List<String> candidates = new ArrayList<>();
-    // As long as the options are of the form name(1), add the name to the candidate list.
-    for (int i = startIndex ; i < index && new IRVPreference(theLine.get(i)).rank == 1 ; i++ ) {
-      candidates.add(new IRVPreference(theLine.get(i)).candidateName);
+    // Iterate through all consecutive pairs of ranks, checking that they have the expected choice
+    // counts and correct ranks.
+    for (int rank =1; rank < maxRank ; rank++) {
+      checkNamesForNextPreference(theLine, startIndex, numChoices, 1);
     }
+  }
 
-    // If there are not an integer multiple of the number of candidates, it is definitely wrong.
-    // TODO clarify whether we should enforce the irvVotesAllowed if that is different from the
-    // number of ranks in the csv file. At the moment, it is enforced, and the csv is rejected if
-    // they don't match. If this changes, this function should probably return the actual max rank,
-    // which should propagate through as votes_allowed.
-    int numCands = candidates.size();
-    int maxRank = (index - startIndex)/numCands;
-    if((index - startIndex) != numCands*maxRank || maxRank != irvVotesAllowed) {
-      final String msg = "Invalid IRV choices header: ";
-      LOGGER.error(String.format("%s %s", prefix, msg+theLine));
-      throw new IRVParsingException(msg+theLine);
-    }
+  /**
+   * Get the candidate names as an ordered list, for a given rank.
+   * Check that the line has names of the form name_1(rank), name_2(rank), ... name_numChoices(rank)
+   * from the given startIndex, for the given rank.
+   * FIXME fix up comment.
+   * @param theLine the CSV line (an indexed list of strings).
+   * @param startIndex the first index where we expect a name(rank) entry of interest.
+   * @param numChoices the number of candidates.
+   * @param startRank the starting rank - these choices will be compared with startRank+1.
+   * @return the candidate names as a list of Strings, in the order they appeared, if they fit
+   * the expected pattern with the right rank and length..
+   */
+  private static void checkNamesForNextPreference(CSVRecord theLine, int startIndex,
+                                             int numChoices, int startRank) throws IRVParsingException {
 
-    // Now check that, for every other rank, we get the same list of candidates.
-    // Run through all the possible ranks that should fit between startIndex and index;
-    // For each candidate with that rank, check that the corresponding candidate in the inital
-    // (first preference) list has the same name.
-    for (int rank =2; rank <= maxRank ; rank++) {
-      for (int i = startIndex+((rank-1)*numCands) ; i < startIndex+rank*numCands ; i++ ) {
-        IRVPreference irvPref = new IRVPreference(theLine.get(i));
-        if(rank != irvPref.rank || !candidates.get(i).equals(irvPref.candidateName)) {
-          final String msg = "Unexpected choice in IRV header: ";
-          LOGGER.error(String.format("%s %s", prefix, msg+theLine.get(i)));
-          throw new IRVParsingException(msg+theLine.get(i));
-        }
+    final String prefix = "[getNamesForPreference] ";
+
+    // irv1 iterates along all the choices of a given rank (startRank), while
+    // irv2 iterates along all the choices of the next rank (startRank+1).
+    // Check whether they have the same candidate name and the expected rank.
+    for (int i = 0 ; i < numChoices ; i++) {
+      IRVPreference irv1 = new IRVPreference(theLine.get(startIndex+i));
+      IRVPreference irv2 = new IRVPreference(theLine.get(startIndex+i+numChoices));
+      if(irv1.rank != startRank || irv2.rank != startRank + 1 || !irv1.candidateName.equals(irv2.candidateName)) {
+        final String msg = "Invalid IRV choices header: ";
+        LOGGER.error(String.format("%s %s", prefix, msg + theLine));
+        throw new IRVParsingException(msg + theLine);
       }
     }
   }

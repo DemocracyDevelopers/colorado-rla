@@ -23,12 +23,23 @@ package au.org.democracydevelopers.corla.model.vote;
 
 import au.org.democracydevelopers.corla.testUtils;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import static au.org.democracydevelopers.corla.model.vote.IRVPreference.validateIRVPreferenceHeaders;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
@@ -42,6 +53,11 @@ public class IRVPreferenceTests {
    * Class-wide logger
    */
   public static final Logger LOGGER = LogManager.getLogger(IRVPreference.class);
+
+  /**
+   * Location of the test data.
+   */
+  public static final String CSV_FILE_PATH = "src/test/resources/CSVs/";
 
   @Rule
   public final ExpectedException exception = ExpectedException.none();
@@ -253,5 +269,19 @@ public class IRVPreferenceTests {
 
     exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
+  }
+
+  /**
+   * Test valid IRV preference headers. This is a very simple set of valid headers.
+   * @throws IRVParsingException never.
+   */
+  @Test
+  public void validateValidIRVPreferenceHeaders() throws IRVParsingException, IOException {
+    Path path = Paths.get(CSV_FILE_PATH+"ThreeCandidatesTenVotes.csv");
+
+    Reader reader = Files.newBufferedReader(path);
+    CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
+    CSVRecord theLine = parser.getRecords().get(2);
+    validateIRVPreferenceHeaders(theLine, 7, 3,3);
   }
 }

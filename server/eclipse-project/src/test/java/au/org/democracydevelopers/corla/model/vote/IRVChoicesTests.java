@@ -49,7 +49,7 @@ public class IRVChoicesTests {
   /**
    * Class-wide logger
    */
-  public static final Logger LOGGER = LogManager.getLogger(IRVPreference.class);
+  public static final Logger LOGGER = LogManager.getLogger(IRVChoicesTests.class);
 
   @Rule
   public final ExpectedException exception = ExpectedException.none();
