@@ -135,9 +135,19 @@ public class IRVChoicesTests {
   }
 
   /**
+   * A blank vote is valid.
+   */
+  @Test
+  public void blankVoteIsValid() throws IRVParsingException {
+
+    IRVChoices b = new IRVChoices("");
+    assertTrue(b.isValid());
+    assertEquals(0, b.getValidIntentAsOrderedList().size());
+  }
+
+  /**
    * Other general validity tests for ballot interpretation,
-   * including applying single rules and checking the validity
-   * of the output.
+   * including a blank vote.
    * Valid choices.
    * @throws IRVParsingException never
    */

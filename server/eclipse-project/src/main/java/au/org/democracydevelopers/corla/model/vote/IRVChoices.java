@@ -131,7 +131,9 @@ public class IRVChoices {
    *   constructor is the only one we need.
    */
   public IRVChoices(String sanitizedChoices) throws IRVParsingException {
-    this(Arrays.asList(sanitizedChoices.trim().split(",")));
+    // Filtering for non-blanks is needed because split will add a blank if the input list is empty.
+    this((Arrays.stream(sanitizedChoices.trim().split(","))
+        .filter(s -> !s.isBlank())).collect(Collectors.toList()));
   }
 
   /**
