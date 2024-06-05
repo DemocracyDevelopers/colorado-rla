@@ -25,13 +25,10 @@ import au.org.democracydevelopers.corla.testUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
 import java.util.List;
 
-import static org.testng.AssertJUnit.*;
+import org.testng.annotations.*;
+import static org.testng.Assert.*;
 
 /**
  * Tests for proper interpretation of IRV choices, including proper interpretation of invalid
@@ -49,10 +46,7 @@ public class IRVChoicesTests {
   /**
    * Class-wide logger
    */
-  public static final Logger LOGGER = LogManager.getLogger(IRVChoicesTests.class);
-
-  @Rule
-  public final ExpectedException exception = ExpectedException.none();
+  private static final Logger LOGGER = LogManager.getLogger(IRVChoicesTests.class);
 
   /**
    * Testing getValidIntent against Example 1 in the Guide. This removes duplicates before

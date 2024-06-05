@@ -28,9 +28,6 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -38,9 +35,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static au.org.democracydevelopers.corla.model.vote.IRVPreference.validateIRVPreferenceHeaders;
-import static org.testng.AssertJUnit.assertEquals;
+import org.testng.annotations.*;
+import static org.testng.Assert.*;
 
+import static au.org.democracydevelopers.corla.model.vote.IRVPreference.validateIRVPreferenceHeaders;
 /**
  * Tests for proper parsing of IRV choices - these are supposed to be of the form name(rank).
  * Tests include both valid complex tests (e.g. candidate names with parentheses, whitespace
@@ -51,15 +49,12 @@ public class IRVPreferenceTests {
   /**
    * Class-wide logger
    */
-  public static final Logger LOGGER = LogManager.getLogger(IRVPreference.class);
+  private static final Logger LOGGER = LogManager.getLogger(IRVPreference.class);
 
   /**
    * Location of the test data.
    */
   public static final String CSV_FILE_PATH = "src/test/resources/CSVs/";
-
-  @Rule
-  public final ExpectedException exception = ExpectedException.none();
 
   /**
    * Ordinary two-digit rank.
@@ -160,14 +155,14 @@ public class IRVPreferenceTests {
    * Parentheses but no rank. This is an error.
    * @throws IRVParsingException and checks it is thrown.
    */
-  @Test
+  @Test(expectedExceptions = IRVParsingException.class)
   public void parseChoiceWithEmptyParenthesesThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithEmptyParenthesesThrowsException");
 
 
     String choice = "CandidateWithNoPreference()";
 
-    exception.expect(IRVParsingException.class);
+    // exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
   }
 
@@ -176,13 +171,13 @@ public class IRVPreferenceTests {
    * Nested parentheses. This is an error.
    * @throws IRVParsingException and checks it is thrown.
    */
-  @Test
+  @Test(expectedExceptions = IRVParsingException.class)
   public void parseChoiceWithNestedParenthesesThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithNestedParenthesesThrowsException");
 
     String choice = "CandidateWithNestedParentheses((42))";
 
-    exception.expect(IRVParsingException.class);
+    // exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
   }
 
@@ -190,13 +185,13 @@ public class IRVPreferenceTests {
    * A rank of 0, which is not allowed. This is an error.
    * @throws IRVParsingException and checks that it is thrown.
    */
-  @Test
+  @Test(expectedExceptions = IRVParsingException.class)
   public void parseChoiceWithZeroPreferenceThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithZeroPreferenceThrowsException");
 
     String choice = "CandidateWithZeroPreference(0)";
 
-    exception.expect(IRVParsingException.class);
+    // exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
   }
 
@@ -204,13 +199,13 @@ public class IRVPreferenceTests {
    * A negative rank, which is not allowed. This is an error.
    * @throws IRVParsingException and checks it is thrown.
    */
-  @Test
+  @Test(expectedExceptions = IRVParsingException.class)
   public void parseChoiceWithNegativePreferenceThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithNegativePreferenceThrowsException");
 
     String choice = "CandidateWithZeroPreference(-10)";
 
-    exception.expect(IRVParsingException.class);
+    // exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
   }
 
@@ -218,13 +213,13 @@ public class IRVPreferenceTests {
    * A non-integer rank, which is not allowed. This is an error.
    * @throws IRVParsingException and checks it is thrown.
    */
-  @Test
+  @Test(expectedExceptions = IRVParsingException.class)
   public void parseChoiceWithFractionalPreferenceThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithFractionalPreferenceThrowsException");
 
     String choice = "CandidateWithFractionalPreference(2.5)";
 
-    exception.expect(IRVParsingException.class);
+    // exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
   }
 
@@ -232,13 +227,13 @@ public class IRVPreferenceTests {
    * A non-numerical rank, which is not allowed. This is an error.
    * @throws IRVParsingException and checks it is thrown.
    */
-  @Test
+  @Test(expectedExceptions = IRVParsingException.class)
   public void parseChoiceWithStringPreferenceThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithStringPreferenceThrowsException");
 
     String choice = "CandidateWithFractionalPreference(pref)";
 
-    exception.expect(IRVParsingException.class);
+    // exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
   }
 
@@ -246,13 +241,13 @@ public class IRVPreferenceTests {
    * No rank, and no parentheses, which is not allowed. This is an error.
    * @throws IRVParsingException and checks it is thrown.
    */
-  @Test
+  @Test(expectedExceptions = IRVParsingException.class)
   public void parseChoiceWithNoParenthesesThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithNoParenthesesThrowsException");
 
     String choice = "CandidateWithNoPreference";
 
-    exception.expect(IRVParsingException.class);
+    // exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
   }
 
@@ -260,13 +255,13 @@ public class IRVPreferenceTests {
    * All-whitespace candidate name. This is an error.
    * @throws IRVParsingException and checks it is thrown.
    */
-  @Test
+  @Test(expectedExceptions = IRVParsingException.class)
   public void parseChoiceWithWhiteSpaceNameThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithWhiteSpaceNameThrowsException");
 
     String choice = "    (23)";
 
-    exception.expect(IRVParsingException.class);
+    // exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
   }
 
@@ -302,14 +297,14 @@ public class IRVPreferenceTests {
    * Another simple test of valid IRV preference headers, except the expected maxRank is too large.
    * @throws IRVParsingException never.
    */
-  @Test
+  @Test(expectedExceptions = IRVParsingException.class)
   public void validateValidIRVPreferenceHeaders3() throws IRVParsingException, IOException {
     Path path = Paths.get(CSV_FILE_PATH+"ThreeCandidatesTenVotes.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
     CSVRecord theLine = parser.getRecords().get(2);
-    exception.expect(IRVParsingException.class);
+    // exception.expect(IRVParsingException.class);
     validateIRVPreferenceHeaders(theLine, 7, 3,4);
   }
 
@@ -317,7 +312,7 @@ public class IRVPreferenceTests {
    * Invalid IRV preference headers - skipped 3rd rank.
    * @throws IRVParsingException always.
    */
-  @Test
+  @Test(expectedExceptions = IRVParsingException.class)
   public void validateInValidIRVPreferenceHeadersSkipped3rdRank() throws IRVParsingException,
       IOException {
     Path path = Paths.get(CSV_FILE_PATH+"InvalidIRVHeadersSkipped3rdRankCandidate.csv");
@@ -325,7 +320,7 @@ public class IRVPreferenceTests {
         Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
     CSVRecord theLine = parser.getRecords().get(2);
-    exception.expect(IRVParsingException.class);
+    // exception.expect(IRVParsingException.class);
     validateIRVPreferenceHeaders(theLine, 7, 3,3);
   }
 

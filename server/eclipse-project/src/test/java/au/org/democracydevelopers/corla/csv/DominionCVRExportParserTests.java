@@ -25,11 +25,6 @@ import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
 import au.org.democracydevelopers.corla.model.vote.IRVPreference;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.testcontainers.containers.PostgreSQLContainer;
 import us.freeandfair.corla.csv.DominionCVRExportParser;
 import us.freeandfair.corla.model.County;
@@ -42,7 +37,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
-import static org.testng.AssertJUnit.*;
+import org.testng.annotations.*;
+import static org.testng.Assert.*;
+
 import static us.freeandfair.corla.query.CountyQueries.fromString;
 
 public class DominionCVRExportParserTests {
@@ -50,7 +47,7 @@ public class DominionCVRExportParserTests {
   /**
    * Class-wide logger
    */
-  public static final Logger LOGGER = LogManager.getLogger(DominionCVRExportParserTests.class);
+  private static final Logger LOGGER = LogManager.getLogger(DominionCVRExportParserTests.class);
   /**
    * Container for the mock-up database.
    */
@@ -69,9 +66,6 @@ public class DominionCVRExportParserTests {
    * Location of the test data.
    */
   public static final String CSV_FILE_PATH = "src/test/resources/CSVs/";
-
-  @Rule
-  public final ExpectedException exception = ExpectedException.none();
 
   @BeforeClass
   public static void beforeAll() {
@@ -108,10 +102,9 @@ public class DominionCVRExportParserTests {
 }
 
 
-  @Test
+  @Test(expectedExceptions = IRVParsingException.class)
   public void parseBadThrowsException() throws IRVParsingException {
 
-    exception.expect(IRVParsingException.class);
     new IRVPreference("bad");
   }
 }
