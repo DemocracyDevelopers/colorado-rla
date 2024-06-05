@@ -54,7 +54,13 @@ public class DominionCVRExportParserTests {
    * Container for the mock-up database.
    */
   static PostgreSQLContainer<?> postgres
-      = new PostgreSQLContainer<>("postgres:15-alpine").withDatabaseName("corla");
+      = new PostgreSQLContainer<>("postgres:15-alpine")
+      // None of these actually have to be the same as the real database (except its name), but this
+      // makes it easy to match the setup scripts.
+      .withDatabaseName("corla")
+      .withUsername("corlaadmin")
+      .withPassword("corlasecret")
+      .withInitScript("corlaInit.sql");
 
   private final static County testCounty = new County("testCounty", 1000L);
   private final static Properties properties = new Properties();
