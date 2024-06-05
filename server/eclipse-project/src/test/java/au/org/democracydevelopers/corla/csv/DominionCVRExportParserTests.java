@@ -43,6 +43,7 @@ import java.nio.file.Paths;
 import java.util.Properties;
 
 import static org.testng.AssertJUnit.*;
+import static us.freeandfair.corla.query.CountyQueries.fromString;
 
 public class DominionCVRExportParserTests {
 
@@ -62,7 +63,6 @@ public class DominionCVRExportParserTests {
       .withPassword("corlasecret")
       .withInitScript("corlaInit.sql");
 
-  private final static County testCounty = new County("testCounty", 1000L);
   private final static Properties properties = new Properties();
 
   /**
@@ -97,10 +97,11 @@ public class DominionCVRExportParserTests {
 
   @Test
   public void parseSimpleIRVSucceeds() throws IOException {
+    County county = fromString("Boulder");
     Path path = Paths.get(CSV_FILE_PATH + "ThreeCandidatesTenVotes.csv");
     Reader reader = Files.newBufferedReader(path);
 
-    DominionCVRExportParser parser = new DominionCVRExportParser(reader, testCounty,
+    DominionCVRExportParser parser = new DominionCVRExportParser(reader, county,
         new Properties(), true);
 
   assertTrue(parser.parse().success);
