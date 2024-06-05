@@ -54,7 +54,14 @@ public class IRVPreferenceTests {
   /**
    * Location of the test data.
    */
-  public static final String CSV_FILE_PATH = "src/test/resources/CSVs/";
+  private static final String CSV_FILE_PATH = "src/test/resources/CSVs/";
+
+  /**
+   * Regular expressions used to check we get the right error message for parse errors.
+   */
+  private static final String noParseRegexp = "Couldn't parse.*";
+  private static final String invalidIRVChoicesRegexp = "Invalid IRV choices.*";
+  private static final String insufficientChoicesRegexp = "Insufficient choices.*";
 
   /**
    * Ordinary two-digit rank.
@@ -155,14 +162,14 @@ public class IRVPreferenceTests {
    * Parentheses but no rank. This is an error.
    * @throws IRVParsingException and checks it is thrown.
    */
-  @Test(expectedExceptions = IRVParsingException.class)
+  @Test(expectedExceptions = IRVParsingException.class,
+        expectedExceptionsMessageRegExp = noParseRegexp)
   public void parseChoiceWithEmptyParenthesesThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithEmptyParenthesesThrowsException");
 
 
     String choice = "CandidateWithNoPreference()";
 
-    // exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
   }
 
@@ -171,13 +178,13 @@ public class IRVPreferenceTests {
    * Nested parentheses. This is an error.
    * @throws IRVParsingException and checks it is thrown.
    */
-  @Test(expectedExceptions = IRVParsingException.class)
+  @Test(expectedExceptions = IRVParsingException.class,
+        expectedExceptionsMessageRegExp = noParseRegexp)
   public void parseChoiceWithNestedParenthesesThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithNestedParenthesesThrowsException");
 
     String choice = "CandidateWithNestedParentheses((42))";
 
-    // exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
   }
 
@@ -185,13 +192,13 @@ public class IRVPreferenceTests {
    * A rank of 0, which is not allowed. This is an error.
    * @throws IRVParsingException and checks that it is thrown.
    */
-  @Test(expectedExceptions = IRVParsingException.class)
+  @Test(expectedExceptions = IRVParsingException.class,
+        expectedExceptionsMessageRegExp = noParseRegexp)
   public void parseChoiceWithZeroPreferenceThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithZeroPreferenceThrowsException");
 
     String choice = "CandidateWithZeroPreference(0)";
 
-    // exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
   }
 
@@ -199,13 +206,13 @@ public class IRVPreferenceTests {
    * A negative rank, which is not allowed. This is an error.
    * @throws IRVParsingException and checks it is thrown.
    */
-  @Test(expectedExceptions = IRVParsingException.class)
+  @Test(expectedExceptions = IRVParsingException.class,
+        expectedExceptionsMessageRegExp = noParseRegexp)
   public void parseChoiceWithNegativePreferenceThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithNegativePreferenceThrowsException");
 
     String choice = "CandidateWithZeroPreference(-10)";
 
-    // exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
   }
 
@@ -213,13 +220,13 @@ public class IRVPreferenceTests {
    * A non-integer rank, which is not allowed. This is an error.
    * @throws IRVParsingException and checks it is thrown.
    */
-  @Test(expectedExceptions = IRVParsingException.class)
+  @Test(expectedExceptions = IRVParsingException.class,
+        expectedExceptionsMessageRegExp = noParseRegexp)
   public void parseChoiceWithFractionalPreferenceThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithFractionalPreferenceThrowsException");
 
     String choice = "CandidateWithFractionalPreference(2.5)";
 
-    // exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
   }
 
@@ -227,13 +234,13 @@ public class IRVPreferenceTests {
    * A non-numerical rank, which is not allowed. This is an error.
    * @throws IRVParsingException and checks it is thrown.
    */
-  @Test(expectedExceptions = IRVParsingException.class)
+  @Test(expectedExceptions = IRVParsingException.class,
+        expectedExceptionsMessageRegExp = noParseRegexp)
   public void parseChoiceWithStringPreferenceThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithStringPreferenceThrowsException");
 
     String choice = "CandidateWithFractionalPreference(pref)";
 
-    // exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
   }
 
@@ -241,13 +248,13 @@ public class IRVPreferenceTests {
    * No rank, and no parentheses, which is not allowed. This is an error.
    * @throws IRVParsingException and checks it is thrown.
    */
-  @Test(expectedExceptions = IRVParsingException.class)
+  @Test(expectedExceptions = IRVParsingException.class,
+        expectedExceptionsMessageRegExp = noParseRegexp)
   public void parseChoiceWithNoParenthesesThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithNoParenthesesThrowsException");
 
     String choice = "CandidateWithNoPreference";
 
-    // exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
   }
 
@@ -255,13 +262,13 @@ public class IRVPreferenceTests {
    * All-whitespace candidate name. This is an error.
    * @throws IRVParsingException and checks it is thrown.
    */
-  @Test(expectedExceptions = IRVParsingException.class)
+  @Test(expectedExceptions = IRVParsingException.class,
+        expectedExceptionsMessageRegExp = noParseRegexp)
   public void parseChoiceWithWhiteSpaceNameThrowsException() throws IRVParsingException {
     testUtils.log(LOGGER, "parseChoiceWithWhiteSpaceNameThrowsException");
 
     String choice = "    (23)";
 
-    // exception.expect(IRVParsingException.class);
     new IRVPreference(choice);
   }
 
@@ -271,6 +278,7 @@ public class IRVPreferenceTests {
    */
   @Test
   public void validateValidIRVPreferenceHeaders() throws IRVParsingException, IOException {
+    testUtils.log(LOGGER, "validateValidIRVPreferenceHeaders");
     Path path = Paths.get(CSV_FILE_PATH+"ThreeCandidatesTenVotes.csv");
 
     Reader reader = Files.newBufferedReader(path);
@@ -285,6 +293,7 @@ public class IRVPreferenceTests {
    */
   @Test
   public void validateValidIRVPreferenceHeaders2() throws IRVParsingException, IOException {
+    testUtils.log(LOGGER, "validateValidIRVPreferenceHeaders2");
     Path path = Paths.get(CSV_FILE_PATH+"GuideToRAIREExample3.csv");
 
     Reader reader = Files.newBufferedReader(path);
@@ -295,34 +304,163 @@ public class IRVPreferenceTests {
 
   /**
    * Another simple test of valid IRV preference headers, except the expected maxRank is too large.
-   * @throws IRVParsingException never.
+   * @throws IRVParsingException always.
    */
-  @Test(expectedExceptions = IRVParsingException.class)
-  public void validateValidIRVPreferenceHeaders3() throws IRVParsingException, IOException {
+  @Test(expectedExceptions = IRVParsingException.class,
+        expectedExceptionsMessageRegExp = insufficientChoicesRegexp)
+  public void maxRankTooLarge() throws IRVParsingException, IOException {
+    testUtils.log(LOGGER, "maxRankTooLarge");
     Path path = Paths.get(CSV_FILE_PATH+"ThreeCandidatesTenVotes.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
     CSVRecord theLine = parser.getRecords().get(2);
-    // exception.expect(IRVParsingException.class);
     validateIRVPreferenceHeaders(theLine, 7, 3,4);
+  }
+
+  /**
+   * Another simple test of valid IRV preference headers, except the expected maxRank is too small.
+   * This does not throw an exception - the test for sufficiently _many_ ranks must be made before
+   * calling validateIRVPreferenceHeaders().
+   * @throws IRVParsingException never.
+   */
+  @Test
+  public void maxRankTooSmallIsValid() throws IRVParsingException, IOException {
+    testUtils.log(LOGGER, "maxRankTooSmallIsValid");
+    Path path = Paths.get(CSV_FILE_PATH+"ThreeCandidatesTenVotes.csv");
+
+    Reader reader = Files.newBufferedReader(path);
+    CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
+    CSVRecord theLine = parser.getRecords().get(2);
+    validateIRVPreferenceHeaders(theLine, 7, 3,2);
+  }
+
+  /**
+   * Another simple test of valid IRV preference headers, except the expected number of choices is
+   * too large.
+   * @throws IRVParsingException always.
+   */
+  @Test(expectedExceptions = IRVParsingException.class,
+      expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
+  public void numChoicesTooLarge() throws IRVParsingException, IOException {
+    testUtils.log(LOGGER, "numChoicesTooLarge");
+    Path path = Paths.get(CSV_FILE_PATH+"ThreeCandidatesTenVotes.csv");
+
+    Reader reader = Files.newBufferedReader(path);
+    CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
+    CSVRecord theLine = parser.getRecords().get(2);
+    validateIRVPreferenceHeaders(theLine, 7, 4,3);
+  }
+
+  /**
+   * Another simple test of valid IRV preference headers, except the expected number of choices is
+   * too small.
+   * @throws IRVParsingException always.
+   */
+  @Test(expectedExceptions = IRVParsingException.class,
+        expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
+  public void numChoicesTooSmall() throws IRVParsingException, IOException {
+    testUtils.log(LOGGER, "numChoicesTooSmall");
+    Path path = Paths.get(CSV_FILE_PATH+"ThreeCandidatesTenVotes.csv");
+
+    Reader reader = Files.newBufferedReader(path);
+    CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
+    CSVRecord theLine = parser.getRecords().get(2);
+    validateIRVPreferenceHeaders(theLine, 7, 2,3);
+  }
+
+  @Test(expectedExceptions = IRVParsingException.class,
+      expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
+  public void differentCandidateNamesInDifferentRanks1() throws IRVParsingException, IOException {
+    testUtils.log(LOGGER,
+        "differentCandidateNamesInDifferentRanks1");
+    Path path = Paths.get(CSV_FILE_PATH+
+        "InvalidIRVHeadersDifferentCandidateNamesInDifferentRanks1.csv");
+
+    Reader reader = Files.newBufferedReader(path);
+    CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
+    CSVRecord theLine = parser.getRecords().get(2);
+    validateIRVPreferenceHeaders(theLine, 7, 3,3);
+  }
+
+  @Test(expectedExceptions = IRVParsingException.class,
+        expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
+  public void differentCandidateNamesInDifferentRanks2() throws IRVParsingException, IOException {
+    testUtils.log(LOGGER, "differentCandidateNamesInDifferentRanks2");
+    Path path = Paths.get(CSV_FILE_PATH +
+        "InvalidIRVHeadersDifferentCandidateNamesInDifferentRanks2.csv");
+
+    Reader reader = Files.newBufferedReader(path);
+    CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
+    CSVRecord theLine = parser.getRecords().get(2);
+    validateIRVPreferenceHeaders(theLine, 7, 3, 3);
+  }
+
+  @Test(expectedExceptions = IRVParsingException.class,
+        expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
+  public void repeated1stRankCandidate() throws IRVParsingException, IOException {
+    testUtils.log(LOGGER, "repeated1stRankCandidate");
+    Path path = Paths.get(CSV_FILE_PATH + "InvalidIRVHeadersRepeated1stRankCandidate.csv");
+
+    Reader reader = Files.newBufferedReader(path);
+    CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
+    CSVRecord theLine = parser.getRecords().get(2);
+    validateIRVPreferenceHeaders(theLine, 7, 3, 3);
+  }
+
+
+  @Test(expectedExceptions = IRVParsingException.class,
+        expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
+  public void repeated2ndRankCandidate() throws IRVParsingException, IOException {
+
+    testUtils.log(LOGGER,"repeated2ndRankCandidate");
+    Path path = Paths.get(CSV_FILE_PATH+"InvalidIRVHeadersRepeated2ndRankCandidate.csv");
+
+    Reader reader = Files.newBufferedReader(path);
+    CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
+    CSVRecord theLine = parser.getRecords().get(2);
+    validateIRVPreferenceHeaders(theLine, 7, 3,3);
+  }
+
+
+  @Test(expectedExceptions = IRVParsingException.class,
+      expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
+  public void shuffledChoices() throws IRVParsingException, IOException {
+    testUtils.log(LOGGER, "shuffledChoices");
+    Path path = Paths.get(CSV_FILE_PATH + "InvalidIRVHeadersShuffledChoices.csv");
+
+    Reader reader = Files.newBufferedReader(path);
+    CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
+    CSVRecord theLine = parser.getRecords().get(2);
+    validateIRVPreferenceHeaders(theLine, 7, 3, 3);
+  }
+
+  @Test(expectedExceptions = IRVParsingException.class,
+        expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
+  public void skipped1stRankCandidate() throws IRVParsingException, IOException {
+    testUtils.log(LOGGER, "skipped1stRankCandidate");
+    Path path = Paths.get(CSV_FILE_PATH+"InvalidIRVHeadersSkipped1stRankCandidate.csv");
+
+    Reader reader = Files.newBufferedReader(path);
+    CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
+    CSVRecord theLine = parser.getRecords().get(2);
+    validateIRVPreferenceHeaders(theLine, 7, 3,3);
   }
 
   /**
    * Invalid IRV preference headers - skipped 3rd rank.
    * @throws IRVParsingException always.
+   * There's no message regexp here because, although the current implementation says "Invalid IRV
+   * choices header", it would be equally valid to say "Insufficient choices"
    */
   @Test(expectedExceptions = IRVParsingException.class)
-  public void validateInValidIRVPreferenceHeadersSkipped3rdRank() throws IRVParsingException,
-      IOException {
+  public void skipped3rdRank() throws IRVParsingException, IOException {
+    testUtils.log(LOGGER, "skipped3rdRank");
     Path path = Paths.get(CSV_FILE_PATH+"InvalidIRVHeadersSkipped3rdRankCandidate.csv");
 
-        Reader reader = Files.newBufferedReader(path);
+    Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
     CSVRecord theLine = parser.getRecords().get(2);
-    // exception.expect(IRVParsingException.class);
     validateIRVPreferenceHeaders(theLine, 7, 3,3);
   }
-
-
 }

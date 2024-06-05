@@ -48,6 +48,7 @@ public class DominionCVRExportParserTests {
    * Class-wide logger
    */
   private static final Logger LOGGER = LogManager.getLogger(DominionCVRExportParserTests.class);
+
   /**
    * Container for the mock-up database.
    */
@@ -102,7 +103,8 @@ public class DominionCVRExportParserTests {
 }
 
 
-  @Test(expectedExceptions = IRVParsingException.class)
+  @Test(expectedExceptions = IRVParsingException.class,
+        expectedExceptionsMessageRegExp = "parse*")
   public void parseBadThrowsException() throws IRVParsingException {
 
     new IRVPreference("bad");

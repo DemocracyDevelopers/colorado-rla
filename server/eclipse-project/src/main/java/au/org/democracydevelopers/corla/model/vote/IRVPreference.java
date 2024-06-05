@@ -115,6 +115,7 @@ public class IRVPreference implements Comparable<IRVPreference> {
   public static void validateIRVPreferenceHeaders(CSVRecord theLine, int startIndex, int numChoices,
                                                   int maxRank) throws IRVParsingException {
     final String prefix = "[validateIRVChoiceHeaders] ";
+    final String errorMsg = "Invalid IRV choices header: ";
 
     final Set<String> names = new HashSet<>();
 
@@ -125,14 +126,14 @@ public class IRVPreference implements Comparable<IRVPreference> {
 
         // A repeated name, or a preference other than 1, is an error.
         if (!names.add(irv1.candidateName) || irv1.rank != 1) {
-          throw new IRVParsingException("Repeated names in IRV choices header: ");
+          throw new IRVParsingException(errorMsg);
         }
         // Iterate through all other ranks, checking that each IRVPreference has the expected choice
         // and rank.
         for (int r = 2; r <= maxRank; r++) {
           IRVPreference irv_nextRank = new IRVPreference(theLine.get(i + (r - 1) * numChoices));
           if (irv_nextRank.rank != r || !irv_nextRank.candidateName.equals(irv1.candidateName)) {
-            throw new IRVParsingException("Invalid IRV choices header: ");
+            throw new IRVParsingException(errorMsg);
           }
         }
       }
