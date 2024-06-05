@@ -23,17 +23,12 @@ package au.org.democracydevelopers.corla.csv;
 
 import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
 import au.org.democracydevelopers.corla.model.vote.IRVPreference;
-import au.org.democracydevelopers.corla.testUtils;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.rules.ExpectedException;
 import org.testcontainers.containers.PostgreSQLContainer;
 import us.freeandfair.corla.csv.DominionCVRExportParser;
@@ -45,7 +40,6 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Properties;
 
 import static org.testng.AssertJUnit.*;
@@ -60,7 +54,7 @@ public class DominionCVRExportParserTests {
    * Container for the mock-up database.
    */
   static PostgreSQLContainer<?> postgres
-      = new PostgreSQLContainer<>("postgres:15-alpine");
+      = new PostgreSQLContainer<>("postgres:15-alpine").withDatabaseName("corla");
 
   private final static County testCounty = new County("testCounty", 1000L);
   private final static Properties properties = new Properties();
@@ -76,10 +70,13 @@ public class DominionCVRExportParserTests {
   @BeforeClass
   public static void beforeAll() {
     postgres.start();
+    properties.setProperty("hibernate.driver", "org.postgresql.Driver");
     properties.setProperty("hibernate.url", postgres.getJdbcUrl());
     properties.setProperty("hibernate.user", postgres.getUsername());
     properties.setProperty("hibernate.pass", postgres.getPassword());
+    properties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
     Persistence.setProperties(properties);
+    Persistence.beginTransaction();
   }
 
   @AfterClass
