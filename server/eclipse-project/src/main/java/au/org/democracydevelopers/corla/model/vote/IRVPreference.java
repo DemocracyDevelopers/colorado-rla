@@ -107,6 +107,9 @@ public class IRVPreference implements Comparable<IRVPreference> {
    * @param maxRank The number of ranks allowed (which matches the number expected in the csv).
    * @throws IRVParsingException if either an individual choice can't be parsed as name(rank), or
    *                             the overall collection of choices doesn't fit the pattern above.
+   * This works by stepping through the 1st-rank choices, checking that the name has not been
+   * repeated, and then checking that the later-ranked versions of the same choice (located at
+   * index startIndex + (rank_being_checked-1)*numChoices) have the same name and the correct rank.
    */
   public static void validateIRVPreferenceHeaders(CSVRecord theLine, int startIndex, int numChoices,
                                                   int maxRank) throws IRVParsingException {
