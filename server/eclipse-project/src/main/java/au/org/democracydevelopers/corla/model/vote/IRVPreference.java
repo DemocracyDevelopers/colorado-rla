@@ -108,8 +108,9 @@ public class IRVPreference implements Comparable<IRVPreference> {
    * @throws IRVParsingException if either an individual choice can't be parsed as name(rank), or
    *                             the overall collection of choices doesn't fit the pattern above.
    * This works by stepping through the 1st-rank choices, checking that the name has not been
-   * repeated, and then checking that the later-ranked versions of the same choice (located at
-   * index startIndex + (rank_being_checked-1)*numChoices) have the same name and the correct rank.
+   * repeated, and then checking that the later-ranked versions of the same choice (located
+   * (rank_being_checked-1)*numChoices further along the line) have the same name and the correct
+   * rank.
    */
   public static void validateIRVPreferenceHeaders(CSVRecord theLine, int startIndex, int numChoices,
                                                   int maxRank) throws IRVParsingException {
@@ -130,7 +131,7 @@ public class IRVPreference implements Comparable<IRVPreference> {
       // Iterate through all other ranks, checking that each IRVPreference has the expected choice
       // and rank.
       for (int r = 2; r <= maxRank; r++) {
-        IRVPreference irv_nextRank = new IRVPreference(theLine.get(startIndex+(r-1)*numChoices));
+        IRVPreference irv_nextRank = new IRVPreference(theLine.get(i+(r-1)*numChoices));
         if(irv_nextRank.rank != r || !irv_nextRank.candidateName.equals(irv1.candidateName)) {
           final String msg = "Invalid IRV choices header: ";
           LOGGER.error(String.format("%s %s", prefix, msg + theLine));
