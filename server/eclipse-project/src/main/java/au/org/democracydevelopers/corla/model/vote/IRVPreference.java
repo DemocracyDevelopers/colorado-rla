@@ -118,26 +118,32 @@ public class IRVPreference implements Comparable<IRVPreference> {
 
     final Set<String> names = new HashSet<>();
 
-    // Iterate over the first-preference choices, expected to have distinct names.
-    for(int i = startIndex ; i < numChoices+startIndex ; i++) {
-      IRVPreference irv1 = new IRVPreference(theLine.get(i));
+    try {
+      // Iterate over the first-preference choices, expected to have distinct names.
+      for (int i = startIndex; i < numChoices + startIndex; i++) {
+        IRVPreference irv1 = new IRVPreference(theLine.get(i));
 
-      // A repeated name, or a preference other than 1, is an error.
-      if(!names.add(irv1.candidateName) || irv1.rank != 1) {
-        final String msg = "Repeated names in IRV choices header: ";
-        LOGGER.error(String.format("%s %s", prefix, msg + theLine));
-        throw new IRVParsingException(msg + theLine);
-      }
-      // Iterate through all other ranks, checking that each IRVPreference has the expected choice
-      // and rank.
-      for (int r = 2; r <= maxRank; r++) {
-        IRVPreference irv_nextRank = new IRVPreference(theLine.get(i+(r-1)*numChoices));
-        if(irv_nextRank.rank != r || !irv_nextRank.candidateName.equals(irv1.candidateName)) {
-          final String msg = "Invalid IRV choices header: ";
-          LOGGER.error(String.format("%s %s", prefix, msg + theLine));
-          throw new IRVParsingException(msg + theLine);
+        // A repeated name, or a preference other than 1, is an error.
+        if (!names.add(irv1.candidateName) || irv1.rank != 1) {
+          throw new IRVParsingException("Repeated names in IRV choices header: ");
+        }
+        // Iterate through all other ranks, checking that each IRVPreference has the expected choice
+        // and rank.
+        for (int r = 2; r <= maxRank; r++) {
+          IRVPreference irv_nextRank = new IRVPreference(theLine.get(i + (r - 1) * numChoices));
+          if (irv_nextRank.rank != r || !irv_nextRank.candidateName.equals(irv1.candidateName)) {
+            throw new IRVParsingException("Invalid IRV choices header: ");
+          }
         }
       }
+    } catch (ArrayIndexOutOfBoundsException e) {
+      final String msg = "Insufficient choices in IRV choices header: ";
+      LOGGER.error(String.format("%s %s", prefix, msg + theLine));
+      throw new IRVParsingException(msg);
+
+    } catch (IRVParsingException e) {
+      LOGGER.error(String.format("%s %s", prefix, e.getMessage() + theLine));
+      throw e;
     }
   }
 

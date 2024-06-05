@@ -32,7 +32,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
@@ -284,4 +283,51 @@ public class IRVPreferenceTests {
     CSVRecord theLine = parser.getRecords().get(2);
     validateIRVPreferenceHeaders(theLine, 7, 3,3);
   }
+
+  /**
+   * Another simple test of valid IRV preference headers.
+   * @throws IRVParsingException never.
+   */
+  @Test
+  public void validateValidIRVPreferenceHeaders2() throws IRVParsingException, IOException {
+    Path path = Paths.get(CSV_FILE_PATH+"GuideToRAIREExample3.csv");
+
+    Reader reader = Files.newBufferedReader(path);
+    CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
+    CSVRecord theLine = parser.getRecords().get(2);
+    validateIRVPreferenceHeaders(theLine, 7, 4,4);
+  }
+
+  /**
+   * Another simple test of valid IRV preference headers, except the expected maxRank is too large.
+   * @throws IRVParsingException never.
+   */
+  @Test
+  public void validateValidIRVPreferenceHeaders3() throws IRVParsingException, IOException {
+    Path path = Paths.get(CSV_FILE_PATH+"ThreeCandidatesTenVotes.csv");
+
+    Reader reader = Files.newBufferedReader(path);
+    CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
+    CSVRecord theLine = parser.getRecords().get(2);
+    exception.expect(IRVParsingException.class);
+    validateIRVPreferenceHeaders(theLine, 7, 3,4);
+  }
+
+  /**
+   * Invalid IRV preference headers - skipped 3rd rank.
+   * @throws IRVParsingException always.
+   */
+  @Test
+  public void validateInValidIRVPreferenceHeadersSkipped3rdRank() throws IRVParsingException,
+      IOException {
+    Path path = Paths.get(CSV_FILE_PATH+"InvalidIRVHeadersSkipped3rdRankCandidate.csv");
+
+        Reader reader = Files.newBufferedReader(path);
+    CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
+    CSVRecord theLine = parser.getRecords().get(2);
+    exception.expect(IRVParsingException.class);
+    validateIRVPreferenceHeaders(theLine, 7, 3,3);
+  }
+
+
 }
