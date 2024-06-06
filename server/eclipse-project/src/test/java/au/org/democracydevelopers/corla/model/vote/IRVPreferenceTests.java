@@ -41,7 +41,7 @@ import static au.org.democracydevelopers.corla.testUtils.BAD_CSV_PATH;
 import static au.org.democracydevelopers.corla.testUtils.TINY_CSV_PATH;
 import static org.testng.Assert.*;
 
-import static au.org.democracydevelopers.corla.model.vote.IRVPreference.validateIRVPreferenceHeaders;
+import static au.org.democracydevelopers.corla.csv.IRVHeadersParser.validateIRVPreferenceHeaders;
 /**
  * Tests for proper parsing of IRV choices - these are supposed to be of the form name(rank).
  * Tests include both valid complex tests (e.g. candidate names with parentheses, whitespace

@@ -41,8 +41,8 @@ import us.freeandfair.corla.query.CountyContestResultQueries;
 import us.freeandfair.corla.util.DBExceptionUtil;
 import us.freeandfair.corla.util.ExponentialBackoffHelper;
 
-import static au.org.democracydevelopers.corla.model.vote.IRVPreference.generateAllIRVPreferences;
-import static au.org.democracydevelopers.corla.model.vote.IRVPreference.validateIRVPreferenceHeaders;
+import static au.org.democracydevelopers.corla.csv.IRVHeadersParser.generateAllIRVPreferences;
+import static au.org.democracydevelopers.corla.csv.IRVHeadersParser.validateIRVPreferenceHeaders;
 
 /**
  * Parser for Dominion CVR export files.

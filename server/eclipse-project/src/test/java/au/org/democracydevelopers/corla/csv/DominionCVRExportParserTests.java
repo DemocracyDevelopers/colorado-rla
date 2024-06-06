@@ -24,9 +24,6 @@ package au.org.democracydevelopers.corla.csv;
 import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
 import au.org.democracydevelopers.corla.testUtils;
-import static au.org.democracydevelopers.corla.testUtils.TINY_CSV_PATH;
-import static au.org.democracydevelopers.corla.testUtils.BOULDER_CSV_PATH;
-import static au.org.democracydevelopers.corla.testUtils.BAD_CSV_PATH;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -46,6 +43,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.testng.annotations.*;
+
+import static au.org.democracydevelopers.corla.testUtils.*;
 import static org.testng.Assert.*;
 
 import static us.freeandfair.corla.query.CastVoteRecordQueries.getMatching;
@@ -401,4 +400,26 @@ public class DominionCVRExportParserTests {
    * The regexp should match any whitespace, followed by any capitalization of "write", followed
    * by -, _, space or no space, followed by any capitalization of "in", followed by any whitespace.
    */
+  @Test
+  public void parseWriteIns() throws IOException {
+    testUtils.log(LOGGER, "parseWriteIns");
+    Path path = Paths.get(WRITEIN_CSV_PATH + "WriteIns.csv");
+    Reader reader = Files.newBufferedReader(path);
+    County lasAnimas = fromString("Las Animas");
+
+    DominionCVRExportParser parser = new DominionCVRExportParser(reader, lasAnimas, blank, true);
+    assertTrue(parser.parse().success);
+
+    // There should be one contest, the one we just read in.
+    List<Contest> contests = forCounties(Set.of(lasAnimas));
+    assertEquals(1, contests.size());
+    Contest contest = contests.get(0);
+
+    // Check basic data
+    assertEquals(contest.name(), "Test Write-ins");
+    assertEquals(contest.description(), ContestType.PLURALITY.toString());
+    assertEquals(contest.choices().size(), 2);
+    assertFalse(contest.choices().get(0).qualifiedWriteIn());
+    assertTrue(contest.choices().get(1).qualifiedWriteIn());
+  }
 }
