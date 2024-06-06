@@ -3,8 +3,8 @@ Democracy Developers IRV extensions to colorado-rla.
 
 @copyright 2024 Colorado Department of State
 
-These IRV extensions are designed to connect to a running instance of the raire 
-service (https://github.com/DemocracyDevelopers/raire-service), in order to 
+These IRV extensions are designed to connect to a running instance of the raire
+service (https://github.com/DemocracyDevelopers/raire-service), in order to
 generate assertions that can be audited using colorado-rla.
 
 The colorado-rla IRV extensions are free software: you can redistribute it and/or modify it under the terms
@@ -21,26 +21,13 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.assertion;
 
-import java.util.ArrayList;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.testng.annotations.Test;
 
-@Entity
-@DiscriminatorValue("NEB")
-public class NEBAssertion extends Assertion {
+public class AssertionTests {
 
-  /**
-   * Construct an empty NEB assertion (for persistence).
-   */
-  public NEBAssertion(){
-    super();
-  }
+  private static final Logger LOGGER = LogManager.getLogger(AssertionTests.class);
 
-  /**
-   * {@inheritDoc}
-   */
-  public NEBAssertion(String contestName, String winner, String loser, int margin, long universeSize,
-      double difficulty) throws IllegalArgumentException {
-    super(contestName, winner, loser, margin, universeSize, difficulty,  new ArrayList<>());
-  }
+
 }

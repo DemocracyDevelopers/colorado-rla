@@ -82,10 +82,12 @@ public abstract class Assertion implements PersistentEntity {
   protected int margin;
 
   /**
-   * Diluted margin of the assertion.
+   * Diluted margin of the assertion. (This could be a double. For consistency with the existing
+   * colorado-rla code base, and the implementation of the methods provided in Audit, we are
+   * using a BigDecimal).
    */
   @Column(name = "diluted_margin", updatable = false, nullable = false)
-  protected double dilutedMargin = 0;
+  protected BigDecimal dilutedMargin = BigDecimal.valueOf(0);
 
   /**
    * Assertion difficulty, as estimated by raire-java.
@@ -124,52 +126,52 @@ public abstract class Assertion implements PersistentEntity {
    * further overstatements arise.
    */
   @Column(name = "optimistic_samples_to_audit", nullable = false)
-  private Integer optimistic_samples_to_audit = 0;
+  protected Integer optimistic_samples_to_audit = 0;
 
   /**
    * The estimated number of samples we expect to need to audit this assertion,
    * assuming overstatement continue at the current rate.
    */
   @Column(name = "estimated_samples_to_audit", nullable = false)
-  private Integer estimated_samples_to_audit = 0;
+  protected Integer estimated_samples_to_audit = 0;
 
   /**
    * The number of two-vote understatements recorded against this assertion so far.
    */
   @Column(name = "two_vote_under_count", nullable = false)
-  private Integer two_vote_under_count = 0;
+  protected Integer two_vote_under_count = 0;
 
   /**
    * The number of one-vote understatements recorded against this assertion so far.
    */
   @Column(name = "one_vote_under_count", nullable = false)
-  private Integer one_vote_under_count = 0;
+  protected Integer one_vote_under_count = 0;
 
   /**
    * The number of one-vote overstatements recorded against this assertion so far.
    */
   @Column(name = "one_vote_over_count", nullable = false)
-  private Integer one_vote_over_count = 0;
+  protected Integer one_vote_over_count = 0;
 
   /**
    * The number of two-vote overstatements recorded against this assertion so far.
    */
   @Column(name = "two_vote_over_count", nullable = false)
-  private Integer two_vote_over_count = 0;
+  protected Integer two_vote_over_count = 0;
 
   /**
    * The number of discrepancies recorded so far, against this assertion, that are neither
    * understatements nor overstatements.
    */
   @Column(name = "other_count", nullable = false)
-  private Integer other_count = 0;
+  protected Integer other_count = 0;
 
   /**
    * Current risk of the assertion. We initialize this risk to 1, as when we have no information
    * we assume maximum risk.
    */
   @Column(name = "current_risk", nullable = false)
-  private BigDecimal current_risk = BigDecimal.valueOf(1);
+  protected BigDecimal current_risk = BigDecimal.valueOf(1);
 
   /**
    * Construct an empty assertion (required for persistence). Note that creation and storage
@@ -195,10 +197,9 @@ public abstract class Assertion implements PersistentEntity {
    * universe size; a negative margin; a margin that is larger than the universe size; or the same
    * candidate as both the winner and loser.
    */
-  public Assertion(String contestName, String winner, String loser, int margin,
-      long universeSize, double difficulty, List<String> assumedContinuing)
-      throws IllegalArgumentException
-  {
+  public Assertion(String contestName, String winner, String loser, int margin, long universeSize,
+      double difficulty, List<String> assumedContinuing) throws IllegalArgumentException {
+
     final String prefix = "[Assertion(all-args-constructor)]";
     LOGGER.debug(String.format("%s Parameters: contest name %s; winner %s; loser %s; " +
             "margin %d; universe size %d; difficulty %f; assumed continuing %s.", prefix,
@@ -231,12 +232,36 @@ public abstract class Assertion implements PersistentEntity {
       throw new IllegalArgumentException(msg);
     }
 
-    this.dilutedMargin = margin / (double) universeSize;
+    this.dilutedMargin = Audit.dilutedMargin(margin, universeSize);
 
     this.difficulty = difficulty;
     this.assumedContinuing = assumedContinuing;
 
     LOGGER.debug(String.format("%s Diluted margin %f computed.", prefix, dilutedMargin));
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Long id() {
+    return id;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void setID(final Long theId) {
+    id = theId;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Long version() {
+    return version;
   }
 
   /**
@@ -258,7 +283,7 @@ public abstract class Assertion implements PersistentEntity {
         two_vote_over_count));
 
     // Call the colorado-rla audit math; update optimistic_samples_to_audit and return new value.
-    optimistic_samples_to_audit = Audit.optimistic(riskLimit, BigDecimal.valueOf(dilutedMargin),
+    optimistic_samples_to_audit = Audit.optimistic(riskLimit, dilutedMargin,
         Audit.GAMMA, two_vote_under_count, one_vote_under_count, one_vote_over_count,
         two_vote_over_count).intValue();
 

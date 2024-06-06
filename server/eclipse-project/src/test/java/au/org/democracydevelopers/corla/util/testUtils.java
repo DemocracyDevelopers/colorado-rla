@@ -19,10 +19,16 @@ You should have received a copy of the GNU Affero General Public License along w
 raire-service. If not, see <https://www.gnu.org/licenses/>.
 */
 
-package au.org.democracydevelopers.corla;
+package au.org.democracydevelopers.corla.util;
 import org.apache.log4j.Logger;
 
 public class testUtils {
+
+  /**
+   * Comparator for doubles within a specific tolerance.
+   */
+  public static final DoubleComparator doubleComparator = new DoubleComparator();
+
   /**
    * Print log statement indicating that a specific test has started running.
    */

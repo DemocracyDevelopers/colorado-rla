@@ -21,5 +21,41 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.assertion;
 
-public class NENAssertion {
+import java.util.List;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
+@Entity
+@DiscriminatorValue("NEN")
+public class NENAssertion extends Assertion {
+
+  /**
+   * Class-wide logger.
+   */
+  private static final Logger LOGGER = LogManager.getLogger(NENAssertion.class);
+
+  /**
+   * Construct an empty NEN assertion (for persistence).
+   */
+  public NENAssertion(){
+    super();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public NENAssertion(String contestName, String winner, String loser, int margin, long universeSize,
+      double difficulty, List<String> assumedContinuing) throws IllegalArgumentException {
+    super(contestName, winner, loser, margin, universeSize, difficulty, assumedContinuing);
+
+    if(!assumedContinuing.contains(winner) || !assumedContinuing.contains(loser)){
+      String msg = String.format("[all-args-constructor] The winner (%s) and loser (%s) of an " +
+          "NEN assertion must also be continuing candidates. Continuing list: %s. ", winner, loser,
+          assumedContinuing);
+      LOGGER.error(msg);
+      throw new IllegalArgumentException(msg);
+    }
+  }
 }
