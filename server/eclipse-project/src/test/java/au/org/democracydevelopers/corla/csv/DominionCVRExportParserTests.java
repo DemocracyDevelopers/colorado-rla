@@ -80,7 +80,7 @@ public class DominionCVRExportParserTests {
   /**
    * Location of the test data.
    */
-  public static final String CSV_FILE_PATH = "src/test/resources/CSVs/";
+  public static final String TINY_IRV_PATH = "src/test/resources/CSVs/Tiny-IRV-Examples";
 
   @BeforeClass
   public static void beforeAll() {
@@ -109,7 +109,7 @@ public class DominionCVRExportParserTests {
   @Test
   public void parseThreeCandidatesTenVotesSucceeds() throws IOException {
     testUtils.log(LOGGER, "parseThreeCandidatesTenVotesSucceeds");
-    Path path = Paths.get(CSV_FILE_PATH + "ThreeCandidatesTenVotes.csv");
+    Path path = Paths.get(TINY_IRV_PATH + "ThreeCandidatesTenVotes.csv");
     Reader reader = Files.newBufferedReader(path);
     County boulder = fromString("Boulder");
 
@@ -159,7 +159,7 @@ public class DominionCVRExportParserTests {
   @Test
   public void parseGuideToRaireExample3() throws IOException {
     testUtils.log(LOGGER, "parseGuideToRaireExample3");
-    Path path = Paths.get(CSV_FILE_PATH + "GuideToRAIREExample3.csv");
+    Path path = Paths.get(TINY_IRV_PATH + "GuideToRAIREExample3.csv");
     Reader reader = Files.newBufferedReader(path);
     County montezuma = fromString("Montezuma");
 
@@ -209,7 +209,7 @@ public class DominionCVRExportParserTests {
   @Test
   public void parseThreeCandidatesTenInvalidVotesSucceeds() throws IOException {
     testUtils.log(LOGGER, "parseThreeCandidatesTenInvalidVotesSucceeds");
-    Path path = Paths.get(CSV_FILE_PATH + "ThreeCandidatesTenInvalidVotes.csv");
+    Path path = Paths.get(TINY_IRV_PATH + "ThreeCandidatesTenInvalidVotes.csv");
     Reader reader = Files.newBufferedReader(path);
     County gilpin = fromString("Gilpin");
 
