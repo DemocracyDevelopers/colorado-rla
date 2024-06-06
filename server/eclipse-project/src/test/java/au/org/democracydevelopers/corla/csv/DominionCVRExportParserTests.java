@@ -22,7 +22,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.csv;
 
 import au.org.democracydevelopers.corla.model.ContestType;
-import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
 import au.org.democracydevelopers.corla.testUtils;
 
 import org.apache.log4j.LogManager;
@@ -38,9 +37,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.testng.annotations.*;
 
@@ -57,9 +58,10 @@ import static us.freeandfair.corla.query.CountyQueries.fromString;
  * - a constructed test with invalid IRV ballots to check they are accepted and properly
  *   interpreted.
  * - a real example from Boulder '23, with a mix of IRV and plurality contests
- * - some examples with invalid headers, to ensure they are rejected. These match the applicable
- *   examples from IRVPreferenceTests.java, plus a bad plurality "Vote For= " with a non-integer.
- * - some examples to test the broader class of Write In strings.
+ * - some examples with invalid headers, to ensure they are rejected (though most of these are
+ *   tested in IRVHeadersParserTests.java and are not repeated here),
+ *   plus a bad plurality "Vote For= " with a non-integer.
+ * - an examples to test the broader class of Write In strings.
  */
 public class DominionCVRExportParserTests {
 
@@ -284,97 +286,248 @@ public class DominionCVRExportParserTests {
     // There should be 38 contests. Check their metadata.
     List<Contest> contests = forCounties(Set.of(boulder));
     assertEquals(38, contests.size());
+
     Contest boulderMayoral = contests.get(0);
     assertEquals(boulderMayoral.name(), "City of Boulder Mayoral Candidates");
+    assertEquals((int) boulderMayoral.votesAllowed(), 4);
+    assertEquals((int) boulderMayoral.winnersAllowed(), 1);
+
     Contest boulderCouncil = contests.get(1);
     assertEquals(boulderCouncil.name(), "City of Boulder Council Candidates");
+    assertEquals((int) boulderCouncil.votesAllowed(), 4);
+    assertEquals((int) boulderCouncil.winnersAllowed(), 4);
+
+
     Contest lafayetteCouncil = contests.get(2);
     assertEquals(lafayetteCouncil.name(), "City of Lafayette City Council Candidates");
+    assertEquals((int) lafayetteCouncil.votesAllowed(), 4);
+    assertEquals((int) lafayetteCouncil.winnersAllowed(), 4);
+
     Contest longmontMayor = contests.get(3);
     assertEquals(longmontMayor.name(),"City of Longmont - Mayor");
+    assertEquals((int) longmontMayor.votesAllowed(), 1);
+    assertEquals((int) longmontMayor.winnersAllowed(), 1);
+
     Contest longmontCouncillorAtLarge = contests.get(4);
     assertEquals(longmontCouncillorAtLarge.name(),
         "City of Longmont - City Council Member At-Large");
+    assertEquals((int) longmontCouncillorAtLarge.votesAllowed(), 1);
+    assertEquals((int) longmontCouncillorAtLarge.winnersAllowed(), 1);
+
     Contest longmontCouncillorWard1 = contests.get(5);
     assertEquals(longmontCouncillorWard1.name(),"City of Longmont - Council Member Ward 1");
+    assertEquals((int) longmontCouncillorWard1.votesAllowed(), 1);
+    assertEquals((int) longmontCouncillorWard1.winnersAllowed(), 1);
+
     Contest longmontCouncillorWard3 = contests.get(6);
     assertEquals(longmontCouncillorWard3.name(),"City of Longmont - Council Member Ward 3");
+    assertEquals((int) longmontCouncillorWard3.votesAllowed(), 1);
+    assertEquals((int) longmontCouncillorWard3.winnersAllowed(), 1);
+
     Contest louisvilleMayor = contests.get(7);
     assertEquals(louisvilleMayor.name(),"City of Louisville Mayor At-Large (4 Year Term)");
+    assertEquals((int) louisvilleMayor.votesAllowed(), 1);
+    assertEquals((int) louisvilleMayor.winnersAllowed(), 1);
+
     Contest louisvilleCouncilWard1 = contests.get(8);
     assertEquals(louisvilleCouncilWard1.name(),
         "City of Louisville City Council Ward 1 (4-year term)");
+    assertEquals((int) louisvilleCouncilWard1.votesAllowed(), 1);
+    assertEquals((int) louisvilleCouncilWard1.winnersAllowed(), 1);
+
     Contest louisvilleCouncilWard2 = contests.get(9);
     assertEquals(louisvilleCouncilWard2.name(),
         "City of Louisville City Council Ward 2 (4-year term)");
+    assertEquals((int) louisvilleCouncilWard2.votesAllowed(), 1);
+    assertEquals((int) louisvilleCouncilWard2.winnersAllowed(), 1);
+
     Contest louisvilleCouncilWard3 = contests.get(10);
     assertEquals( louisvilleCouncilWard3.name(),
         "City of Louisville City Council Ward 3");
+    assertEquals((int) louisvilleCouncilWard3.votesAllowed(), 2);
+    assertEquals((int) louisvilleCouncilWard3.winnersAllowed(), 2);
+
     Contest boulderValleySchoolDirectorA = contests.get(11);
     assertEquals( boulderValleySchoolDirectorA.name(),
         "Boulder Valley School District RE-2 Director District A (4 Years)");
+    assertEquals((int) boulderValleySchoolDirectorA.votesAllowed(), 1);
+    assertEquals((int) boulderValleySchoolDirectorA.winnersAllowed(), 1);
+
     Contest boulderValleySchoolDirectorC = contests.get(12);
     assertEquals(boulderValleySchoolDirectorC.name(),
         "Boulder Valley School District RE-2 Director District C (4 Years)");
+    assertEquals((int) boulderValleySchoolDirectorC.votesAllowed(), 1);
+    assertEquals((int) boulderValleySchoolDirectorC.winnersAllowed(), 1);
+
     Contest boulderValleySchoolDirectorD = contests.get(13);
     assertEquals(boulderValleySchoolDirectorD.name(),
         "Boulder Valley School District RE-2 Director District D (4 Years)");
+    assertEquals((int) boulderValleySchoolDirectorD.votesAllowed(), 1);
+    assertEquals((int) boulderValleySchoolDirectorD.winnersAllowed(), 1);
+
     Contest boulderValleySchoolDirectorG = contests.get(14);
     assertEquals(boulderValleySchoolDirectorG.name(),
         "Boulder Valley School District RE-2 Director District G (4 Years)");
+    assertEquals((int) boulderValleySchoolDirectorG.votesAllowed(), 1);
+    assertEquals((int) boulderValleySchoolDirectorG.winnersAllowed(), 1);
+
     Contest estesParkSchoolDirectorAtLarge = contests.get(15);
     assertEquals(estesParkSchoolDirectorAtLarge.name(),
         "Estes Park School District R-3 School Board Director At Large (4 Year)");
+    assertEquals((int) estesParkSchoolDirectorAtLarge.votesAllowed(), 2);
+    assertEquals((int) estesParkSchoolDirectorAtLarge.winnersAllowed(), 2);
+
     Contest thompsonSchoolDirectorA = contests.get(16);
     assertEquals(thompsonSchoolDirectorA.name(),
         "Thompson R2-J School District Board of Education Director District A (4 Year Term)");
+    assertEquals((int) thompsonSchoolDirectorA.votesAllowed(), 1);
+    assertEquals((int) thompsonSchoolDirectorA.winnersAllowed(), 1);
+
     Contest thompsonSchoolDirectorC = contests.get(17);
     assertEquals(thompsonSchoolDirectorC.name(),
         "Thompson R2-J School District Board of Education Director District C (4 Year Term)");
+    assertEquals((int) thompsonSchoolDirectorC.votesAllowed(), 1);
+    assertEquals((int) thompsonSchoolDirectorC.winnersAllowed(), 1);
+
     Contest thompsonSchoolDirectorD = contests.get(18);
     assertEquals( thompsonSchoolDirectorD.name(),
         "Thompson R2-J School District Board of Education Director District D (4 Year Term)");
+    assertEquals((int) thompsonSchoolDirectorD.votesAllowed(), 1);
+    assertEquals((int) thompsonSchoolDirectorD.winnersAllowed(), 1);
+
     Contest thompsonSchoolDirectorG = contests.get(19);
     assertEquals(thompsonSchoolDirectorG.name(),
         "Thompson R2-J School District Board of Education Director District G (4 Year Term)");
+    assertEquals((int) thompsonSchoolDirectorG.votesAllowed(), 1);
+    assertEquals((int) thompsonSchoolDirectorG.winnersAllowed(), 1);
+
     Contest cityOfLongmontJudge = contests.get(20);
     assertEquals(cityOfLongmontJudge.name(), "City of Longmont Municipal Court Judge - Frick");
+    assertEquals((int) cityOfLongmontJudge.votesAllowed(), 1);
+    assertEquals((int) cityOfLongmontJudge.winnersAllowed(), 1);
+
     Contest propHH = contests.get(21);
     assertEquals(propHH.name(),"Proposition HH (Statutory)");
+    assertEquals((int) propHH.votesAllowed(), 1);
+    assertEquals((int) propHH.winnersAllowed(), 1);
+
     Contest propII = contests.get(22);
     assertEquals(propII.name(),"Proposition II (Statutory)");
+    assertEquals((int) propII.votesAllowed(), 1);
+    assertEquals((int) propII.winnersAllowed(), 1);
+
     Contest boulder1A = contests.get(23);
     assertEquals(boulder1A.name(),"Boulder County Ballot Issue 1A");
+    assertEquals((int) boulder1A.votesAllowed(), 1);
+    assertEquals((int) boulder1A.winnersAllowed(), 1);
+
     Contest boulder1B = contests.get(24);
     assertEquals(boulder1B.name(),"Boulder County Ballot Issue 1B");
+    assertEquals((int) boulder1B.votesAllowed(), 1);
+    assertEquals((int) boulder1B.winnersAllowed(), 1);
+
     Contest boulder2A = contests.get(25);
     assertEquals(boulder2A.name(), "City of Boulder Ballot Issue 2A");
+    assertEquals((int) boulder2A.votesAllowed(), 1);
+    assertEquals((int) boulder2A.winnersAllowed(), 1);
+
     Contest boulder2B = contests.get(26);
     assertEquals(boulder2B.name(), "City of Boulder Ballot Question 2B");
+    assertEquals((int) boulder2B.votesAllowed(), 1);
+    assertEquals((int) boulder2B.winnersAllowed(), 1);
+
     Contest boulder302 = contests.get(27);
     assertEquals(boulder302.name(), "City of Boulder Ballot Question 302");
+    assertEquals((int) boulder302.votesAllowed(), 1);
+    assertEquals((int) boulder302.winnersAllowed(), 1);
+
     Contest erie3A = contests.get(28);
     assertEquals(erie3A.name(), "Town of Erie Ballot Question 3A");
+    assertEquals((int) erie3A.votesAllowed(), 1);
+    assertEquals((int) erie3A.winnersAllowed(), 1);
+
     Contest erie3B = contests.get(29);
     assertEquals(erie3B.name(), "Town of Erie Ballot Question 3B");
+    assertEquals((int) erie3B.votesAllowed(), 1);
+    assertEquals((int) erie3B.winnersAllowed(), 1);
+
     Contest longmont3C = contests.get(30);
     assertEquals(longmont3C.name(), "City of Longmont Ballot Issue 3C");
+    assertEquals((int) longmont3C.votesAllowed(), 1);
+    assertEquals((int) longmont3C.winnersAllowed(), 1);
+
     Contest longmont3D = contests.get(31);
     assertEquals(longmont3D.name(), "City of Longmont Ballot Issue 3D");
+    assertEquals((int) longmont3D.votesAllowed(), 1);
+    assertEquals((int) longmont3D.winnersAllowed(), 1);
+
     Contest longmont3E = contests.get(32);
     assertEquals(longmont3E.name(), "City of Longmont Ballot Issue 3E");
+    assertEquals((int) longmont3E.votesAllowed(), 1);
+    assertEquals((int) longmont3E.winnersAllowed(), 1);
+
     Contest louisville2C = contests.get(33);
     assertEquals(louisville2C.name(), "City of Louisville Ballot Issue 2C");
+    assertEquals((int) louisville2C.votesAllowed(), 1);
+    assertEquals((int) louisville2C.winnersAllowed(), 1);
+
     Contest superior301 = contests.get(34);
     assertEquals(superior301.name(), "Town of Superior Ballot Question 301");
+    assertEquals((int) superior301.votesAllowed(), 1);
+    assertEquals((int) superior301.winnersAllowed(), 1);
+
     Contest superiorHomeRule = contests.get(35);
     assertEquals(superiorHomeRule.name(), "Town of Superior - Home Rule Charter Commission");
+    assertEquals((int) superiorHomeRule.votesAllowed(), 9);
+    assertEquals((int) superiorHomeRule.winnersAllowed(), 9);
+
     Contest nederlandEcoPass6A = contests.get(36);
     assertEquals(nederlandEcoPass6A.name(),
         "Nederland Eco Pass Public Improvement District Ballot Issue 6A");
+    assertEquals((int) nederlandEcoPass6A.votesAllowed(), 1);
+    assertEquals((int) nederlandEcoPass6A.winnersAllowed(), 1);
+
     Contest northMetroFire7A = contests.get(37);
     assertEquals(northMetroFire7A.name(), "North Metro Fire Rescue District Ballot Issue 7A");
+    assertEquals((int) northMetroFire7A.votesAllowed(), 1);
+    assertEquals((int) northMetroFire7A.winnersAllowed(), 1);
 
+    // Check that the number of cvrs is correct. We have redacted CVRs, so the total is slightly
+    // less than the actual official count of 119757.
+    List<CastVoteRecord> cvrs = getMatching(boulder.id(),
+        CastVoteRecord.RecordType.UPLOADED).collect(Collectors.toList());
+    assertEquals(cvrs.size(), 118669);
+    CastVoteRecord cvr1 = cvrs.get(0);
+
+    // Check that the first cvr was correctly parsed.
+    // We expect the first cvr to have voted on 13 contests (all Boulder), as follows:
+    assertEquals(Objects.requireNonNull(cvr1.contestInfoForContest(boulderMayoral)).choices(),
+        List.of("Aaron Brockett", "Nicole Speer", "Bob Yates", "Paul Tweedlie"));
+    assertNotNull(cvr1.contestInfoForContest(boulderCouncil));
+    assertEquals(Objects.requireNonNull(cvr1.contestInfoForContest(boulderCouncil)).choices(),
+        List.of("Silas Atkins", "Ryan Schuchard", "Tara Winer", "Taishya Adams"));
+    assertEquals(Objects.requireNonNull(cvr1.contestInfoForContest(boulderValleySchoolDirectorA)).choices(),
+        List.of("Jason Unger"));
+    assertEquals(Objects.requireNonNull(cvr1.contestInfoForContest(boulderValleySchoolDirectorC)).choices(),
+        List.of("Alex Medler"));
+    assertEquals(Objects.requireNonNull(cvr1.contestInfoForContest(boulderValleySchoolDirectorD)).choices(),
+        List.of("Andrew Brandt"));
+    assertEquals(Objects.requireNonNull(cvr1.contestInfoForContest(boulderValleySchoolDirectorG)).choices(),
+        List.of("Jorge ChÃ¡vez"));
+    assertEquals(Objects.requireNonNull(cvr1.contestInfoForContest(propHH)).choices(),
+        List.of("Yes/For"));
+    assertEquals(Objects.requireNonNull(cvr1.contestInfoForContest(propII)).choices(),
+        List.of("Yes/For"));
+    assertEquals(Objects.requireNonNull(cvr1.contestInfoForContest(boulder1A)).choices(),
+        List.of("Yes/For"));
+    assertEquals(Objects.requireNonNull(cvr1.contestInfoForContest(boulder1B)).choices(),
+        List.of("Yes/For"));
+    assertEquals(Objects.requireNonNull(cvr1.contestInfoForContest(boulder2A)).choices(),
+        List.of("Yes/For"));
+    assertEquals(Objects.requireNonNull(cvr1.contestInfoForContest(boulder2B)).choices(),
+        List.of("Yes/For"));
+    assertEquals(Objects.requireNonNull(cvr1.contestInfoForContest(boulder302)).choices(),
+        List.of("No/Against"));
   }
 
   /**
@@ -410,16 +563,23 @@ public class DominionCVRExportParserTests {
     DominionCVRExportParser parser = new DominionCVRExportParser(reader, lasAnimas, blank, true);
     assertTrue(parser.parse().success);
 
-    // There should be one contest, the one we just read in.
+    // There should be seven contests, one for each example way of writing write-in:
+    // "Write-in", "Write-In", "Write in", "Write_in", "writeIn", "WRITEIN", "WRITE_IN"
     List<Contest> contests = forCounties(Set.of(lasAnimas));
-    assertEquals(1, contests.size());
-    Contest contest = contests.get(0);
+    assertEquals(7, contests.size());
 
-    // Check basic data
-    assertEquals(contest.name(), "Test Write-ins");
-    assertEquals(contest.description(), ContestType.PLURALITY.toString());
-    assertEquals(contest.choices().size(), 2);
-    assertFalse(contest.choices().get(0).qualifiedWriteIn());
-    assertTrue(contest.choices().get(1).qualifiedWriteIn());
+    for(int i=0 ; i < contests.size() ; i++) {
+      Contest contest = contests.get(i);
+      List<Choice> choices = contest.choices();
+
+      // Check basic data
+      assertEquals(contest.name(), String.format("Contest %d", i+1));
+      assertEquals(contest.description(), ContestType.PLURALITY.toString());
+
+      assertEquals(choices.size(), 3);
+      assertFalse(choices.get(0).qualifiedWriteIn());
+      assertTrue(choices.get(1).fictitious());
+      assertTrue(contest.choices().get(2).qualifiedWriteIn());
+    }
   }
 }
