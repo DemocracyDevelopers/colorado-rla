@@ -36,6 +36,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.testng.annotations.*;
+
+import static au.org.democracydevelopers.corla.testUtils.BAD_CSV_PATH;
+import static au.org.democracydevelopers.corla.testUtils.TINY_CSV_PATH;
 import static org.testng.Assert.*;
 
 import static au.org.democracydevelopers.corla.model.vote.IRVPreference.validateIRVPreferenceHeaders;
@@ -51,19 +54,11 @@ public class IRVPreferenceTests {
    */
   private static final Logger LOGGER = LogManager.getLogger(IRVPreference.class);
 
-  /**
-   * Location of the test data.
-   */
-  private static final String TINY_IRV_PATH = "src/test/resources/CSVs/Tiny-IRV-Examples/";
-  /**
-   * Location of examples that are expected to fail to parse.
-   */
-  private static final String BAD_IRV_PATH = "src/test/resources/CSVs/badExamples/";
 
   /**
    * Regular expressions used to check we get the right error message for parse errors.
    */
-  private static final String noParseRegexp = "Couldn't parse.*";
+  private static final String noParseRegexp = "Could not parse.*";
   private static final String invalidIRVChoicesRegexp = "Invalid IRV choices.*";
   private static final String insufficientChoicesRegexp = "Insufficient choices.*";
 
@@ -283,7 +278,7 @@ public class IRVPreferenceTests {
   @Test
   public void validateValidIRVPreferenceHeaders() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "validateValidIRVPreferenceHeaders");
-    Path path = Paths.get(TINY_IRV_PATH +"ThreeCandidatesTenVotes.csv");
+    Path path = Paths.get(TINY_CSV_PATH +"ThreeCandidatesTenVotes.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -298,7 +293,7 @@ public class IRVPreferenceTests {
   @Test
   public void validateValidIRVPreferenceHeaders2() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "validateValidIRVPreferenceHeaders2");
-    Path path = Paths.get(TINY_IRV_PATH +"GuideToRAIREExample3.csv");
+    Path path = Paths.get(TINY_CSV_PATH +"GuideToRAIREExample3.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -314,7 +309,7 @@ public class IRVPreferenceTests {
         expectedExceptionsMessageRegExp = insufficientChoicesRegexp)
   public void maxRankTooLarge() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "maxRankTooLarge");
-    Path path = Paths.get(TINY_IRV_PATH +"ThreeCandidatesTenVotes.csv");
+    Path path = Paths.get(TINY_CSV_PATH +"ThreeCandidatesTenVotes.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -331,7 +326,7 @@ public class IRVPreferenceTests {
   @Test
   public void maxRankTooSmallIsValid() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "maxRankTooSmallIsValid");
-    Path path = Paths.get(TINY_IRV_PATH +"ThreeCandidatesTenVotes.csv");
+    Path path = Paths.get(TINY_CSV_PATH +"ThreeCandidatesTenVotes.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -348,7 +343,7 @@ public class IRVPreferenceTests {
       expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
   public void numChoicesTooLarge() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "numChoicesTooLarge");
-    Path path = Paths.get(TINY_IRV_PATH +"ThreeCandidatesTenVotes.csv");
+    Path path = Paths.get(TINY_CSV_PATH +"ThreeCandidatesTenVotes.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -365,7 +360,7 @@ public class IRVPreferenceTests {
         expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
   public void numChoicesTooSmall() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "numChoicesTooSmall");
-    Path path = Paths.get(TINY_IRV_PATH +"ThreeCandidatesTenVotes.csv");
+    Path path = Paths.get(TINY_CSV_PATH +"ThreeCandidatesTenVotes.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -382,7 +377,7 @@ public class IRVPreferenceTests {
   public void differentCandidateNamesInDifferentRanks1() throws IRVParsingException, IOException {
     testUtils.log(LOGGER,
         "differentCandidateNamesInDifferentRanks1");
-    Path path = Paths.get(BAD_IRV_PATH +
+    Path path = Paths.get(BAD_CSV_PATH +
         "InvalidIRVHeadersDifferentCandidateNamesInDifferentRanks1.csv");
 
     Reader reader = Files.newBufferedReader(path);
@@ -399,7 +394,7 @@ public class IRVPreferenceTests {
         expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
   public void differentCandidateNamesInDifferentRanks2() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "differentCandidateNamesInDifferentRanks2");
-    Path path = Paths.get(BAD_IRV_PATH +
+    Path path = Paths.get(BAD_CSV_PATH +
         "InvalidIRVHeadersDifferentCandidateNamesInDifferentRanks2.csv");
 
     Reader reader = Files.newBufferedReader(path);
@@ -416,7 +411,7 @@ public class IRVPreferenceTests {
         expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
   public void repeated1stRankCandidate() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "repeated1stRankCandidate");
-    Path path = Paths.get(BAD_IRV_PATH + "InvalidIRVHeadersRepeated1stRankCandidate.csv");
+    Path path = Paths.get(BAD_CSV_PATH + "InvalidIRVHeadersRepeated1stRankCandidate.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -434,7 +429,7 @@ public class IRVPreferenceTests {
   public void repeated2ndRankCandidate() throws IRVParsingException, IOException {
 
     testUtils.log(LOGGER,"repeated2ndRankCandidate");
-    Path path = Paths.get(BAD_IRV_PATH +"InvalidIRVHeadersRepeated2ndRankCandidate.csv");
+    Path path = Paths.get(BAD_CSV_PATH +"InvalidIRVHeadersRepeated2ndRankCandidate.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -451,7 +446,7 @@ public class IRVPreferenceTests {
       expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
   public void shuffledChoices() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "shuffledChoices");
-    Path path = Paths.get(BAD_IRV_PATH + "InvalidIRVHeadersShuffledChoices.csv");
+    Path path = Paths.get(BAD_CSV_PATH + "InvalidIRVHeadersShuffledChoices.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -467,7 +462,7 @@ public class IRVPreferenceTests {
         expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
   public void skipped1stRankCandidate() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "skipped1stRankCandidate");
-    Path path = Paths.get(BAD_IRV_PATH +"InvalidIRVHeadersSkipped1stRankCandidate.csv");
+    Path path = Paths.get(BAD_CSV_PATH +"InvalidIRVHeadersSkipped1stRankCandidate.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -484,7 +479,7 @@ public class IRVPreferenceTests {
   @Test(expectedExceptions = IRVParsingException.class)
   public void skipped3rdRank() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "skipped3rdRank");
-    Path path = Paths.get(BAD_IRV_PATH +"InvalidIRVHeadersSkipped3rdRankCandidate.csv");
+    Path path = Paths.get(BAD_CSV_PATH +"InvalidIRVHeadersSkipped3rdRankCandidate.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);

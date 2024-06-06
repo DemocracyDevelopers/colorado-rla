@@ -88,7 +88,7 @@ public class IRVPreference implements Comparable<IRVPreference> {
       }
     } catch (NumberFormatException | IndexOutOfBoundsException | IRVParsingException e) {
       final String prefix = "[IRVChoices constructor]";
-      final String errorMessage = "Couldn't parse candidate-preference: ";
+      final String errorMessage = "Could not parse candidate-preference: ";
       LOGGER.error(String.format("%s %s %s", prefix, errorMessage, nameWithRank), e);
       throw new IRVParsingException(errorMessage + nameWithRank);
     }

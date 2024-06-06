@@ -23,8 +23,11 @@ package au.org.democracydevelopers.corla.csv;
 
 import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
-import au.org.democracydevelopers.corla.model.vote.IRVPreference;
 import au.org.democracydevelopers.corla.testUtils;
+import static au.org.democracydevelopers.corla.testUtils.TINY_CSV_PATH;
+import static au.org.democracydevelopers.corla.testUtils.BOULDER_CSV_PATH;
+import static au.org.democracydevelopers.corla.testUtils.BAD_CSV_PATH;
+
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -56,7 +59,8 @@ import static us.freeandfair.corla.query.CountyQueries.fromString;
  *   interpreted.
  * - a real example from Boulder '23, with a mix of IRV and plurality contests
  * - some examples with invalid headers, to ensure they are rejected. These match the applicable
- *   examples from IRVPreferenceTests.java
+ *   examples from IRVPreferenceTests.java, plus a bad plurality "Vote For= " with a non-integer.
+ * - some examples to test the broader class of Write In strings.
  */
 public class DominionCVRExportParserTests {
 
@@ -78,20 +82,25 @@ public class DominionCVRExportParserTests {
       .withInitScript("corlaInit.sql");
 
   /**
-   * Location of the test data.
+   * Error message to match.
    */
-  public static final String TINY_IRV_PATH = "src/test/resources/CSVs/Tiny-IRV-Examples/";
+  private static final String badNumsRegexp = "Unexpected or uninterpretable numbers in header:.*";
+
+  /**
+   * Blank properties for submitting to the DominionCVRExportParser instance.
+   */
+  private static final Properties blank = new Properties();
 
   @BeforeClass
   public static void beforeAll() {
     postgres.start();
-    Properties properties = new Properties();
-    properties.setProperty("hibernate.driver", "org.postgresql.Driver");
-    properties.setProperty("hibernate.url", postgres.getJdbcUrl());
-    properties.setProperty("hibernate.user", postgres.getUsername());
-    properties.setProperty("hibernate.pass", postgres.getPassword());
-    properties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
-    Persistence.setProperties(properties);
+    Properties hibernateProperties = new Properties();
+    hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
+    hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
+    hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
+    hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
+    hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
+    Persistence.setProperties(hibernateProperties);
     Persistence.beginTransaction();
 
   }
@@ -109,15 +118,15 @@ public class DominionCVRExportParserTests {
   @Test
   public void parseThreeCandidatesTenVotesSucceeds() throws IOException {
     testUtils.log(LOGGER, "parseThreeCandidatesTenVotesSucceeds");
-    Path path = Paths.get(TINY_IRV_PATH + "ThreeCandidatesTenVotes.csv");
+    Path path = Paths.get(TINY_CSV_PATH + "ThreeCandidatesTenVotes.csv");
     Reader reader = Files.newBufferedReader(path);
-    County boulder = fromString("Boulder");
+    County saguache = fromString("Saguache");
 
-    DominionCVRExportParser parser = new DominionCVRExportParser(reader, boulder, new Properties(), true);
+    DominionCVRExportParser parser = new DominionCVRExportParser(reader, saguache, blank, true);
     assertTrue(parser.parse().success);
 
     // There should be one contest, the one we just read in.
-    List<Contest> contests = forCounties(Set.of(boulder));
+    List<Contest> contests = forCounties(Set.of(saguache));
     assertEquals(1, contests.size());
     Contest contest = contests.get(0);
 
@@ -136,7 +145,7 @@ public class DominionCVRExportParserTests {
     // 3 Alice, Chuan, Bob
     // 1 Bob, Alice, Chuan
     // 3 Bob, Chuan, Alice
-    List<CVRContestInfo> cvrs = getMatching(boulder.id(),  CastVoteRecord.RecordType.UPLOADED)
+    List<CVRContestInfo> cvrs = getMatching(saguache.id(),  CastVoteRecord.RecordType.UPLOADED)
         .map(cvr -> cvr.contestInfoForContest(contest)).collect(Collectors.toList());
     assertEquals(10, cvrs.size());
     assertEquals(List.of("Alice","Bob","Chuan"), cvrs.get(0).choices());
@@ -159,11 +168,11 @@ public class DominionCVRExportParserTests {
   @Test
   public void parseGuideToRaireExample3() throws IOException {
     testUtils.log(LOGGER, "parseGuideToRaireExample3");
-    Path path = Paths.get(TINY_IRV_PATH + "GuideToRAIREExample3.csv");
+    Path path = Paths.get(TINY_CSV_PATH + "GuideToRAIREExample3.csv");
     Reader reader = Files.newBufferedReader(path);
     County montezuma = fromString("Montezuma");
 
-    DominionCVRExportParser parser = new DominionCVRExportParser(reader, montezuma, new Properties(), true);
+    DominionCVRExportParser parser = new DominionCVRExportParser(reader, montezuma, blank, true);
     assertTrue(parser.parse().success);
 
     // There should be one contest, the one we just read in.
@@ -209,11 +218,11 @@ public class DominionCVRExportParserTests {
   @Test
   public void parseThreeCandidatesTenInvalidVotesSucceeds() throws IOException {
     testUtils.log(LOGGER, "parseThreeCandidatesTenInvalidVotesSucceeds");
-    Path path = Paths.get(TINY_IRV_PATH + "ThreeCandidatesTenInvalidVotes.csv");
+    Path path = Paths.get(TINY_CSV_PATH + "ThreeCandidatesTenInvalidVotes.csv");
     Reader reader = Files.newBufferedReader(path);
     County gilpin = fromString("Gilpin");
 
-    DominionCVRExportParser parser = new DominionCVRExportParser(reader, gilpin, new Properties(), true);
+    DominionCVRExportParser parser = new DominionCVRExportParser(reader, gilpin, blank, true);
     assertTrue(parser.parse().success);
 
     // There should be one contest, the one we just read in.
@@ -258,10 +267,138 @@ public class DominionCVRExportParserTests {
     assertTrue(cvrs.get(9).choices().isEmpty());
   }
 
-  @Test(expectedExceptions = IRVParsingException.class,
-        expectedExceptionsMessageRegExp = "Couldn't parse.*")
-  public void parseBadThrowsException() throws IRVParsingException {
+  /**
+   * Test of successful parsing of data from Boulder '23, which contains a mix of IRV and plurality
+   * contests. Check all their metadata.
+   * Check correct parsing of the first vote.
+   */
+  @Test
+  public void parseBoulder23Succeeds() throws IOException {
+    testUtils.log(LOGGER, "parseBoulder23Succeeds");
+    Path path = Paths.get(BOULDER_CSV_PATH + "Boulder-2023-Coordinated-CVR-Redactions-removed.csv");
+    Reader reader = Files.newBufferedReader(path);
+    County boulder = fromString("Boulder");
 
-    new IRVPreference("bad");
+    DominionCVRExportParser parser = new DominionCVRExportParser(reader, boulder, blank, true);
+    assertTrue(parser.parse().success);
+
+    // There should be 38 contests. Check their metadata.
+    List<Contest> contests = forCounties(Set.of(boulder));
+    assertEquals(38, contests.size());
+    Contest boulderMayoral = contests.get(0);
+    assertEquals(boulderMayoral.name(), "City of Boulder Mayoral Candidates");
+    Contest boulderCouncil = contests.get(1);
+    assertEquals(boulderCouncil.name(), "City of Boulder Council Candidates");
+    Contest lafayetteCouncil = contests.get(2);
+    assertEquals(lafayetteCouncil.name(), "City of Lafayette City Council Candidates");
+    Contest longmontMayor = contests.get(3);
+    assertEquals(longmontMayor.name(),"City of Longmont - Mayor");
+    Contest longmontCouncillorAtLarge = contests.get(4);
+    assertEquals(longmontCouncillorAtLarge.name(),
+        "City of Longmont - City Council Member At-Large");
+    Contest longmontCouncillorWard1 = contests.get(5);
+    assertEquals(longmontCouncillorWard1.name(),"City of Longmont - Council Member Ward 1");
+    Contest longmontCouncillorWard3 = contests.get(6);
+    assertEquals(longmontCouncillorWard3.name(),"City of Longmont - Council Member Ward 3");
+    Contest louisvilleMayor = contests.get(7);
+    assertEquals(louisvilleMayor.name(),"City of Louisville Mayor At-Large (4 Year Term)");
+    Contest louisvilleCouncilWard1 = contests.get(8);
+    assertEquals(louisvilleCouncilWard1.name(),
+        "City of Louisville City Council Ward 1 (4-year term)");
+    Contest louisvilleCouncilWard2 = contests.get(9);
+    assertEquals(louisvilleCouncilWard2.name(),
+        "City of Louisville City Council Ward 2 (4-year term)");
+    Contest louisvilleCouncilWard3 = contests.get(10);
+    assertEquals( louisvilleCouncilWard3.name(),
+        "City of Louisville City Council Ward 3");
+    Contest boulderValleySchoolDirectorA = contests.get(11);
+    assertEquals( boulderValleySchoolDirectorA.name(),
+        "Boulder Valley School District RE-2 Director District A (4 Years)");
+    Contest boulderValleySchoolDirectorC = contests.get(12);
+    assertEquals(boulderValleySchoolDirectorC.name(),
+        "Boulder Valley School District RE-2 Director District C (4 Years)");
+    Contest boulderValleySchoolDirectorD = contests.get(13);
+    assertEquals(boulderValleySchoolDirectorD.name(),
+        "Boulder Valley School District RE-2 Director District D (4 Years)");
+    Contest boulderValleySchoolDirectorG = contests.get(14);
+    assertEquals(boulderValleySchoolDirectorG.name(),
+        "Boulder Valley School District RE-2 Director District G (4 Years)");
+    Contest estesParkSchoolDirectorAtLarge = contests.get(15);
+    assertEquals(estesParkSchoolDirectorAtLarge.name(),
+        "Estes Park School District R-3 School Board Director At Large (4 Year)");
+    Contest thompsonSchoolDirectorA = contests.get(16);
+    assertEquals(thompsonSchoolDirectorA.name(),
+        "Thompson R2-J School District Board of Education Director District A (4 Year Term)");
+    Contest thompsonSchoolDirectorC = contests.get(17);
+    assertEquals(thompsonSchoolDirectorC.name(),
+        "Thompson R2-J School District Board of Education Director District C (4 Year Term)");
+    Contest thompsonSchoolDirectorD = contests.get(18);
+    assertEquals( thompsonSchoolDirectorD.name(),
+        "Thompson R2-J School District Board of Education Director District D (4 Year Term)");
+    Contest thompsonSchoolDirectorG = contests.get(19);
+    assertEquals(thompsonSchoolDirectorG.name(),
+        "Thompson R2-J School District Board of Education Director District G (4 Year Term)");
+    Contest cityOfLongmontJudge = contests.get(20);
+    assertEquals(cityOfLongmontJudge.name(), "City of Longmont Municipal Court Judge - Frick");
+    Contest propHH = contests.get(21);
+    assertEquals(propHH.name(),"Proposition HH (Statutory)");
+    Contest propII = contests.get(22);
+    assertEquals(propII.name(),"Proposition II (Statutory)");
+    Contest boulder1A = contests.get(23);
+    assertEquals(boulder1A.name(),"Boulder County Ballot Issue 1A");
+    Contest boulder1B = contests.get(24);
+    assertEquals(boulder1B.name(),"Boulder County Ballot Issue 1B");
+    Contest boulder2A = contests.get(25);
+    assertEquals(boulder2A.name(), "City of Boulder Ballot Issue 2A");
+    Contest boulder2B = contests.get(26);
+    assertEquals(boulder2B.name(), "City of Boulder Ballot Question 2B");
+    Contest boulder302 = contests.get(27);
+    assertEquals(boulder302.name(), "City of Boulder Ballot Question 302");
+    Contest erie3A = contests.get(28);
+    assertEquals(erie3A.name(), "Town of Erie Ballot Question 3A");
+    Contest erie3B = contests.get(29);
+    assertEquals(erie3B.name(), "Town of Erie Ballot Question 3B");
+    Contest longmont3C = contests.get(30);
+    assertEquals(longmont3C.name(), "City of Longmont Ballot Issue 3C");
+    Contest longmont3D = contests.get(31);
+    assertEquals(longmont3D.name(), "City of Longmont Ballot Issue 3D");
+    Contest longmont3E = contests.get(32);
+    assertEquals(longmont3E.name(), "City of Longmont Ballot Issue 3E");
+    Contest louisville2C = contests.get(33);
+    assertEquals(louisville2C.name(), "City of Louisville Ballot Issue 2C");
+    Contest superior301 = contests.get(34);
+    assertEquals(superior301.name(), "Town of Superior Ballot Question 301");
+    Contest superiorHomeRule = contests.get(35);
+    assertEquals(superiorHomeRule.name(), "Town of Superior - Home Rule Charter Commission");
+    Contest nederlandEcoPass6A = contests.get(36);
+    assertEquals(nederlandEcoPass6A.name(),
+        "Nederland Eco Pass Public Improvement District Ballot Issue 6A");
+    Contest northMetroFire7A = contests.get(37);
+    assertEquals(northMetroFire7A.name(), "North Metro Fire Rescue District Ballot Issue 7A");
+
   }
+
+  /**
+   * A plurality cvr with a "Vote for=2.0". This is an error.
+   * Note different behaviour from earlier parsing, which simply assumed 1.
+   * @throws RuntimeException always,
+   */
+  @Test(expectedExceptions = RuntimeException.class,
+      expectedExceptionsMessageRegExp = badNumsRegexp)
+  public void parseBadVoteForPluralityError() throws IOException {
+    testUtils.log(LOGGER, "parseBadVoteForPluralityError");
+    Path path = Paths.get(BAD_CSV_PATH + "badVoteForPlurality.csv");
+    Reader reader = Files.newBufferedReader(path);
+    County sedgwick = fromString("Sedgwick");
+
+    DominionCVRExportParser parser = new DominionCVRExportParser(reader, sedgwick, blank, true);
+    assertTrue(parser.parse().success);
+  }
+
+  /**
+   * Test for correct interpretation of a variety of different write-in strings, including
+   * "WRITEIN", "WRITE-in" etc.
+   * The regexp should match any whitespace, followed by any capitalization of "write", followed
+   * by -, _, space or no space, followed by any capitalization of "in", followed by any whitespace.
+   */
 }
