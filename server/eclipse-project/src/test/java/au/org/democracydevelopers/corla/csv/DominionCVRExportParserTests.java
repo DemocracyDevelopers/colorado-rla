@@ -80,7 +80,7 @@ public class DominionCVRExportParserTests {
   /**
    * Location of the test data.
    */
-  public static final String TINY_IRV_PATH = "src/test/resources/CSVs/Tiny-IRV-Examples";
+  public static final String TINY_IRV_PATH = "src/test/resources/CSVs/Tiny-IRV-Examples/";
 
   @BeforeClass
   public static void beforeAll() {

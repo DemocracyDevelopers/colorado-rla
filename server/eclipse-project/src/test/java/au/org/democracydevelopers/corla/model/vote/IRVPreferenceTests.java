@@ -54,7 +54,11 @@ public class IRVPreferenceTests {
   /**
    * Location of the test data.
    */
-  private static final String CSV_FILE_PATH = "src/test/resources/CSVs/";
+  private static final String TINY_IRV_PATH = "src/test/resources/CSVs/Tiny-IRV-Examples/";
+  /**
+   * Location of examples that are expected to fail to parse.
+   */
+  private static final String BAD_IRV_PATH = "src/test/resources/CSVs/badExamples/";
 
   /**
    * Regular expressions used to check we get the right error message for parse errors.
@@ -279,7 +283,7 @@ public class IRVPreferenceTests {
   @Test
   public void validateValidIRVPreferenceHeaders() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "validateValidIRVPreferenceHeaders");
-    Path path = Paths.get(CSV_FILE_PATH+"ThreeCandidatesTenVotes.csv");
+    Path path = Paths.get(TINY_IRV_PATH +"ThreeCandidatesTenVotes.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -294,7 +298,7 @@ public class IRVPreferenceTests {
   @Test
   public void validateValidIRVPreferenceHeaders2() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "validateValidIRVPreferenceHeaders2");
-    Path path = Paths.get(CSV_FILE_PATH+"GuideToRAIREExample3.csv");
+    Path path = Paths.get(TINY_IRV_PATH +"GuideToRAIREExample3.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -310,7 +314,7 @@ public class IRVPreferenceTests {
         expectedExceptionsMessageRegExp = insufficientChoicesRegexp)
   public void maxRankTooLarge() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "maxRankTooLarge");
-    Path path = Paths.get(CSV_FILE_PATH+"ThreeCandidatesTenVotes.csv");
+    Path path = Paths.get(TINY_IRV_PATH +"ThreeCandidatesTenVotes.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -327,7 +331,7 @@ public class IRVPreferenceTests {
   @Test
   public void maxRankTooSmallIsValid() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "maxRankTooSmallIsValid");
-    Path path = Paths.get(CSV_FILE_PATH+"ThreeCandidatesTenVotes.csv");
+    Path path = Paths.get(TINY_IRV_PATH +"ThreeCandidatesTenVotes.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -344,7 +348,7 @@ public class IRVPreferenceTests {
       expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
   public void numChoicesTooLarge() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "numChoicesTooLarge");
-    Path path = Paths.get(CSV_FILE_PATH+"ThreeCandidatesTenVotes.csv");
+    Path path = Paths.get(TINY_IRV_PATH +"ThreeCandidatesTenVotes.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -361,7 +365,7 @@ public class IRVPreferenceTests {
         expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
   public void numChoicesTooSmall() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "numChoicesTooSmall");
-    Path path = Paths.get(CSV_FILE_PATH+"ThreeCandidatesTenVotes.csv");
+    Path path = Paths.get(TINY_IRV_PATH +"ThreeCandidatesTenVotes.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -369,12 +373,16 @@ public class IRVPreferenceTests {
     validateIRVPreferenceHeaders(theLine, 7, 2,3);
   }
 
+  /**
+   * Invalid headers with inconsistent names.
+   * @throws IRVParsingException always.
+   */
   @Test(expectedExceptions = IRVParsingException.class,
       expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
   public void differentCandidateNamesInDifferentRanks1() throws IRVParsingException, IOException {
     testUtils.log(LOGGER,
         "differentCandidateNamesInDifferentRanks1");
-    Path path = Paths.get(CSV_FILE_PATH+
+    Path path = Paths.get(BAD_IRV_PATH +
         "InvalidIRVHeadersDifferentCandidateNamesInDifferentRanks1.csv");
 
     Reader reader = Files.newBufferedReader(path);
@@ -383,11 +391,15 @@ public class IRVPreferenceTests {
     validateIRVPreferenceHeaders(theLine, 7, 3,3);
   }
 
+  /**
+   * Another example of invalid headers with inconsistent names.
+   * @throws IRVParsingException always.
+   */
   @Test(expectedExceptions = IRVParsingException.class,
         expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
   public void differentCandidateNamesInDifferentRanks2() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "differentCandidateNamesInDifferentRanks2");
-    Path path = Paths.get(CSV_FILE_PATH +
+    Path path = Paths.get(BAD_IRV_PATH +
         "InvalidIRVHeadersDifferentCandidateNamesInDifferentRanks2.csv");
 
     Reader reader = Files.newBufferedReader(path);
@@ -396,11 +408,15 @@ public class IRVPreferenceTests {
     validateIRVPreferenceHeaders(theLine, 7, 3, 3);
   }
 
+  /**
+   * A repeated candidate name in the first rank.
+   * @throws IRVParsingException never.
+   */
   @Test(expectedExceptions = IRVParsingException.class,
         expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
   public void repeated1stRankCandidate() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "repeated1stRankCandidate");
-    Path path = Paths.get(CSV_FILE_PATH + "InvalidIRVHeadersRepeated1stRankCandidate.csv");
+    Path path = Paths.get(BAD_IRV_PATH + "InvalidIRVHeadersRepeated1stRankCandidate.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -409,12 +425,16 @@ public class IRVPreferenceTests {
   }
 
 
+  /**
+   * Repeated candidate in the second rank.
+   * @throws IRVParsingException always.
+   */
   @Test(expectedExceptions = IRVParsingException.class,
         expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
   public void repeated2ndRankCandidate() throws IRVParsingException, IOException {
 
     testUtils.log(LOGGER,"repeated2ndRankCandidate");
-    Path path = Paths.get(CSV_FILE_PATH+"InvalidIRVHeadersRepeated2ndRankCandidate.csv");
+    Path path = Paths.get(BAD_IRV_PATH +"InvalidIRVHeadersRepeated2ndRankCandidate.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -423,11 +443,15 @@ public class IRVPreferenceTests {
   }
 
 
+  /**
+   * Candidates are the same between ranks, but are in a shuffled order. This is invalid.
+   * @throws IRVParsingException always.
+   */
   @Test(expectedExceptions = IRVParsingException.class,
       expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
   public void shuffledChoices() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "shuffledChoices");
-    Path path = Paths.get(CSV_FILE_PATH + "InvalidIRVHeadersShuffledChoices.csv");
+    Path path = Paths.get(BAD_IRV_PATH + "InvalidIRVHeadersShuffledChoices.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -435,11 +459,15 @@ public class IRVPreferenceTests {
     validateIRVPreferenceHeaders(theLine, 7, 3, 3);
   }
 
+  /**
+   * A first-rank candidate is skipped.
+   * @throws IRVParsingException always.
+   */
   @Test(expectedExceptions = IRVParsingException.class,
         expectedExceptionsMessageRegExp = invalidIRVChoicesRegexp)
   public void skipped1stRankCandidate() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "skipped1stRankCandidate");
-    Path path = Paths.get(CSV_FILE_PATH+"InvalidIRVHeadersSkipped1stRankCandidate.csv");
+    Path path = Paths.get(BAD_IRV_PATH +"InvalidIRVHeadersSkipped1stRankCandidate.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
@@ -448,7 +476,7 @@ public class IRVPreferenceTests {
   }
 
   /**
-   * Invalid IRV preference headers - skipped 3rd rank.
+   * Invalid IRV preference headers - skipped 3rd rank candidate.
    * @throws IRVParsingException always.
    * There's no message regexp here because, although the current implementation says "Invalid IRV
    * choices header", it would be equally valid to say "Insufficient choices"
@@ -456,7 +484,7 @@ public class IRVPreferenceTests {
   @Test(expectedExceptions = IRVParsingException.class)
   public void skipped3rdRank() throws IRVParsingException, IOException {
     testUtils.log(LOGGER, "skipped3rdRank");
-    Path path = Paths.get(CSV_FILE_PATH+"InvalidIRVHeadersSkipped3rdRankCandidate.csv");
+    Path path = Paths.get(BAD_IRV_PATH +"InvalidIRVHeadersSkipped3rdRankCandidate.csv");
 
     Reader reader = Files.newBufferedReader(path);
     CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
