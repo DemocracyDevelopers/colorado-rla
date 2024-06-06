@@ -21,13 +21,15 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.csv;
 
+import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
 import au.org.democracydevelopers.corla.model.vote.IRVPreference;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import us.freeandfair.corla.csv.DominionCVRExportParser;
-import us.freeandfair.corla.model.County;
+import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 
 import java.io.IOException;
@@ -35,11 +37,16 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
+import static us.freeandfair.corla.query.CastVoteRecordQueries.getMatching;
+import static us.freeandfair.corla.query.ContestQueries.forCounties;
 import static us.freeandfair.corla.query.CountyQueries.fromString;
 
 public class DominionCVRExportParserTests {
@@ -61,7 +68,10 @@ public class DominionCVRExportParserTests {
       .withPassword("corlasecret")
       .withInitScript("corlaInit.sql");
 
-  private final static Properties properties = new Properties();
+  /**
+   * Test county.
+   */
+  private static County boulder;
 
   /**
    * Location of the test data.
@@ -71,6 +81,7 @@ public class DominionCVRExportParserTests {
   @BeforeClass
   public static void beforeAll() {
     postgres.start();
+    Properties properties = new Properties();
     properties.setProperty("hibernate.driver", "org.postgresql.Driver");
     properties.setProperty("hibernate.url", postgres.getJdbcUrl());
     properties.setProperty("hibernate.user", postgres.getUsername());
@@ -78,6 +89,8 @@ public class DominionCVRExportParserTests {
     properties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
     Persistence.setProperties(properties);
     Persistence.beginTransaction();
+
+    boulder = fromString("Boulder");
   }
 
   @AfterClass
@@ -86,25 +99,42 @@ public class DominionCVRExportParserTests {
   }
 
   @Test
-  public void trivialTest() {
-    assertTrue(true);
-  }
-
-  @Test
   public void parseSimpleIRVSucceeds() throws IOException {
-    County county = fromString("Boulder");
     Path path = Paths.get(CSV_FILE_PATH + "ThreeCandidatesTenVotes.csv");
     Reader reader = Files.newBufferedReader(path);
 
-    DominionCVRExportParser parser = new DominionCVRExportParser(reader, county,
-        new Properties(), true);
+    DominionCVRExportParser parser = new DominionCVRExportParser(reader, boulder, new Properties(), true);
+    assertTrue(parser.parse().success);
 
-  assertTrue(parser.parse().success);
+    List<Contest> contests = forCounties(Set.of(boulder));
+    assertFalse(contests.isEmpty());
+    Contest contest = contests.get(0);
+
+    // Check basic data
+    assertEquals(contest.name(), "TinyExample1");
+    assertEquals(ContestType.IRV.toString(), contest.description());
+    assertEquals(List.of("Alice","Bob","Chuan"), contest.choices().stream().map(Choice::name).collect(Collectors.toList()));
+
+    // Votes allowed should be 3 (because there are 3 ranks), whereas winners=1 always for IRV.
+    assertEquals(contest.votesAllowed().intValue(), 3);
+    assertEquals(contest.winnersAllowed().intValue(), 1);
+
+    // There are 10 votes:
+    // 3 Alice, Bob, Chuan
+    // 3 Alice, Chuan, Bob
+    // 1 Bob, Alice, Chuan
+    // 3 Bob, Chuan, Alice
+    List<CastVoteRecord> cvrs = getMatching(boulder.id(),  CastVoteRecord.RecordType.UPLOADED).collect(Collectors.toList());
+    List<CVRContestInfo> v1 = cvrs.stream().map(cvr -> cvr.contestInfoForContest(contest)).collect(Collectors.toList());
+    assertEquals(cvrs.size(), 10);
+
+
+
 }
 
 
   @Test(expectedExceptions = IRVParsingException.class,
-        expectedExceptionsMessageRegExp = "parse*")
+        expectedExceptionsMessageRegExp = "Couldn't parse.*")
   public void parseBadThrowsException() throws IRVParsingException {
 
     new IRVPreference("bad");
