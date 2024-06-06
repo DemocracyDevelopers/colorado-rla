@@ -356,6 +356,7 @@ public class DominionCVRExportParser {
           the_votes_allowed.put(contestName, irvVotesAllowed);
 
         // TODO Clarify whether we should accept, though not audit, an STV contest, as below,
+        // See issue https://github.com/DemocracyDevelopers/colorado-rla/issues/107
         // } else if (pluralityVotesAllowed == -1 && irvVotesAllowed > 0 && irvWinners > 1) {
         } else {
           // The header didn't have the keywords we expected.
@@ -675,8 +676,10 @@ public class DominionCVRExportParser {
             contest_info.add(new CVRContestInfo(co, null, null, orderedChoices));
 
           // TODO think about whether we should also store the raw vote in the database if applicable.
+          // See Issue https://github.com/DemocracyDevelopers/colorado-rla/issues/100
           // TODO refine this part when we know whether we should reject csvs with invalid IRV
           //  votes.
+          // See Issue https://github.com/DemocracyDevelopers/colorado-rla/issues/106
         } else {
           contest_info.add(new CVRContestInfo(co, null, null, votes));
         }
