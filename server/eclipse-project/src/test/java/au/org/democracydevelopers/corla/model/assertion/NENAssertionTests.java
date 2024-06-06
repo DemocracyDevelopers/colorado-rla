@@ -152,4 +152,7 @@ public class NENAssertionTests {
     assert(a.dilutedMargin.compareTo(BigDecimal.ZERO) == 0);
   }
 
+  // The following tests verify NENAssertion functionality that is used for auditing, not just
+  // for the construction of tests.
+
 }

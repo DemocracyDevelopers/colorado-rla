@@ -128,5 +128,226 @@ public class NEBAssertionTests {
     assert(a.dilutedMargin.compareTo(BigDecimal.ZERO) == 0);
   }
 
+  // The following tests verify NEBAssertion functionality that is used for auditing, not just
+  // for the construction of tests.
 
+  // To test sample size calculation, we consider the following dimensions:
+  // -- Assertions with large/small diluted margins.
+  // -- Assertions with varying combinations of discrepancies:
+  //      -- No discrepancies;
+  //      -- 1 of each type of discrepancy, rest 0.
+  //      -- 2 of each type of discrepancy, rest 0.
+  //      -- Combinations of discrepancies including overstatements. We could have lots of
+  //         combinations here, but given that overstatements are of the highest concern, we
+  //         consider 1 one vote overstatement plus 1 of each other type (alternating) and
+  //         1 two vote overstatement plus 1 of each other type (alternating).
+  //      -- Combinations of discrepancies including no overstatements (1 of each type).
+  /**
+   * Testing estimated/optimistic sample size calculation:
+   * - No discrepancies;
+   * - 1 of each type of discrepancy, rest 0.
+   * - 2 of each type of discrepancy, rest 0.
+   * - Combinations of discrepancies including overstatements. Here is where we could have lots of
+   * combinations, but given that overstatements are the main ones, could do:
+   *  -- 1 one vote overstatement + 1 of each other type of discrepancy (alternating with rest 0);
+   *  -- 1 two-vote overstatement + 1 of each other type of discrepancy (alternating with rest 0).
+   *
+   * - Combinations of discrepancies including no overstatements. Perhaps just 1 of each type.
+   *
+   * Test the above under small/large diluted margin.
+   */
+
+  // Dimension: small diluted margin
+  @Test
+  public void testNEBOptimisticSampleNoDiscrepanciesSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneOneVoteUnderSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneOneVoteOverSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneTwoVoteUnderSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneTwoVoteOverSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneOtherSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleTwoOneVoteUnderSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleTwoOneVoteOverSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleTwoTwoVoteUnderSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleTwoTwoVoteOverSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleTwoOtherSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneOneVoteOverOneTwoVoteOverSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneOneVoteOverOneOneVoteUnderSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneOneVoteOverOneTwoVoteUnderSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneOneVoteOverOtherSmallMargin(){
+
+  }
+
+
+  @Test
+  public void testNEBOptimisticSampleOneTwoVoteOverOneOneVoteUnderSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneTwoVoteOverOneTwoVoteUnderSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneTwoVoteOverOtherSmallMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneOfEachTypeNoOverstatementsSmallMargin(){
+
+  }
+
+  // Dimension: large diluted margin
+  @Test
+  public void testNEBOptimisticSampleNoDiscrepanciesLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneOneVoteUnderLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneOneVoteOverLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneTwoVoteUnderLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneTwoVoteOverLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneOtherLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleTwoOneVoteUnderLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleTwoOneVoteOverLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleTwoTwoVoteUnderLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleTwoTwoVoteOverLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleTwoOtherLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneOneVoteOverOneTwoVoteOverLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneOneVoteOverOneOneVoteUnderLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneOneVoteOverOneTwoVoteUnderLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneOneVoteOverOtherLargeMargin(){
+
+  }
+
+
+  @Test
+  public void testNEBOptimisticSampleOneTwoVoteOverOneOneVoteUnderLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneTwoVoteOverOneTwoVoteUnderLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneTwoVoteOverOtherLargeMargin(){
+
+  }
+
+  @Test
+  public void testNEBOptimisticSampleOneOfEachTypeNoOverstatementsLargeMargin(){
+
+  }
 }
