@@ -88,16 +88,31 @@ public class IRVChoices {
   /**
    * Constructor - takes a list of IRVPreferences (ranked candidates) representing a vote, sorts
    * this list by rank (most to least preferred), then stores in an unmodifiable list.
-   *
-   * @param mutableChoices a list of IRVPreferences, which need not be valid - repeats or skipped
-   *                       preferences are allowed.
+   * This private constructor is used only during the application of rules for removing invalid
+   * choices (overvotes, skipped preferences, repeated candidate names).
+   * @param sortedChoices a list of IRVPreferences, which need not be valid - repeats or skipped
+   *                      preferences are allowed.
+   * @param firstDropped  the first index of the sorted choices to omit. If this is 0, we get an
+   *                      empty choices list.
    */
-  public IRVChoices(List<IRVPreference> mutableChoices) {
+  private IRVChoices(List<IRVPreference> sortedChoices, int firstDropped) {
     final String prefix = "[IRVChoices constructor]";
-    LOGGER.debug(String.format("%s interpreting IRV Preferences %s", prefix, mutableChoices));
+    LOGGER.debug(String.format("%s interpreting IRV Preferences %s", prefix, sortedChoices));
 
-    mutableChoices.sort(IRVPreference::compareTo);
-    choices = Collections.unmodifiableList(mutableChoices);
+    if(firstDropped < sortedChoices.size()) {
+      // If firstDropped is inside the list, return the sublist (firstDropped is excluded)
+      choices = Collections.unmodifiableList(sortedChoices.subList(0, firstDropped));
+    } else {
+      // If firstDropped is off the end of the list, just return the whole list.
+      choices = Collections.unmodifiableList(sortedChoices);
+    }
+
+    // This constructor should be applied only to sorted choices.
+    if (choicesAreUnsorted()) {
+      final String msg = String.format("%s called on unsorted choices: %s.", prefix, choices);
+      LOGGER.error(msg);
+      throw new RuntimeException(msg);
+    }
   }
 
   /**
@@ -112,9 +127,35 @@ public class IRVChoices {
    * @throws IRVParsingException if one of the comma-separated substrings cannot be parsed as a
    *                             name(rank). This could happen for example if called on a
    *                             plurality vote.
+   * TODO Note we are currently not using this outside tests - it's possible the List<String>
+   *   constructor is the only one we need.
    */
   public IRVChoices(String sanitizedChoices) throws IRVParsingException {
-    this(parseChoices(sanitizedChoices));
+    // Filtering for non-blanks is needed because split will add a blank if the input list is empty.
+    this((Arrays.stream(sanitizedChoices.trim().split(","))
+        .filter(s -> !s.isBlank())).collect(Collectors.toList()));
+  }
+
+  /**
+   * Constructor - takes IRV preferences as a list of strings of the kind stored in the corla
+   * database, of the form ["name1(p1)","name2(p2)", ...]
+   * Parses each individual preference into an IRVPreference to make a list of IRVPreferences, and
+   * then calls the other constructor, which sorts the list by rank (most to least preferred), then
+   * stores in an unmodifiable list.
+   *
+   * @param rawChoices the IRV preferences as a list of strings, which need not be a valid IRV
+   *                   vote - repeats or skipped preferences are allowed.
+   * @throws IRVParsingException if one of the comma-separated substrings cannot be parsed as a
+   *                             name(rank). This could happen for example if called on a
+   *                             plurality vote.
+   */
+  public IRVChoices(List<String> rawChoices) throws IRVParsingException {
+    final String prefix = "[IRVChoices constructor]";
+    LOGGER.debug(String.format("%s interpreting IRV Preferences %s", prefix, rawChoices));
+
+    List<IRVPreference> irvChoices = parseChoices(rawChoices);
+    irvChoices.sort(IRVPreference::compareTo);
+    choices = Collections.unmodifiableList(irvChoices);
   }
 
   /**
@@ -184,6 +225,13 @@ public class IRVChoices {
   }
 
   /**
+   * Return the list of candidate names, without the ranks.
+   */
+  public List<String> getCandidateNames() {
+    return choices.stream().map(c -> c.candidateName).collect(Collectors.toList());
+  }
+
+  /**
    * Return this vote as a human-readable string. This will include explicit preferences in
    * parentheses. The method can be used irrespective of whether the vote is valid or invalid.
    */
@@ -220,12 +268,12 @@ public class IRVChoices {
       if ((nonRepeatedChoices.get(i)).compareTo(nonRepeatedChoices.get(i + 1)) == 0) {
 
         // We found an overvote. Skip from this item.
-        nonRepeatedChoices.subList(i, nonRepeatedChoices.size()).clear();
-        break;
+        return new IRVChoices(nonRepeatedChoices, i);
       }
     }
 
-    return new IRVChoices(nonRepeatedChoices);
+    // We found no overvotes - return all the choices.
+    return new IRVChoices(nonRepeatedChoices, choices.size());
   }
 
   /**
@@ -259,24 +307,24 @@ public class IRVChoices {
     // If the choices are blank, return blank. If the first element is not rank 1, the vote is
     // effectively blank.
     if (choices.isEmpty() || choices.get(0).rank != 1) {
-      return new IRVChoices(new ArrayList<>());
+      return new IRVChoices(new ArrayList<>(),0);
     }
 
-    List<IRVPreference> mutableChoices = new ArrayList<>(choices);
+    List<IRVPreference> nonSkipChoices = new ArrayList<>(choices);
 
     // Iterate through the list - at any time, if we find a rank that is more than one greater than
     // the rank beforehand, break and drop all subsequent choices.
     // We use the explicit control over array index to deal appropriately with the comparison
     // between adjacent items and the need to remove the second if there is a skipped rank.
-    for (int i = 0; i < mutableChoices.size() - 1; i++) {
-      if ((mutableChoices.get(i + 1)).rank > mutableChoices.get(i).rank + 1) {
+    for (int i = 0; i < nonSkipChoices.size() - 1; i++) {
+      if ((nonSkipChoices.get(i + 1)).rank > nonSkipChoices.get(i).rank + 1) {
+
         // We found a skipped rank. Skip from the _next_ item.
-        mutableChoices.subList(i + 1, mutableChoices.size()).clear();
-        break;
+        return new IRVChoices(nonSkipChoices, i+1);
       }
     }
 
-    return new IRVChoices(mutableChoices);
+    return new IRVChoices(nonSkipChoices, choices.size());
   }
 
   /**
@@ -299,7 +347,7 @@ public class IRVChoices {
     }
 
     HashSet<String> candidates = new HashSet<>();
-    List<IRVPreference> mutableChoices = new ArrayList<>();
+    List<IRVPreference> unrepeatedCandidateChoices = new ArrayList<>();
 
     // Iterate through the choices in increasing order of preference, maintaining a set of
     // candidates who have been encountered already. A candidate encountered for the first time is
@@ -309,12 +357,13 @@ public class IRVChoices {
       if (!candidates.contains(choice.candidateName)) {
         // This candidate hasn't been mentioned before. Add it to both the vote and the set of
         // mentioned candidates.
-        mutableChoices.add(choice);
+        unrepeatedCandidateChoices.add(choice);
         candidates.add(choice.candidateName);
       }
     }
 
-    return new IRVChoices(mutableChoices);
+    // Return all the unrepeated-candidate choices.
+    return new IRVChoices(unrepeatedCandidateChoices, unrepeatedCandidateChoices.size());
   }
 
   /**
@@ -322,17 +371,17 @@ public class IRVChoices {
    * preference for validity (a nonempty string, followed by a positive integer in parentheses) but
    * does _not_ check whether the vote is valid - repeated and skipped preferences are allowed.
    *
-   * @param sanitizedChoices a string describing the IRV vote, in the form "name1(p1),name2(p2),..."
+   * @param sanitizedChoices a list of strings describing the IRV vote, in the form ["name1
+   *                         (p1)", "name2(p2)",...]
    * @return the same information as a list of IRVPreference objects.
    * @throws IRVParsingException if any of the strings cannot be parsed as an IRVPreference.
    */
-  private static List<IRVPreference> parseChoices(String sanitizedChoices) throws IRVParsingException {
+  private static List<IRVPreference> parseChoices(List<String> sanitizedChoices)
+      throws IRVParsingException {
     ArrayList<IRVPreference> mutableChoices = new ArrayList<>();
 
-    String[] preferences = sanitizedChoices.trim().split(",");
-
-    for (String preference : preferences) {
-      mutableChoices.add(new IRVPreference(preference));
+    for (String choice : sanitizedChoices) {
+      mutableChoices.add(new IRVPreference(choice));
     }
 
     return mutableChoices;
