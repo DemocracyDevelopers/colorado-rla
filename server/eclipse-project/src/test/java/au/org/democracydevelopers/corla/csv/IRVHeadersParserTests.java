@@ -40,6 +40,14 @@ import static au.org.democracydevelopers.corla.csv.IRVHeadersParser.validateIRVP
 import static au.org.democracydevelopers.corla.testUtils.BAD_CSV_PATH;
 import static au.org.democracydevelopers.corla.testUtils.TINY_CSV_PATH;
 
+/**
+ * Tests for various kinds of invalid IRV headers, such as those that don't have a consistent
+ * list of choice names for each rank, or have reordered or repeated choices.
+ * Note this does _not_ test
+ * - when the choice itself can't be parsed properly,
+ * - when the list of ranks is larger than expected (this needs to be checked by
+ *   DominionCVRExportParser).
+ */
 public class IRVHeadersParserTests {
 
   /**
