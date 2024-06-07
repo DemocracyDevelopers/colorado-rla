@@ -41,7 +41,6 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.testng.annotations.*;
 
@@ -123,6 +122,11 @@ public class DominionCVRExportParserTests {
     Reader reader = Files.newBufferedReader(path);
     County saguache = fromString("Saguache");
 
+    final List<String> ABC = List.of("Alice","Bob","Chuan");
+    final List<String> ACB = List.of("Alice","Chuan","Bob");
+    final List<String> BAC = List.of("Bob","Alice","Chuan");
+    final List<String> CAB = List.of("Chuan","Alice","Bob");
+
     DominionCVRExportParser parser = new DominionCVRExportParser(reader, saguache, blank, true);
     assertTrue(parser.parse().success);
 
@@ -134,8 +138,7 @@ public class DominionCVRExportParserTests {
     // Check basic data
     assertEquals(contest.name(), "TinyExample1");
     assertEquals(contest.description(), ContestType.IRV.toString());
-    assertEquals(contest.choices().stream().map(Choice::name).collect(Collectors.toList()),
-        List.of("Alice","Bob","Chuan"));
+    assertEquals(contest.choices().stream().map(Choice::name).collect(Collectors.toList()), ABC);
 
     // Votes allowed should be 3 (because there are 3 ranks), whereas winners=1 always for IRV.
     assertEquals(contest.votesAllowed().intValue(), 3);
@@ -145,20 +148,19 @@ public class DominionCVRExportParserTests {
     // 3 Alice, Bob, Chuan
     // 3 Alice, Chuan, Bob
     // 1 Bob, Alice, Chuan
-    // 3 Bob, Chuan, Alice
+    // 3 Chuan, Alice, Bob
+    final List<List<String>> expectedChoices = List.of(
+        ABC,ABC,ABC,
+        ACB,ACB,ACB,
+        BAC,
+        CAB, CAB, CAB);
+
     List<CVRContestInfo> cvrs = getMatching(saguache.id(),  CastVoteRecord.RecordType.UPLOADED)
         .map(cvr -> cvr.contestInfoForContest(contest)).collect(Collectors.toList());
     assertEquals(10, cvrs.size());
-    assertEquals(List.of("Alice","Bob","Chuan"), cvrs.get(0).choices());
-    assertEquals(List.of("Alice","Bob","Chuan"), cvrs.get(1).choices());
-    assertEquals(List.of("Alice","Bob","Chuan"), cvrs.get(2).choices());
-    assertEquals(List.of("Alice","Chuan","Bob"), cvrs.get(3).choices());
-    assertEquals(List.of("Alice","Chuan","Bob"), cvrs.get(4).choices());
-    assertEquals(List.of("Alice","Chuan","Bob"), cvrs.get(5).choices());
-    assertEquals(List.of("Bob","Alice","Chuan"), cvrs.get(6).choices());
-    assertEquals(List.of("Chuan","Alice","Bob"), cvrs.get(7).choices());
-    assertEquals(List.of("Chuan","Alice","Bob"), cvrs.get(8).choices());
-    assertEquals(List.of("Chuan","Alice","Bob"), cvrs.get(9).choices());
+    for(int i=0 ; i < expectedChoices.size() ; i++) {
+      assertEquals(cvrs.get(i).choices(), expectedChoices.get(i));
+    }
   }
 
   /**

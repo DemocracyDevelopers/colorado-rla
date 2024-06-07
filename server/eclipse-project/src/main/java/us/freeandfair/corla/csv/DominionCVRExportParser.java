@@ -323,7 +323,6 @@ public class DominionCVRExportParser {
     do {
       final String c = the_line.get(index);
       int count = 0;
-      int startIndex = index;
       while (index < the_line.size() &&
              c.equals(the_line.get(index))) {
         index = index + 1;
@@ -331,11 +330,11 @@ public class DominionCVRExportParser {
       }
 
       try {
-        int pluralityVotesAllowed = extractPositiveInteger(c, PLURALITY_VOTE_FOR, ")");
-        int irvVotesAllowed = extractPositiveInteger(c, IRV_VOTE_FOR, ")");
-        int irvWinners = extractPositiveInteger(c, IRV_WINNERS_ALLOWED, ",");
+        final int pluralityVotesAllowed = extractPositiveInteger(c, PLURALITY_VOTE_FOR, ")");
+        final int irvVotesAllowed = extractPositiveInteger(c, IRV_VOTE_FOR, ")");
+        final int irvWinners = extractPositiveInteger(c, IRV_WINNERS_ALLOWED, ",");
 
-        // If it worked as expected for plurality parsing, this is a plurality contest.
+        // If winners and allowed votes are as expected for plurality, this is a plurality contest.
         if(pluralityVotesAllowed > 0 && irvVotesAllowed == -1 && irvWinners == -1) {
           String contestName = c.substring(0, c.indexOf(PLURALITY_VOTE_FOR)).strip();
           the_names.add(contestName);
@@ -343,7 +342,7 @@ public class DominionCVRExportParser {
           the_choice_counts.put(contestName, count);
           the_votes_allowed.put(contestName, pluralityVotesAllowed);
 
-        // If it worked as expected for IRV parsing, this is an IRV contest.
+        // If winners and allowed votes are as expected for IRV, this is an IRV contest.
         } else if(pluralityVotesAllowed == -1 && irvVotesAllowed > 0 && irvWinners == 1
             // We expect the count to be the real number of choices times the number of ranks.
             && count % irvVotesAllowed == 0) {
@@ -397,7 +396,7 @@ public class DominionCVRExportParser {
       return -1;
     }
 
-    // The index we expect the integer to start.
+    // The index in wholeString where we expect the integer to start.
     int intIndex = wholeString.indexOf(indicator)+indicator.length();
     String intString = wholeString.substring(intIndex, wholeString.indexOf(endString, intIndex));
     final int val = Integer.parseInt(intString.strip());
@@ -434,7 +433,7 @@ public class DominionCVRExportParser {
       final List<Choice> choices = new ArrayList<Choice>();
       final int end = index + choiceCounts.get(contestName);
       boolean isWriteIn = false;
-      boolean isIRV = contestTypes.get(contestName).equals(ContestType.IRV);
+      final boolean isIRV = contestTypes.get(contestName).equals(ContestType.IRV);
 
       try {
         if (isIRV) {
@@ -467,7 +466,7 @@ public class DominionCVRExportParser {
 
         // Winners allowed is always 1 for IRV, but is assumed to be equal to votesAllowed for
         // plurality, because the Dominion format doesn't give us that separately.
-        int winnersAllowed = isIRV ? 1 : votesAllowed.get(contestName);
+        final int winnersAllowed = isIRV ? 1 : votesAllowed.get(contestName);
 
         final Contest c = new Contest(contestName, my_county, contestTypes.get(contestName).toString(),
             choices, votesAllowed.get(contestName), winnersAllowed, contest_count);
@@ -522,7 +521,7 @@ public class DominionCVRExportParser {
   private boolean nameIsWriteIn(String choice, ContestType contestType) throws IRVParsingException {
     // The upper case matches "WRITE" [something] "IN", where the something can be 0 or more of
     // '-', '_', space or tab.
-    String writeInRegexp = "WRITE[-_ \t]*IN";
+    final String writeInRegexp = "WRITE[-_ \t]*IN";
 
     // If it's IRV, ignore the rank in parentheses and just check the name.
     if(contestType == ContestType.IRV) {
@@ -636,7 +635,7 @@ public class DominionCVRExportParser {
     final String ballot_type =
       stripEqualQuotes(the_line.get(my_columns.get(BALLOT_TYPE_HEADER)));
     final List<CVRContestInfo> contest_info = new ArrayList<CVRContestInfo>();
-    final String prefix = "[extractCVR] ";
+    final String prefix = "[extractCVR]";
 
     // for each contest, see if choices exist on the CVR; "0" or "1" are
     // votes or absences of votes; "" means that the contest is not in this style
@@ -644,7 +643,7 @@ public class DominionCVRExportParser {
     for (final Contest co : my_contests) {
       boolean present = false;
       final List<String> votes = new ArrayList<String>();
-      boolean isIRV = co.description().equals(ContestType.IRV.toString());
+      final boolean isIRV = co.description().equals(ContestType.IRV.toString());
 
       List<Choice> choices;
       if(isIRV) {
@@ -669,7 +668,7 @@ public class DominionCVRExportParser {
         if(isIRV) {
             // If it is IRV, convert it into an ordered list of names (without parentheses), then
             // store.
-            IRVChoices irvVotes = new IRVChoices(votes);
+            final IRVChoices irvVotes = new IRVChoices(votes);
             List<String> orderedChoices = irvVotes.getValidIntentAsOrderedList();
             String msg = "IRV interpretation: ";
             LOGGER.debug(String.format("%s %s", prefix, msg+irvVotes+" to "+orderedChoices));

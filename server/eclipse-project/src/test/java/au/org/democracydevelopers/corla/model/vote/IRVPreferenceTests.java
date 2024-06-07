@@ -39,7 +39,7 @@ public class IRVPreferenceTests {
   /**
    * Class-wide logger
    */
-  private static final Logger LOGGER = LogManager.getLogger(IRVPreference.class);
+  private static final Logger LOGGER = LogManager.getLogger(IRVPreferenceTests.class);
 
 
   /**
