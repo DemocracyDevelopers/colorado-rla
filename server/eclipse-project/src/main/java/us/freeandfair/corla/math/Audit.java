@@ -59,7 +59,7 @@ public final class Audit {
    * been audited) upward. The scaling factor grows as the ratio of
    * overstatements to samples increases.
    */
-  private static BigDecimal scalingFactor(BigDecimal auditedSamples, BigDecimal overstatements) {
+  public static BigDecimal scalingFactor(BigDecimal auditedSamples, BigDecimal overstatements) {
     if (auditedSamples.equals(BigDecimal.ZERO)) {
       return BigDecimal.ONE;
     } else {
