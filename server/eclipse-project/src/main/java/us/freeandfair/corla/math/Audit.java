@@ -5,6 +5,8 @@ import static java.math.MathContext.DECIMAL128;
 // this is BigDecimal land
 import java.math.BigDecimal;
 import static java.math.BigDecimal.*;
+
+import java.math.MathContext;
 import java.math.RoundingMode;
 
 import static ch.obermuhlner.math.big.BigDecimalMath.pow;
@@ -49,6 +51,19 @@ public final class Audit {
       return ZERO;
     } else {
       return margin.divide(ballotCount, DECIMAL128);
+    }
+  }
+
+  /**
+   * A scaling factor for a sample size estimate, from 1 (when no samples have
+   * been audited) upward. The scaling factor grows as the ratio of
+   * overstatements to samples increases.
+   */
+  private static BigDecimal scalingFactor(BigDecimal auditedSamples, BigDecimal overstatements) {
+    if (auditedSamples.equals(BigDecimal.ZERO)) {
+      return BigDecimal.ONE;
+    } else {
+      return BigDecimal.ONE.add(overstatements.divide(auditedSamples, MathContext.DECIMAL128));
     }
   }
 
