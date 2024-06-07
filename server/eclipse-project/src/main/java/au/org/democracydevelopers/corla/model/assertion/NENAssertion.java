@@ -22,10 +22,12 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.model.assertion;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import us.freeandfair.corla.model.CVRContestInfo;
 
 @Entity
 @DiscriminatorValue("NEN")
@@ -41,6 +43,36 @@ public class NENAssertion extends Assertion {
    */
   public NENAssertion(){
     super();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected int score(final CVRContestInfo info){
+    final String prefix = "[score]";
+
+    // Reduce the list of choices in 'info' to those that are assumed to be continuing.
+    final List<String> choices_left = info.choices().stream().filter(c ->
+        assumedContinuing.contains(c)).collect(Collectors.toList());
+
+    int score = 0;
+
+    // If none of the candidates relevant to the assertion are on the vote, then
+    // return 0.
+    if (!choices_left.isEmpty()) {
+      // If our winner is the first candidate in 'choices_left' our score is 1.
+      if (choices_left.get(0).equals(winner)) {
+        score = 1;
+      }
+      // If our loser is the first candidate in 'choices_left' our score is -1.
+      else if (choices_left.get(0).equals(loser)) {
+        score = -1;
+      }
+    }
+    LOGGER.debug(String.format("%s Score of %d computed for NEN Assertion ID %d, contest %s, vote %s",
+        prefix, score, id(), contestName, info.choices()));
+    return score;
   }
 
 }
