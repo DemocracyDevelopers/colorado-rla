@@ -36,11 +36,4 @@ public class NEBAssertion extends Assertion {
     super();
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  public NEBAssertion(String contestName, String winner, String loser, int margin, long universeSize,
-      double difficulty) throws IllegalArgumentException {
-    super(contestName, winner, loser, margin, universeSize, difficulty,  new ArrayList<>());
-  }
 }

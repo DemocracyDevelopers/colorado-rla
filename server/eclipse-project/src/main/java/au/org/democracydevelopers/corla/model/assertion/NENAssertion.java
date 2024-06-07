@@ -43,19 +43,4 @@ public class NENAssertion extends Assertion {
     super();
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  public NENAssertion(String contestName, String winner, String loser, int margin, long universeSize,
-      double difficulty, List<String> assumedContinuing) throws IllegalArgumentException {
-    super(contestName, winner, loser, margin, universeSize, difficulty, assumedContinuing);
-
-    if(!assumedContinuing.contains(winner) || !assumedContinuing.contains(loser)){
-      String msg = String.format("[all-args-constructor] The winner (%s) and loser (%s) of an " +
-          "NEN assertion must also be continuing candidates. Continuing list: %s. ", winner, loser,
-          assumedContinuing);
-      LOGGER.error(msg);
-      throw new IllegalArgumentException(msg);
-    }
-  }
 }

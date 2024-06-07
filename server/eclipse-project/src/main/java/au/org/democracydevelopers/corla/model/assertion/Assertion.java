@@ -180,67 +180,6 @@ public abstract class Assertion implements PersistentEntity {
   public Assertion(){}
 
   /**
-   * Creates an Assertion for a specific contest. The assertion has a given winner, loser,
-   * margin, and list of candidates that are assumed to be continuing in the assertion's
-   * context. This constructor is designed solely for testing purposes, as assertions are
-   * created and stored in the corla database by raire-service.
-   *
-   * @param contestName       The contest to which this assertion belongs.
-   * @param winner            Winning candidate (from contest contestName) of the assertion.
-   * @param loser             Losing candidate (from contest contestName) of the assertion.
-   * @param margin            Raw margin of the assertion.
-   * @param universeSize      Size of the universe for this audit, i.e. overall ballot count.
-   * @param difficulty        Estimated difficulty of assertion.
-   * @param assumedContinuing List of candidates that assertion assumes are continuing.
-   *
-   * @throws IllegalArgumentException if invalid parameters are supplied: a zero or negative
-   * universe size; a negative margin; a margin that is larger than the universe size; or the same
-   * candidate as both the winner and loser.
-   */
-  public Assertion(String contestName, String winner, String loser, int margin, long universeSize,
-      double difficulty, List<String> assumedContinuing) throws IllegalArgumentException {
-
-    final String prefix = "[Assertion(all-args-constructor)]";
-    LOGGER.debug(String.format("%s Parameters: contest name %s; winner %s; loser %s; " +
-            "margin %d; universe size %d; difficulty %f; assumed continuing %s.", prefix,
-        contestName, winner, loser, margin, universeSize, difficulty, assumedContinuing));
-
-    this.contestName = contestName;
-    this.winner = winner;
-    this.loser = loser;
-    this.margin = margin;
-
-    if(universeSize <= 0){
-      final String msg = String.format("%s Attempt to create an assertion with a zero or " +
-          "negative universe size of %d", prefix, universeSize);
-      LOGGER.error(msg);
-      throw new IllegalArgumentException(msg);
-    }
-
-    if(margin < 0 || margin > universeSize){
-      String msg = String.format("%s An assertion must have a non-negative margin that is " +
-          "less than universe size (margin of %d provided with universe size %d).",
-          prefix, margin, universeSize);
-      LOGGER.error(msg);
-      throw new IllegalArgumentException(msg);
-    }
-
-    if(winner.equals(loser)){
-      String msg = String.format("%s The winner and loser of an assertion must not be the same " +
-          "candidate (%s provided for both).", prefix, winner);
-      LOGGER.error(msg);
-      throw new IllegalArgumentException(msg);
-    }
-
-    this.dilutedMargin = Audit.dilutedMargin(margin, universeSize);
-
-    this.difficulty = difficulty;
-    this.assumedContinuing = assumedContinuing;
-
-    LOGGER.debug(String.format("%s Diluted margin %f computed.", prefix, dilutedMargin));
-  }
-
-  /**
    * {@inheritDoc}
    */
   @Override
