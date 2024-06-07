@@ -20,6 +20,6 @@ us.freeandfair.corla.model.IntermediateAuditReportInfo
 us.freeandfair.corla.model.LogEntry
 us.freeandfair.corla.model.Tribute
 us.freeandfair.corla.model.UploadedFile
-au.org.democracydevelopers.model.assertion.Assertion
-au.org.democracydevelopers.model.assertion.NEBAssertion
-au.org.democracydevelopers.model.assertion.NENAssertion
+au.org.democracydevelopers.corla.model.assertion.Assertion
+au.org.democracydevelopers.corla.model.assertion.NEBAssertion
+au.org.democracydevelopers.corla.model.assertion.NENAssertion
