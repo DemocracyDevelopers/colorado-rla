@@ -222,7 +222,7 @@ public abstract class Assertion implements PersistentEntity {
    *
    * @return the given number of audited samples increased by a scaling factor.
    */
-  public static BigDecimal scalingFactor(BigDecimal auditedSamples, BigDecimal overstatements) {
+  private static BigDecimal scalingFactor(BigDecimal auditedSamples, BigDecimal overstatements) {
     if (auditedSamples.equals(BigDecimal.ZERO)) {
       return BigDecimal.ONE;
     } else {
