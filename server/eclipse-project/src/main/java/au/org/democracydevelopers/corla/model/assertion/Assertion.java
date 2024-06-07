@@ -132,52 +132,52 @@ public abstract class Assertion implements PersistentEntity {
    * overstatements arise.
    */
   @Column(name = "optimistic_samples_to_audit", nullable = false)
-  protected Integer optimistic_samples_to_audit = 0;
+  protected Integer optimisticSamplesToAudit = 0;
 
   /**
    * The estimated number of samples we expect to need to audit this assertion, assuming
    * overstatement continue at the current rate.
    */
   @Column(name = "estimated_samples_to_audit", nullable = false)
-  protected Integer estimated_samples_to_audit = 0;
+  protected Integer estimatedSamplesToAudit = 0;
 
   /**
    * The number of two-vote understatements recorded against this assertion so far.
    */
   @Column(name = "two_vote_under_count", nullable = false)
-  protected Integer two_vote_under_count = 0;
+  protected Integer twoVoteUnderCount = 0;
 
   /**
    * The number of one-vote understatements recorded against this assertion so far.
    */
   @Column(name = "one_vote_under_count", nullable = false)
-  protected Integer one_vote_under_count = 0;
+  protected Integer oneVoteUnderCount = 0;
 
   /**
    * The number of one-vote overstatements recorded against this assertion so far.
    */
   @Column(name = "one_vote_over_count", nullable = false)
-  protected Integer one_vote_over_count = 0;
+  protected Integer oneVoteOverCount = 0;
 
   /**
    * The number of two-vote overstatements recorded against this assertion so far.
    */
   @Column(name = "two_vote_over_count", nullable = false)
-  protected Integer two_vote_over_count = 0;
+  protected Integer twoVoteOverCount = 0;
 
   /**
    * The number of discrepancies recorded so far, against this assertion, that are neither
    * understatements nor overstatements.
    */
   @Column(name = "other_count", nullable = false)
-  protected Integer other_count = 0;
+  protected Integer otherCount = 0;
 
   /**
    * Current risk of the assertion. We initialize this risk to 1, as when we have no information we
    * assume maximum risk.
    */
   @Column(name = "current_risk", nullable = false)
-  protected BigDecimal current_risk = BigDecimal.valueOf(1);
+  protected BigDecimal currentRisk = BigDecimal.valueOf(1);
 
   /**
    * Construct an empty assertion (required for persistence). Note that creation and storage of
@@ -246,18 +246,16 @@ public abstract class Assertion implements PersistentEntity {
     LOGGER.debug(String.format("%s Calling Audit::optimistic() with parameters: risk limit " +
             "%f; diluted margin %f; gamma %f; two vote under count %d; one vote under count %d; " +
             "one vote over count %d; two vote over count %d.", prefix, riskLimit, dilutedMargin,
-        Audit.GAMMA, two_vote_under_count, one_vote_under_count, one_vote_over_count,
-        two_vote_over_count));
+            Audit.GAMMA, twoVoteUnderCount, oneVoteUnderCount, oneVoteOverCount, twoVoteOverCount));
 
     // Call the colorado-rla audit math; update optimistic_samples_to_audit and return new value.
-    optimistic_samples_to_audit = Audit.optimistic(riskLimit, dilutedMargin,
-        Audit.GAMMA, two_vote_under_count, one_vote_under_count, one_vote_over_count,
-        two_vote_over_count).intValue();
+    optimisticSamplesToAudit = Audit.optimistic(riskLimit, dilutedMargin, Audit.GAMMA,
+        twoVoteUnderCount, oneVoteUnderCount, oneVoteOverCount, twoVoteOverCount).intValue();
 
     LOGGER.debug(String.format("%s Computed optimistic samples to audit for Assertion %d" +
-        " of %s ballots.", prefix, id, optimistic_samples_to_audit));
+        " of %s ballots.", prefix, id, optimisticSamplesToAudit));
 
-    return optimistic_samples_to_audit;
+    return optimisticSamplesToAudit;
   }
 
   /**
@@ -273,30 +271,30 @@ public abstract class Assertion implements PersistentEntity {
    */
   public Integer computeEstimatedSamplesToAudit(int auditedSampleCount) {
     final String prefix = "[computeEstimatedSamplesToAudit]";
-    final int totalOverstatements = one_vote_over_count + two_vote_over_count;
+    final int totalOverstatements = oneVoteOverCount + twoVoteOverCount;
 
     if (totalOverstatements == 0) {
-      estimated_samples_to_audit = optimistic_samples_to_audit;
+      estimatedSamplesToAudit = optimisticSamplesToAudit;
 
       LOGGER.debug(String.format("%s No overstatements thus far; estimated ballot samples (%d) " +
               "equals optimistic samples (%d). Assertion ID %d, contest %s.", prefix,
-              estimated_samples_to_audit, optimistic_samples_to_audit, id, contestName));
+              estimatedSamplesToAudit, optimisticSamplesToAudit, id, contestName));
     }
     else {
       // Compute scaling factor (based on rate of observed overstatements to audited ballots).
       final BigDecimal scalingFac = scalingFactor(BigDecimal.valueOf(auditedSampleCount),
           BigDecimal.valueOf(totalOverstatements));
 
-      estimated_samples_to_audit = BigDecimal.valueOf(optimistic_samples_to_audit)
+      estimatedSamplesToAudit = BigDecimal.valueOf(optimisticSamplesToAudit)
               .multiply(scalingFac).setScale(0, RoundingMode.CEILING).intValue();
 
       LOGGER.debug(String.format("%s %d overstatements thus far; scaling factor of %f applied to " +
               "optimistic sample count of %d; estimate sample count is %d ballots " +
               "(Assertion ID %d, contest %s).", prefix, totalOverstatements, scalingFac,
-              optimistic_samples_to_audit, estimated_samples_to_audit, id, contestName));
+              optimisticSamplesToAudit, estimatedSamplesToAudit, id, contestName));
     }
 
-    return estimated_samples_to_audit;
+    return estimatedSamplesToAudit;
   }
 
   /**
@@ -387,6 +385,8 @@ public abstract class Assertion implements PersistentEntity {
       cvrDiscrepancy.put(cvr.id(), result.getAsInt());
     }
     else {
+      LOGGER.info(String.format("%s CVR ID %d, Assertion ID %d, contest %s, no discrepancy.",
+          prefix, cvr.id(), id, contestName));
       cvrDiscrepancy.remove(cvr.id());
     }
     return result;
@@ -406,23 +406,23 @@ public abstract class Assertion implements PersistentEntity {
       final int theType = cvrDiscrepancy.get(the_record.id());
       switch (theType) {
         case -2:
-          two_vote_under_count += 1;
+          twoVoteUnderCount += 1;
           break;
 
         case -1:
-          one_vote_under_count += 1;
+          oneVoteUnderCount += 1;
           break;
 
         case 0:
-          other_count += 1;
+          otherCount += 1;
           break;
 
         case 1:
-          one_vote_over_count += 1;
+          oneVoteOverCount += 1;
           break;
 
         case 2:
-          two_vote_over_count += 1;
+          twoVoteOverCount += 1;
           break;
 
         default:
@@ -435,16 +435,16 @@ public abstract class Assertion implements PersistentEntity {
       LOGGER.debug(String.format("%s Discrepancy of type %d added to Assertion ID %d,"+
           "contest %s, CVR ID %d. New totals: 1 vote understatements %d; 1 vote overstatements %d; " +
           "2 vote understatements %d; 2 vote overstatements %d; other %d.", prefix, theType, id,
-          contestName, the_record.id(), one_vote_under_count, one_vote_over_count,
-          two_vote_under_count, two_vote_over_count, other_count));
+          contestName, the_record.id(), oneVoteUnderCount, oneVoteOverCount, twoVoteUnderCount,
+          twoVoteOverCount, otherCount));
     }
     else{
       LOGGER.debug(String.format("%s Attempt to record a discrepancy in Assertion ID %d " +
               "contest %s, CVR ID %s, but no record of a pre-computed discrepancy associated with " +
               "that CVR exists. No increase to discrepancy totals: 1 vote understatements %d; " +
               "1 vote overstatements %d; 2 vote understatements %d; 2 vote overstatements %d; other %d.",
-              prefix, id, contestName, the_record.id(), one_vote_under_count, one_vote_over_count,
-              two_vote_under_count, two_vote_over_count, other_count));
+              prefix, id, contestName, the_record.id(), oneVoteUnderCount, oneVoteOverCount,
+              twoVoteUnderCount, twoVoteOverCount, otherCount));
     }
   }
 
@@ -463,23 +463,23 @@ public abstract class Assertion implements PersistentEntity {
       final int theType = cvrDiscrepancy.get(the_record.id());
       switch (theType) {
         case -2:
-          two_vote_under_count -= 1;
+          twoVoteUnderCount -= 1;
           break;
 
         case -1:
-          one_vote_under_count -= 1;
+          oneVoteUnderCount -= 1;
           break;
 
         case 0:
-          other_count -= 1;
+          otherCount -= 1;
           break;
 
         case 1:
-          one_vote_over_count -= 1;
+          oneVoteOverCount -= 1;
           break;
 
         case 2:
-          two_vote_over_count -= 1;
+          twoVoteOverCount -= 1;
           break;
 
         default:
@@ -492,16 +492,16 @@ public abstract class Assertion implements PersistentEntity {
       LOGGER.debug(String.format("%s Discrepancy of type %d removed from Assertion ID %d,"+
               "contest %s, CVR ID %d. New totals: 1 vote understatements %d; 1 vote overstatements %d; " +
               "2 vote understatements %d; 2 vote overstatements %d; other %d.", prefix, theType, id,
-              contestName, the_record.id(), one_vote_under_count, one_vote_over_count,
-              two_vote_under_count, two_vote_over_count, other_count));
+              contestName, the_record.id(), oneVoteUnderCount, oneVoteOverCount, twoVoteUnderCount,
+              twoVoteOverCount, otherCount));
     }
     else{
       LOGGER.debug(String.format("%s Attempt to remove a discrepancy in Assertion ID %d " +
               "contest %s, CVR ID %s, but no record of a pre-computed discrepancy associated with " +
               "that CVR exists. No increase to discrepancy totals: 1 vote understatements %d; " +
               "1 vote overstatements %d; 2 vote understatements %d; 2 vote overstatements %d; other %d.",
-              prefix, id, contestName, the_record.id(), one_vote_under_count, one_vote_over_count,
-              two_vote_under_count, two_vote_over_count, other_count));
+              prefix, id, contestName, the_record.id(), oneVoteUnderCount, oneVoteOverCount,
+              twoVoteUnderCount, twoVoteOverCount, otherCount));
     }
   }
 
