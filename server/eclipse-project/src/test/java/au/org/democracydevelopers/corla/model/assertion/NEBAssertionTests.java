@@ -61,8 +61,8 @@ public class NEBAssertionTests {
 
     Assertion a = new NEBAssertion();
     AssertionTests.populateAssertion(a, winner, loser, contestName, List.of(), rawMargin,
-    dilutedMargin, difficulty, cvrDiscrepancy, oneVoteOver, oneVoteUnder, twoVoteOver,
-    twoVoteUnder, other);
+      dilutedMargin, difficulty, cvrDiscrepancy, oneVoteOver, oneVoteUnder, twoVoteOver,
+      twoVoteUnder, other);
 
     return a;
   }

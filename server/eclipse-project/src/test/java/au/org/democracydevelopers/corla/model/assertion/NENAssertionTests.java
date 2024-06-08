@@ -21,12 +21,82 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.assertion;
 
+import static org.testng.Assert.assertEquals;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.testng.annotations.Test;
+import us.freeandfair.corla.math.Audit;
 
+/**
+ * A suite of tests to verify the functionality of NENAssertion objects. This includes:
+ * -- Testing of optimistic sample size.
+ */
 public class NENAssertionTests {
 
   private static final Logger LOGGER = LogManager.getLogger(NENAssertionTests.class);
 
+  /**
+   * Create an NEN assertion with the given parameters.
+   * @param winner Winner of the assertion.
+   * @param loser Loser of the assertion.
+   * @param contestName Name of the contest to which the assertion belongs.
+   * @param continuing List of candidates assumed to be continuing.
+   * @param rawMargin Raw margin of the assertion.
+   * @param dilutedMargin Diluted margin of the assertion.
+   * @param difficulty Difficulty of the assertion.
+   * @param cvrDiscrepancy Map between CVR ID and discrepancy type.
+   * @param oneVoteOver Number of one vote overstatements to associate with the assertion.
+   * @param oneVoteUnder Number of one vote understatements to associate with the assertion.
+   * @param twoVoteOver Number of two vote overstatements to associate with the assertion.
+   * @param twoVoteUnder Number of two vote understatements to associate with the assertion.
+   * @param other Number of other discrepancies to associate with the assertion.
+   * @return an NEB assertion with the given specification.
+   */
+  public static Assertion createNENAssertion(String winner, String loser, String contestName,
+      List<String> continuing, int rawMargin, double dilutedMargin, double difficulty,
+      Map<Long,Integer> cvrDiscrepancy, int oneVoteOver, int oneVoteUnder, int twoVoteOver,
+      int twoVoteUnder, int other){
+
+    Assertion a = new NENAssertion();
+    AssertionTests.populateAssertion(a, winner, loser, contestName, continuing, rawMargin,
+        dilutedMargin, difficulty, cvrDiscrepancy, oneVoteOver, oneVoteUnder, twoVoteOver,
+        twoVoteUnder, other);
+
+    return a;
+  }
+
+
+  /**
+   * This suite of tests verifies the optimistic sample size computation for NEN assertions.
+   * @param rawMargin Raw margin of the assertion.
+   * @param dilutedMargin Diluted margin of the assertion.
+   * @param difficulty Raire-computed difficulty of the assertion.
+   * @param cvrDiscrepancies Map between CVR id and associated discrepancy for the assertion.
+   * @param oneVoteOver Number of one vote overstatements related to the assertion.
+   * @param oneVoteUnder Number of one vote understatements related to the assertion.
+   * @param twoVoteOver Number of two vote overstatements related to the assertion.
+   * @param twoVoteUnder Number of two vote understatements related to the assertion.
+   * @param other Number of other discrepancies related to the assertion.
+   */
+  @Test(dataProvider = "SampleParameters", dataProviderClass = AssertionTests.class)
+  public void testNENOptimistic(Integer rawMargin, BigDecimal dilutedMargin, BigDecimal difficulty,
+      Map<Long,Integer> cvrDiscrepancies, Integer oneVoteOver, Integer oneVoteUnder,
+      Integer twoVoteOver, Integer twoVoteUnder, Integer other){
+
+    Assertion a = createNENAssertion("W", "L", "Test Contest",
+        List.of("W","L","O"), rawMargin, dilutedMargin.doubleValue(), difficulty.doubleValue(),
+        cvrDiscrepancies, oneVoteOver, oneVoteUnder, twoVoteOver, twoVoteUnder, other);
+
+    final int result = a.computeOptimisticSamplesToAudit(AssertionTests.riskLimit10);
+    final int expected = AssertionTests.optimistic(AssertionTests.riskLimit10,
+        dilutedMargin.doubleValue(), oneVoteOver, twoVoteOver, oneVoteUnder, twoVoteUnder, Audit.GAMMA);
+
+    assertEquals(result, expected);
+    assertEquals(a.optimisticSamplesToAudit.intValue(), expected);
+  }
 
 }
