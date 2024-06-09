@@ -405,31 +405,17 @@ public abstract class Assertion implements PersistentEntity {
     if(cvrDiscrepancy.containsKey(the_record.id())){
       final int theType = cvrDiscrepancy.get(the_record.id());
       switch (theType) {
-        case -2:
-          twoVoteUnderCount += 1;
-          break;
-
-        case -1:
-          oneVoteUnderCount += 1;
-          break;
-
-        case 0:
-          otherCount += 1;
-          break;
-
-        case 1:
-          oneVoteOverCount += 1;
-          break;
-
-        case 2:
-          twoVoteOverCount += 1;
-          break;
-
-        default:
+        case -2 -> twoVoteUnderCount += 1;
+        case -1 -> oneVoteUnderCount += 1;
+        case 0 -> otherCount += 1;
+        case 1 -> oneVoteOverCount += 1;
+        case 2 -> twoVoteOverCount += 1;
+        default -> {
           final String msg = String.format("%s Invalid discrepancy type %d stored in " +
               "discrepancy map for Assertion ID %d, contest %s.", prefix, theType, id, contestName);
           LOGGER.error(msg);
           throw new RuntimeException(msg);
+        }
       }
 
       LOGGER.debug(String.format("%s Discrepancy of type %d added to Assertion ID %d,"+
@@ -462,31 +448,17 @@ public abstract class Assertion implements PersistentEntity {
     if(cvrDiscrepancy.containsKey(the_record.id())){
       final int theType = cvrDiscrepancy.get(the_record.id());
       switch (theType) {
-        case -2:
-          twoVoteUnderCount -= 1;
-          break;
-
-        case -1:
-          oneVoteUnderCount -= 1;
-          break;
-
-        case 0:
-          otherCount -= 1;
-          break;
-
-        case 1:
-          oneVoteOverCount -= 1;
-          break;
-
-        case 2:
-          twoVoteOverCount -= 1;
-          break;
-
-        default:
+        case -2 -> twoVoteUnderCount -= 1;
+        case -1 -> oneVoteUnderCount -= 1;
+        case 0 -> otherCount -= 1;
+        case 1 -> oneVoteOverCount -= 1;
+        case 2 -> twoVoteOverCount -= 1;
+        default -> {
           final String msg = String.format("%s Invalid discrepancy type %d stored in " +
               "discrepancy map for Assertion ID %d, contest %s.", prefix, theType, id, contestName);
           LOGGER.error(msg);
           throw new RuntimeException(msg);
+        }
       }
 
       LOGGER.debug(String.format("%s Discrepancy of type %d removed from Assertion ID %d,"+

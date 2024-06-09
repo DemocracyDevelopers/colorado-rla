@@ -55,19 +55,6 @@ public final class Audit {
   }
 
   /**
-   * A scaling factor for a sample size estimate, from 1 (when no samples have
-   * been audited) upward. The scaling factor grows as the ratio of
-   * overstatements to samples increases.
-   */
-  public static BigDecimal scalingFactor(BigDecimal auditedSamples, BigDecimal overstatements) {
-    if (auditedSamples.equals(BigDecimal.ZERO)) {
-      return BigDecimal.ONE;
-    } else {
-      return BigDecimal.ONE.add(overstatements.divide(auditedSamples, MathContext.DECIMAL128));
-    }
-  }
-
-  /**
    * The "total error bound" defined in the literature.
    *
    * Usually represented as `U`, this can be found in equation (8) in Stark's

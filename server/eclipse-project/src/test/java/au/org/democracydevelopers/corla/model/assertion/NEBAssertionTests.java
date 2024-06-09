@@ -21,6 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.assertion;
 
+import static au.org.democracydevelopers.corla.util.testUtils.log;
 import static org.testng.Assert.assertEquals;
 
 import java.math.BigDecimal;
@@ -34,6 +35,7 @@ import us.freeandfair.corla.math.Audit;
 /**
  * A suite of tests to verify the functionality of NEBAssertion objects. This includes:
  * -- Testing of optimistic sample size.
+ * -- Testing of estimated sample size.
  */
 public class NEBAssertionTests {
 
@@ -84,6 +86,8 @@ public class NEBAssertionTests {
   public void testNEBOptimistic(Integer rawMargin, BigDecimal dilutedMargin, BigDecimal difficulty,
       Map<Long,Integer> cvrDiscrepancies, Integer oneVoteOver, Integer oneVoteUnder,
       Integer twoVoteOver, Integer twoVoteUnder, Integer other){
+    log(LOGGER, String.format("testNEBOptimistic[%f;%d;%d:%d;%d;%d]", dilutedMargin,
+        oneVoteOver, oneVoteUnder, twoVoteOver, twoVoteUnder, other));
 
     Assertion a = createNEBAssertion("W", "L", "Test Contest",
         rawMargin, dilutedMargin.doubleValue(), difficulty.doubleValue(), cvrDiscrepancies,
@@ -97,4 +101,45 @@ public class NEBAssertionTests {
     assertEquals(a.optimisticSamplesToAudit.intValue(), expected);
   }
 
+  /**
+   * Test estimated sample size computation in context where none or some ballots have been sampled,
+   * with various combinations of risk limit, diluted margin, and discrepancies.
+   * @param auditedSamples Number of ballots that have been sampled thus far.
+   * @param riskLimit Risk limit of the audit.
+   * @param rawMargin Raw margin of the assertion.
+   * @param dilutedMargin Diluted margin of the assertion.
+   * @param difficulty Raire-computed difficulty of the assertion.
+   * @param cvrDiscrepancies Map between CVR id and associated discrepancy for the assertion.
+   * @param oneVoteOver Number of one vote overstatements related to the assertion.
+   * @param oneVoteUnder Number of one vote understatements related to the assertion.
+   * @param twoVoteOver Number of two vote overstatements related to the assertion.
+   * @param twoVoteUnder Number of two vote understatements related to the assertion.
+   * @param other Number of other discrepancies related to the assertion.
+   */
+  @Test(dataProvider = "ParametersVaryingSamples", dataProviderClass = AssertionTests.class)
+  public void testNEBEstimatedVaryingSamples(Integer auditedSamples, BigDecimal riskLimit,
+      Integer rawMargin, BigDecimal dilutedMargin, BigDecimal difficulty,
+      Map<Long,Integer> cvrDiscrepancies, Integer oneVoteOver, Integer oneVoteUnder,
+      Integer twoVoteOver, Integer twoVoteUnder, Integer other)
+  {
+    log(LOGGER, String.format("testNEBEstimatedVaryingSamples[%d;%f;%f;%d;%d:%d;%d;%d]",
+        auditedSamples, riskLimit, dilutedMargin, oneVoteOver, oneVoteUnder, twoVoteOver,
+        twoVoteUnder, other));
+
+    Assertion a = createNEBAssertion("W", "L", "Test Contest",
+        rawMargin, dilutedMargin.doubleValue(), difficulty.doubleValue(), cvrDiscrepancies,
+        oneVoteOver, oneVoteUnder, twoVoteOver, twoVoteUnder, other);
+
+    // Note that the way optimistic/estimated sample computation is performed is that
+    // there is an assumption that the optimistic calculation has occurred prior to
+    // 'computeEstimatedSamplesToAudit' being called. This fits with the existing design
+    // of how plurality sample size computation is done.
+    a.computeOptimisticSamplesToAudit(riskLimit);
+    final int result = a.computeEstimatedSamplesToAudit(auditedSamples);
+    final int expected = AssertionTests.estimated(riskLimit, dilutedMargin.doubleValue(),
+        oneVoteOver, twoVoteOver, oneVoteUnder, twoVoteUnder, Audit.GAMMA, auditedSamples);
+
+    assertEquals(result, expected);
+    assertEquals(a.estimatedSamplesToAudit.intValue(), expected);
+  }
 }
