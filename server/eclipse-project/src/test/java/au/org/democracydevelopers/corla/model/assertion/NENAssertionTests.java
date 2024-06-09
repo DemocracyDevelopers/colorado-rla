@@ -31,11 +31,13 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.math.Audit;
+import us.freeandfair.corla.model.CVRAuditInfo;
 
 /**
  * A suite of tests to verify the functionality of NENAssertion objects. This includes:
  * -- Testing of optimistic sample size.
  * -- Testing of estimated sample size.
+ * -- Recording of a pre-computed discrepancy.
  */
 public class NENAssertionTests {
 
@@ -145,5 +147,281 @@ public class NENAssertionTests {
 
     assertEquals(result, expected);
     assertEquals(a.estimatedSamplesToAudit.intValue(), expected);
+  }
+
+
+  /**
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) in the context where no discrepancy has
+   * been computed for the given CVR-ACVR pair, and the assertion has no prior recorded
+   * discrepancies. It should not change the assertion's discrepancy counts. What
+   * recordDiscrepancy() does is look for the CVRAuditInfo's ID in its cvrDiscrepancy map. If it is
+   * there, the value matching the ID key is retrieved and the associated discrepancy type
+   * incremented. If it is not there, then the discrepancy counts are not changed.
+   */
+  @Test
+  public void testRecordNoMatch1(){
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a = createNENAssertion("W", "L", "Test Contest",
+        AssertionTests.wlo, 50, 0.1, 8, Map.of(), 0,
+        0, 0, 0, 0);
+
+
+        a.recordDiscrepancy(info);
+
+    assertEquals(0, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(0, a.twoVoteUnderCount.intValue());
+    assertEquals(0, a.otherCount.intValue());
+  }
+
+  /**
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) in the context where no discrepancy has
+   * been computed for the given CVR-ACVR pair, and the assertion has some discrepancies recorded
+   * already. It should not change the assertion's discrepancy counts.
+   */
+  @Test
+  public void testRecordNoMatch2(){
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a = createNENAssertion("W", "L", "Test Contest",
+        AssertionTests.wlo, 50, 0.1, 8,  Map.of(2L, -1,
+            3L, 1), 1, 1, 0, 0, 0);
+
+    a.recordDiscrepancy(info);
+
+    assertEquals(1, a.oneVoteOverCount.intValue());
+    assertEquals(1, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(0, a.twoVoteUnderCount.intValue());
+    assertEquals(0, a.otherCount.intValue());
+  }
+
+  /**
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote overvote, in the context
+   * where the assertion has no recorded discrepancies.
+   */
+  @Test
+  public void testRecordOneVoteOvervote1(){
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a = createNENAssertion("W", "L", "Test Contest",
+        AssertionTests.wlo, 50, 0.1, 8,  Map.of(1L, 1),
+        0, 0, 0, 0, 0);
+
+    a.recordDiscrepancy(info);
+
+    assertEquals(1, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(0, a.twoVoteUnderCount.intValue());
+    assertEquals(0, a.otherCount.intValue());
+  }
+
+  /**
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote undervote, in the context
+   * where the assertion has no recorded discrepancies.
+   */
+  @Test
+  public void testRecordOneVoteUndervote1(){
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a = createNENAssertion("W", "L", "Test Contest",
+        AssertionTests.wlo, 50, 0.1, 8,  Map.of(1L, -1),
+        0, 0, 0, 0, 0);
+
+    a.recordDiscrepancy(info);
+
+    assertEquals(0, a.oneVoteOverCount.intValue());
+    assertEquals(1, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(0, a.twoVoteUnderCount.intValue());
+    assertEquals(0, a.otherCount.intValue());
+  }
+
+  /**
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overvote, in the context
+   * where the assertion has no recorded discrepancies.
+   */
+  @Test
+  public void testRecordTwoVoteOvervote1(){
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a = createNENAssertion("W", "L", "Test Contest",
+        AssertionTests.wlo, 50, 0.1, 8,  Map.of(1L, 2),
+        0, 0, 0, 0, 0);
+
+    a.recordDiscrepancy(info);
+
+    assertEquals(0, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(1, a.twoVoteOverCount.intValue());
+    assertEquals(0, a.twoVoteUnderCount.intValue());
+    assertEquals(0, a.otherCount.intValue());
+  }
+
+  /**
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote undervote, in the context
+   * where the assertion has no recorded discrepancies.
+   */
+  @Test
+  public void testRecordTwoVoteUndervote1(){
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a = createNENAssertion("W", "L", "Test Contest",
+        AssertionTests.wlo, 50, 0.1, 8, Map.of(1L, -2),
+        0, 0, 0, 0, 0);
+
+    a.recordDiscrepancy(info);
+
+    assertEquals(0, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(1, a.twoVoteUnderCount.intValue());
+    assertEquals(0, a.otherCount.intValue());
+  }
+
+  /**
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote undervote, in the context
+   * where the assertion has no recorded discrepancies.
+   */
+  @Test
+  public void testRecordOther1(){
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a = createNENAssertion("W", "L", "Test Contest",
+        AssertionTests.wlo, 50, 0.1, 8,  Map.of(1L, 0),
+        0, 0, 0, 0, 0);
+
+    a.recordDiscrepancy(info);
+
+    assertEquals(0, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(0, a.twoVoteUnderCount.intValue());
+    assertEquals(1, a.otherCount.intValue());
+  }
+
+  /**
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote overvote, in the context
+   * where the assertion has already recorded discrepancies.
+   */
+  @Test
+  public void testRecordOneVoteOvervote2(){
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(4L);
+
+    Assertion a = createNENAssertion("W", "L", "Test Contest",
+        AssertionTests.wlo, 50, 0.1, 8,  Map.of(1L, 0, 2L,
+            1, 3L, -2, 4L, 1), 1, 0, 0,
+            1, 1);
+
+    a.recordDiscrepancy(info);
+
+    assertEquals(2, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(1, a.twoVoteUnderCount.intValue());
+    assertEquals(1, a.otherCount.intValue());
+  }
+
+  /**
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote undervote, in the context
+   * where the assertion has already recorded discrepancies.
+   */
+  @Test
+  public void testRecordOneVoteUndervote2(){
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(4L);
+
+    Assertion a = createNENAssertion("W", "L", "Test Contest",
+        AssertionTests.wlo, 50, 0.1, 8,  Map.of(1L, 0, 2L,
+            1, 3L, -2, 4L, -1), 1, 0, 0,
+            1, 1);
+
+    a.recordDiscrepancy(info);
+
+    assertEquals(1, a.oneVoteOverCount.intValue());
+    assertEquals(1, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(1, a.twoVoteUnderCount.intValue());
+    assertEquals(1, a.otherCount.intValue());
+  }
+
+  /**
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overvote, in the context
+   * where the assertion has already recorded discrepancies.
+   */
+  @Test
+  public void testRecordTwoVoteOvervote2(){
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(4L);
+
+    Assertion a = createNENAssertion("W", "L", "Test Contest",
+        AssertionTests.wlo, 50, 0.1, 8,  Map.of(1L, 0,
+            2L, 1, 3L, -2, 4L, 2), 1, 0,
+            0, 1, 1);
+
+    a.recordDiscrepancy(info);
+
+    assertEquals(1, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(1, a.twoVoteOverCount.intValue());
+    assertEquals(1, a.twoVoteUnderCount.intValue());
+    assertEquals(1, a.otherCount.intValue());
+  }
+
+  /**
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote undervote, in the context
+   * where the assertion has already recorded discrepancies.
+   */
+  @Test
+  public void testRecordTwoVoteUndervote2(){
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(4L);
+
+    Assertion a = createNENAssertion("W", "L", "Test Contest",
+        AssertionTests.wlo, 50, 0.1, 8, Map.of(1L, 0, 2L,
+            1, 3L, -2, 4L, -2), 1, 0, 0,
+            1, 1);
+
+    a.recordDiscrepancy(info);
+
+    assertEquals(1, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(2, a.twoVoteUnderCount.intValue());
+    assertEquals(1, a.otherCount.intValue());
+  }
+
+  /**
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote undervote, in the context
+   * where the assertion has already recorded discrepancies.
+   */
+  @Test
+  public void testRecordOther2(){
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(4L);
+
+    Assertion a = createNENAssertion("W", "L", "Test Contest",
+        List.of("W", "L", "O"), 50, 0.1, 8, Map.of(1L, 0,
+            2L, 1, 3L, -2, 4L, 0), 1, 0,
+        0, 1, 1);
+
+    a.recordDiscrepancy(info);
+
+    assertEquals(1, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(1, a.twoVoteUnderCount.intValue());
+    assertEquals(2, a.otherCount.intValue());
   }
 }

@@ -83,6 +83,11 @@ public class AssertionTests {
   public static final BigDecimal smallDifficulty = BigDecimal.valueOf(1);
 
   /**
+   * List of candidates called "W", "L", and "O".
+   */
+  public static final List<String> wlo = List.of("W", "L", "O");
+
+  /**
    * Returns a set of varying parameters to supply when constructing assertions to test
    * sample size computations. To test sample size calculation, we consider the following dimensions:
    * -- Risk limit (5% or 10%)
