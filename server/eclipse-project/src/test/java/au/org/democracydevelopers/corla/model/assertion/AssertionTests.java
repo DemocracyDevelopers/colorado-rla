@@ -355,7 +355,7 @@ public class AssertionTests {
     a.margin = rawMargin;
     a.dilutedMargin = BigDecimal.valueOf(dilutedMargin);
     a.difficulty = difficulty;
-    a.cvrDiscrepancy = cvrDiscrepancy;
+    a.cvrDiscrepancy.putAll(cvrDiscrepancy);
     a.oneVoteOverCount = oneVoteOver;
     a.oneVoteUnderCount = oneVoteUnder;
     a.twoVoteOverCount = twoVoteOver;

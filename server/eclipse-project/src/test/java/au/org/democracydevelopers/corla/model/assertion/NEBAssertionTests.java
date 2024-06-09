@@ -39,6 +39,7 @@ import us.freeandfair.corla.model.CVRAuditInfo;
  * -- Testing of optimistic sample size.
  * -- Testing of estimated sample size.
  * -- Recording of a pre-computed discrepancy.
+ * -- Removal of a pre-recorded discrepancy.
  */
 public class NEBAssertionTests {
 
@@ -154,10 +155,11 @@ public class NEBAssertionTests {
    * discrepancies. It should not change the assertion's discrepancy counts. What
    * recordDiscrepancy() does is look for the CVRAuditInfo's ID in its cvrDiscrepancy map. If it is
    * there, the value matching the ID key is retrieved and the associated discrepancy type
-   * incremented. If it is not there, then the discrepancy counts are not changed.
+   * incremented. If it is not there, then a runtime exception is thrown.
    */
-  @Test
+  @Test(expectedExceptions = {RuntimeException.class})
   public void testRecordNoMatch1(){
+    log(LOGGER, "testRecordNoMatch1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -166,21 +168,16 @@ public class NEBAssertionTests {
         0, 0, 0);
 
     a.recordDiscrepancy(info);
-
-    assertEquals(0, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(0, a.twoVoteUnderCount.intValue());
-    assertEquals(0, a.otherCount.intValue());
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) in the context where no discrepancy has
    * been computed for the given CVR-ACVR pair, and the assertion has some discrepancies recorded
-   * already. It should not change the assertion's discrepancy counts.
+   * already. A runtime exception should be thrown.
    */
-  @Test
+  @Test(expectedExceptions = {RuntimeException.class})
   public void testRecordNoMatch2(){
+    log(LOGGER, "testRecordNoMatch2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -189,12 +186,6 @@ public class NEBAssertionTests {
         1, 1, 0, 0, 0);
 
     a.recordDiscrepancy(info);
-
-    assertEquals(1, a.oneVoteOverCount.intValue());
-    assertEquals(1, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(0, a.twoVoteUnderCount.intValue());
-    assertEquals(0, a.otherCount.intValue());
   }
 
   /**
@@ -202,6 +193,7 @@ public class NEBAssertionTests {
    */
   @Test
   public void testRecordOneVoteOvervote1(){
+    log(LOGGER, "testRecordOneVoteOvervote1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -223,6 +215,7 @@ public class NEBAssertionTests {
    */
   @Test
   public void testRecordOneVoteUndervote1(){
+    log(LOGGER, "testRecordOneVoteUndervote1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -244,6 +237,7 @@ public class NEBAssertionTests {
    */
   @Test
   public void testRecordTwoVoteOvervote1(){
+    log(LOGGER, "testRecordTwoVoteOvervote1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -265,6 +259,7 @@ public class NEBAssertionTests {
    */
   @Test
   public void testRecordTwoVoteUndervote1(){
+    log(LOGGER, "testRecordTwoVoteUndervote1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -286,6 +281,7 @@ public class NEBAssertionTests {
    */
   @Test
   public void testRecordOther1(){
+    log(LOGGER, "testRecordOther1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -308,6 +304,7 @@ public class NEBAssertionTests {
    */
   @Test
   public void testRecordOneVoteOvervote2(){
+    log(LOGGER, "testRecordOneVoteOvervote2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -326,10 +323,11 @@ public class NEBAssertionTests {
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote undervote, in the context
-   *    * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies.
    */
   @Test
   public void testRecordOneVoteUndervote2(){
+    log(LOGGER, "testRecordOneVoteUndervote2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -348,10 +346,11 @@ public class NEBAssertionTests {
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overvote, in the context
-   *    * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies.
    */
   @Test
   public void testRecordTwoVoteOvervote2(){
+    log(LOGGER, "testRecordTwoVoteOvervote2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -370,10 +369,11 @@ public class NEBAssertionTests {
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote undervote, in the context
-   *    * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies.
    */
   @Test
   public void testRecordTwoVoteUndervote2(){
+    log(LOGGER, "testRecordTwoVoteUndervote2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -392,10 +392,11 @@ public class NEBAssertionTests {
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote undervote, in the context
-   *    * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies.
    */
   @Test
   public void testRecordOther2(){
+    log(LOGGER, "testRecordOther2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -410,5 +411,290 @@ public class NEBAssertionTests {
     assertEquals(0, a.twoVoteOverCount.intValue());
     assertEquals(1, a.twoVoteUnderCount.intValue());
     assertEquals(2, a.otherCount.intValue());
+  }
+
+  /**
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) in the context where no discrepancy has
+   * been recorded for the given CVR-ACVR pair, and the assertion has no prior recorded
+   * discrepancies. It should not change the assertion's discrepancy counts. What
+   * removeDiscrepancy() does is look for the CVRAuditInfo's ID in its cvrDiscrepancy map. If it is
+   * there, the value matching the ID key is retrieved, the associated discrepancy type
+   * decremented, and the ID removed from the map. If it is not there, then the discrepancy counts
+   * and the map are not changed.
+   */
+  @Test(expectedExceptions = {RuntimeException.class})
+  public void testRemoveNoMatch1(){
+    log(LOGGER, "testRemoveNoMatch1");
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a = createNEBAssertion("W", "L", "Test Contest",
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+
+    a.removeDiscrepancy(info);
+  }
+
+  /**
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) in the context where no discrepancy has
+   * been computed for the given CVR-ACVR pair, and the assertion has some discrepancies recorded
+   * already. It should not change the assertion's discrepancy counts.
+   */
+  @Test(expectedExceptions = {RuntimeException.class})
+  public void testRemoveNoMatch2(){
+    log(LOGGER, "testRemoveNoMatch2");
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a = createNEBAssertion("W", "L", "Test Contest",
+        50, 0.1, 8, Map.of(2L, -1, 3L, 1),
+        1, 1, 0, 0, 0);
+
+    a.removeDiscrepancy(info);
+  }
+
+  /**
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote overvote.
+   */
+  @Test
+  public void testRemoveOneVoteOvervote1(){
+    log(LOGGER, "testRemoveOneVoteOvervote1");
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a = createNEBAssertion("W", "L", "Test Contest",
+        50, 0.1, 8, Map.of(1L, 1), 1,
+        0, 0, 0, 0);
+
+    a.removeDiscrepancy(info);
+
+    assertEquals(0, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(0, a.twoVoteUnderCount.intValue());
+    assertEquals(0, a.otherCount.intValue());
+
+    assertEquals(Map.of(), a.cvrDiscrepancy);
+  }
+
+  /**
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote undervote.
+   */
+  @Test
+  public void testRemoveOneVoteUndervote1(){
+    log(LOGGER, "testRemoveOneVoteUndervote1");
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a = createNEBAssertion("W", "L", "Test Contest",
+        50, 0.1, 8, Map.of(1L, -1), 0,
+        1, 0, 0, 0);
+
+    a.removeDiscrepancy(info);
+
+    assertEquals(0, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(0, a.twoVoteUnderCount.intValue());
+    assertEquals(0, a.otherCount.intValue());
+
+    assertEquals(Map.of(), a.cvrDiscrepancy);
+  }
+
+  /**
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote overvote.
+   */
+  @Test
+  public void testRemoveTwoVoteOvervote1(){
+    log(LOGGER, "testRemoveTwoVoteOvervote1");
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a = createNEBAssertion("W", "L", "Test Contest",
+        50, 0.1, 8, Map.of(1L, 2), 0,
+        0, 1, 0, 0);
+
+    a.removeDiscrepancy(info);
+
+    assertEquals(0, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(0, a.twoVoteUnderCount.intValue());
+    assertEquals(0, a.otherCount.intValue());
+
+    assertEquals(Map.of(), a.cvrDiscrepancy);
+  }
+
+  /**
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote undervote.
+   */
+  @Test
+  public void testRemoveTwoVoteUndervote1(){
+    log(LOGGER, "testRemoveTwoVoteUndervote1");
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a = createNEBAssertion("W", "L", "Test Contest",
+        50, 0.1, 8, Map.of(1L, -2), 0,
+        0, 0, 1, 0);
+
+    a.removeDiscrepancy(info);
+
+    assertEquals(0, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(0, a.twoVoteUnderCount.intValue());
+    assertEquals(0, a.otherCount.intValue());
+
+    assertEquals(Map.of(), a.cvrDiscrepancy);
+  }
+
+  /**
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote undervote.
+   */
+  @Test
+  public void testRemoveOther1(){
+    log(LOGGER, "testRemoveOther1");
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a = createNEBAssertion("W", "L", "Test Contest",
+        50, 0.1, 8, Map.of(1L, 0), 0,
+        0, 0, 0, 1);
+
+    a.removeDiscrepancy(info);
+
+    assertEquals(0, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(0, a.twoVoteUnderCount.intValue());
+    assertEquals(0, a.otherCount.intValue());
+
+    assertEquals(Map.of(), a.cvrDiscrepancy);
+  }
+
+  /**
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote overvote, in the context
+   * where the assertion has already recorded discrepancies.
+   */
+  @Test
+  public void testRemoveOneVoteOvervote2(){
+    log(LOGGER, "testRemoveOneVoteOvervote2");
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(4L);
+
+    Assertion a = createNEBAssertion("W", "L", "Test Contest",
+        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
+            4L, 1), 2, 0, 0, 1, 1);
+
+    a.removeDiscrepancy(info);
+
+    assertEquals(1, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(1, a.twoVoteUnderCount.intValue());
+    assertEquals(1, a.otherCount.intValue());
+
+    assertEquals(Map.of(1L, 0, 2L, 1, 3L, -2), a.cvrDiscrepancy);
+  }
+
+  /**
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote undervote, in the context
+   * where the assertion has already recorded discrepancies.
+   */
+  @Test
+  public void testRemoveOneVoteUndervote2(){
+    log(LOGGER, "testRemoveOneVoteUndervote2");
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(4L);
+
+    Assertion a = createNEBAssertion("W", "L", "Test Contest",
+        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -1,
+            4L, -1), 1, 2, 0, 0, 1);
+
+    a.removeDiscrepancy(info);
+
+    assertEquals(1, a.oneVoteOverCount.intValue());
+    assertEquals(1, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(0, a.twoVoteUnderCount.intValue());
+    assertEquals(1, a.otherCount.intValue());
+
+    assertEquals(Map.of(1L, 0, 2L, 1, 3L, -1), a.cvrDiscrepancy);
+  }
+
+  /**
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote overvote, in the context
+   * where the assertion has already recorded discrepancies.
+   */
+  @Test
+  public void testRemoveTwoVoteOvervote2(){
+    log(LOGGER, "testRemoveTwoVoteOvervote2");
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(4L);
+
+    Assertion a = createNEBAssertion("W", "L", "Test Contest",
+        50, 0.1, 8, Map.of(1L, 2, 2L, 1, 3L, -2,
+            4L, 2), 1, 0, 2, 1, 0);
+
+    a.removeDiscrepancy(info);
+
+    assertEquals(1, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(1, a.twoVoteOverCount.intValue());
+    assertEquals(1, a.twoVoteUnderCount.intValue());
+    assertEquals(0, a.otherCount.intValue());
+
+    assertEquals(Map.of(1L, 2, 2L, 1, 3L, -2), a.cvrDiscrepancy);
+  }
+
+  /**
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote undervote, in the context
+   * where the assertion has already recorded discrepancies.
+   */
+  @Test
+  public void testRemoveTwoVoteUndervote2(){
+    log(LOGGER, "testRemoveTwoVoteUndervote2");
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(4L);
+
+    Assertion a = createNEBAssertion("W", "L", "Test Contest",
+        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
+            4L, -2), 1, 0, 0, 2, 1);
+
+    a.removeDiscrepancy(info);
+
+    assertEquals(1, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(1, a.twoVoteUnderCount.intValue());
+    assertEquals(1, a.otherCount.intValue());
+
+    assertEquals(Map.of(1L, 0, 2L, 1, 3L, -2), a.cvrDiscrepancy);
+  }
+
+  /**
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote undervote, in the context
+   * where the assertion has already recorded discrepancies.
+   */
+  @Test
+  public void testRemoveOther2(){
+    log(LOGGER, "testRemoveOther2");
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(4L);
+
+    Assertion a = createNEBAssertion("W", "L", "Test Contest",
+        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
+            4L, 0), 1, 0, 0, 1, 2);
+
+    a.removeDiscrepancy(info);
+
+    assertEquals(1, a.oneVoteOverCount.intValue());
+    assertEquals(0, a.oneVoteUnderCount.intValue());
+    assertEquals(0, a.twoVoteOverCount.intValue());
+    assertEquals(1, a.twoVoteUnderCount.intValue());
+    assertEquals(1, a.otherCount.intValue());
+
+    assertEquals(Map.of(1L, 0, 2L, 1, 3L, -2), a.cvrDiscrepancy);
   }
 }

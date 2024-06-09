@@ -425,12 +425,14 @@ public abstract class Assertion implements PersistentEntity {
           twoVoteOverCount, otherCount));
     }
     else{
-      LOGGER.debug(String.format("%s Attempt to record a discrepancy in Assertion ID %d " +
+      final String msg = String.format("%s Attempt to record a discrepancy in Assertion ID %d " +
               "contest %s, CVR ID %s, but no record of a pre-computed discrepancy associated with " +
               "that CVR exists. No increase to discrepancy totals: 1 vote understatements %d; " +
               "1 vote overstatements %d; 2 vote understatements %d; 2 vote overstatements %d; other %d.",
               prefix, id, contestName, the_record.id(), oneVoteUnderCount, oneVoteOverCount,
-              twoVoteUnderCount, twoVoteOverCount, otherCount));
+              twoVoteUnderCount, twoVoteOverCount, otherCount);
+      LOGGER.error(msg);
+      throw new RuntimeException(msg);
     }
   }
 
@@ -460,7 +462,7 @@ public abstract class Assertion implements PersistentEntity {
           throw new RuntimeException(msg);
         }
       }
-
+      cvrDiscrepancy.remove(the_record.id());
       LOGGER.debug(String.format("%s Discrepancy of type %d removed from Assertion ID %d,"+
               "contest %s, CVR ID %d. New totals: 1 vote understatements %d; 1 vote overstatements %d; " +
               "2 vote understatements %d; 2 vote overstatements %d; other %d.", prefix, theType, id,
@@ -468,15 +470,24 @@ public abstract class Assertion implements PersistentEntity {
               twoVoteOverCount, otherCount));
     }
     else{
-      LOGGER.debug(String.format("%s Attempt to remove a discrepancy in Assertion ID %d " +
+      final String msg = String.format("%s Attempt to remove a discrepancy in Assertion ID %d " +
               "contest %s, CVR ID %s, but no record of a pre-computed discrepancy associated with " +
               "that CVR exists. No increase to discrepancy totals: 1 vote understatements %d; " +
               "1 vote overstatements %d; 2 vote understatements %d; 2 vote overstatements %d; other %d.",
               prefix, id, contestName, the_record.id(), oneVoteUnderCount, oneVoteOverCount,
-              twoVoteUnderCount, twoVoteOverCount, otherCount));
+              twoVoteUnderCount, twoVoteOverCount, otherCount);
+      LOGGER.error(msg);
+      throw new RuntimeException(msg);
+    }
+
+    if(oneVoteOverCount < 0 || oneVoteUnderCount < 0 || twoVoteUnderCount < 0 || otherCount < 0 ||
+        twoVoteOverCount < 0) {
+      final String msg = String.format("%s Negative discrepancy counts in Assertion ID %d, " +
+          "contest %s when removing discrepancy for CVR %d.", prefix, id, contestName, the_record.id());
+      LOGGER.error(msg);
+      throw new RuntimeException(msg);
     }
   }
-
 
   /**
    * Computes the Score for the given vote in the context of this assertion. For details on how
