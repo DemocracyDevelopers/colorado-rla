@@ -37,10 +37,9 @@ import java.util.List;
  * (which is necessary for producing the metadata for later visualization). riskLimit states the
  * risk limit for the audit. This is not actually used in raire-service computations,
  * but will be output later with the assertion export, so that it can be used in the assertion
- * visualizer. Validation consists only of checking that the request is reasonable, including calling
- * ContestRequest.Validate to check that the contest exists and is all IRV, and that the candidate
- * names are reasonable. GetAssertionsRequest.Validate then checks that the risk limit is non-negative.
+ * visualizer.
  */
+// @JsonIgnoreProperties({"timeLimitSeconds"})
 public class GetAssertionsRequest extends ContestRequest {
 
   /**
@@ -64,6 +63,12 @@ public class GetAssertionsRequest extends ContestRequest {
    * then we know we will never mistakenly claim the risk limit has been met.
    */
   public final BigDecimal riskLimit;
+
+  /**
+   * Hide the timeLimitSeconds, ensure it is not serialised by Gson (transient) and set it to a
+   * default value (which is ignored).
+   */
+  public final transient double timeLimitSeconds = DEFAULT_TIME_LIMIT;
 
   /**
    * Not-quite-all args constructor. (Arguments omit the timeLimitSeconds, which is set to a default
