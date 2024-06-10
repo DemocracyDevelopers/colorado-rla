@@ -21,5 +21,67 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.raire.requestToRaire;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
+import java.beans.ConstructorProperties;
+import java.util.List;
+
+/**
+ * Request (expected to be json) identifying a contest by name and listing other data:
+ * - the candidates (by name),
+ * - the total auditable ballots in the universe (used to calculate difficulty in raire),
+ * - the time limit allowed to raire.
+ * Identical to the ContestRequest in raire-service.
+ * This is used directly for requesting assertion generation.
+ * The get assertions request type inherits from this class and adds some other fields.
+ */
 public class ContestRequest {
+
+  /**
+   * Class-wide logger
+   */
+  public static final Logger LOGGER = LogManager.getLogger(ContestRequest.class);
+
+  /**
+   * The name of the contest
+   */
+  public final String contestName;
+
+  /**
+   * The total number of ballots in the universe under audit.
+   * This may not be the same as the number of ballots or CVRs in the contest, if the contest
+   * is available only to a subset of voters in the universe.
+   */
+  public final int totalAuditableBallots;
+
+  /**
+   * The elapsed time allowed to raire to generate the assertions, in seconds.
+   * Ignored for GetAssertionsRequests.
+   */
+  public final double timeLimitSeconds;
+
+  /**
+   * List of candidate names.
+   */
+  public final List<String> candidates;
+
+  /**
+   * All args constructor.
+   * @param contestName the name of the contest
+   * @param totalAuditableBallots the total auditable ballots in the universe under audit.
+   * @param timeLimitSeconds the elapsed time allowed for RAIRE to generate assertions, in seconds.
+   * @param candidates the list of candidates by name
+   */
+  @ConstructorProperties({"contestName", "totalAuditableBallots", "timeLimitSeconds","candidates"})
+  public ContestRequest(String contestName, int totalAuditableBallots, double timeLimitSeconds,
+                        List<String> candidates) {
+    final String prefix = "[ContestRequest constructor]";
+    LOGGER.debug(String.format("%s Making ContestRequest for contest %s", prefix, contestName));
+
+    this.contestName = contestName;
+    this.totalAuditableBallots = totalAuditableBallots;
+    this.timeLimitSeconds = timeLimitSeconds;
+    this.candidates = candidates;
+  }
 }
