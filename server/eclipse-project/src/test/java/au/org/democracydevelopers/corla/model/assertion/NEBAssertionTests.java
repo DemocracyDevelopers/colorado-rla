@@ -22,6 +22,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.model.assertion;
 
 import static au.org.democracydevelopers.corla.util.testUtils.log;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import java.math.BigDecimal;
@@ -29,9 +30,13 @@ import java.util.List;
 import java.util.Map;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.CVRAuditInfo;
+import us.freeandfair.corla.model.CVRContestInfo;
 
 
 /**
@@ -40,10 +45,32 @@ import us.freeandfair.corla.model.CVRAuditInfo;
  * -- Testing of estimated sample size.
  * -- Recording of a pre-computed discrepancy.
  * -- Removal of a pre-recorded discrepancy.
+ * -- Scoring of NEB assertions.
  */
 public class NEBAssertionTests {
 
   private static final Logger LOGGER = LogManager.getLogger(NEBAssertionTests.class);
+
+  /**
+   * Establish a mocked CVRContestInfo for use in testing Assertion scoring.
+   */
+  @Mock
+  private CVRContestInfo cvrInfo;
+
+  /**
+   * Test NEB assertion: Alice NEB Chuan
+   */
+  private final Assertion aliceNEBChaun = createNEBAssertion("Alice", "Chuan",
+      "Test Contest", 50, 0.1, 8, Map.of(),
+      0, 0, 0, 0, 0);
+
+  /**
+   * Initialise mocked objects prior to the first test.
+   */
+  @BeforeClass
+  public void initMocks() {
+    MockitoAnnotations.openMocks(this);
+  }
 
   /**
    * Create an NEB assertion with the given parameters.
@@ -697,4 +724,113 @@ public class NEBAssertionTests {
 
     assertEquals(Map.of(1L, 0, 2L, 1, 3L, -2), a.cvrDiscrepancy);
   }
+
+  /**
+   * Test NEB assertion scoring: zero score.
+   */
+  @Test
+  public void testScoreZero1() {
+    when(cvrInfo.choices()).thenReturn(List.of("Bob", "Diego"));
+
+    int score = aliceNEBChaun.score(cvrInfo);
+
+    assertEquals(0, score);
+  }
+
+  /**
+   * Test NEB assertion scoring: zero score.
+   */
+  @Test
+  public void testScoreZero2() {
+    when(cvrInfo.choices()).thenReturn(List.of());
+
+    int score = aliceNEBChaun.score(cvrInfo);
+
+    assertEquals(0, score);
+  }
+
+  /**
+   * Test NEB assertion scoring: score of zero.
+   */
+  @Test
+  public void testScoreZero3() {
+    when(cvrInfo.choices()).thenReturn(List.of("Diego", "Alice"));
+
+    int score = aliceNEBChaun.score(cvrInfo);
+
+    assertEquals(0, score);
+  }
+
+  /**
+   * Test NEB assertion scoring: score of one.
+   */
+  @Test
+  public void testScoreOne1() {
+    when(cvrInfo.choices()).thenReturn(List.of("Alice"));
+
+    int score = aliceNEBChaun.score(cvrInfo);
+
+    assertEquals(1, score);
+  }
+
+  /**
+   * Test NEB assertion scoring: score of one.
+   */
+  @Test
+  public void testScoreOne2() {
+    when(cvrInfo.choices()).thenReturn(List.of("Alice", "Chuan"));
+
+    int score = aliceNEBChaun.score(cvrInfo);
+
+    assertEquals(1, score);
+  }
+
+  /**
+   * Test NEB assertion scoring: score of one.
+   */
+  @Test(groups = "scoring")
+  public void testScoreOne3() {
+    when(cvrInfo.choices()).thenReturn(List.of("Alice", "Bob", "Chuan"));
+
+    int score = aliceNEBChaun.score(cvrInfo);
+
+    assertEquals(1, score);
+  }
+
+  /**
+   * Test NEB assertion scoring: score of minus one.
+   */
+  @Test
+  public void testScoreMinusOne1() {
+    when(cvrInfo.choices()).thenReturn(List.of("Diego", "Chuan", "Bob", "Alice"));
+
+    int score = aliceNEBChaun.score(cvrInfo);
+
+    assertEquals(-1, score);
+  }
+
+  /**
+   * Test NEB assertion scoring: score of minus one.
+   */
+  @Test
+  public void testScoreMinusOne2() {
+    when(cvrInfo.choices()).thenReturn(List.of("Chuan"));
+
+    int score = aliceNEBChaun.score(cvrInfo);
+
+    assertEquals(-1, score);
+  }
+
+  /**
+   * Test NEB assertion scoring: score of minus one.
+   */
+  @Test
+  public void testScoreMinusOne3() {
+    when(cvrInfo.choices()).thenReturn(List.of("Chuan", "Alice"));
+
+    int score = aliceNEBChaun.score(cvrInfo);
+
+    assertEquals(-1, score);
+  }
+
 }

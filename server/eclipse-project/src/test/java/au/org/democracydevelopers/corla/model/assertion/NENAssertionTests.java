@@ -22,6 +22,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.model.assertion;
 
 import static au.org.democracydevelopers.corla.util.testUtils.log;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import java.math.BigDecimal;
@@ -29,9 +30,13 @@ import java.util.List;
 import java.util.Map;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.CVRAuditInfo;
+import us.freeandfair.corla.model.CVRContestInfo;
 
 /**
  * A suite of tests to verify the functionality of NENAssertion objects. This includes:
@@ -39,10 +44,39 @@ import us.freeandfair.corla.model.CVRAuditInfo;
  * -- Testing of estimated sample size.
  * -- Recording of a pre-computed discrepancy.
  * -- Removal of a pre-recorded discrepancy.
+ * -- Scoring of NEN assertions.
  */
 public class NENAssertionTests {
 
   private static final Logger LOGGER = LogManager.getLogger(NENAssertionTests.class);
+
+  /**
+   * Establish a mocked CVRContestInfo for use in testing Assertion scoring.
+   */
+  @Mock
+  private CVRContestInfo cvrInfo;
+
+  /**
+   * Test NEN assertion: Alice NEN Chuan assuming Alice and Chuan remain.
+   */
+  private final Assertion aliceNENChaun1 = createNENAssertion("Alice", "Chuan",
+      "Test Contest", List.of("Alice", "Chuan"), 50, 0.1,
+      8, Map.of(), 0, 0, 0, 0, 0);
+
+  /**
+   * Test NEN assertion: Alice NEN Chuan assuming Alice, Chuan, and Bob remain.
+   */
+  private final Assertion aliceNENChaun2 = createNENAssertion("Alice", "Chuan",
+      "Test Contest", List.of("Alice", "Chuan", "Bob"), 50, 0.1,
+      8, Map.of(), 0, 0, 0, 0, 0);
+
+  /**
+   * Initialise mocked objects prior to the first test.
+   */
+  @BeforeClass
+  public void initMocks() {
+    MockitoAnnotations.openMocks(this);
+  }
 
   /**
    * Create an NEN assertion with the given parameters.
@@ -709,5 +743,150 @@ public class NENAssertionTests {
     assertEquals(1, a.otherCount.intValue());
 
     assertEquals(Map.of(1L, 0, 2L, 1, 3L, -2), a.cvrDiscrepancy);
+  }
+
+
+  /**
+   * Test NEN assertion scoring: zero score.
+   */
+  @Test
+  public void testScoreZero1() {
+    when(cvrInfo.choices()).thenReturn(List.of("Bob", "Diego"));
+
+    int score = aliceNENChaun1.score(cvrInfo);
+
+    assertEquals(0, score);
+  }
+
+  /**
+   * Test NEN assertion scoring: zero score.
+   */
+  @Test
+  public void testScoreZero2() {
+    when(cvrInfo.choices()).thenReturn(List.of());
+
+    int score = aliceNENChaun1.score(cvrInfo);
+
+    assertEquals(0, score);
+  }
+
+  /**
+   * Test NEN assertion scoring: score of zero.
+   */
+  @Test
+  public void testScoreZero3() {
+    when(cvrInfo.choices()).thenReturn(List.of("Diego"));
+
+    int score = aliceNENChaun2.score(cvrInfo);
+
+    assertEquals(0, score);
+  }
+
+  /**
+   * Test NEN assertion scoring: score of zero.
+   */
+  @Test
+  public void testScoreZero4() {
+    when(cvrInfo.choices()).thenReturn(List.of("Bob", "Alice", "Diego", "Chuan"));
+
+    int score = aliceNENChaun2.score(cvrInfo);
+
+    assertEquals(0, score);
+  }
+
+  /**
+   * Test NEN assertion scoring: score of one.
+   */
+  @Test
+  public void testScoreOne1() {
+    when(cvrInfo.choices()).thenReturn(List.of("Alice"));
+
+    int score = aliceNENChaun1.score(cvrInfo);
+
+    assertEquals(1, score);
+  }
+
+  /**
+   * Test NEN assertion scoring: score of one.
+   */
+  @Test
+  public void testScoreOne2() {
+    when(cvrInfo.choices()).thenReturn(List.of("Alice", "Chuan"));
+
+    int score = aliceNENChaun2.score(cvrInfo);
+
+    assertEquals(1, score);
+  }
+
+  /**
+   * Test NEN assertion scoring: score of one.
+   */
+  @Test
+  public void testScoreOne3() {
+    when(cvrInfo.choices()).thenReturn(List.of("Alice", "Bob", "Chuan"));
+
+    int score = aliceNENChaun1.score(cvrInfo);
+
+    assertEquals(1, score);
+  }
+
+  /**
+   * Test NEN assertion scoring: score of one.
+   */
+  @Test
+  public void testScoreOne4() {
+    when(cvrInfo.choices()).thenReturn(List.of("Bob", "Alice", "Diego", "Chuan"));
+
+    int score = aliceNENChaun1.score(cvrInfo);
+
+    assertEquals(1, score);
+  }
+
+  /**
+   * Test NEN assertion scoring: score of minus one.
+   */
+  @Test
+  public void testScoreMinusOne1() {
+    when(cvrInfo.choices()).thenReturn(List.of("Diego", "Chuan", "Bob", "Alice"));
+
+    int score = aliceNENChaun1.score(cvrInfo);
+
+    assertEquals(-1, score);
+  }
+
+  /**
+   * Test NEN assertion scoring: score of minus one.
+   */
+  @Test
+  public void testScoreMinusOne2() {
+    when(cvrInfo.choices()).thenReturn(List.of("Chuan"));
+
+    int score = aliceNENChaun2.score(cvrInfo);
+
+    assertEquals(-1, score);
+  }
+
+  /**
+   * Test NEN assertion scoring: score of minus one.
+   */
+  @Test
+  public void testScoreMinusOne3() {
+    when(cvrInfo.choices()).thenReturn(List.of("Chuan", "Alice"));
+
+    int score = aliceNENChaun2.score(cvrInfo);
+
+    assertEquals(-1, score);
+  }
+
+  /**
+   * Test NEN assertion scoring: score of minus one.
+   */
+  @Test
+  public void testScoreMinusOne4() {
+    when(cvrInfo.choices()).thenReturn(List.of("Bob", "Chuan", "Alice"));
+
+    int score = aliceNENChaun1.score(cvrInfo);
+
+    assertEquals(-1, score);
   }
 }
