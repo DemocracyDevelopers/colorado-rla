@@ -56,15 +56,21 @@ public class ContestRequest {
   public final int totalAuditableBallots;
 
   /**
+   * List of candidate names.
+   */
+  public final List<String> candidates;
+
+  /**
    * The elapsed time allowed to raire to generate the assertions, in seconds.
    * Ignored for GetAssertionsRequests.
    */
   public final double timeLimitSeconds;
 
   /**
-   * List of candidate names.
+   * The field name of timeLimitSeconds, used to exclude it from serialization in
+   * GetAssertionsRequest. It's important that this matches the actual field name above.
    */
-  public final List<String> candidates;
+  protected final static String TIME_LIMIT_SECONDS = "timeLimitSeconds";
 
   /**
    * All args constructor.

@@ -21,6 +21,10 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.raire.requestToRaire;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.log4j.LogManager;
 
 import java.beans.ConstructorProperties;
@@ -38,8 +42,9 @@ import java.util.List;
  * risk limit for the audit. This is not actually used in raire-service computations,
  * but will be output later with the assertion export, so that it can be used in the assertion
  * visualizer.
+ * This class also includes a custom gson instance which should be used to serialize it - it
+ * ignores some fields that are inherited from the superclass but not used.
  */
-// @JsonIgnoreProperties({"timeLimitSeconds"})
 public class GetAssertionsRequest extends ContestRequest {
 
   /**
@@ -65,10 +70,27 @@ public class GetAssertionsRequest extends ContestRequest {
   public final BigDecimal riskLimit;
 
   /**
-   * Hide the timeLimitSeconds, ensure it is not serialised by Gson (transient) and set it to a
-   * default value (which is ignored).
+   * A special GSON exclusion strategy that hides the timeLimitSeconds field from serialization.
    */
-  public final transient double timeLimitSeconds = DEFAULT_TIME_LIMIT;
+  private static final ExclusionStrategy omitTimeLimit = new ExclusionStrategy() {
+    @Override
+    public boolean shouldSkipField(FieldAttributes fieldAttributes) {
+      return fieldAttributes.getName().equals(TIME_LIMIT_SECONDS);
+    }
+
+    @Override
+    public boolean shouldSkipClass(Class<?> aClass) {
+      return false;
+    }
+  };
+
+  /**
+   * The actual gson instance that uses the correct exclusion strategy. Use this when
+   * serializing the GetAssertionRequest for sending to raire. (If we were using Jackson, this
+   * could be implemented with one @JsonIgnoreProperties statement excluding timeLimitSeconds.)
+   */
+  public static final Gson gson = new GsonBuilder()
+      .addSerializationExclusionStrategy(omitTimeLimit).create();
 
   /**
    * Not-quite-all args constructor. (Arguments omit the timeLimitSeconds, which is set to a default
@@ -91,4 +113,5 @@ public class GetAssertionsRequest extends ContestRequest {
     this.winner = winner;
     this.riskLimit = riskLimit;
   }
+
 }
