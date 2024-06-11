@@ -21,8 +21,8 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.assertion;
 
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.AllCountsZero;
 import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.TC;
+import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.countsEqual;
 import static au.org.democracydevelopers.corla.util.testUtils.log;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -53,6 +53,9 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
  * -- Recording of a pre-computed discrepancy.
  * -- Removal of a pre-recorded discrepancy.
  * -- Scoring of NEB assertions.
+ * -- Computation of discrepancies for NEB assertions.
+ * Refer to the Guide to RAIRE for details on how NEB assertions are scored, and how
+ * discrepancies are computed.
  */
 public class NEBAssertionTests {
 
@@ -785,6 +788,7 @@ public class NEBAssertionTests {
    */
   @Test
   public void testScoreZero1() {
+    log(LOGGER, "testScoreZero1");
     when(cvrInfo.choices()).thenReturn(List.of("Bob", "Diego"));
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(0, score);
@@ -795,6 +799,7 @@ public class NEBAssertionTests {
    */
   @Test
   public void testScoreZero2() {
+    log(LOGGER, "testScoreZero2");
     when(cvrInfo.choices()).thenReturn(List.of());
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(0, score);
@@ -805,6 +810,7 @@ public class NEBAssertionTests {
    */
   @Test
   public void testScoreZero3() {
+    log(LOGGER, "testScoreZero3");
     when(cvrInfo.choices()).thenReturn(List.of("Diego", "Alice"));
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(0, score);
@@ -815,6 +821,7 @@ public class NEBAssertionTests {
    */
   @Test
   public void testScoreOne1() {
+    log(LOGGER, "testScoreOne1");
     when(cvrInfo.choices()).thenReturn(List.of("Alice"));
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(1, score);
@@ -825,6 +832,7 @@ public class NEBAssertionTests {
    */
   @Test
   public void testScoreOne2() {
+    log(LOGGER, "testScoreOne2");
     when(cvrInfo.choices()).thenReturn(List.of("Alice", "Chuan"));
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(1, score);
@@ -833,8 +841,9 @@ public class NEBAssertionTests {
   /**
    * Test NEB assertion scoring: score of one.
    */
-  @Test(groups = "scoring")
+  @Test
   public void testScoreOne3() {
+    log(LOGGER, "testScoreOne3");
     when(cvrInfo.choices()).thenReturn(List.of("Alice", "Bob", "Chuan"));
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(1, score);
@@ -845,6 +854,7 @@ public class NEBAssertionTests {
    */
   @Test
   public void testScoreMinusOne1() {
+    log(LOGGER, "testScoreMinusOne1");
     when(cvrInfo.choices()).thenReturn(List.of("Diego", "Chuan", "Bob", "Alice"));
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(-1, score);
@@ -855,6 +865,7 @@ public class NEBAssertionTests {
    */
   @Test
   public void testScoreMinusOne2() {
+    log(LOGGER, "testScoreMinusOne2");
     when(cvrInfo.choices()).thenReturn(List.of("Chuan"));
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(-1, score);
@@ -865,6 +876,7 @@ public class NEBAssertionTests {
    */
   @Test
   public void testScoreMinusOne3() {
+    log(LOGGER, "testScoreMinusOne3");
     when(cvrInfo.choices()).thenReturn(List.of("Chuan", "Alice"));
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(-1, score);
@@ -873,41 +885,41 @@ public class NEBAssertionTests {
   /**
    * Two CastVoteRecord's with a blank vote will not trigger a discrepancy.
    */
-  @Test
-  public void testComputeDiscrepancyNone1(){
-    testComputeDiscrepancyNone(blank);
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNone1(RecordType auditedType){
+    testComputeDiscrepancyNone(blank, auditedType);
   }
 
   /**
    * Two CastVoteRecord's with a single vote for "A" will not trigger a discrepancy.
    */
-  @Test
-  public void testComputeDiscrepancyNone2(){
-    testComputeDiscrepancyNone(A);
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNone2(RecordType auditedType){
+    testComputeDiscrepancyNone(A, auditedType);
   }
 
   /**
    * Two CastVoteRecord's with a single vote for "B" will not trigger a discrepancy.
    */
-  @Test
-  public void testComputeDiscrepancyNone3(){
-    testComputeDiscrepancyNone(B);
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNone3(RecordType auditedType){
+    testComputeDiscrepancyNone(B, auditedType);
   }
 
   /**
    * Two CastVoteRecord's with a vote for "A", "B", "C", "D" will not trigger a discrepancy.
    */
-  @Test
-  public void testComputeDiscrepancyNone4(){
-    testComputeDiscrepancyNone(ABCD);
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNone4(RecordType auditedType){
+    testComputeDiscrepancyNone(ABCD, auditedType);
   }
 
   /**
    * Two CastVoteRecord's with a vote for "B", "A", "C", "D" will not trigger a discrepancy.
    */
-  @Test
-  public void testComputeDiscrepancyNone5(){
-    testComputeDiscrepancyNone(BACD);
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNone5(RecordType auditedType){
+    testComputeDiscrepancyNone(BACD, auditedType);
   }
 
   /**
@@ -916,13 +928,14 @@ public class NEBAssertionTests {
    * field in the CVR and audited ballot CastVoteRecords.
    * @param info A vote configuration.
    */
-  public void testComputeDiscrepancyNone(CVRContestInfo info){
+  public void testComputeDiscrepancyNone(CVRContestInfo info, RecordType auditedType){
+    log(LOGGER, String.format("testComputeDiscrepancyNone[%s;%s]", info.choices(), auditedType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(info));
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(info));
 
-    when(ABCD.consensus()).thenReturn(ConsensusValue.YES);
+    when(info.consensus()).thenReturn(ConsensusValue.YES);
     when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(RecordType.AUDITOR_ENTERED);
+    when(auditedCvr.recordType()).thenReturn(auditedType);
 
     // Create a series of NEB assertions and check that this cvr/audited ballot are never
     // identified as having a discrepancy.
@@ -948,14 +961,850 @@ public class NEBAssertionTests {
     // None of the above calls to computeDiscrepancy should have produced a discrepancy.
     assert(d1.isEmpty() && d2.isEmpty() && d3.isEmpty() && d4.isEmpty());
 
-    assert(AllCountsZero(a1));
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
     assertEquals(Map.of(), a1.cvrDiscrepancy);
-    assert(AllCountsZero(a2));
+    assert(countsEqual(a2, 0, 0, 0, 0, 0));
     assertEquals(Map.of(), a2.cvrDiscrepancy);
-    assert(AllCountsZero(a3));
+    assert(countsEqual(a3, 0, 1, 0, 0, 0));
     assertEquals(Map.of(2L, 2), a3.cvrDiscrepancy);
-    assert(AllCountsZero(a4));
+    assert(countsEqual(a4, 1, 0, 0, 0, 0));
     assertEquals(Map.of(2L, 1), a4.cvrDiscrepancy);
   }
 
+
+  /**
+   * Given a CVR with vote "A", "B", "C", "D" and audited ballot with vote "B", "A", "C", "D",
+   * check that the right discrepancy is computed for the assertion  A NEB C. (In this case, a one
+   * vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyOneOver1(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyOneOver1[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(BACD));
+
+    when(BACD.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("A", "C", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 1);
+
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 1), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with vote "A" and audited ballot with vote "B", check that the right discrepancy
+   * is computed for the assertions A NEB C. (In this case, a one vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyOneOver2(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyOneOver2[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(B));
+
+    when(B.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("A", "C", TC, 50, 0.1,
+        8, Map.of(2L, -1, 4L, 2), 0, 1,
+        1, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 1);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 1, 1, 0, 0));
+    assertEquals(Map.of(1L, 1,2L, -1, 4L, 2), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with vote "A" and audited ballot with a blank vote, check that the right discrepancy
+   * is computed for the assertions A NEB B. (In this case, a one vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyOneOver3(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyOneOver3[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
+
+    when(blank.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
+        8, Map.of(2L, -1), 0, 1, 0,
+        0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 1);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 1, 0, 0));
+    assertEquals(Map.of(1L, 1, 2L, -1), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with vote "A" and audited ballot with a vote of "B", check that the right discrepancy
+   * is computed for the assertions A NEB B. (In this case, a two vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyTwoOver1(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyTwoOver1[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(B));
+
+    when(B.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 2);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 2), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with vote "A", "B", "C", "D" and audited ballot with a vote of "B", "A", "C", "D",
+   * check that the right discrepancy is computed for the assertions A NEB B. (In this case, a
+   * two vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyTwoOver2(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyTwoOver2[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(BACD));
+
+    when(BACD.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
+        8, Map.of(3L, 2), 0, 0, 1,
+        0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 2);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 1, 0, 0, 0));
+    assertEquals(Map.of(1L, 2, 3L, 2), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with vote "A", "B", "C", "D" and audited ballot with a vote of "B", "A", "C", "D",
+   * check that the right discrepancy is computed for the assertion B NEB C. (In this case, a
+   * one vote undervote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyOneUnder1(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyOneUnder1[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(BACD));
+
+    when(BACD.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("B", "C", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == -1);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, -1), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with a blank vote and audited ballot with a vote of "B", "A", "C", "D",
+   * check that the right discrepancy is computed for the assertion B NEB C. (In this case, a
+   * one vote undervote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyOneUnder2(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyOneUnder2[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(BACD));
+
+    when(BACD.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("B", "C", TC, 50, 0.1,
+        8, Map.of(2L, 0), 0, 0, 0,
+        0, 1);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == -1);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 1));
+    assertEquals(Map.of(1L, -1, 2L, 0), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with a vote "B" and audited ballot with a vote of "A", check that the right
+   * discrepancy is computed for the assertion A NEB C. (In this case, a one vote undervote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyOneUnder3(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyOneUnder3[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(B));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
+
+    when(A.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("A", "C", TC, 50, 0.1,
+        8, Map.of(2L, 1), 1, 0, 0,
+        0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == -1);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 1, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, -1, 2L, 1), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with a vote "B" and audited ballot with a vote of "A", check that the right
+   * discrepancy is computed for the assertion A NEB B. (In this case, a two vote undervote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyTwoUnder1(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyTwoUnder1[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(B));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
+
+    when(A.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == -2);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, -2), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with a vote "A", "B", "C", "D" and audited ballot with a vote of "B", "A", "C", "D",
+   * check that the right discrepancy is computed for the assertion B NEB A. (In this case, a two
+   * vote undervote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyTwoUnder2(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyTwoUnder2[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(BACD));
+
+    when(BACD.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
+        8, Map.of(2L, -1), 0, 1, 0,
+        0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == -2);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 1, 0, 0));
+    assertEquals(Map.of(1L, -2, 2L, -1), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with a vote "A", "B", "C", "D" and audited ballot with a vote of "B", "A", "C", "D",
+   * check that the right discrepancy is computed for the assertion D NEB C. (In this case, an
+   * "other" discrepancy).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyOther1(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyOther1[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(BACD));
+
+    when(BACD.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("D", "C", TC, 50, 0.1,
+        8, Map.of(2L, -1), 0, 1, 0,
+        0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 0);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 1, 0, 0));
+    assertEquals(Map.of(1L, 0, 2L, -1), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with a vote "A" and audited ballot with a vote of "B", check that the right
+   * discrepancy is computed for the assertion C NEB D. (In this case, an "other" discrepancy).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyOther2(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyOther2[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(B));
+
+    when(B.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("C", "D", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 0);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 0), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with a vote "A" and audited ballot with a blank vote, check that the right
+   * discrepancy is computed for the assertion C NEB D. (In this case, an "other" discrepancy).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyOther3(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyOther3[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
+
+    when(blank.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("C", "D", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 0);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 0), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a phantom CVR, and a normal ballot with a blank vote, check that the right
+   * discrepancy is computed for the assertion A NEB B. (In this case, a one vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyPhantomRecordOneOver1(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordOneOver1[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
+
+    when(blank.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 1);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 1), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a phantom CVR, and a normal ballot with vote "A", "B", "C", "D", check that the right
+   * discrepancy is computed for the assertion F NEB G. (In this case, a one vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyPhantomRecordOneOver2(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordOneOver2[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+
+    when(ABCD.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("F", "G", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 1);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 1), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a phantom CVR, and a normal ballot with vote "A", "B", "C", "D", check that the right
+   * discrepancy is computed for the assertion A NEB B. (In this case, an "other" discrepancy).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyPhantomRecordOther1(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordOther1[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+
+    when(ABCD.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 0);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 0), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a phantom CVR, and a normal ballot with vote "A", "B", "C", "D", check that the right
+   * discrepancy is computed for the assertion B NEB A. (In this case, a two vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyPhantomRecordTwoOver1(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordTwoOver1[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+
+    when(ABCD.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 2);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 2), a1.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a phantom CVR, and a ballot with vote "A", "B", "C", "D", but no consensus, check that
+   * the right discrepancy is computed for any NEB assertion. (A two vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyPhantomRecordNoConsensus1(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordNoConsensus1[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+
+    when(ABCD.consensus()).thenReturn(ConsensusValue.NO);
+    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+    Assertion a2 = createNEBAssertion("A", "B", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+    Assertion a3 = createNEBAssertion("F", "G", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d3 = a3.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 2);
+    assert(d2.isPresent() && d2.getAsInt() == 2);
+    assert(d3.isPresent() && d3.getAsInt() == 2);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 2), a1.cvrDiscrepancy);
+    assert(countsEqual(a2, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 2), a2.cvrDiscrepancy);
+    assert(countsEqual(a3, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 2), a3.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a phantom CVR, and a ballot with a blank vote, but no consensus, check that
+   * the right discrepancy is computed for any NEB assertion. (A two vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyPhantomRecordNoConsensus2(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordNoConsensus2[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
+
+    when(blank.consensus()).thenReturn(ConsensusValue.NO);
+    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+    Assertion a2 = createNEBAssertion("A", "B", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+    Assertion a3 = createNEBAssertion("F", "G", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d3 = a3.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 2);
+    assert(d2.isPresent() && d2.getAsInt() == 2);
+    assert(d3.isPresent() && d3.getAsInt() == 2);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 2), a1.cvrDiscrepancy);
+    assert(countsEqual(a2, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 2), a2.cvrDiscrepancy);
+    assert(countsEqual(a3, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 2), a3.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a phantom CVR, and a phantom ballot, check that the right discrepancy is computed for
+   * any NEB assertion. (A two vote overvote).
+   */
+  @Test
+  public void testComputeDiscrepancyPhantomRecordPhantomBallot(){
+    log(LOGGER, "testComputeDiscrepancyPhantomRecordPhantomBallot");
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD)); // Choices do not matter
+
+    when(ABCD.consensus()).thenReturn(ConsensusValue.YES); // Setting does not matter
+    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
+    when(auditedCvr.recordType()).thenReturn(RecordType.PHANTOM_BALLOT);
+
+    Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+    Assertion a2 = createNEBAssertion("A", "B", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+    Assertion a3 = createNEBAssertion("F", "G", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d3 = a3.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 2);
+    assert(d2.isPresent() && d2.getAsInt() == 2);
+    assert(d3.isPresent() && d3.getAsInt() == 2);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 2), a1.cvrDiscrepancy);
+    assert(countsEqual(a2, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 2), a2.cvrDiscrepancy);
+    assert(countsEqual(a3, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 2), a3.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with vote "A", "B", "C", "D", and a phantom ballot, check that
+   * the right discrepancy is computed for assertions A NEB F, and A NEB C. (A two vote overvote).
+   */
+  @Test
+  public void testComputeDiscrepancyPhantomBallotNormalCVR1(){
+    log(LOGGER, "testComputeDiscrepancyPhantomRecordNormalCVR1");
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+
+    when(blank.consensus()).thenReturn(ConsensusValue.YES); // Setting does not matter
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(RecordType.PHANTOM_BALLOT);
+
+    Assertion a1 = createNEBAssertion("A", "F", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+    Assertion a2 = createNEBAssertion("A", "C", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 2);
+    assert(d2.isPresent() && d2.getAsInt() == 2);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 2), a1.cvrDiscrepancy);
+    assert(countsEqual(a2, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 2), a2.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with vote "A", "B", "C", "D", and a phantom ballot, check that
+   * the right discrepancy is computed for assertions F NEB A, and D NEB B. (An "other" discrepancy).
+   */
+  @Test
+  public void testComputeDiscrepancyPhantomBallotNormalCVR2(){
+    log(LOGGER, "testComputeDiscrepancyPhantomRecordNormalCVR2");
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+
+    when(blank.consensus()).thenReturn(ConsensusValue.YES); // Setting does not matter
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(RecordType.PHANTOM_BALLOT);
+
+    Assertion a1 = createNEBAssertion("F", "A", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+    Assertion a2 = createNEBAssertion("D", "B", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 0);
+    assert(d2.isPresent() && d2.getAsInt() == 0);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 0), a1.cvrDiscrepancy);
+    assert(countsEqual(a2, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 0), a2.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with vote "A", "B", "C", "D", and a phantom ballot, check that
+   * the right discrepancy is computed for assertions B NEB C, and B NEB D. (A one vote overvote).
+   */
+  @Test
+  public void testComputeDiscrepancyPhantomBallotNormalCVR3(){
+    log(LOGGER, "testComputeDiscrepancyPhantomRecordNormalCVR3");
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+
+    when(blank.consensus()).thenReturn(ConsensusValue.YES); // Setting does not matter
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(RecordType.PHANTOM_BALLOT);
+
+    Assertion a1 = createNEBAssertion("B", "C", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+    Assertion a2 = createNEBAssertion("B", "D", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 1);
+    assert(d2.isPresent() && d2.getAsInt() == 1);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 1), a1.cvrDiscrepancy);
+    assert(countsEqual(a2, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 1), a2.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with a blank vote, and a phantom ballot, check that the right discrepancy is computed for
+   * any NEB assertion. (A one vote overvote).
+   */
+  @Test
+  public void testComputeDiscrepancyPhantomBallotNormalCVR4(){
+    log(LOGGER, "testComputeDiscrepancyPhantomRecordNormalCVR4");
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+
+    when(blank.consensus()).thenReturn(ConsensusValue.YES); // Setting does not matter
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(RecordType.PHANTOM_BALLOT);
+
+    Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+    Assertion a2 = createNEBAssertion("A", "B", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+    Assertion a3 = createNEBAssertion("F", "G", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d3 = a3.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 1);
+    assert(d2.isPresent() && d2.getAsInt() == 1);
+    assert(d3.isPresent() && d3.getAsInt() == 1);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 1), a1.cvrDiscrepancy);
+    assert(countsEqual(a2, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 1), a2.cvrDiscrepancy);
+    assert(countsEqual(a3, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 1), a3.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with vote "A", "B", "C", "D", and a ballot with no consensus, check that
+   * the right discrepancy is computed for assertions A NEB F, and A NEB C. (A two vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNoConsensusNormalCVR1(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyNoConsensusNormalCVR1[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(BACD));
+
+    when(BACD.consensus()).thenReturn(ConsensusValue.NO);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("A", "F", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+    Assertion a2 = createNEBAssertion("A", "C", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 2);
+    assert(d2.isPresent() && d2.getAsInt() == 2);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 2), a1.cvrDiscrepancy);
+    assert(countsEqual(a2, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 2), a2.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with vote "A", "B", "C", "D", and a ballot with no consensus, check that
+   * the right discrepancy is computed for assertions F NEB A, and D NEB B. (An "other" discrepancy).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNoConsensusNormalCVR2(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyNoConsensusNormalCVR2[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+
+    when(ABCD.consensus()).thenReturn(ConsensusValue.NO);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("F", "A", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+    Assertion a2 = createNEBAssertion("D", "B", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 0);
+    assert(d2.isPresent() && d2.getAsInt() == 0);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 0), a1.cvrDiscrepancy);
+    assert(countsEqual(a2, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 0), a2.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with vote "A", "B", "C", "D", and a ballot with no consensus, check that
+   * the right discrepancy is computed for assertions B NEB C, and B NEB D. (A one vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNoConsensusNormalCVR3(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyNoConsensusNormalCVR3[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
+
+    when(blank.consensus()).thenReturn(ConsensusValue.NO);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("B", "C", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+    Assertion a2 = createNEBAssertion("B", "D", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 1);
+    assert(d2.isPresent() && d2.getAsInt() == 1);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 1), a1.cvrDiscrepancy);
+    assert(countsEqual(a2, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 1), a2.cvrDiscrepancy);
+  }
+
+  /**
+   * Given a CVR with a blank vote, and a ballot with no consensus, check that the right
+   * discrepancy is computed for any NEB assertion. (A one vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNoConsensusNormalCVR4(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyNoConsensusNormalCVR4[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+
+    when(ABCD.consensus()).thenReturn(ConsensusValue.NO);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+    Assertion a2 = createNEBAssertion("A", "B", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+    Assertion a3 = createNEBAssertion("F", "G", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d3 = a3.computeDiscrepancy(cvr, auditedCvr);
+
+    assert(d1.isPresent() && d1.getAsInt() == 1);
+    assert(d2.isPresent() && d2.getAsInt() == 1);
+    assert(d3.isPresent() && d3.getAsInt() == 1);
+
+    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 1), a1.cvrDiscrepancy);
+    assert(countsEqual(a2, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 1), a2.cvrDiscrepancy);
+    assert(countsEqual(a3, 0, 0, 0, 0, 0));
+    assertEquals(Map.of(1L, 1), a3.cvrDiscrepancy);
+  }
 }

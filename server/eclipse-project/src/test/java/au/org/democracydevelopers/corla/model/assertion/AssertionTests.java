@@ -29,6 +29,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Parameters;
+import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 
 /**
  * This class does not contain any tests, but provides utilities for use by the
@@ -91,6 +93,18 @@ public class AssertionTests {
    * List of candidates called "W", "L", and "O".
    */
   public static final List<String> wlo = List.of("W", "L", "O");
+
+  /**
+   * A parameter set consisting of two audited ballot record types (AUDITOR_ENTERED and REAUDITED).
+   * @return An array of parameter arrays.
+   */
+  @DataProvider(name = "AuditedRecordTypes")
+  public static Object[][] auditedRecordTypes(){
+    return new Object[][]{
+        {RecordType.AUDITOR_ENTERED},
+        {RecordType.REAUDITED}
+    };
+  }
 
   /**
    * Returns a set of varying parameters to supply when constructing assertions to test
@@ -426,12 +440,17 @@ public class AssertionTests {
 
 
   /**
-   * Returns true if all discrepancy counts in the given assertion are zero.
-   * @param a Given assertion that should have no recorded discrepancies.
-   * @return True if the assertion has no recorded discrepancies.
+   * Returns true if all discrepancy counts match those given as parameters.
+   * @param a Given assertion.
+   * @param o1 Number of expected one vote overstatements.
+   * @param o2 Number of expected two vote overstatements.
+   * @param u1 Number of expected one vote understatements.
+   * @param u2 Number of expected two vote understatements.
+   * @param o Number of other discrepancies.
+   * @return True if the assertion has the specified discrepancy counts
    */
-  public static boolean AllCountsZero(Assertion a){
-    return a.otherCount == 0 && a.oneVoteOverCount == 0 && a.oneVoteUnderCount == 0 &&
-        a.twoVoteOverCount == 0 && a.twoVoteUnderCount == 0;
+  public static boolean countsEqual(Assertion a, int o1, int o2, int u1, int u2, int o){
+    return a.otherCount == o && a.oneVoteOverCount == o1 && a.oneVoteUnderCount == u1 &&
+        a.twoVoteOverCount == o2 && a.twoVoteUnderCount == u2;
   }
 }
