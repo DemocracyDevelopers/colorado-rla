@@ -43,6 +43,11 @@ import org.testng.annotations.DataProvider;
 public class AssertionTests {
 
   /**
+   * Constant representing a test contest name.
+   */
+  public static final String TC = "Test Contest";
+
+  /**
    * A 10% risk limit, as a BigDecimal.
    */
   public static final BigDecimal riskLimit10 = BigDecimal.valueOf(0.10);
@@ -417,5 +422,16 @@ public class AssertionTests {
       return optimistic;
     }
     return (int)ceil(optimistic * (1 + (o1+o2)/(double)auditedSamples));
+  }
+
+
+  /**
+   * Returns true if all discrepancy counts in the given assertion are zero.
+   * @param a Given assertion that should have no recorded discrepancies.
+   * @return True if the assertion has no recorded discrepancies.
+   */
+  public static boolean AllCountsZero(Assertion a){
+    return a.otherCount == 0 && a.oneVoteOverCount == 0 && a.oneVoteUnderCount == 0 &&
+        a.twoVoteOverCount == 0 && a.twoVoteUnderCount == 0;
   }
 }

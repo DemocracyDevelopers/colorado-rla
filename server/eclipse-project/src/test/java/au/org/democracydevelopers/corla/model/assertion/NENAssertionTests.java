@@ -752,9 +752,7 @@ public class NENAssertionTests {
   @Test
   public void testScoreZero1() {
     when(cvrInfo.choices()).thenReturn(List.of("Bob", "Diego"));
-
-    int score = aliceNENChaun1.score(cvrInfo);
-
+    final int score = aliceNENChaun1.score(cvrInfo);
     assertEquals(0, score);
   }
 
@@ -764,9 +762,7 @@ public class NENAssertionTests {
   @Test
   public void testScoreZero2() {
     when(cvrInfo.choices()).thenReturn(List.of());
-
-    int score = aliceNENChaun1.score(cvrInfo);
-
+    final int score = aliceNENChaun1.score(cvrInfo);
     assertEquals(0, score);
   }
 
@@ -776,9 +772,7 @@ public class NENAssertionTests {
   @Test
   public void testScoreZero3() {
     when(cvrInfo.choices()).thenReturn(List.of("Diego"));
-
-    int score = aliceNENChaun2.score(cvrInfo);
-
+    final int score = aliceNENChaun2.score(cvrInfo);
     assertEquals(0, score);
   }
 
@@ -788,9 +782,7 @@ public class NENAssertionTests {
   @Test
   public void testScoreZero4() {
     when(cvrInfo.choices()).thenReturn(List.of("Bob", "Alice", "Diego", "Chuan"));
-
-    int score = aliceNENChaun2.score(cvrInfo);
-
+    final int score = aliceNENChaun2.score(cvrInfo);
     assertEquals(0, score);
   }
 
@@ -800,9 +792,7 @@ public class NENAssertionTests {
   @Test
   public void testScoreOne1() {
     when(cvrInfo.choices()).thenReturn(List.of("Alice"));
-
-    int score = aliceNENChaun1.score(cvrInfo);
-
+    final int score = aliceNENChaun1.score(cvrInfo);
     assertEquals(1, score);
   }
 
@@ -812,9 +802,7 @@ public class NENAssertionTests {
   @Test
   public void testScoreOne2() {
     when(cvrInfo.choices()).thenReturn(List.of("Alice", "Chuan"));
-
-    int score = aliceNENChaun2.score(cvrInfo);
-
+    final int score = aliceNENChaun2.score(cvrInfo);
     assertEquals(1, score);
   }
 
@@ -824,9 +812,7 @@ public class NENAssertionTests {
   @Test
   public void testScoreOne3() {
     when(cvrInfo.choices()).thenReturn(List.of("Alice", "Bob", "Chuan"));
-
-    int score = aliceNENChaun1.score(cvrInfo);
-
+    final int score = aliceNENChaun1.score(cvrInfo);
     assertEquals(1, score);
   }
 
@@ -836,9 +822,7 @@ public class NENAssertionTests {
   @Test
   public void testScoreOne4() {
     when(cvrInfo.choices()).thenReturn(List.of("Bob", "Alice", "Diego", "Chuan"));
-
-    int score = aliceNENChaun1.score(cvrInfo);
-
+    final int score = aliceNENChaun1.score(cvrInfo);
     assertEquals(1, score);
   }
 
@@ -848,9 +832,7 @@ public class NENAssertionTests {
   @Test
   public void testScoreMinusOne1() {
     when(cvrInfo.choices()).thenReturn(List.of("Diego", "Chuan", "Bob", "Alice"));
-
-    int score = aliceNENChaun1.score(cvrInfo);
-
+    final int score = aliceNENChaun1.score(cvrInfo);
     assertEquals(-1, score);
   }
 
@@ -860,9 +842,7 @@ public class NENAssertionTests {
   @Test
   public void testScoreMinusOne2() {
     when(cvrInfo.choices()).thenReturn(List.of("Chuan"));
-
-    int score = aliceNENChaun2.score(cvrInfo);
-
+    final int score = aliceNENChaun2.score(cvrInfo);
     assertEquals(-1, score);
   }
 
@@ -872,9 +852,7 @@ public class NENAssertionTests {
   @Test
   public void testScoreMinusOne3() {
     when(cvrInfo.choices()).thenReturn(List.of("Chuan", "Alice"));
-
-    int score = aliceNENChaun2.score(cvrInfo);
-
+    final int score = aliceNENChaun2.score(cvrInfo);
     assertEquals(-1, score);
   }
 
@@ -884,9 +862,7 @@ public class NENAssertionTests {
   @Test
   public void testScoreMinusOne4() {
     when(cvrInfo.choices()).thenReturn(List.of("Bob", "Chuan", "Alice"));
-
-    int score = aliceNENChaun1.score(cvrInfo);
-
+    final int score = aliceNENChaun1.score(cvrInfo);
     assertEquals(-1, score);
   }
 }

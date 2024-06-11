@@ -21,6 +21,8 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.assertion;
 
+import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.AllCountsZero;
+import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.TC;
 import static au.org.democracydevelopers.corla.util.testUtils.log;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -28,6 +30,8 @@ import static org.testng.Assert.assertEquals;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.mockito.Mock;
@@ -37,6 +41,9 @@ import org.testng.annotations.Test;
 import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.CVRAuditInfo;
 import us.freeandfair.corla.model.CVRContestInfo;
+import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
+import us.freeandfair.corla.model.CastVoteRecord;
+import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 
 
 /**
@@ -58,10 +65,52 @@ public class NEBAssertionTests {
   private CVRContestInfo cvrInfo;
 
   /**
+   * Mocked CVRContestInfo representing the vote "A", "B", "C", "D".
+   */
+  @Mock
+  private CVRContestInfo ABCD;
+
+  /**
+   * Mocked CVRContestInfo representing the vote "B", "A", "C", "D".
+   */
+  @Mock
+  private CVRContestInfo BACD;
+
+  /**
+   * Mocked CVRContestInfo representing a blank vote.
+   */
+  @Mock
+  private CVRContestInfo blank;
+
+  /**
+   * Mocked CVRContestInfo representing the vote "A".
+   */
+  @Mock
+  private CVRContestInfo A;
+
+  /**
+   * Mocked CVRContestInfo representing the vote "B".
+   */
+  @Mock
+  private CVRContestInfo B;
+
+  /**
+   * Mocked CastVoteRecord to represent a CVR.
+   */
+  @Mock
+  private CastVoteRecord cvr;
+
+  /**
+   * Mocked CastVoteRecord to represent an audited CVR.
+   */
+  @Mock
+  private CastVoteRecord auditedCvr;
+
+  /**
    * Test NEB assertion: Alice NEB Chuan
    */
   private final Assertion aliceNEBChaun = createNEBAssertion("Alice", "Chuan",
-      "Test Contest", 50, 0.1, 8, Map.of(),
+      TC, 50, 0.1, 8, Map.of(),
       0, 0, 0, 0, 0);
 
   /**
@@ -70,6 +119,14 @@ public class NEBAssertionTests {
   @BeforeClass
   public void initMocks() {
     MockitoAnnotations.openMocks(this);
+
+    when(ABCD.choices()).thenReturn(List.of("A", "B", "C", "D"));
+    when(BACD.choices()).thenReturn(List.of("B", "A", "C", "D"));
+    when(blank.choices()).thenReturn(List.of());
+    when(A.choices()).thenReturn(List.of("A"));
+    when(B.choices()).thenReturn(List.of("B"));
+
+    when(cvr.id()).thenReturn(1L);
   }
 
   /**
@@ -122,9 +179,9 @@ public class NEBAssertionTests {
     log(LOGGER, String.format("testNEBOptimistic[%f;%f;%d;%d:%d;%d;%d]", riskLimit, dilutedMargin,
         oneVoteOver, oneVoteUnder, twoVoteOver, twoVoteUnder, other));
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        rawMargin, dilutedMargin.doubleValue(), difficulty.doubleValue(), cvrDiscrepancies,
-        oneVoteOver, oneVoteUnder, twoVoteOver, twoVoteUnder, other);
+    Assertion a = createNEBAssertion("W", "L", TC, rawMargin, dilutedMargin.doubleValue(),
+        difficulty.doubleValue(), cvrDiscrepancies, oneVoteOver, oneVoteUnder, twoVoteOver,
+        twoVoteUnder, other);
 
     final int result = a.computeOptimisticSamplesToAudit(riskLimit);
     final int expected = AssertionTests.optimistic(riskLimit, dilutedMargin.doubleValue(),
@@ -159,9 +216,9 @@ public class NEBAssertionTests {
         auditedSamples, riskLimit, dilutedMargin, oneVoteOver, oneVoteUnder, twoVoteOver,
         twoVoteUnder, other));
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        rawMargin, dilutedMargin.doubleValue(), difficulty.doubleValue(), cvrDiscrepancies,
-        oneVoteOver, oneVoteUnder, twoVoteOver, twoVoteUnder, other);
+    Assertion a = createNEBAssertion("W", "L", TC, rawMargin, dilutedMargin.doubleValue(),
+        difficulty.doubleValue(), cvrDiscrepancies, oneVoteOver, oneVoteUnder, twoVoteOver,
+        twoVoteUnder, other);
 
     // Note that the way optimistic/estimated sample computation is performed is that
     // there is an assumption that the optimistic calculation has occurred prior to
@@ -190,9 +247,8 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(), 0, 0,
-        0, 0, 0);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
 
     a.recordDiscrepancy(info);
   }
@@ -208,9 +264,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(2L, -1, 3L, 1),
-        1, 1, 0, 0, 0);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(2L, -1, 3L, 1), 1, 1,
+        0, 0, 0);
 
     a.recordDiscrepancy(info);
   }
@@ -224,9 +280,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, 1), 0,
-        0, 0, 0, 0);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(1L, 1), 0, 0, 0,
+        0, 0);
 
     a.recordDiscrepancy(info);
 
@@ -246,9 +302,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, -1), 0,
-        0, 0, 0, 0);
+    Assertion a = createNEBAssertion("W", "L", TC,50, 0.1,
+        8, Map.of(1L, -1), 0, 0, 0,
+        0, 0);
 
     a.recordDiscrepancy(info);
 
@@ -268,9 +324,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, 2), 0,
-        0, 0, 0, 0);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(1L, 2), 0, 0, 0,
+        0, 0);
 
     a.recordDiscrepancy(info);
 
@@ -290,9 +346,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, -2), 0,
-        0, 0, 0, 0);
+    Assertion a = createNEBAssertion("W", "L", TC,50, 0.1,
+        8, Map.of(1L, -2), 0, 0, 0,
+        0, 0);
 
     a.recordDiscrepancy(info);
 
@@ -312,9 +368,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, 0), 0,
-        0, 0, 0, 0);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(1L, 0), 0, 0, 0,
+        0, 0);
 
     a.recordDiscrepancy(info);
 
@@ -335,9 +391,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
-            4L, 1), 1, 0, 0, 1, 1);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 1),
+        1, 0, 0, 1, 1);
 
     a.recordDiscrepancy(info);
 
@@ -358,9 +414,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
-            4L, -1), 1, 0, 0, 1, 1);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -1),
+        1, 0, 0, 1, 1);
 
     a.recordDiscrepancy(info);
 
@@ -381,9 +437,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
-            4L, 2), 1, 0, 0, 1, 1);
+    Assertion a = createNEBAssertion("W", "L", TC,50, 0.1,
+        8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 2),
+        1, 0, 0, 1, 1);
 
     a.recordDiscrepancy(info);
 
@@ -404,9 +460,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
-            4L, -2), 1, 0, 0, 1, 1);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -2),
+        1, 0, 0, 1, 1);
 
     a.recordDiscrepancy(info);
 
@@ -427,9 +483,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
-            4L, 0), 1, 0, 0, 1, 1);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0),
+        1, 0, 0, 1, 1);
 
     a.recordDiscrepancy(info);
 
@@ -455,9 +511,8 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(), 0, 0,
-        0, 0, 0);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
 
     a.removeDiscrepancy(info);
   }
@@ -473,9 +528,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(2L, -1, 3L, 1),
-        1, 1, 0, 0, 0);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(2L, -1, 3L, 1), 1, 1,
+        0, 0, 0);
 
     a.removeDiscrepancy(info);
   }
@@ -489,9 +544,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, 1), 1,
-        0, 0, 0, 0);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(1L, 1), 1, 0, 0,
+        0, 0);
 
     a.removeDiscrepancy(info);
 
@@ -513,9 +568,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, -1), 0,
-        1, 0, 0, 0);
+    Assertion a = createNEBAssertion("W", "L", TC,50, 0.1,
+        8, Map.of(1L, -1), 0, 1, 0,
+        0, 0);
 
     a.removeDiscrepancy(info);
 
@@ -537,9 +592,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, 2), 0,
-        0, 1, 0, 0);
+    Assertion a = createNEBAssertion("W", "L", TC,50, 0.1,
+        8, Map.of(1L, 2), 0, 0, 1,
+        0, 0);
 
     a.removeDiscrepancy(info);
 
@@ -561,9 +616,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, -2), 0,
-        0, 0, 1, 0);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(1L, -2), 0, 0, 0,
+        1, 0);
 
     a.removeDiscrepancy(info);
 
@@ -585,9 +640,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, 0), 0,
-        0, 0, 0, 1);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(1L, 0), 0, 0, 0,
+        0, 1);
 
     a.removeDiscrepancy(info);
 
@@ -610,9 +665,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
-            4L, 1), 2, 0, 0, 1, 1);
+    Assertion a = createNEBAssertion("W", "L", TC,50, 0.1,
+        8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 1),
+        2, 0, 0, 1, 1);
 
     a.removeDiscrepancy(info);
 
@@ -635,9 +690,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -1,
-            4L, -1), 1, 2, 0, 0, 1);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(1L, 0, 2L, 1, 3L, -1, 4L, -1),
+        1, 2, 0, 0, 1);
 
     a.removeDiscrepancy(info);
 
@@ -660,9 +715,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, 2, 2L, 1, 3L, -2,
-            4L, 2), 1, 0, 2, 1, 0);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(1L, 2, 2L, 1, 3L, -2, 4L, 2),
+        1, 0, 2, 1, 0);
 
     a.removeDiscrepancy(info);
 
@@ -685,9 +740,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
-            4L, -2), 1, 0, 0, 2, 1);
+    Assertion a = createNEBAssertion("W", "L", TC,50, 0.1,
+        8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -2),
+        1, 0, 0, 2, 1);
 
     a.removeDiscrepancy(info);
 
@@ -710,9 +765,9 @@ public class NEBAssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", "Test Contest",
-        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
-            4L, 0), 1, 0, 0, 1, 2);
+    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+        8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0),
+        1, 0, 0, 1, 2);
 
     a.removeDiscrepancy(info);
 
@@ -731,9 +786,7 @@ public class NEBAssertionTests {
   @Test
   public void testScoreZero1() {
     when(cvrInfo.choices()).thenReturn(List.of("Bob", "Diego"));
-
-    int score = aliceNEBChaun.score(cvrInfo);
-
+    final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(0, score);
   }
 
@@ -743,9 +796,7 @@ public class NEBAssertionTests {
   @Test
   public void testScoreZero2() {
     when(cvrInfo.choices()).thenReturn(List.of());
-
-    int score = aliceNEBChaun.score(cvrInfo);
-
+    final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(0, score);
   }
 
@@ -755,9 +806,7 @@ public class NEBAssertionTests {
   @Test
   public void testScoreZero3() {
     when(cvrInfo.choices()).thenReturn(List.of("Diego", "Alice"));
-
-    int score = aliceNEBChaun.score(cvrInfo);
-
+    final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(0, score);
   }
 
@@ -767,9 +816,7 @@ public class NEBAssertionTests {
   @Test
   public void testScoreOne1() {
     when(cvrInfo.choices()).thenReturn(List.of("Alice"));
-
-    int score = aliceNEBChaun.score(cvrInfo);
-
+    final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(1, score);
   }
 
@@ -779,9 +826,7 @@ public class NEBAssertionTests {
   @Test
   public void testScoreOne2() {
     when(cvrInfo.choices()).thenReturn(List.of("Alice", "Chuan"));
-
-    int score = aliceNEBChaun.score(cvrInfo);
-
+    final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(1, score);
   }
 
@@ -791,9 +836,7 @@ public class NEBAssertionTests {
   @Test(groups = "scoring")
   public void testScoreOne3() {
     when(cvrInfo.choices()).thenReturn(List.of("Alice", "Bob", "Chuan"));
-
-    int score = aliceNEBChaun.score(cvrInfo);
-
+    final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(1, score);
   }
 
@@ -803,9 +846,7 @@ public class NEBAssertionTests {
   @Test
   public void testScoreMinusOne1() {
     when(cvrInfo.choices()).thenReturn(List.of("Diego", "Chuan", "Bob", "Alice"));
-
-    int score = aliceNEBChaun.score(cvrInfo);
-
+    final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(-1, score);
   }
 
@@ -815,9 +856,7 @@ public class NEBAssertionTests {
   @Test
   public void testScoreMinusOne2() {
     when(cvrInfo.choices()).thenReturn(List.of("Chuan"));
-
-    int score = aliceNEBChaun.score(cvrInfo);
-
+    final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(-1, score);
   }
 
@@ -827,10 +866,96 @@ public class NEBAssertionTests {
   @Test
   public void testScoreMinusOne3() {
     when(cvrInfo.choices()).thenReturn(List.of("Chuan", "Alice"));
-
-    int score = aliceNEBChaun.score(cvrInfo);
-
+    final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(-1, score);
+  }
+
+  /**
+   * Two CastVoteRecord's with a blank vote will not trigger a discrepancy.
+   */
+  @Test
+  public void testComputeDiscrepancyNone1(){
+    testComputeDiscrepancyNone(blank);
+  }
+
+  /**
+   * Two CastVoteRecord's with a single vote for "A" will not trigger a discrepancy.
+   */
+  @Test
+  public void testComputeDiscrepancyNone2(){
+    testComputeDiscrepancyNone(A);
+  }
+
+  /**
+   * Two CastVoteRecord's with a single vote for "B" will not trigger a discrepancy.
+   */
+  @Test
+  public void testComputeDiscrepancyNone3(){
+    testComputeDiscrepancyNone(B);
+  }
+
+  /**
+   * Two CastVoteRecord's with a vote for "A", "B", "C", "D" will not trigger a discrepancy.
+   */
+  @Test
+  public void testComputeDiscrepancyNone4(){
+    testComputeDiscrepancyNone(ABCD);
+  }
+
+  /**
+   * Two CastVoteRecord's with a vote for "B", "A", "C", "D" will not trigger a discrepancy.
+   */
+  @Test
+  public void testComputeDiscrepancyNone5(){
+    testComputeDiscrepancyNone(BACD);
+  }
+
+  /**
+   * Check that a series of NEB assertions will recognise when there is no discrepancy
+   * between a CVR and audited ballot. The given vote configuration is used as the CVRContestInfo
+   * field in the CVR and audited ballot CastVoteRecords.
+   * @param info A vote configuration.
+   */
+  public void testComputeDiscrepancyNone(CVRContestInfo info){
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(info));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(info));
+
+    when(ABCD.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(RecordType.AUDITOR_ENTERED);
+
+    // Create a series of NEB assertions and check that this cvr/audited ballot are never
+    // identified as having a discrepancy.
+    Assertion a1 = createNEBAssertion("A", "C", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    Assertion a2 = createNEBAssertion("D", "C", TC, 50, 0.1,
+        8, Map.of(), 0, 0, 0, 0, 0);
+
+    Assertion a3 = createNEBAssertion("E", "F", TC, 50, 0.1,
+        8, Map.of(2L, 2), 0, 0, 1,
+        0, 0);
+
+    Assertion a4 = createNEBAssertion("B", "F", TC, 50, 0.1,
+        8, Map.of(2L, 1), 1, 0, 0,
+        0, 0);
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d3 = a3.computeDiscrepancy(cvr, auditedCvr);
+    OptionalInt d4 = a4.computeDiscrepancy(cvr, auditedCvr);
+
+    // None of the above calls to computeDiscrepancy should have produced a discrepancy.
+    assert(d1.isEmpty() && d2.isEmpty() && d3.isEmpty() && d4.isEmpty());
+
+    assert(AllCountsZero(a1));
+    assertEquals(Map.of(), a1.cvrDiscrepancy);
+    assert(AllCountsZero(a2));
+    assertEquals(Map.of(), a2.cvrDiscrepancy);
+    assert(AllCountsZero(a3));
+    assertEquals(Map.of(2L, 2), a3.cvrDiscrepancy);
+    assert(AllCountsZero(a4));
+    assertEquals(Map.of(2L, 1), a4.cvrDiscrepancy);
   }
 
 }
