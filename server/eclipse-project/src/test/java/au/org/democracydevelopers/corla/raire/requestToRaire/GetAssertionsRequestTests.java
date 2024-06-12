@@ -30,12 +30,11 @@ import org.testng.annotations.Test;
 import java.math.BigDecimal;
 import java.util.List;
 
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
- * A very basic test class that just constructs the object (a GetAssertionsRequest) and checks
- * that it serializes correctly.
+ * A very basic test class that constructs a GetAssertionsRequest and checks that it serializes
+ * correctly.
  */
 public class GetAssertionsRequestTests {
 
@@ -44,7 +43,10 @@ public class GetAssertionsRequestTests {
    */
   private static final Logger LOGGER = LogManager.getLogger(GetAssertionsRequestTests.class);
 
-  private static final Gson gson = GetAssertionsRequest.gson;
+  /**
+   * Gson serializer.
+   */
+  private static final Gson gson = new Gson();
 
   /**
    * Basic test for correct serialization of reasonable values.
@@ -59,8 +61,6 @@ public class GetAssertionsRequestTests {
 
     assertTrue(json.contains("\"contestName\":\"Test Contest\""));
     assertTrue(json.contains("\"totalAuditableBallots\":50000"));
-    // This is supposed to be omitted.
-    assertFalse(json.contains("\"timeLimitSeconds\":5"));
     assertTrue(json.contains("\"candidates\":[\"Alice\",\"Bob\",\"Chuan\",\"Diego\"]"));
     assertTrue(json.contains("\"winner\":\"Diego\""));
     assertTrue(json.contains("\"riskLimit\":0.05"));

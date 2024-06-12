@@ -32,8 +32,7 @@ import java.util.List;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
- * A very basic test class that just constructs the object (a ContestRequest) and checks that it
- * serializes correctly.
+ * A very basic test class that constructs a ContestRequest and checks that it serializes correctly.
  */
 public class ContestRequestTests {
 
@@ -50,7 +49,7 @@ public class ContestRequestTests {
   @Test
   public void testSerialization() {
     testUtils.log(LOGGER, "testSerialization");
-    ContestRequest request = new ContestRequest("Test Contest", 50000,
+    ContestRequestBase request = new ContestRequest("Test Contest", 50000,
         5, List.of("Alice", "Bob", "Chuan", "Diego"));
 
     String json = gson.toJson(request);
