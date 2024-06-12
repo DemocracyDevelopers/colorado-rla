@@ -24,11 +24,14 @@ package au.org.democracydevelopers.corla.model.assertion;
 import static java.lang.Math.ceil;
 import static java.lang.Math.log;
 import static java.lang.Math.max;
+import static org.testng.Assert.assertEquals;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import org.testng.annotations.DataProvider;
+import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 
 /**
@@ -451,5 +454,33 @@ public class AssertionTests {
   public static boolean countsEqual(Assertion a, int o1, int o2, int u1, int u2, int o){
     return a.otherCount == o && a.oneVoteOverCount == o1 && a.oneVoteUnderCount == u1 &&
         a.twoVoteOverCount == o2 && a.twoVoteUnderCount == u2;
+  }
+
+  /**
+   * Check that the given CVR and audited CVR pair represent a discrepancy of the given type
+   * for the given list of assertions. For each assertion, the discrepancy counts should equal
+   * those given as parameters, and their cvrDiscrepancy map should match the given
+   * parameter, after computeDiscrepancy() is called on it.
+   * @param cvr CVR being audited.
+   * @param auditedCvr Audited ballot matching the CVR.
+   * @param assertions List of assertions to compute discrepancies for.
+   * @param dType Type of discrepancy that should arise.
+   * @param cvrDiscrepancies Expected cvrDiscrepancy map after discrepancy computation.
+   * @param o1 Expected one vote overstatement count after discrepancy computation.
+   * @param o2 Expected two vote overstatement count after discrepancy computation.
+   * @param u1 Expected one vote understatement count after discrepancy computation.
+   * @param u2 Expected two vote understatement count after discrepancy computation.
+   * @param o Expected "other" discrepancy count after discrepancy computation.
+   */
+  public static void checkComputeDiscrepancy(CastVoteRecord cvr, CastVoteRecord auditedCvr,
+      List<Assertion> assertions, int dType, Map<Long,Integer> cvrDiscrepancies, int o1, int o2,
+      int u1, int u2, int o)
+  {
+    for(Assertion a : assertions){
+      OptionalInt d = a.computeDiscrepancy(cvr, auditedCvr);
+      assert(d.isPresent() && d.getAsInt() == dType);
+      assert(countsEqual(a, o1, o2, u1, u2, o));
+      assertEquals(cvrDiscrepancies, a.cvrDiscrepancy);
+    }
   }
 }

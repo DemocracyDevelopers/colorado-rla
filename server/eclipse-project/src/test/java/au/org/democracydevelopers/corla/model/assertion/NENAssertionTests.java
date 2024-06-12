@@ -22,6 +22,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.model.assertion;
 
 import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.TC;
+import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.checkComputeDiscrepancy;
 import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.countsEqual;
 import static au.org.democracydevelopers.corla.util.testUtils.log;
 import static org.mockito.Mockito.when;
@@ -1058,12 +1059,8 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(), 0, 0,
         0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 1);
-
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 1), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 1, Map.of(1L, 1),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1085,13 +1082,8 @@ public class NENAssertionTests {
         0.1, 8, Map.of(2L, -1, 4L, 2), 0,
         1, 1, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 1);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 1, 1, 0, 0));
-    assertEquals(Map.of(1L, 1,2L, -1, 4L, 2), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 1, Map.of(1L, 1,2L,
+            -1, 4L, 2), 0, 1, 1, 0, 0);
   }
 
   /**
@@ -1113,13 +1105,8 @@ public class NENAssertionTests {
         0.1, 8, Map.of(2L, -1), 0, 1,
         0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 1);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 1, 0, 0));
-    assertEquals(Map.of(1L, 1, 2L, -1), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 1, Map.of(1L, 1, 2L, -1),
+        0, 0, 1, 0, 0);
   }
 
   /**
@@ -1141,12 +1128,8 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(), 0, 0,
         0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 1);
-
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 1), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 1, Map.of(1L, 1),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1171,17 +1154,8 @@ public class NENAssertionTests {
         0.1, 8, Map.of(), 0, 0, 0,
         0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 2);
-    assert(d2.isPresent() && d2.getAsInt() == 2);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a2.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2), 2, Map.of(1L, 2),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1203,13 +1177,8 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(3L, 2), 0,
         0, 1, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 2);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 1, 0, 0, 0));
-    assertEquals(Map.of(1L, 2, 3L, 2), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 2,
+        Map.of(1L, 2, 3L, 2), 0, 1, 0, 0, 0);
   }
 
   /**
@@ -1235,17 +1204,8 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(3L, 2), 0,
         0, 1, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 2);
-    assert(d2.isPresent() && d2.getAsInt() == 2);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 1, 0, 0, 0));
-    assertEquals(Map.of(1L, 2, 3L, 2), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 1, 0, 0, 0));
-    assertEquals(Map.of(1L, 2, 3L, 2), a2.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2), 2,
+        Map.of(1L, 2, 3L, 2), 0, 1, 0, 0, 0);
   }
 
   /**
@@ -1267,13 +1227,8 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(), 0, 0,
         0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == -1);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, -1), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), -1, Map.of(1L, -1),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1295,13 +1250,8 @@ public class NENAssertionTests {
         0.1, 8, Map.of(2L, 0), 0, 0,
         0, 0, 1);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == -1);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 1));
-    assertEquals(Map.of(1L, -1, 2L, 0), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), -1,
+        Map.of(1L, -1, 2L, 0), 0, 0, 0, 0, 1);
   }
 
   /**
@@ -1323,13 +1273,8 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(2L, 1), 1,
         0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == -1);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 1, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, -1, 2L, 1), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), -1,
+        Map.of(1L, -1, 2L, 1), 1, 0, 0, 0, 0);
   }
 
   /**
@@ -1351,13 +1296,8 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(2L, 1), 1,
         0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == -1);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 1, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, -1, 2L, 1), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), -1,
+        Map.of(1L, -1, 2L, 1), 1, 0, 0, 0, 0);
   }
 
   /**
@@ -1379,13 +1319,8 @@ public class NENAssertionTests {
         0.1, 8, Map.of(), 0, 0, 0,
         0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == -2);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, -2), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), -2, Map.of(1L, -2),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1411,17 +1346,8 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(2L, -1), 0,
         1, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == -2);
-    assert(d2.isPresent() && d2.getAsInt() == -2);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 1, 0, 0));
-    assertEquals(Map.of(1L, -2, 2L, -1), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 0, 1, 0, 0));
-    assertEquals(Map.of(1L, -2, 2L, -1), a2.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2), -2,
+        Map.of(1L, -2, 2L, -1), 0, 0, 1, 0, 0);
   }
 
   /**
@@ -1447,17 +1373,8 @@ public class NENAssertionTests {
         50, 0.1,  8, Map.of(2L, -1), 0,
         1, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 0);
-    assert(d2.isPresent() && d2.getAsInt() == 0);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 1, 0, 0));
-    assertEquals(Map.of(1L, 0, 2L, -1), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 0, 1, 0, 0));
-    assertEquals(Map.of(1L, 0, 2L, -1), a2.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2), 0,
+        Map.of(1L, 0, 2L, -1), 0, 0, 1, 0, 0);
   }
 
   /**
@@ -1479,13 +1396,8 @@ public class NENAssertionTests {
         0.1, 8, Map.of(), 0, 0, 0,
         0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 0);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 0), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 0, Map.of(1L, 0),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1504,16 +1416,11 @@ public class NENAssertionTests {
     when(auditedCvr.recordType()).thenReturn(recordType);
 
     Assertion a1 = createNENAssertion("C", "D", TC, List.of("A", "B", "C", "D"),
-        50, 0.1, 8, Map.of(), 0, 0,
-        0, 0, 0);
+        50, 0.1, 8, Map.of(2L, 0), 0,
+        0, 0, 0, 1);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 0);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 0), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 0, Map.of(1L, 0, 2L, 0),
+        0, 0, 0, 0, 1);
   }
 
   /**
@@ -1532,16 +1439,11 @@ public class NENAssertionTests {
     when(auditedCvr.recordType()).thenReturn(recordType);
 
     Assertion a1 = createNENAssertion("A", "C", TC, List.of("A", "C", "D"), 50,
-        0.1, 8, Map.of(), 0, 0, 0,
+        0.1, 8, Map.of(2L, 2), 0, 0, 1,
         0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 0);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 0), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 0, Map.of(1L, 0, 2L, 2),
+        0, 1, 0, 0, 0);
   }
 
   /**
@@ -1567,16 +1469,398 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(), 0, 0,
         0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2), 0, Map.of(1L, 0),
+        0, 0, 0, 0, 0);
+  }
 
-    assert(d1.isPresent() && d1.getAsInt() == 0);
-    assert(d2.isPresent() && d2.getAsInt() == 0);
+  /**
+   * Given a phantom CVR, and a normal ballot with a blank vote, check that the right
+   * discrepancy is computed for the assertions A NEN B given A and B are continuing, and
+   * C NEN A given A, B, C, and D are continuing. (In this case, a one vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyPhantomRecordOneOver1(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordOneOver1[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
 
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 0), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 0), a2.cvrDiscrepancy);
+    when(blank.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNENAssertion("A", "B", TC, List.of("A", "B"), 50,
+        0.1, 8, Map.of(), 0, 0, 0,
+        0, 0);
+    Assertion a2 = createNENAssertion("C", "A", TC, List.of("A", "B", "C", "D"),
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2), 1, Map.of(1L, 1),
+        0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Given a phantom CVR, and a normal ballot with vote "A", "B", "C", "D", check that the right
+   * discrepancy is computed for the assertions F NEN G given "B", "D", "F", and "G" are continuing,
+   * and C NEN D given "B", "C", and "D" are continuing.
+   * (In this case, a one vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyPhantomRecordOneOver2(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordOneOver2[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+
+    when(ABCD.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNENAssertion("F", "G", TC, List.of("B", "D", "F", "G"),
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+    Assertion a2 = createNENAssertion("C", "D", TC, List.of("B", "C", "D"),
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2), 1, Map.of(1L, 1),
+        0, 0, 0, 0, 0);
+  }
+
+
+  /**
+   * Given a phantom CVR, and a normal ballot with vote "A", "B", "C", "D", check that the right
+   * discrepancy is computed for the assertions A NEN B given "A", "B", and "C" are continuing,
+   * A NEN B given "A" and "B" are continuing, and B NEN D given "B", "C" and "D" are
+   * continuing. (In this case, an "other" discrepancy).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyPhantomRecordOther1(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordOther1[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+
+    when(ABCD.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNENAssertion("A", "B", TC, List.of("A", "B", "C"),
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+    Assertion a2 = createNENAssertion("A", "B", TC, List.of("A", "B"),
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+    Assertion a3 = createNENAssertion("B", "D", TC, List.of("B", "C", "D"),
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2, a3), 0, Map.of(1L, 0),
+        0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Given a phantom CVR, and a normal ballot with vote "A", "B", "C", "D", check that the right
+   * discrepancy is computed for the assertions B NEN A assuming "A", "B" and "D" are continuing,
+   * and D NEN C assuming only "C" and "D" are continuing. (In this case, a two vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyPhantomRecordTwoOver1(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordTwoOver1[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+
+    when(ABCD.consensus()).thenReturn(ConsensusValue.YES);
+    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNENAssertion("B", "A", TC, List.of("A", "B", "D"),
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+    Assertion a2 = createNENAssertion("D", "C", TC, List.of("C", "D"),
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2), 2, Map.of(1L, 2),
+        0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Given a phantom CVR, and a ballot with vote "A", "B", "C", "D", but no consensus, check that
+   * the right discrepancy is computed for any NEN assertion. (A two vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyPhantomRecordNoConsensus1(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordNoConsensus1[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+
+    when(ABCD.consensus()).thenReturn(ConsensusValue.NO);
+    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    List<Assertion> assertions = getSetAnyNEN();
+    checkComputeDiscrepancy(cvr, auditedCvr, assertions, 2, Map.of(1L, 2),
+        0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Given a phantom CVR, and a ballot with a blank vote, but no consensus, check that
+   * the right discrepancy is computed for any NEN assertion. (A two vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyPhantomRecordNoConsensus2(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordNoConsensus2[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
+
+    when(blank.consensus()).thenReturn(ConsensusValue.NO);
+    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    List<Assertion> assertions = getSetAnyNEN();
+    checkComputeDiscrepancy(cvr, auditedCvr, assertions, 2, Map.of(1L, 2),
+        0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Given a phantom CVR, and a phantom ballot, check that the right discrepancy is computed for
+   * any NEN assertion. (A two vote overvote).
+   */
+  @Test
+  public void testComputeDiscrepancyPhantomRecordPhantomBallot(){
+    log(LOGGER, "testComputeDiscrepancyPhantomRecordPhantomBallot");
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD)); // Choices do not matter
+
+    when(ABCD.consensus()).thenReturn(ConsensusValue.YES); // Setting does not matter
+    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
+    when(auditedCvr.recordType()).thenReturn(RecordType.PHANTOM_BALLOT);
+
+    List<Assertion> assertions = getSetAnyNEN();
+    checkComputeDiscrepancy(cvr, auditedCvr, assertions, 2, Map.of(1L, 2),
+        0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Given a CVR with vote "A", "B", "C", "D", and a phantom ballot, check that
+   * the right discrepancy is computed for assertions A NEN F given "A", "C", and "F" are
+   * continuing, B NEN C given "B", "C", and "D" are continuing, and C NEN F given "C" and "F"
+   * are continuing. (A two vote overvote).
+   */
+  @Test
+  public void testComputeDiscrepancyPhantomBallotNormalCVR1(){
+    log(LOGGER, "testComputeDiscrepancyPhantomRecordNormalCVR1");
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+
+    when(blank.consensus()).thenReturn(ConsensusValue.YES); // Setting does not matter
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(RecordType.PHANTOM_BALLOT);
+
+    Assertion a1 = createNENAssertion("A", "F", TC, List.of("A", "C", "F"),
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+    Assertion a2 = createNENAssertion("B", "C", TC, List.of("B", "C", "D"),
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+    Assertion a3 = createNENAssertion("C", "F", TC, List.of("C", "F"),
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2, a3), 2, Map.of(1L, 2),
+        0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Given a CVR with vote "A", "B", "C", "D", and a phantom ballot, check that
+   * the right discrepancy is computed for assertions F NEN A given "A", "B", "C", and "D" are
+   * continuing, D NEN B given "B" and "D" are continuing, and D NEN C given "C", and "D" are
+   * continuing. (An "other" discrepancy).
+   */
+  @Test
+  public void testComputeDiscrepancyPhantomBallotNormalCVR2(){
+    log(LOGGER, "testComputeDiscrepancyPhantomRecordNormalCVR2");
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+
+    when(blank.consensus()).thenReturn(ConsensusValue.YES); // Setting does not matter
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(RecordType.PHANTOM_BALLOT);
+
+    Assertion a1 = createNENAssertion("F", "A", TC, List.of("A", "B", "C", "D"),
+        50, 0.1,8, Map.of(), 0, 0,
+        0, 0, 0);
+    Assertion a2 = createNENAssertion("D", "B", TC, List.of("B", "D"),
+        50, 0.1,8, Map.of(), 0, 0,
+        0, 0, 0);
+    Assertion a3 = createNENAssertion("D", "C", TC, List.of("C", "D"),
+        50, 0.1,8, Map.of(), 0, 0,
+        0, 0, 0);
+
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2, a3), 0, Map.of(1L, 0),
+        0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Given a CVR with vote "A", "B", "C", "D", and a phantom ballot, check that
+   * the right discrepancy is computed for assertions B NEN C given "A", "B", and "C" are
+   * continuing, D NEN C given "B", "C" and "D" are continuing. (A one vote overvote).
+   */
+  @Test
+  public void testComputeDiscrepancyPhantomBallotNormalCVR3(){
+    log(LOGGER, "testComputeDiscrepancyPhantomRecordNormalCVR3");
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+
+    when(blank.consensus()).thenReturn(ConsensusValue.YES); // Setting does not matter
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(RecordType.PHANTOM_BALLOT);
+
+    Assertion a1 = createNENAssertion("B", "C", TC, List.of("A", "B", "C"),
+        50, 0.1,8, Map.of(), 0, 0,
+        0, 0, 0);
+    Assertion a2 = createNENAssertion("D", "C", TC, List.of("B", "C", "D"),
+        50, 0.1,8, Map.of(), 0, 0,
+        0, 0, 0);
+
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2), 1, Map.of(1L, 1),
+        0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Given a CVR with a blank vote, and a phantom ballot, check that the right discrepancy is computed for
+   * any NEN assertion. (A one vote overvote).
+   */
+  @Test
+  public void testComputeDiscrepancyPhantomBallotNormalCVR4(){
+    log(LOGGER, "testComputeDiscrepancyPhantomRecordNormalCVR4");
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
+
+    when(blank.consensus()).thenReturn(ConsensusValue.YES); // Setting does not matter
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(RecordType.PHANTOM_BALLOT);
+
+    List<Assertion> assertions = getSetAnyNEN();
+    checkComputeDiscrepancy(cvr, auditedCvr, assertions, 1, Map.of(1L, 1),
+        0, 0, 0, 0, 0);
+  }
+
+
+  /**
+   * Given a CVR with vote "A", "B", "C", "D", and a ballot with no consensus, check that
+   * the right discrepancy is computed for assertions A NEN F given that "A", "C", and "F" are
+   * continuing, B NEB C given "B", and "C" are continuing, and D NEN F given "D" and "F" are
+   * continuing. (A two vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNoConsensusNormalCVR1(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyNoConsensusNormalCVR1[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(BACD));
+
+    when(BACD.consensus()).thenReturn(ConsensusValue.NO);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNENAssertion("A", "F", TC, List.of("A", "C", "F"),
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+    Assertion a2 = createNENAssertion("B", "C", TC, List.of("B", "C"),50,
+        0.1,8, Map.of(), 0, 0, 0,
+        0, 0);
+    Assertion a3 = createNENAssertion("D", "F", TC, List.of("D", "F"),
+        50, 0.1,8, Map.of(), 0, 0,
+        0, 0, 0);
+
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2, a3), 2, Map.of(1L, 2),
+        0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Given a CVR with vote "A", and a ballot with no consensus, check that the right discrepancy
+   * is computed for assertion F NEN A given "A" and "F" are continuing. (An "other" discrepancy).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNoConsensusNormalCVR2(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyNoConsensusNormalCVR2[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
+
+    when(A.consensus()).thenReturn(ConsensusValue.NO);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNENAssertion("F", "A", TC, List.of("A", "F"),
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 0, Map.of(1L, 0),
+        0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Given a CVR with vote "A", "B", "C", "D", and a ballot with no consensus, check that
+   * the right discrepancy is computed for assertions B NEN C given "A", "B" and "C" are
+   * continuing, and C NEN D given "B", "C", and "D" are continuing. (A one vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNoConsensusNormalCVR3(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyNoConsensusNormalCVR3[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
+
+    when(blank.consensus()).thenReturn(ConsensusValue.NO);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    Assertion a1 = createNENAssertion("B", "C", TC, List.of("A", "B", "C"),
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+    Assertion a2 = createNENAssertion("C", "D", TC, List.of("B", "C", "D"),
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2), 1, Map.of(1L, 1),
+        0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Given a CVR with a blank vote, and a ballot with no consensus, check that the right
+   * discrepancy is computed for any NEN assertion. (A one vote overvote).
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNoConsensusNormalCVR4(RecordType recordType){
+    log(LOGGER, String.format("testComputeDiscrepancyNoConsensusNormalCVR4[%s]", recordType));
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
+
+    when(ABCD.consensus()).thenReturn(ConsensusValue.NO);
+    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
+    when(auditedCvr.recordType()).thenReturn(recordType);
+
+    List<Assertion> assertions = getSetAnyNEN();
+    checkComputeDiscrepancy(cvr, auditedCvr, assertions, 1, Map.of(1L, 1),
+        0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Return a set of NEN assertions for use when testing discrepancy computation on arbitrary
+   * NENs.
+   * @return A set of arbitrary NEN assertions.
+   */
+  private static List<Assertion> getSetAnyNEN(){
+    Assertion a1 = createNENAssertion("B", "A", TC, List.of("A", "B", "C", "D"),
+        50, 0.1, 8, Map.of(), 0, 0,
+        0, 0, 0);
+    Assertion a2 = createNENAssertion("A", "B", TC, List.of("A", "B"),50,
+        0.1,8, Map.of(), 0, 0, 0,
+        0, 0);
+    Assertion a3 = createNENAssertion("F", "G", TC, List.of("B", "D", "F", "G"),
+        50, 0.1,8, Map.of(), 0, 0,
+        0, 0, 0);
+    Assertion a4 = createNENAssertion("F", "G", TC, List.of("F", "G"),
+        50, 0.1,8, Map.of(), 0, 0,
+        0, 0, 0);
+    return List.of(a1, a2, a3, a4);
   }
 }
