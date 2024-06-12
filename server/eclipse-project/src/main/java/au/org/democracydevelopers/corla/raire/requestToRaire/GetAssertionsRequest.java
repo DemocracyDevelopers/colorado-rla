@@ -39,12 +39,13 @@ import java.util.List;
  * but will be output later with the assertion export, so that it can be used in the assertion
  * visualizer.
  */
-public class GetAssertionsRequest extends ContestRequestBase {
+public class GetAssertionsRequest extends ContestRequest {
 
   /**
    * Class-wide logger
    */
-  public static final org.apache.log4j.Logger LOGGER = LogManager.getLogger(ContestRequestBase.class);
+  private static final org.apache.log4j.Logger LOGGER =
+      LogManager.getLogger(GetAssertionsRequest.class);
 
   /**
    * The winner, as stated by the request. This is written into response metadata

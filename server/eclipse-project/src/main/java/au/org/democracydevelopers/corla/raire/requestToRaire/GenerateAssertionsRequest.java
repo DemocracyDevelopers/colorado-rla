@@ -22,52 +22,46 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.raire.requestToRaire;
 
 import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 
 import java.util.List;
 
 /**
- * Abstract class that serves as a parent class for particular requests to raire. This class
- * identifies a contest by name and includes
- * - the total number of auditable ballots in the relevant auditing universe,
- * - the list of candidates by name.
- * The GetAssertionsRequest and GenerateAssertionsRequest types inherit from this class and add
- * some other fields.
+ * Request (expected to be json) identifying a contest by name and listing other data:
+ * - the total auditable ballots in the universe (used to calculate difficulty in raire),
+ * - the time limit allowed to raire,
+ * - the candidates (by name).
+ * This is used directly for requesting assertion generation, and is identical to ContestRequest
+ * in raire-service.
  */
-public abstract class ContestRequestBase {
+public class GenerateAssertionsRequest extends ContestRequest {
+
+  /**
+   * The elapsed time allowed to raire to generate the assertions, in seconds.
+   * Ignored for GetAssertionsRequests.
+   */
+  public final double timeLimitSeconds;
 
   /**
    * Class-wide logger
    */
-  public static final Logger LOGGER = LogManager.getLogger(ContestRequestBase.class);
+  private static final org.apache.log4j.Logger LOGGER
+      = LogManager.getLogger(GenerateAssertionsRequest.class);
 
   /**
-   * The name of the contest
-   */
-  public final String contestName;
-
-  /**
-   * The total number of ballots in the universe under audit.
-   * This may not be the same as the number of ballots or CVRs in the contest, if the contest
-   * is available only to a subset of voters in the universe.
-   */
-  public final int totalAuditableBallots;
-
-  /**
-   * List of candidate names.
-   */
-  public final List<String> candidates;
-
-  /**
-   * All args constructor.
+   * All args constructor
+   * @param timeLimitSeconds the elapsed time allowed for RAIRE to generate assertions, in seconds.
    * @param contestName the name of the contest
    * @param totalAuditableBallots the total auditable ballots in the universe under audit.
    * @param candidates the list of candidates by name
    */
-  protected ContestRequestBase(String contestName, int totalAuditableBallots,
-                            List<String> candidates) {
-    this.contestName = contestName;
-    this.totalAuditableBallots = totalAuditableBallots;
-    this.candidates = candidates;
+  public GenerateAssertionsRequest(String contestName, int totalAuditableBallots,
+                                   double timeLimitSeconds, List<String> candidates) {
+    super(contestName, totalAuditableBallots, candidates);
+
+    final String prefix = "[GenerateAssertionsRequest constructor]";
+    LOGGER.debug(String.format("%s Making GenerateAssertionsRequest for contest %s", prefix,
+        contestName));
+
+    this.timeLimitSeconds = timeLimitSeconds;
   }
 }

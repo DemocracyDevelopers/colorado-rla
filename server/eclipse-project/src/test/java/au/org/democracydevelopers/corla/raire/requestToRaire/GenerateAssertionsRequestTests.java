@@ -34,12 +34,12 @@ import static org.testng.AssertJUnit.assertTrue;
 /**
  * A very basic test class that constructs a ContestRequest and checks that it serializes correctly.
  */
-public class ContestRequestTests {
+public class GenerateAssertionsRequestTests {
 
   /**
    * Class-wide logger
    */
-  private static final Logger LOGGER = LogManager.getLogger(ContestRequestTests.class);
+  private static final Logger LOGGER = LogManager.getLogger(GenerateAssertionsRequestTests.class);
 
   private static final Gson gson = new Gson();
 
@@ -49,7 +49,7 @@ public class ContestRequestTests {
   @Test
   public void testSerialization() {
     testUtils.log(LOGGER, "testSerialization");
-    ContestRequestBase request = new ContestRequest("Test Contest", 50000,
+    GenerateAssertionsRequest request = new GenerateAssertionsRequest("Test Contest", 50000,
         5, List.of("Alice", "Bob", "Chuan", "Diego"));
 
     String json = gson.toJson(request);
