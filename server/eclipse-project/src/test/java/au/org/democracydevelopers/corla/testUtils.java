@@ -23,6 +23,32 @@ package au.org.democracydevelopers.corla;
 import org.apache.log4j.Logger;
 
 public class testUtils {
+
+  /**
+   * Location of the tiny examples intended to be human-tallyable.
+   */
+  public static final String TINY_CSV_PATH = "src/test/resources/CSVs/Tiny-IRV-Examples/";
+
+  /**
+   * Location of the (redacted) data from Boulder '23.
+   */
+  public static final String BOULDER_CSV_PATH = "src/test/resources/CSVs/Boulder23/";
+
+  /**
+   * Location of the data derived from New South Wales '21 elections.
+   */
+  public static final String NSW_CSV_PATH = "src/test/resources/CSVs/NewSouthWales21/";
+
+  /**
+   * Location of examples that are expected to fail to parse.
+   */
+  public static final String BAD_CSV_PATH = "src/test/resources/CSVs/badExamples/";
+
+  /**
+   * Location of examples that test expanded definition of Write-In string.
+   */
+  public static final String WRITEIN_CSV_PATH = "src/test/resources/CSVs/WriteIns/";
+
   /**
    * Print log statement indicating that a specific test has started running.
    */
