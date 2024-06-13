@@ -53,7 +53,7 @@ public abstract class ContestRequest {
   /**
    * All args constructor.
    * @param contestName the name of the contest
-   * @param totalAuditableBallots the total auditable ballots in the universe under audit.
+   * @param totalAuditableBallots the total number of auditable ballots.
    * @param candidates the list of candidates by name
    */
   protected ContestRequest(String contestName, int totalAuditableBallots,

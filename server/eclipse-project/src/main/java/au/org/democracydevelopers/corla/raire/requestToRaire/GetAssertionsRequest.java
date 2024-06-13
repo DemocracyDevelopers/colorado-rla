@@ -31,10 +31,10 @@ import java.util.List;
  * Request (expected to be json) identifying the contest for which assertions should be retrieved
  * from the database (expected to be exported as json).
  * Identical data to GetAssertionsRequest in raire-service.
- * This extends ContestRequestBase and uses the contest name, totalAuditable ballots and candidate
+ * This extends ContestRequest and uses the contest name, totalAuditable ballots and candidate
  * list from there.
  * A GetAssertionsRequest identifies a contest by name along with the candidate list
- * (which is necessary for producing the metadata for later visualization). riskLimit states the
+ * (which is necessary for producing the metadata for later visualization). The riskLimit states the
  * risk limit for the audit. This is not actually used in raire-service computations,
  * but will be output later with the assertion export, so that it can be used in the assertion
  * visualizer.
