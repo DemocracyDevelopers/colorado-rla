@@ -97,7 +97,6 @@ public class IRVChoices {
    */
   private IRVChoices(List<IRVPreference> sortedChoices, int firstDropped) {
     final String prefix = "[IRVChoices constructor]";
-    LOGGER.debug(String.format("%s interpreting IRV Preferences %s", prefix, sortedChoices));
 
     if(firstDropped < sortedChoices.size()) {
       // If firstDropped is inside the list, return the sublist (firstDropped is excluded)
@@ -150,8 +149,6 @@ public class IRVChoices {
    *                             plurality vote.
    */
   public IRVChoices(List<String> rawChoices) throws IRVParsingException {
-    final String prefix = "[IRVChoices constructor]";
-    LOGGER.debug(String.format("%s interpreting IRV Preferences %s", prefix, rawChoices));
 
     List<IRVPreference> irvChoices = parseChoices(rawChoices);
     irvChoices.sort(IRVPreference::compareTo);
