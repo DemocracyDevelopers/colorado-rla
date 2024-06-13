@@ -22,6 +22,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.model.assertion;
 
 import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.TC;
+import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.checkComputeDiscrepancy;
 import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.countsEqual;
 import static au.org.democracydevelopers.corla.util.testUtils.log;
 import static org.mockito.Mockito.when;
@@ -48,8 +49,8 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 
 /**
  * A suite of tests to verify the functionality of NEBAssertion objects. This includes:
- * -- Testing of optimistic sample size.
- * -- Testing of estimated sample size.
+ * -- Testing of optimistic sample size computation.
+ * -- Testing of estimated sample size computation.
  * -- Recording of a pre-computed discrepancy.
  * -- Removal of a pre-recorded discrepancy.
  * -- Scoring of NEB assertions.
@@ -131,35 +132,6 @@ public class NEBAssertionTests {
 
     when(cvr.id()).thenReturn(1L);
   }
-
-  /**
-   * Create an NEB assertion with the given parameters.
-   * @param winner Winner of the assertion.
-   * @param loser Loser of the assertion.
-   * @param contestName Name of the contest to which the assertion belongs.
-   * @param rawMargin Raw margin of the assertion.
-   * @param dilutedMargin Diluted margin of the assertion.
-   * @param difficulty Difficulty of the assertion.
-   * @param cvrDiscrepancy Map between CVR ID and discrepancy type.
-   * @param oneVoteOver Number of one vote overstatements to associate with the assertion.
-   * @param oneVoteUnder Number of one vote understatements to associate with the assertion.
-   * @param twoVoteOver Number of two vote overstatements to associate with the assertion.
-   * @param twoVoteUnder Number of two vote understatements to associate with the assertion.
-   * @param other Number of other discrepancies to associate with the assertion.
-   * @return an NEB assertion with the given specification.
-   */
-  public static Assertion createNEBAssertion(String winner, String loser, String contestName,
-      int rawMargin, double dilutedMargin, double difficulty, Map<Long,Integer> cvrDiscrepancy,
-      int oneVoteOver, int oneVoteUnder, int twoVoteOver, int twoVoteUnder, int other){
-
-    Assertion a = new NEBAssertion();
-    AssertionTests.populateAssertion(a, winner, loser, contestName, List.of(), rawMargin,
-      dilutedMargin, difficulty, cvrDiscrepancy, oneVoteOver, oneVoteUnder, twoVoteOver,
-      twoVoteUnder, other);
-
-    return a;
-  }
-
 
   /**
    * This suite of tests verifies the optimistic sample size computation for NEB assertions.
@@ -245,8 +217,8 @@ public class NEBAssertionTests {
    * incremented. If it is not there, then a runtime exception is thrown.
    */
   @Test(expectedExceptions = {RuntimeException.class})
-  public void testRecordNoMatch1(){
-    log(LOGGER, "testRecordNoMatch1");
+  public void testNEBRecordNoMatch1(){
+    log(LOGGER, "testNEBRecordNoMatch1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -262,8 +234,8 @@ public class NEBAssertionTests {
    * already. A runtime exception should be thrown.
    */
   @Test(expectedExceptions = {RuntimeException.class})
-  public void testRecordNoMatch2(){
-    log(LOGGER, "testRecordNoMatch2");
+  public void testNEBRecordNoMatch2(){
+    log(LOGGER, "testNEBRecordNoMatch2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -278,8 +250,8 @@ public class NEBAssertionTests {
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote overvote.
    */
   @Test
-  public void testRecordOneVoteOvervote1(){
-    log(LOGGER, "testRecordOneVoteOvervote1");
+  public void testNEBRecordOneVoteOvervote1(){
+    log(LOGGER, "testNEBRecordOneVoteOvervote1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -300,8 +272,8 @@ public class NEBAssertionTests {
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote undervote.
    */
   @Test
-  public void testRecordOneVoteUndervote1(){
-    log(LOGGER, "testRecordOneVoteUndervote1");
+  public void testNEBRecordOneVoteUndervote1(){
+    log(LOGGER, "testNEBRecordOneVoteUndervote1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -322,8 +294,8 @@ public class NEBAssertionTests {
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overvote.
    */
   @Test
-  public void testRecordTwoVoteOvervote1(){
-    log(LOGGER, "testRecordTwoVoteOvervote1");
+  public void testNEBRecordTwoVoteOvervote1(){
+    log(LOGGER, "testNEBRecordTwoVoteOvervote1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -344,8 +316,8 @@ public class NEBAssertionTests {
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote undervote.
    */
   @Test
-  public void testRecordTwoVoteUndervote1(){
-    log(LOGGER, "testRecordTwoVoteUndervote1");
+  public void testNEBRecordTwoVoteUndervote1(){
+    log(LOGGER, "testNEBRecordTwoVoteUndervote1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -366,8 +338,8 @@ public class NEBAssertionTests {
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote undervote.
    */
   @Test
-  public void testRecordOther1(){
-    log(LOGGER, "testRecordOther1");
+  public void testNEBRecordOther1(){
+    log(LOGGER, "testNEBRecordOther1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -389,8 +361,8 @@ public class NEBAssertionTests {
    * where the assertion has already recorded discrepancies.
    */
   @Test
-  public void testRecordOneVoteOvervote2(){
-    log(LOGGER, "testRecordOneVoteOvervote2");
+  public void testNEBRecordOneVoteOvervote2(){
+    log(LOGGER, "testNEBRecordOneVoteOvervote2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -412,8 +384,8 @@ public class NEBAssertionTests {
    * where the assertion has already recorded discrepancies.
    */
   @Test
-  public void testRecordOneVoteUndervote2(){
-    log(LOGGER, "testRecordOneVoteUndervote2");
+  public void testNEBRecordOneVoteUndervote2(){
+    log(LOGGER, "testNEBRecordOneVoteUndervote2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -435,8 +407,8 @@ public class NEBAssertionTests {
    * where the assertion has already recorded discrepancies.
    */
   @Test
-  public void testRecordTwoVoteOvervote2(){
-    log(LOGGER, "testRecordTwoVoteOvervote2");
+  public void testNEBRecordTwoVoteOvervote2(){
+    log(LOGGER, "testNEBRecordTwoVoteOvervote2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -458,8 +430,8 @@ public class NEBAssertionTests {
    * where the assertion has already recorded discrepancies.
    */
   @Test
-  public void testRecordTwoVoteUndervote2(){
-    log(LOGGER, "testRecordTwoVoteUndervote2");
+  public void testNEBRecordTwoVoteUndervote2(){
+    log(LOGGER, "testNEBRecordTwoVoteUndervote2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -481,8 +453,8 @@ public class NEBAssertionTests {
    * where the assertion has already recorded discrepancies.
    */
   @Test
-  public void testRecordOther2(){
-    log(LOGGER, "testRecordOther2");
+  public void testNEBRecordOther2(){
+    log(LOGGER, "testNEBRecordOther2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -509,8 +481,8 @@ public class NEBAssertionTests {
    * and the map are not changed.
    */
   @Test(expectedExceptions = {RuntimeException.class})
-  public void testRemoveNoMatch1(){
-    log(LOGGER, "testRemoveNoMatch1");
+  public void testNEBRemoveNoMatch1(){
+    log(LOGGER, "testNEBRemoveNoMatch1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -526,8 +498,8 @@ public class NEBAssertionTests {
    * already. It should not change the assertion's discrepancy counts.
    */
   @Test(expectedExceptions = {RuntimeException.class})
-  public void testRemoveNoMatch2(){
-    log(LOGGER, "testRemoveNoMatch2");
+  public void testNEBRemoveNoMatch2(){
+    log(LOGGER, "testNEBRemoveNoMatch2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -542,8 +514,8 @@ public class NEBAssertionTests {
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote overvote.
    */
   @Test
-  public void testRemoveOneVoteOvervote1(){
-    log(LOGGER, "testRemoveOneVoteOvervote1");
+  public void testNEBRemoveOneVoteOvervote1(){
+    log(LOGGER, "testNEBRemoveOneVoteOvervote1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -566,8 +538,8 @@ public class NEBAssertionTests {
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote undervote.
    */
   @Test
-  public void testRemoveOneVoteUndervote1(){
-    log(LOGGER, "testRemoveOneVoteUndervote1");
+  public void testNEBRemoveOneVoteUndervote1(){
+    log(LOGGER, "testNEBRemoveOneVoteUndervote1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -590,8 +562,8 @@ public class NEBAssertionTests {
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote overvote.
    */
   @Test
-  public void testRemoveTwoVoteOvervote1(){
-    log(LOGGER, "testRemoveTwoVoteOvervote1");
+  public void testNEBRemoveTwoVoteOvervote1(){
+    log(LOGGER, "testNEBRemoveTwoVoteOvervote1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -614,8 +586,8 @@ public class NEBAssertionTests {
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote undervote.
    */
   @Test
-  public void testRemoveTwoVoteUndervote1(){
-    log(LOGGER, "testRemoveTwoVoteUndervote1");
+  public void testNEBRemoveTwoVoteUndervote1(){
+    log(LOGGER, "testNEBRemoveTwoVoteUndervote1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -638,8 +610,8 @@ public class NEBAssertionTests {
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote undervote.
    */
   @Test
-  public void testRemoveOther1(){
-    log(LOGGER, "testRemoveOther1");
+  public void testNEBRemoveOther1(){
+    log(LOGGER, "testNEBRemoveOther1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -663,8 +635,8 @@ public class NEBAssertionTests {
    * where the assertion has already recorded discrepancies.
    */
   @Test
-  public void testRemoveOneVoteOvervote2(){
-    log(LOGGER, "testRemoveOneVoteOvervote2");
+  public void testNEBRemoveOneVoteOvervote2(){
+    log(LOGGER, "testNEBRemoveOneVoteOvervote2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -688,8 +660,8 @@ public class NEBAssertionTests {
    * where the assertion has already recorded discrepancies.
    */
   @Test
-  public void testRemoveOneVoteUndervote2(){
-    log(LOGGER, "testRemoveOneVoteUndervote2");
+  public void testNEBRemoveOneVoteUndervote2(){
+    log(LOGGER, "testNEBRemoveOneVoteUndervote2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -713,8 +685,8 @@ public class NEBAssertionTests {
    * where the assertion has already recorded discrepancies.
    */
   @Test
-  public void testRemoveTwoVoteOvervote2(){
-    log(LOGGER, "testRemoveTwoVoteOvervote2");
+  public void testNEBRemoveTwoVoteOvervote2(){
+    log(LOGGER, "testNEBRemoveTwoVoteOvervote2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -738,8 +710,8 @@ public class NEBAssertionTests {
    * where the assertion has already recorded discrepancies.
    */
   @Test
-  public void testRemoveTwoVoteUndervote2(){
-    log(LOGGER, "testRemoveTwoVoteUndervote2");
+  public void testNEBRemoveTwoVoteUndervote2(){
+    log(LOGGER, "testNEBRemoveTwoVoteUndervote2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -763,8 +735,8 @@ public class NEBAssertionTests {
    * where the assertion has already recorded discrepancies.
    */
   @Test
-  public void testRemoveOther2(){
-    log(LOGGER, "testRemoveOther2");
+  public void testNEBRemoveOther2(){
+    log(LOGGER, "testNEBRemoveOther2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -787,8 +759,8 @@ public class NEBAssertionTests {
    * Test NEB assertion scoring: zero score.
    */
   @Test
-  public void testScoreZero1() {
-    log(LOGGER, "testScoreZero1");
+  public void testNEBScoreZero1() {
+    log(LOGGER, "testNEBScoreZero1");
     when(cvrInfo.choices()).thenReturn(List.of("Bob", "Diego"));
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(0, score);
@@ -798,8 +770,8 @@ public class NEBAssertionTests {
    * Test NEB assertion scoring: zero score.
    */
   @Test
-  public void testScoreZero2() {
-    log(LOGGER, "testScoreZero2");
+  public void testNEBScoreZero2() {
+    log(LOGGER, "testNEBScoreZero2");
     when(cvrInfo.choices()).thenReturn(List.of());
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(0, score);
@@ -809,8 +781,8 @@ public class NEBAssertionTests {
    * Test NEB assertion scoring: score of zero.
    */
   @Test
-  public void testScoreZero3() {
-    log(LOGGER, "testScoreZero3");
+  public void testNEBScoreZero3() {
+    log(LOGGER, "testNEBScoreZero3");
     when(cvrInfo.choices()).thenReturn(List.of("Diego", "Alice"));
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(0, score);
@@ -820,8 +792,8 @@ public class NEBAssertionTests {
    * Test NEB assertion scoring: score of one.
    */
   @Test
-  public void testScoreOne1() {
-    log(LOGGER, "testScoreOne1");
+  public void testNEBScoreOne1() {
+    log(LOGGER, "testNEBScoreOne1");
     when(cvrInfo.choices()).thenReturn(List.of("Alice"));
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(1, score);
@@ -831,8 +803,8 @@ public class NEBAssertionTests {
    * Test NEB assertion scoring: score of one.
    */
   @Test
-  public void testScoreOne2() {
-    log(LOGGER, "testScoreOne2");
+  public void testNEBScoreOne2() {
+    log(LOGGER, "testNEBScoreOne2");
     when(cvrInfo.choices()).thenReturn(List.of("Alice", "Chuan"));
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(1, score);
@@ -842,8 +814,8 @@ public class NEBAssertionTests {
    * Test NEB assertion scoring: score of one.
    */
   @Test
-  public void testScoreOne3() {
-    log(LOGGER, "testScoreOne3");
+  public void testNEBScoreOne3() {
+    log(LOGGER, "testNEBScoreOne3");
     when(cvrInfo.choices()).thenReturn(List.of("Alice", "Bob", "Chuan"));
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(1, score);
@@ -853,8 +825,8 @@ public class NEBAssertionTests {
    * Test NEB assertion scoring: score of minus one.
    */
   @Test
-  public void testScoreMinusOne1() {
-    log(LOGGER, "testScoreMinusOne1");
+  public void testNEBScoreMinusOne1() {
+    log(LOGGER, "testNEBScoreMinusOne1");
     when(cvrInfo.choices()).thenReturn(List.of("Diego", "Chuan", "Bob", "Alice"));
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(-1, score);
@@ -864,8 +836,8 @@ public class NEBAssertionTests {
    * Test NEB assertion scoring: score of minus one.
    */
   @Test
-  public void testScoreMinusOne2() {
-    log(LOGGER, "testScoreMinusOne2");
+  public void testNEBScoreMinusOne2() {
+    log(LOGGER, "testNEBScoreMinusOne2");
     when(cvrInfo.choices()).thenReturn(List.of("Chuan"));
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(-1, score);
@@ -875,8 +847,8 @@ public class NEBAssertionTests {
    * Test NEB assertion scoring: score of minus one.
    */
   @Test
-  public void testScoreMinusOne3() {
-    log(LOGGER, "testScoreMinusOne3");
+  public void testNEBScoreMinusOne3() {
+    log(LOGGER, "testNEBScoreMinusOne3");
     when(cvrInfo.choices()).thenReturn(List.of("Chuan", "Alice"));
     final int score = aliceNEBChaun.score(cvrInfo);
     assertEquals(-1, score);
@@ -886,40 +858,40 @@ public class NEBAssertionTests {
    * Two CastVoteRecord's with a blank vote will not trigger a discrepancy.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyNone1(RecordType auditedType){
-    testComputeDiscrepancyNone(blank, auditedType);
+  public void testNEBComputeDiscrepancyNone1(RecordType auditedType){
+    testNEBComputeDiscrepancyNone(blank, auditedType);
   }
 
   /**
    * Two CastVoteRecord's with a single vote for "A" will not trigger a discrepancy.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyNone2(RecordType auditedType){
-    testComputeDiscrepancyNone(A, auditedType);
+  public void testNEBComputeDiscrepancyNone2(RecordType auditedType){
+    testNEBComputeDiscrepancyNone(A, auditedType);
   }
 
   /**
    * Two CastVoteRecord's with a single vote for "B" will not trigger a discrepancy.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyNone3(RecordType auditedType){
-    testComputeDiscrepancyNone(B, auditedType);
+  public void testNEBComputeDiscrepancyNone3(RecordType auditedType){
+    testNEBComputeDiscrepancyNone(B, auditedType);
   }
 
   /**
    * Two CastVoteRecord's with a vote for "A", "B", "C", "D" will not trigger a discrepancy.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyNone4(RecordType auditedType){
-    testComputeDiscrepancyNone(ABCD, auditedType);
+  public void testNEBComputeDiscrepancyNone4(RecordType auditedType){
+    testNEBComputeDiscrepancyNone(ABCD, auditedType);
   }
 
   /**
    * Two CastVoteRecord's with a vote for "B", "A", "C", "D" will not trigger a discrepancy.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyNone5(RecordType auditedType){
-    testComputeDiscrepancyNone(BACD, auditedType);
+  public void testNEBComputeDiscrepancyNone5(RecordType auditedType){
+    testNEBComputeDiscrepancyNone(BACD, auditedType);
   }
 
   /**
@@ -928,14 +900,9 @@ public class NEBAssertionTests {
    * field in the CVR and audited ballot CastVoteRecords.
    * @param info A vote configuration.
    */
-  public void testComputeDiscrepancyNone(CVRContestInfo info, RecordType auditedType){
-    log(LOGGER, String.format("testComputeDiscrepancyNone[%s;%s]", info.choices(), auditedType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(info));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(info));
-
-    when(info.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(auditedType);
+  public void testNEBComputeDiscrepancyNone(CVRContestInfo info, RecordType auditedType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyNone[%s;%s]", info.choices(), auditedType));
+    resetMocks(info, info, RecordType.UPLOADED, ConsensusValue.YES, auditedType);
 
     // Create a series of NEB assertions and check that this cvr/audited ballot are never
     // identified as having a discrepancy.
@@ -978,24 +945,15 @@ public class NEBAssertionTests {
    * vote overvote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyOneOver1(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyOneOver1[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(BACD));
-
-    when(BACD.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyOneOver1(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyOneOver1[%s]", recordType));
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("A", "C", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 1);
-
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 1), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 1, Map.of(1L, 1),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1003,26 +961,16 @@ public class NEBAssertionTests {
    * is computed for the assertions A NEB C. (In this case, a one vote overvote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyOneOver2(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyOneOver2[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(B));
-
-    when(B.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyOneOver2(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyOneOver2[%s]", recordType));
+    resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("A", "C", TC, 50, 0.1,
         8, Map.of(2L, -1, 4L, 2), 0, 1,
         1, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 1);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 1, 1, 0, 0));
-    assertEquals(Map.of(1L, 1,2L, -1, 4L, 2), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 1, Map.of(1L, 1,
+            2L, -1, 4L, 2),0, 1, 1, 0, 0);
   }
 
   /**
@@ -1030,26 +978,16 @@ public class NEBAssertionTests {
    * is computed for the assertions A NEB B. (In this case, a one vote overvote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyOneOver3(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyOneOver3[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
-
-    when(blank.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyOneOver3(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyOneOver3[%s]", recordType));
+    resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
         8, Map.of(2L, -1), 0, 1, 0,
         0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 1);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 1, 0, 0));
-    assertEquals(Map.of(1L, 1, 2L, -1), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 1, Map.of(1L, 1, 2L, -1),
+        0, 0, 1, 0, 0);
   }
 
   /**
@@ -1057,25 +995,15 @@ public class NEBAssertionTests {
    * is computed for the assertions A NEB B. (In this case, a two vote overvote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyTwoOver1(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyTwoOver1[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(B));
-
-    when(B.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyTwoOver1(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyTwoOver1[%s]", recordType));
+    resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 2);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 2, Map.of(1L, 2),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1084,26 +1012,15 @@ public class NEBAssertionTests {
    * two vote overvote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyTwoOver2(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyTwoOver2[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(BACD));
-
-    when(BACD.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyTwoOver2(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyTwoOver2[%s]", recordType));
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
         8, Map.of(3L, 2), 0, 0, 1,
         0, 0);
-
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 2);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 1, 0, 0, 0));
-    assertEquals(Map.of(1L, 2, 3L, 2), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 2, Map.of(1L, 2, 3L, 2),
+        0, 1, 0, 0, 0);
   }
 
   /**
@@ -1112,25 +1029,15 @@ public class NEBAssertionTests {
    * one vote undervote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyOneUnder1(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyOneUnder1[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(BACD));
-
-    when(BACD.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyOneUnder1(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyOneUnder1[%s]", recordType));
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("B", "C", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == -1);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, -1), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), -1, Map.of(1L, -1),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1139,26 +1046,16 @@ public class NEBAssertionTests {
    * one vote undervote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyOneUnder2(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyOneUnder2[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(BACD));
-
-    when(BACD.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyOneUnder2(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyOneUnder2[%s]", recordType));
+    resetMocks(blank, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("B", "C", TC, 50, 0.1,
         8, Map.of(2L, 0), 0, 0, 0,
         0, 1);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == -1);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 1));
-    assertEquals(Map.of(1L, -1, 2L, 0), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), -1, Map.of(1L, -1, 2L, 0),
+        0, 0, 0, 0, 1);
   }
 
   /**
@@ -1166,26 +1063,16 @@ public class NEBAssertionTests {
    * discrepancy is computed for the assertion A NEB C. (In this case, a one vote undervote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyOneUnder3(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyOneUnder3[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(B));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
-
-    when(A.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyOneUnder3(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyOneUnder3[%s]", recordType));
+    resetMocks(B, A, RecordType.UPLOADED, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("A", "C", TC, 50, 0.1,
         8, Map.of(2L, 1), 1, 0, 0,
         0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == -1);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 1, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, -1, 2L, 1), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), -1, Map.of(1L, -1, 2L, 1),
+        1, 0, 0, 0, 0);
   }
 
   /**
@@ -1193,25 +1080,15 @@ public class NEBAssertionTests {
    * discrepancy is computed for the assertion A NEB B. (In this case, a two vote undervote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyTwoUnder1(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyTwoUnder1[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(B));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
-
-    when(A.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyTwoUnder1(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyTwoUnder1[%s]", recordType));
+    resetMocks(B, A, RecordType.UPLOADED, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == -2);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, -2), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), -2, Map.of(1L, -2),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1220,26 +1097,16 @@ public class NEBAssertionTests {
    * vote undervote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyTwoUnder2(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyTwoUnder2[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(BACD));
-
-    when(BACD.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyTwoUnder2(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyTwoUnder2[%s]", recordType));
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
         8, Map.of(2L, -1), 0, 1, 0,
         0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == -2);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 1, 0, 0));
-    assertEquals(Map.of(1L, -2, 2L, -1), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), -2, Map.of(1L, -2, 2L, -1),
+        0, 0, 1, 0, 0);
   }
 
   /**
@@ -1248,26 +1115,16 @@ public class NEBAssertionTests {
    * "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyOther1(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyOther1[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(BACD));
-
-    when(BACD.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyOther1(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyOther1[%s]", recordType));
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("D", "C", TC, 50, 0.1,
         8, Map.of(2L, -1), 0, 1, 0,
         0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 0);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 1, 0, 0));
-    assertEquals(Map.of(1L, 0, 2L, -1), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 0, Map.of(1L, 0,2L, -1),
+        0, 0, 1, 0, 0);
   }
 
   /**
@@ -1275,25 +1132,15 @@ public class NEBAssertionTests {
    * discrepancy is computed for the assertion C NEB D. (In this case, an "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyOther2(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyOther2[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(B));
-
-    when(B.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyOther2(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyOther2[%s]", recordType));
+    resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("C", "D", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 0);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 0), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 0, Map.of(1L, 0),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1301,25 +1148,15 @@ public class NEBAssertionTests {
    * discrepancy is computed for the assertion C NEB D. (In this case, an "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyOther3(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyOther3[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
-
-    when(blank.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyOther3(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyOther3[%s]", recordType));
+    resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("C", "D", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 0);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 0), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 0, Map.of(1L, 0),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1327,25 +1164,15 @@ public class NEBAssertionTests {
    * discrepancy is computed for the assertion A NEB B. (In this case, a one vote overvote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyPhantomRecordOneOver1(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordOneOver1[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
-
-    when(blank.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyPhantomRecordOneOver1(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordOneOver1[%s]", recordType));
+    resetMocks(blank, blank, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 1);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 1), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 1, Map.of(1L, 1),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1353,25 +1180,15 @@ public class NEBAssertionTests {
    * discrepancy is computed for the assertion F NEB G. (In this case, a one vote overvote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyPhantomRecordOneOver2(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordOneOver2[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-
-    when(ABCD.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyPhantomRecordOneOver2(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordOneOver2[%s]", recordType));
+    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("F", "G", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 1);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 1), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 1, Map.of(1L, 1),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1379,25 +1196,15 @@ public class NEBAssertionTests {
    * discrepancy is computed for the assertion A NEB B. (In this case, an "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyPhantomRecordOther1(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordOther1[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-
-    when(ABCD.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyPhantomRecordOther1(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordOther1[%s]", recordType));
+    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 0);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 0), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 0, Map.of(1L, 0),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1405,25 +1212,15 @@ public class NEBAssertionTests {
    * discrepancy is computed for the assertion B NEB A. (In this case, a two vote overvote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyPhantomRecordTwoOver1(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordTwoOver1[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-
-    when(ABCD.consensus()).thenReturn(ConsensusValue.YES);
-    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyPhantomRecordTwoOver1(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordTwoOver1[%s]", recordType));
+    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType);
 
     Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 2);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a1.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 2, Map.of(1L, 2),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1431,14 +1228,9 @@ public class NEBAssertionTests {
    * the right discrepancy is computed for any NEB assertion. (A two vote overvote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyPhantomRecordNoConsensus1(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordNoConsensus1[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-
-    when(ABCD.consensus()).thenReturn(ConsensusValue.NO);
-    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyPhantomRecordNoConsensus1(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordNoConsensus1[%s]", recordType));
+    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.NO, recordType);
 
     Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1447,21 +1239,8 @@ public class NEBAssertionTests {
     Assertion a3 = createNEBAssertion("F", "G", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d3 = a3.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 2);
-    assert(d2.isPresent() && d2.getAsInt() == 2);
-    assert(d3.isPresent() && d3.getAsInt() == 2);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a2.cvrDiscrepancy);
-    assert(countsEqual(a3, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a3.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2, a3), 2, Map.of(1L, 2),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1469,14 +1248,9 @@ public class NEBAssertionTests {
    * the right discrepancy is computed for any NEB assertion. (A two vote overvote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyPhantomRecordNoConsensus2(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyPhantomRecordNoConsensus2[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
-
-    when(blank.consensus()).thenReturn(ConsensusValue.NO);
-    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyPhantomRecordNoConsensus2(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordNoConsensus2[%s]", recordType));
+    resetMocks(blank, blank, RecordType.PHANTOM_RECORD, ConsensusValue.NO, recordType);
 
     Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1485,21 +1259,8 @@ public class NEBAssertionTests {
     Assertion a3 = createNEBAssertion("F", "G", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d3 = a3.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 2);
-    assert(d2.isPresent() && d2.getAsInt() == 2);
-    assert(d3.isPresent() && d3.getAsInt() == 2);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a2.cvrDiscrepancy);
-    assert(countsEqual(a3, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a3.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2, a3), 2, Map.of(1L, 2),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1507,14 +1268,9 @@ public class NEBAssertionTests {
    * any NEB assertion. (A two vote overvote).
    */
   @Test
-  public void testComputeDiscrepancyPhantomRecordPhantomBallot(){
-    log(LOGGER, "testComputeDiscrepancyPhantomRecordPhantomBallot");
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD)); // Choices do not matter
-
-    when(ABCD.consensus()).thenReturn(ConsensusValue.YES); // Setting does not matter
-    when(cvr.recordType()).thenReturn(RecordType.PHANTOM_RECORD);
-    when(auditedCvr.recordType()).thenReturn(RecordType.PHANTOM_BALLOT);
+  public void testNEBComputeDiscrepancyPhantomRecordPhantomBallot(){
+    log(LOGGER, "testNEBComputeDiscrepancyPhantomRecordPhantomBallot");
+    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, RecordType.PHANTOM_BALLOT);
 
     Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1523,21 +1279,8 @@ public class NEBAssertionTests {
     Assertion a3 = createNEBAssertion("F", "G", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d3 = a3.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 2);
-    assert(d2.isPresent() && d2.getAsInt() == 2);
-    assert(d3.isPresent() && d3.getAsInt() == 2);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a2.cvrDiscrepancy);
-    assert(countsEqual(a3, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a3.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2, a3), 2, Map.of(1L, 2),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1545,31 +1288,17 @@ public class NEBAssertionTests {
    * the right discrepancy is computed for assertions A NEB F, and A NEB C. (A two vote overvote).
    */
   @Test
-  public void testComputeDiscrepancyPhantomBallotNormalCVR1(){
-    log(LOGGER, "testComputeDiscrepancyPhantomRecordNormalCVR1");
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
-
-    when(blank.consensus()).thenReturn(ConsensusValue.YES); // Setting does not matter
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(RecordType.PHANTOM_BALLOT);
+  public void testNEBComputeDiscrepancyPhantomBallotNormalCVR1(){
+    log(LOGGER, "testNEBComputeDiscrepancyPhantomRecordNormalCVR1");
+    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT);
 
     Assertion a1 = createNEBAssertion("A", "F", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
     Assertion a2 = createNEBAssertion("A", "C", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 2);
-    assert(d2.isPresent() && d2.getAsInt() == 2);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a2.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2), 2, Map.of(1L, 2),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1577,31 +1306,17 @@ public class NEBAssertionTests {
    * the right discrepancy is computed for assertions F NEB A, and D NEB B. (An "other" discrepancy).
    */
   @Test
-  public void testComputeDiscrepancyPhantomBallotNormalCVR2(){
-    log(LOGGER, "testComputeDiscrepancyPhantomRecordNormalCVR2");
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
-
-    when(blank.consensus()).thenReturn(ConsensusValue.YES); // Setting does not matter
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(RecordType.PHANTOM_BALLOT);
+  public void testNEBComputeDiscrepancyPhantomBallotNormalCVR2(){
+    log(LOGGER, "testNEBComputeDiscrepancyPhantomRecordNormalCVR2");
+    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT);
 
     Assertion a1 = createNEBAssertion("F", "A", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
     Assertion a2 = createNEBAssertion("D", "B", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 0);
-    assert(d2.isPresent() && d2.getAsInt() == 0);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 0), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 0), a2.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2), 0, Map.of(1L, 0),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1609,31 +1324,17 @@ public class NEBAssertionTests {
    * the right discrepancy is computed for assertions B NEB C, and B NEB D. (A one vote overvote).
    */
   @Test
-  public void testComputeDiscrepancyPhantomBallotNormalCVR3(){
-    log(LOGGER, "testComputeDiscrepancyPhantomRecordNormalCVR3");
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
-
-    when(blank.consensus()).thenReturn(ConsensusValue.YES); // Setting does not matter
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(RecordType.PHANTOM_BALLOT);
+  public void testNEBComputeDiscrepancyPhantomBallotNormalCVR3(){
+    log(LOGGER, "testNEBComputeDiscrepancyPhantomRecordNormalCVR3");
+    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT);
 
     Assertion a1 = createNEBAssertion("B", "C", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
     Assertion a2 = createNEBAssertion("B", "D", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 1);
-    assert(d2.isPresent() && d2.getAsInt() == 1);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 1), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 1), a2.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2), 1, Map.of(1L, 1),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1641,14 +1342,9 @@ public class NEBAssertionTests {
    * any NEB assertion. (A one vote overvote).
    */
   @Test
-  public void testComputeDiscrepancyPhantomBallotNormalCVR4(){
-    log(LOGGER, "testComputeDiscrepancyPhantomRecordNormalCVR4");
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank)); // Choices do not matter
-
-    when(blank.consensus()).thenReturn(ConsensusValue.YES); // Setting does not matter
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(RecordType.PHANTOM_BALLOT);
+  public void testNEBComputeDiscrepancyPhantomBallotNormalCVR4(){
+    log(LOGGER, "testNEBComputeDiscrepancyPhantomRecordNormalCVR4");
+    resetMocks(blank, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT);
 
     Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1657,21 +1353,8 @@ public class NEBAssertionTests {
     Assertion a3 = createNEBAssertion("F", "G", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d3 = a3.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 1);
-    assert(d2.isPresent() && d2.getAsInt() == 1);
-    assert(d3.isPresent() && d3.getAsInt() == 1);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 1), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 1), a2.cvrDiscrepancy);
-    assert(countsEqual(a3, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 1), a3.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2, a3), 1, Map.of(1L, 1),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1679,31 +1362,17 @@ public class NEBAssertionTests {
    * the right discrepancy is computed for assertions A NEB F, and A NEB C. (A two vote overvote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyNoConsensusNormalCVR1(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyNoConsensusNormalCVR1[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(BACD));
-
-    when(BACD.consensus()).thenReturn(ConsensusValue.NO);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyNoConsensusNormalCVR1(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyNoConsensusNormalCVR1[%s]", recordType));
+    resetMocks(ABCD, ABCD, RecordType.UPLOADED, ConsensusValue.NO, recordType);
 
     Assertion a1 = createNEBAssertion("A", "F", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
     Assertion a2 = createNEBAssertion("A", "C", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 2);
-    assert(d2.isPresent() && d2.getAsInt() == 2);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 2), a2.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2), 2, Map.of(1L, 2),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1711,31 +1380,17 @@ public class NEBAssertionTests {
    * the right discrepancy is computed for assertions F NEB A, and D NEB B. (An "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyNoConsensusNormalCVR2(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyNoConsensusNormalCVR2[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-
-    when(ABCD.consensus()).thenReturn(ConsensusValue.NO);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyNoConsensusNormalCVR2(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyNoConsensusNormalCVR2[%s]", recordType));
+    resetMocks(ABCD, ABCD, RecordType.UPLOADED, ConsensusValue.NO, recordType);
 
     Assertion a1 = createNEBAssertion("F", "A", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
     Assertion a2 = createNEBAssertion("D", "B", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 0);
-    assert(d2.isPresent() && d2.getAsInt() == 0);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 0), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 0), a2.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2), 0, Map.of(1L, 0),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1743,31 +1398,17 @@ public class NEBAssertionTests {
    * the right discrepancy is computed for assertions B NEB C, and B NEB D. (A one vote overvote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyNoConsensusNormalCVR3(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyNoConsensusNormalCVR3[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
-
-    when(blank.consensus()).thenReturn(ConsensusValue.NO);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyNoConsensusNormalCVR3(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyNoConsensusNormalCVR3[%s]", recordType));
+    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.NO, recordType);
 
     Assertion a1 = createNEBAssertion("B", "C", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
     Assertion a2 = createNEBAssertion("B", "D", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
-
-    assert(d1.isPresent() && d1.getAsInt() == 1);
-    assert(d2.isPresent() && d2.getAsInt() == 1);
-
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 1), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 1), a2.cvrDiscrepancy);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2), 1, Map.of(1L, 1),
+        0, 0, 0, 0, 0);
   }
 
   /**
@@ -1775,14 +1416,9 @@ public class NEBAssertionTests {
    * discrepancy is computed for any NEB assertion. (A one vote overvote).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeDiscrepancyNoConsensusNormalCVR4(RecordType recordType){
-    log(LOGGER, String.format("testComputeDiscrepancyNoConsensusNormalCVR4[%s]", recordType));
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
-
-    when(ABCD.consensus()).thenReturn(ConsensusValue.NO);
-    when(cvr.recordType()).thenReturn(RecordType.UPLOADED);
-    when(auditedCvr.recordType()).thenReturn(recordType);
+  public void testNEBComputeDiscrepancyNoConsensusNormalCVR4(RecordType recordType){
+    log(LOGGER, String.format("testNEBComputeDiscrepancyNoConsensusNormalCVR4[%s]", recordType));
+    resetMocks(blank, ABCD, RecordType.UPLOADED, ConsensusValue.NO, recordType);
 
     Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1791,20 +1427,53 @@ public class NEBAssertionTests {
     Assertion a3 = createNEBAssertion("F", "G", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
 
-    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d2 = a2.computeDiscrepancy(cvr, auditedCvr);
-    OptionalInt d3 = a3.computeDiscrepancy(cvr, auditedCvr);
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2, a3), 1, Map.of(1L, 1),
+        0, 0, 0, 0, 0);
+  }
 
-    assert(d1.isPresent() && d1.getAsInt() == 1);
-    assert(d2.isPresent() && d2.getAsInt() == 1);
-    assert(d3.isPresent() && d3.getAsInt() == 1);
+  /**
+   * Reset the CVR and audited CVR mock objects with the given parameters.
+   * @param cvrInfo CVRContestInfo for the CVR.
+   * @param acvrInfo CVRContestInfo for the audited ballot.
+   * @param cvrRecType Record type for the CVR.
+   * @param acvrConsensus Consensys value for the audited ballot.
+   * @param acvrRecType Record type for the audited ballot.
+   */
+  private void resetMocks(CVRContestInfo cvrInfo, CVRContestInfo acvrInfo, RecordType cvrRecType,
+      ConsensusValue acvrConsensus, RecordType acvrRecType){
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(cvrInfo));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(acvrInfo));
 
-    // Note that discrepancy counts don't change until recordDiscrepancy() is called.
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 1), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 1), a2.cvrDiscrepancy);
-    assert(countsEqual(a3, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(1L, 1), a3.cvrDiscrepancy);
+    when(acvrInfo.consensus()).thenReturn(acvrConsensus);
+    when(cvr.recordType()).thenReturn(cvrRecType);
+    when(auditedCvr.recordType()).thenReturn(acvrRecType);
+  }
+
+  /**
+   * Create an NEB assertion with the given parameters.
+   * @param winner Winner of the assertion.
+   * @param loser Loser of the assertion.
+   * @param contestName Name of the contest to which the assertion belongs.
+   * @param rawMargin Raw margin of the assertion.
+   * @param dilutedMargin Diluted margin of the assertion.
+   * @param difficulty Difficulty of the assertion.
+   * @param cvrDiscrepancy Map between CVR ID and discrepancy type.
+   * @param oneVoteOver Number of one vote overstatements to associate with the assertion.
+   * @param oneVoteUnder Number of one vote understatements to associate with the assertion.
+   * @param twoVoteOver Number of two vote overstatements to associate with the assertion.
+   * @param twoVoteUnder Number of two vote understatements to associate with the assertion.
+   * @param other Number of other discrepancies to associate with the assertion.
+   * @return an NEB assertion with the given specification.
+   */
+  private static Assertion createNEBAssertion(String winner, String loser, String contestName,
+      int rawMargin, double dilutedMargin, double difficulty, Map<Long,Integer> cvrDiscrepancy,
+      int oneVoteOver, int oneVoteUnder, int twoVoteOver, int twoVoteUnder, int other){
+
+    Assertion a = new NEBAssertion();
+    AssertionTests.populateAssertion(a, winner, loser, contestName, List.of(), rawMargin,
+        dilutedMargin, difficulty, cvrDiscrepancy, oneVoteOver, oneVoteUnder, twoVoteOver,
+        twoVoteUnder, other);
+
+    return a;
   }
 }

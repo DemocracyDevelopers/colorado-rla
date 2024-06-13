@@ -21,13 +21,20 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.assertion;
 
-import java.util.ArrayList;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import us.freeandfair.corla.model.CVRContestInfo;
 
+/**
+ * A Not Eliminated Before (NEB) assertion compares the tallies of two candidates W and L in
+ * the context where W is given all votes on which they are ranked first, and L is given all
+ * votes on which they appear before W (or they appear and W does not). This equates to comparing
+ * the minimum possible tally for W against the maximum possible tally for L while W is still
+ * continuing. If this assertion holds, it means that W can never be eliminated while L is
+ * still continuing, or that W will always have more votes than L.
+ */
 @Entity
 @DiscriminatorValue("NEB")
 public class NEBAssertion extends Assertion {

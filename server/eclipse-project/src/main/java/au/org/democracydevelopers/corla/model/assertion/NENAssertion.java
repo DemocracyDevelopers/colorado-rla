@@ -29,6 +29,13 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import us.freeandfair.corla.model.CVRContestInfo;
 
+/**
+ * A Not Eliminated Next (NEN) assertion is defined between two candidates W and L in the context
+ * where an assumed set of candidates (including W and L) are 'continuing'. What this assertion
+ * says is that in the context where everyone outside the assumed 'continuing' list has been
+ * eliminated, W has more votes than L. This means that in the context where only the assumed
+ * continuing candidates remain, W will not be eliminated next as L will have fewer votes.
+ */
 @Entity
 @DiscriminatorValue("NEN")
 public class NENAssertion extends Assertion {
@@ -54,7 +61,7 @@ public class NENAssertion extends Assertion {
 
     // Reduce the list of choices in 'info' to those that are assumed to be continuing.
     final List<String> choices_left = info.choices().stream().filter(c ->
-        assumedContinuing.contains(c)).collect(Collectors.toList());
+        assumedContinuing.contains(c)).toList();
 
     int score = 0;
 

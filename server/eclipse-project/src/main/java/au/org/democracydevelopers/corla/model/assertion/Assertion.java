@@ -39,6 +39,17 @@ import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.persistence.PersistentEntity;
 
+/**
+ * An assertion is a statement comparing the tallies of two candidates in varying contexts.
+ * A RAIRE audit of an IRV contest involves checking a finite set of assertions. If we verify
+ * that the set of assertions holds (with the desired degree of confidence) then we have ruled
+ * out all possible outcomes in which the reported winner did not win. Each assertion is associated
+ * with an expected number of ballots to sample when checking in an audit, and will have an
+ * associated risk. Subclasses of this abstract base class are defined for the different types
+ * of RAIRE assertion. Assertions are created and stored in the database by raire-service. They
+ * are audited by colorado-rla. During this process, the record of discrepancies attached to
+ * the assertion will be updated, as well as its estimated sample sizes and risk.
+ */
 @Entity
 @Table(name = "assertion")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -215,7 +226,7 @@ public abstract class Assertion implements PersistentEntity {
    * Given a number of audited samples, and the total number of overstatements experienced thus far,
    * increase the sample count by a scaling factor. The scaling factor grows as the ratio of
    * overstatements to samples increases. This method could be directly moved to
-   * us.freeandfair.corla.math.Audit, can called within this class. The method is almost a direct
+   * us.freeandfair.corla.math.Audit, and called within this class. The method is almost a direct
    * copy of a private scalingFactor() method in us.freeandfair.corla.ComparisonAudit. If this
    * scalingFactor method is moved to math.Audit, then that private method in ComparisonAudit can be
    * deleted, with calls replaced with calls to the public static method in math.Audit.
@@ -233,8 +244,8 @@ public abstract class Assertion implements PersistentEntity {
   /**
    * For the given risk limit, compute the expected (optimistic) number of samples to audit for this
    * assertion. This calculation assumes that no further overstatements will arise. This method
-   * updates the Assertion::optimistic_samples_to_audit attribute with a call to Audit.optimistic()
-   * and then returns the new optimistic_samples_to_audit value.
+   * updates the Assertion::optimisticSamplesToAudit attribute with a call to Audit.optimistic()
+   * and then returns the new optimisticSamplesToAudit value.
    *
    * @param riskLimit The risk limit of the audit.
    * @return The (optimistic) number of samples we expect we will need to sample to audit this
