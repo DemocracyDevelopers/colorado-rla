@@ -667,11 +667,13 @@ public class DominionCVRExportParser {
       if (present) {
         if(isIRV) {
             // If it is IRV, convert it into an ordered list of names (without parentheses), then
-            // store.
+            // store. If it was not valid, make a warning log message and keep going.
             final IRVChoices irvVotes = new IRVChoices(votes);
             List<String> orderedChoices = irvVotes.getValidIntentAsOrderedList();
-            String msg = "IRV interpretation: ";
-            LOGGER.debug(String.format("%s %s", prefix, msg+irvVotes+" to "+orderedChoices));
+            if(!irvVotes.isValid()) {
+              String msg = "Interpretation of invalid IRV choices: ";
+              LOGGER.warn(String.format("%s %s", prefix, msg + irvVotes + " to " + orderedChoices));
+            }
             contest_info.add(new CVRContestInfo(co, null, null, orderedChoices));
 
           // TODO think about whether we should also store the raw vote in the database if applicable.
