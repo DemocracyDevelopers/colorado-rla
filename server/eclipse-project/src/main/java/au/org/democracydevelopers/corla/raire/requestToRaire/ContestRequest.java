@@ -21,5 +21,45 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.raire.requestToRaire;
 
-public class ContestRequest {
+import java.util.List;
+
+/**
+ * Abstract class that serves as a parent class for particular requests to raire. This class
+ * identifies a contest by name and includes
+ * - the total number of auditable ballots in the relevant auditing universe,
+ * - the list of candidates by name.
+ * The GetAssertionsRequest and GenerateAssertionsRequest types inherit from this class and add
+ * some other fields.
+ */
+public abstract class ContestRequest {
+
+  /**
+   * The name of the contest
+   */
+  public final String contestName;
+
+  /**
+   * The total number of ballots in the universe under audit.
+   * This may not be the same as the number of ballots or CVRs in the contest, if the contest
+   * is available only to a subset of voters in the universe.
+   */
+  public final int totalAuditableBallots;
+
+  /**
+   * List of candidate names.
+   */
+  public final List<String> candidates;
+
+  /**
+   * All args constructor.
+   * @param contestName the name of the contest
+   * @param totalAuditableBallots the total number of auditable ballots.
+   * @param candidates the list of candidates by name
+   */
+  protected ContestRequest(String contestName, int totalAuditableBallots,
+                            List<String> candidates) {
+    this.contestName = contestName;
+    this.totalAuditableBallots = totalAuditableBallots;
+    this.candidates = candidates;
+  }
 }

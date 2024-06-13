@@ -21,5 +21,62 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.raire.requestToRaire;
 
-public class GetAssertionsRequest {
+import org.apache.log4j.LogManager;
+
+import java.beans.ConstructorProperties;
+import java.math.BigDecimal;
+import java.util.List;
+
+/**
+ * Request (expected to be json) identifying the contest for which assertions should be retrieved
+ * from the database (expected to be exported as json).
+ * Identical data to GetAssertionsRequest in raire-service.
+ * This extends ContestRequest and uses the contest name, totalAuditable ballots and candidate
+ * list from there.
+ * A GetAssertionsRequest identifies a contest by name along with the candidate list
+ * (which is necessary for producing the metadata for later visualization). The riskLimit states the
+ * risk limit for the audit. This is not actually used in raire-service computations,
+ * but will be output later with the assertion export, so that it can be used in the assertion
+ * visualizer.
+ */
+public class GetAssertionsRequest extends ContestRequest {
+
+  /**
+   * Class-wide logger
+   */
+  private static final org.apache.log4j.Logger LOGGER =
+      LogManager.getLogger(GetAssertionsRequest.class);
+
+  /**
+   * The winner, as stated by the request. This is written into response metadata
+   * _without_ being checked.
+   */
+  public final String winner;
+
+  /**
+   * The risk limit for the audit, expected to be in the range [0,1]. Defaults to zero, because
+   * then we know we will never mistakenly claim the risk limit has been met.
+   */
+  public final BigDecimal riskLimit;
+
+  /**
+   * All args constructor.
+   * @param contestName           the name of the contest
+   * @param totalAuditableBallots the total number of ballots in the universe.
+   * @param candidates            a list of candidates by name
+   * @param winner                the winner's name
+   * @param riskLimit             the risk limit for the audit, expected to be in the range [0,1].
+   */
+  @ConstructorProperties({"contestName", "totalAuditableBallots", "candidates", "winner", "riskLimit"})
+  public GetAssertionsRequest(String contestName, int totalAuditableBallots, List<String> candidates,
+                              String winner, BigDecimal riskLimit) {
+    super(contestName, totalAuditableBallots, candidates);
+
+    final String prefix = "[GetAssertionsRequest constructor]";
+    LOGGER.debug(String.format("%s Making GetAssertionsRequest for contest %s", prefix,
+        contestName));
+
+    this.winner = winner;
+    this.riskLimit = riskLimit;
+  }
 }
