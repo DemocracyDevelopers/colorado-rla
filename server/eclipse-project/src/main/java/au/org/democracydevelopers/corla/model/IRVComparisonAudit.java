@@ -21,7 +21,70 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model;
 
-import us.freeandfair.corla.model.ComparisonAudit;
+import us.freeandfair.corla.model.*;
 
+import java.math.BigDecimal;
+import java.util.OptionalInt;
+
+import static us.freeandfair.corla.math.Audit.GAMMA;
+
+/**
+ * Stub of the IRVComparisonAudit class, which currently does nothing.
+ */
 public class IRVComparisonAudit extends ComparisonAudit {
+
+  /**
+   * Constructs a new, empty IRVComparisonAudit (solely for persistence).
+   */
+  public IRVComparisonAudit() {
+      super();
+  }
+
+  /**
+   * Constructs an IRVComparisonAudit for the given params
+   *
+   * @param contestResult The contest result.
+   * @param riskLimit The risk limit.
+   * @param auditReason The audit reason.
+   *
+   */
+  @SuppressWarnings({"PMD.ConstructorCallsOverridableMethod"})
+  public IRVComparisonAudit(final ContestResult contestResult, final BigDecimal riskLimit,
+                            final AuditReason auditReason) {
+    super(contestResult, riskLimit, BigDecimal.ONE, GAMMA, auditReason);
+  }
+
+  // Does nothing - TODO.
+  @Override
+  protected void recalculateSamplesToAudit() {
+
+  }
+
+  // Does nothing - TODO.
+  @Override
+  public int initialSamplesToAudit() {
+    return 0;
+  }
+
+  // Does nothing - TODO.
+  @Override
+  public OptionalInt computeDiscrepancy(final CastVoteRecord cvr, final CastVoteRecord auditedCVR) {
+      return OptionalInt.of(0);
+  }
+
+  // Does nothing - TODO.
+  @Override
+  public BigDecimal riskMeasurement() {
+    return BigDecimal.ONE;
+  }
+
+  // Does nothing - TODO.
+  @Override
+  public void removeDiscrepancy(final CVRAuditInfo the_record, final int the_type) {
+  }
+
+  // Does nothing - TODO.
+  @Override
+  public void recordDiscrepancy(final CVRAuditInfo the_record, final int the_type) {
+  }
 }

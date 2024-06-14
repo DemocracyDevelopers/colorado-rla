@@ -542,7 +542,7 @@ public class ComparisonAudit implements PersistentEntity {
    * object's `my_optimistic_samples_to_audit` and
    * `my_estimates_samples_to_audit` fields.
    */
-  private void recalculateSamplesToAudit() {
+  protected void recalculateSamplesToAudit() {
     LOGGER.debug(String.format("[recalculateSamplestoAudit start contestName=%s, "
                                + "twoUnder=%d, oneUnder=%d, oneOver=%d, twoOver=%d"
                                + " optimistic=%d, estimated=%d]",
