@@ -78,7 +78,6 @@ public class ComparisonAuditControllerTests {
       .withDatabaseName("corla")
       .withUsername("corlaadmin")
       .withPassword("corlasecret")
-      // .withInitScript("SQL/corlaInit.sql");
       .withInitScript("SQL/corla-three-candidates-ten-votes-inconsistent-types.sql");
 
   /**
@@ -125,15 +124,18 @@ public class ComparisonAuditControllerTests {
    */
   @Test
   public void IRVContestMakesIRVAudit() {
+    testUtils.log(LOGGER, "IRVContestMakesIRVAudit");
+
     // Set up the contest results from the stored data.
     List<ContestResult> results = ContestCounter.countAllContests();
 
-    // Find all the contestResults for TinyIRV - there should be one.
+    // Find all the ContestResults for TinyIRV - there should be one.
     List<ContestResult> tinyIRVResults = results.stream().filter(
             cr -> cr.getContests().stream().anyMatch(co -> co.name().equals(tinyIRV))).toList();
     assertEquals(1, tinyIRVResults.size());
-
     ContestResult tinyIRV = tinyIRVResults.get(0);
+
+    // Check that it makes an IRVComparisonAudit.
     ComparisonAudit irvAudit = ComparisonAuditController.createAuditOfCorrectType(tinyIRV, BigDecimal.valueOf(0.03));
     assertTrue(irvAudit instanceof IRVComparisonAudit);
   }
@@ -143,29 +145,33 @@ public class ComparisonAuditControllerTests {
    */
   @Test
   public void pluralityContestMakesPluralityAudit() {
+    testUtils.log(LOGGER, "pluralityContestMakesPluralityAudit");
+
     // Set up the contest results from the stored data.
     List<ContestResult> results = ContestCounter.countAllContests();
 
-    // Find all the contestResults for TinyIRV - there should be one.
+    // Find all the ContestResults for TinyPlurality - there should be one.
     List<ContestResult> tinyPluralityResults = results.stream().filter(
             cr -> cr.getContests().stream().anyMatch(co -> co.name().equals(tinyPlurality))).toList();
     assertEquals(1, tinyPluralityResults.size());
-
     ContestResult tinyPlurality = tinyPluralityResults.get(0);
-    ComparisonAudit audit = ComparisonAuditController.createAuditOfCorrectType(tinyPlurality, BigDecimal.valueOf(0.03));
+
     // Should _not_ be an IRVComparisonAudit.
+    ComparisonAudit audit = ComparisonAuditController.createAuditOfCorrectType(tinyPlurality, BigDecimal.valueOf(0.03));
     assertFalse(audit instanceof IRVComparisonAudit);
   }
 
   /**
-   * A contest that mixes plurality and IRV throws an exception when we try to create an audit.
+   * A contest that mixes plurality and IRV throws an exception when we try to create a ComparisonAudit.
    */
   @Test(expectedExceptions = RuntimeException.class)
   public void inconsistentContestThrowsException() {
+    testUtils.log(LOGGER, "inconsistentContestThrowsException");
+
     // Set up the contest results from the stored data.
     List<ContestResult> results = ContestCounter.countAllContests();
 
-    // Find all the contestResults for TinyIRV - there should be one.
+    // Find all the contestResults for TinyMixed - there should be one.
     List<ContestResult> tinyMixedResults = results.stream().filter(
             cr -> cr.getContests().stream().anyMatch(co -> co.name().equals(tinyMixed))).toList();
     assertEquals(1, tinyMixedResults.size());

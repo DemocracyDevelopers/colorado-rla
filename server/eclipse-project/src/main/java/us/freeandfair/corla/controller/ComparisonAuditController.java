@@ -171,13 +171,14 @@ public final class ComparisonAuditController {
     if (contestResult.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.PLURALITY.toString()))) {
       return new ComparisonAudit(contestResult, riskLimit, contestResult.getDilutedMargin(), Audit.GAMMA, contestResult.getAuditReason());
     }
-    // If it is all IRV, make an IRVComparisonAudit
+    // If it is all IRV, make an IRVComparisonAudit.
     if (contestResult.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.IRV.toString()))) {
       return new IRVComparisonAudit(contestResult, riskLimit, contestResult.getAuditReason());
     }
 
-    // If it is a mix of different types of contests, that is an error.
-    throw new RuntimeException("EstimateSampleSizes: Contest "+contestResult.getContestName()+" has inconsistent plurality/IRV types.");
+    // If it is a mix of different types of contests, or a contest type that we don't recognize, that is an error.
+    throw new RuntimeException("EstimateSampleSizes: Contest "+contestResult.getContestName()+
+            " has inconsistent or unrecognized contest types.");
   }
 
   /**
