@@ -36,6 +36,7 @@ import org.apache.log4j.Logger;
 import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.CVRAuditInfo;
 import us.freeandfair.corla.model.CVRContestInfo;
+import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.persistence.PersistentEntity;
 
@@ -310,14 +311,22 @@ public abstract class Assertion implements PersistentEntity {
 
   /**
    * Computes the over/understatement represented by the specified CVR and ACVR. This method returns
-   * an optional int that, if present, indicates a discrepancy. There are 5 possible types of
-   * discrepancy: -1 and -2 indicate 1- and 2-vote understatements; 1 and 2 indicate 1- and 2- vote
-   * overstatements; and 0 indicates a discrepancy that does not count as either an under- or
-   * overstatement for the RLA algorithm, but nonetheless indicates a difference between ballot
-   * interpretations. If a discrepancy is found, it will be recorded in the cvrDiscrepancy map for
-   * this Assertion. It will not be added to the Assertion's discrepancy counters until the
-   * recordDiscrepancy() method is called. This design choice is influenced by how the audit logic
-   * process interacts with ComparisonAudit's.
+   * an optional int that, if present, indicates a discrepancy. Note that we compute discrepancies
+   * by computing a score for the CVR and ACVR in relation to the assertion, and then subtracting the
+   * ACVR score from the CVR score (see A Guide to RAIRE Part 1, Chapter 5).
+   * There are 5 possible types of discrepancy that can result: -1 and -2 indicate 1- and 2-vote
+   * understatements; 1 and 2 indicate 1- and 2- vote overstatements; and 0 indicates a discrepancy
+   * that does not count as either an under- or overstatement for the RLA algorithm, but nonetheless
+   * indicates a difference between ballot interpretations. If a discrepancy is found, it will be
+   * recorded in the cvrDiscrepancy map for this Assertion. It will not be added to the Assertion's
+   * discrepancy counters until the recordDiscrepancy() method is called. This design choice is
+   * influenced by how the audit logic process interacts with ComparisonAudit's.
+   * The function considers the following cases, in order:
+   * 1. The paper ballot is missing (it is a PHANTOM_BALLOT).
+   * 2. The CVR is missing (it is a PHANTOM_RECORD).
+   * 3. The CVR contains the assertion's contest but the ACVR does not.
+   * 4. The ACVR contains the assertion's contest but the CVR does not.
+   * 5. Neither the paper ballot nor CVR are phantoms (and both contain the assertion's contest).
    * @param cvr        The CVR that the machine saw.
    * @param auditedCVR The ACVR that the human audit board saw.
    * @return an optional int that is present if there is a discrepancy and absent otherwise.
@@ -333,37 +342,66 @@ public abstract class Assertion implements PersistentEntity {
     final Optional<CVRContestInfo> cvrInfo = cvr.contestInfoForContestResult(contestName);
     final Optional<CVRContestInfo> acvrInfo = auditedCVR.contestInfoForContestResult(contestName);
 
+    // The first "if" block deals with the case where the paper ballot matching the CVR could
+    // not be found (we have PHANTOM_BALLOT). We need to determine the worst case discrepancy we
+    // could have here. If the CVR is also missing (we have a PHANTOM_RECORD), the worst case
+    // discrepancy is a 2 vote overstatement. Otherwise, we need to compute the worst case
+    // discrepancy between an existent CVR and a phantom ballot.
     if (auditedCVR.recordType() == CastVoteRecord.RecordType.PHANTOM_BALLOT) {
-      // There is no matching ballot for this CVR (the audited ballot is a phantom), and the
-      // relevant contest for this assertion is on the CVR. If the contest has not been recorded
-      // as being on this CVR, the worst-case discrepancy in this instance is a 1-vote
-      // overstatement (we treat the CVR score as being 0 in this case, and if the ACVR score
-      // is -1, we get a 1-vote overstatement).
+      // If the CVR is also a phantom, we have the worst case discrepancy of 2.
       if (cvr.recordType() == CastVoteRecord.RecordType.PHANTOM_RECORD) {
         LOGGER.debug(String.format("%s Phantom ballot, phantom record.", prefix));
         result = OptionalInt.of(2);
       }
       else {
+        // The CVR is not a phantom record. If this assertion's contest is on the CVR, then we
+        // call 'computeDiscrepancyPhantomBallot' to determine the worst case discrepancy between
+        // the vote recorded on the CVR and an audited ballot with an unknown vote. If the CVR
+        // does not contain the contest, the largest discrepancy we could have is a one vote
+        // overstatement (i.e. the CVR score is 0, and the ACVR score could potentially be -1).
         LOGGER.debug(String.format("%s Phantom ballot.", prefix));
         result = cvrInfo.map(this::computeDiscrepancyPhantomBallot)
             .orElseGet(() -> OptionalInt.of(1));
       }
     }
+    // This next "if" block deals with the case where the CVR is missing (we have a PHANTOM_RECORD).
+    // If the audited ballot does not have the assertion's contest on it (i.e. the ACVR score is 0
+    // for our assertion), then the maximum discrepancy we could have is 1. If the audited ballot
+    // does have the contest on it, and there is no consensus on the audited ballot, the worst case
+    // discrepancy is a two vote overstatement (we treat the audited ballot as a phantom),
+    // Otherwise, it is 1 (max possible CVR score) - the audited ballot score.
     else if (cvr.recordType() == CastVoteRecord.RecordType.PHANTOM_RECORD) {
       LOGGER.debug(String.format("%s Phantom record.", prefix));
-      // Similar to the phantom ballot, we use the worst case scenario.
-      result = OptionalInt.of(2);
-
-      if (acvrInfo.isPresent() && acvrInfo.get().consensus() == CVRContestInfo.ConsensusValue.YES) {
-        // Compute ballot score for this assertion.
-        final int acvrScore = score(acvrInfo.get());
-
+      if(acvrInfo.isEmpty()){
+        result = OptionalInt.of(1);
+      }
+      else if (acvrInfo.get().consensus() == CVRContestInfo.ConsensusValue.NO) {
+        // Similar to the phantom ballot, we use the worst case scenario.
+        result = OptionalInt.of(2);
+      }
+      else{
         // Based on the ballot score, what is the maximum discrepancy we could have for the
         // phantom CVR and given ballot?
-        result = OptionalInt.of(1 - acvrScore);
+        result = OptionalInt.of(1 - score(acvrInfo.get()));
       }
     }
-    else if (cvrInfo.isPresent() && acvrInfo.isPresent()) {
+    // The next case considers the situation where the audited ballot does not have the
+    // assertion's contest on it, but somehow the CVR does. We treat the ACVR score a 0, and
+    // compute the score for the CVR to give us our discrepancy.
+    else if(cvrInfo.isPresent() && acvrInfo.isEmpty()){
+      result = OptionalInt.of(score(cvrInfo.get()));
+    }
+    // The next case considers the situation where the CVR has no recorded vote for the
+    // assertion's contest
+    else if(cvrInfo.isEmpty() && acvrInfo.isPresent()){
+      result = OptionalInt.of(-score(acvrInfo.get()));
+    }
+    // The assertion's contest is on both the CVR and audited ballot. We check whether the
+    // audited ballot has consensus (if not, it is treated like a phantom). If so, we
+    // look at whether the recorded votes differ, and if so, compute the CVR and ACVR scores
+    // to determine the discrepancy.
+    else{
+      // Both acvrInfo and cvrInfo are non-empty.
       if (acvrInfo.get().consensus() == CVRContestInfo.ConsensusValue.NO) {
         LOGGER.debug(String.format("%s Lack of consensus, treat as phantom ballot.", prefix));
         // A lack of consensus for this contest between auditors is treated as if the ballot is a
