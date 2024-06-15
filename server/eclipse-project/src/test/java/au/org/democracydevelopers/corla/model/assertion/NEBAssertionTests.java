@@ -247,11 +247,11 @@ public class NEBAssertionTests {
   }
 
   /**
-   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote overvote.
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote overstatement.
    */
   @Test
-  public void testNEBRecordOneVoteOvervote1(){
-    log(LOGGER, "testNEBRecordOneVoteOvervote1");
+  public void testNEBRecordOneVoteOverstatement1(){
+    log(LOGGER, "testNEBRecordOneVoteOverstatement1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -291,11 +291,11 @@ public class NEBAssertionTests {
   }
 
   /**
-   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overvote.
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overstatement.
    */
   @Test
-  public void testNEBRecordTwoVoteOvervote1(){
-    log(LOGGER, "testNEBRecordTwoVoteOvervote1");
+  public void testNEBRecordTwoVoteOverstatement1(){
+    log(LOGGER, "testNEBRecordTwoVoteOverstatement1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -357,12 +357,12 @@ public class NEBAssertionTests {
   }
 
   /**
-   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote overvote, in the context
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote overstatement, in the context
    * where the assertion has already recorded discrepancies.
    */
   @Test
-  public void testNEBRecordOneVoteOvervote2(){
-    log(LOGGER, "testNEBRecordOneVoteOvervote2");
+  public void testNEBRecordOneVoteOverstatement2(){
+    log(LOGGER, "testNEBRecordOneVoteOverstatement2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -403,12 +403,12 @@ public class NEBAssertionTests {
   }
 
   /**
-   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overvote, in the context
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overstatement, in the context
    * where the assertion has already recorded discrepancies.
    */
   @Test
-  public void testNEBRecordTwoVoteOvervote2(){
-    log(LOGGER, "testNEBRecordTwoVoteOvervote2");
+  public void testNEBRecordTwoVoteOverstatement2(){
+    log(LOGGER, "testNEBRecordTwoVoteOverstatement2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -511,11 +511,11 @@ public class NEBAssertionTests {
   }
 
   /**
-   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote overvote.
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote overstatement.
    */
   @Test
-  public void testNEBRemoveOneVoteOvervote1(){
-    log(LOGGER, "testNEBRemoveOneVoteOvervote1");
+  public void testNEBRemoveOneVoteOverstatement1(){
+    log(LOGGER, "testNEBRemoveOneVoteOverstatement1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -559,11 +559,11 @@ public class NEBAssertionTests {
   }
 
   /**
-   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote overvote.
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote overstatement.
    */
   @Test
-  public void testNEBRemoveTwoVoteOvervote1(){
-    log(LOGGER, "testNEBRemoveTwoVoteOvervote1");
+  public void testNEBRemoveTwoVoteOverstatement1(){
+    log(LOGGER, "testNEBRemoveTwoVoteOverstatement1");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
@@ -631,12 +631,12 @@ public class NEBAssertionTests {
   }
 
   /**
-   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote overvote, in the context
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote overstatement, in the context
    * where the assertion has already recorded discrepancies.
    */
   @Test
-  public void testNEBRemoveOneVoteOvervote2(){
-    log(LOGGER, "testNEBRemoveOneVoteOvervote2");
+  public void testNEBRemoveOneVoteOverstatement2(){
+    log(LOGGER, "testNEBRemoveOneVoteOverstatement2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -681,12 +681,12 @@ public class NEBAssertionTests {
   }
 
   /**
-   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote overvote, in the context
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote overstatement, in the context
    * where the assertion has already recorded discrepancies.
    */
   @Test
-  public void testNEBRemoveTwoVoteOvervote2(){
-    log(LOGGER, "testNEBRemoveTwoVoteOvervote2");
+  public void testNEBRemoveTwoVoteOverstatement2(){
+    log(LOGGER, "testNEBRemoveTwoVoteOverstatement2");
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
@@ -942,7 +942,7 @@ public class NEBAssertionTests {
   /**
    * Given a CVR with vote "A", "B", "C", "D" and audited ballot with vote "B", "A", "C", "D",
    * check that the right discrepancy is computed for the assertion  A NEB C. (In this case, a one
-   * vote overvote).
+   * vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyOneOver1(RecordType recordType){
@@ -958,7 +958,7 @@ public class NEBAssertionTests {
 
   /**
    * Given a CVR with vote "A" and audited ballot with vote "B", check that the right discrepancy
-   * is computed for the assertions A NEB C. (In this case, a one vote overvote).
+   * is computed for the assertions A NEB C. (In this case, a one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyOneOver2(RecordType recordType){
@@ -975,7 +975,7 @@ public class NEBAssertionTests {
 
   /**
    * Given a CVR with vote "A" and audited ballot with a blank vote, check that the right discrepancy
-   * is computed for the assertions A NEB B. (In this case, a one vote overvote).
+   * is computed for the assertions A NEB B. (In this case, a one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyOneOver3(RecordType recordType){
@@ -992,7 +992,7 @@ public class NEBAssertionTests {
 
   /**
    * Given a CVR with vote "A" and audited ballot with a vote of "B", check that the right discrepancy
-   * is computed for the assertions A NEB B. (In this case, a two vote overvote).
+   * is computed for the assertions A NEB B. (In this case, a two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyTwoOver1(RecordType recordType){
@@ -1009,7 +1009,7 @@ public class NEBAssertionTests {
   /**
    * Given a CVR with vote "A", "B", "C", "D" and audited ballot with a vote of "B", "A", "C", "D",
    * check that the right discrepancy is computed for the assertions A NEB B. (In this case, a
-   * two vote overvote).
+   * two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyTwoOver2(RecordType recordType){
@@ -1161,7 +1161,7 @@ public class NEBAssertionTests {
 
   /**
    * Given a phantom CVR, and a normal ballot with a blank vote, check that the right
-   * discrepancy is computed for the assertion A NEB B. (In this case, a one vote overvote).
+   * discrepancy is computed for the assertion A NEB B. (In this case, a one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyPhantomRecordOneOver1(RecordType recordType){
@@ -1177,7 +1177,7 @@ public class NEBAssertionTests {
 
   /**
    * Given a phantom CVR, and a normal ballot with vote "A", "B", "C", "D", check that the right
-   * discrepancy is computed for the assertion F NEB G. (In this case, a one vote overvote).
+   * discrepancy is computed for the assertion F NEB G. (In this case, a one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyPhantomRecordOneOver2(RecordType recordType){
@@ -1209,7 +1209,7 @@ public class NEBAssertionTests {
 
   /**
    * Given a phantom CVR, and a normal ballot with vote "A", "B", "C", "D", check that the right
-   * discrepancy is computed for the assertion B NEB A. (In this case, a two vote overvote).
+   * discrepancy is computed for the assertion B NEB A. (In this case, a two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyPhantomRecordTwoOver1(RecordType recordType){
@@ -1225,7 +1225,7 @@ public class NEBAssertionTests {
 
   /**
    * Given a phantom CVR, and a ballot with vote "A", "B", "C", "D", but no consensus, check that
-   * the right discrepancy is computed for any NEB assertion. (A two vote overvote).
+   * the right discrepancy is computed for any NEB assertion. (A two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyPhantomRecordNoConsensus1(RecordType recordType){
@@ -1245,7 +1245,7 @@ public class NEBAssertionTests {
 
   /**
    * Given a phantom CVR, and a ballot with a blank vote, but no consensus, check that
-   * the right discrepancy is computed for any NEB assertion. (A two vote overvote).
+   * the right discrepancy is computed for any NEB assertion. (A two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyPhantomRecordNoConsensus2(RecordType recordType){
@@ -1265,7 +1265,7 @@ public class NEBAssertionTests {
 
   /**
    * Given a phantom CVR, and a phantom ballot, check that the right discrepancy is computed for
-   * any NEB assertion. (A two vote overvote).
+   * any NEB assertion. (A two vote overstatement).
    */
   @Test
   public void testNEBComputeDiscrepancyPhantomRecordPhantomBallot(){
@@ -1285,7 +1285,7 @@ public class NEBAssertionTests {
 
   /**
    * Given a CVR with vote "A", "B", "C", "D", and a phantom ballot, check that
-   * the right discrepancy is computed for assertions A NEB F, and A NEB C. (A two vote overvote).
+   * the right discrepancy is computed for assertions A NEB F, and A NEB C. (A two vote overstatement).
    */
   @Test
   public void testNEBComputeDiscrepancyPhantomBallotNormalCVR1(){
@@ -1321,7 +1321,7 @@ public class NEBAssertionTests {
 
   /**
    * Given a CVR with vote "A", "B", "C", "D", and a phantom ballot, check that
-   * the right discrepancy is computed for assertions B NEB C, and B NEB D. (A one vote overvote).
+   * the right discrepancy is computed for assertions B NEB C, and B NEB D. (A one vote overstatement).
    */
   @Test
   public void testNEBComputeDiscrepancyPhantomBallotNormalCVR3(){
@@ -1339,7 +1339,7 @@ public class NEBAssertionTests {
 
   /**
    * Given a CVR with a blank vote, and a phantom ballot, check that the right discrepancy is computed for
-   * any NEB assertion. (A one vote overvote).
+   * any NEB assertion. (A one vote overstatement).
    */
   @Test
   public void testNEBComputeDiscrepancyPhantomBallotNormalCVR4(){
@@ -1359,7 +1359,7 @@ public class NEBAssertionTests {
 
   /**
    * Given a CVR with vote "A", "B", "C", "D", and a ballot with no consensus, check that
-   * the right discrepancy is computed for assertions A NEB F, and A NEB C. (A two vote overvote).
+   * the right discrepancy is computed for assertions A NEB F, and A NEB C. (A two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyNoConsensusNormalCVR1(RecordType recordType){
@@ -1395,7 +1395,7 @@ public class NEBAssertionTests {
 
   /**
    * Given a CVR with vote "A", "B", "C", "D", and a ballot with no consensus, check that
-   * the right discrepancy is computed for assertions B NEB C, and B NEB D. (A one vote overvote).
+   * the right discrepancy is computed for assertions B NEB C, and B NEB D. (A one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyNoConsensusNormalCVR3(RecordType recordType){
@@ -1413,7 +1413,7 @@ public class NEBAssertionTests {
 
   /**
    * Given a CVR with a blank vote, and a ballot with no consensus, check that the right
-   * discrepancy is computed for any NEB assertion. (A one vote overvote).
+   * discrepancy is computed for any NEB assertion. (A one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyNoConsensusNormalCVR4(RecordType recordType){
