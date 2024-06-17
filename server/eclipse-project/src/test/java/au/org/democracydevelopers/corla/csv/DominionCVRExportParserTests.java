@@ -79,8 +79,7 @@ public class DominionCVRExportParserTests {
       .withDatabaseName("corla")
       .withUsername("corlaadmin")
       .withPassword("corlasecret")
-     // .withInitScripts("corlaInit.sql","contest.sql");
-          .withInitScript("SQL/corlaInit.sql");
+      .withInitScript("SQL/corlaInit.sql");
 
   /**
    * Error message to match.
