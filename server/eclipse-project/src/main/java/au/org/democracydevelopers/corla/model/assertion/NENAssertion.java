@@ -21,5 +21,65 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.assertion;
 
-public class NENAssertion {
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import us.freeandfair.corla.model.CVRContestInfo;
+
+/**
+ * A Not Eliminated Next (NEN) assertion is defined between two candidates W and L in the context
+ * where an assumed set of candidates (including W and L) are 'continuing'. What this assertion
+ * says is that in the context where everyone outside the assumed 'continuing' list has been
+ * eliminated, W has more votes than L. This means that in the context where only the assumed
+ * continuing candidates remain, W will not be eliminated next as L will have fewer votes.
+ */
+@Entity
+@DiscriminatorValue("NEN")
+public class NENAssertion extends Assertion {
+
+  /**
+   * Class-wide logger.
+   */
+  private static final Logger LOGGER = LogManager.getLogger(NENAssertion.class);
+
+  /**
+   * Construct an empty NEN assertion (for persistence).
+   */
+  public NENAssertion(){
+    super();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected int score(final CVRContestInfo info){
+    final String prefix = "[score]";
+
+    // Reduce the list of choices in 'info' to those that are assumed to be continuing.
+    final List<String> choices_left = info.choices().stream().filter(c ->
+        assumedContinuing.contains(c)).toList();
+
+    int score = 0;
+
+    // If none of the candidates relevant to the assertion are on the vote, then
+    // return 0.
+    if (!choices_left.isEmpty()) {
+      // If our winner is the first candidate in 'choices_left' our score is 1.
+      if (choices_left.get(0).equals(winner)) {
+        score = 1;
+      }
+      // If our loser is the first candidate in 'choices_left' our score is -1.
+      else if (choices_left.get(0).equals(loser)) {
+        score = -1;
+      }
+    }
+    LOGGER.debug(String.format("%s Score of %d computed for NEN Assertion ID %d, contest %s, vote %s",
+        prefix, score, id(), contestName, info.choices()));
+    return score;
+  }
+
 }
