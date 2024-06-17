@@ -26,25 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.persistence.Cacheable;
-import javax.persistence.CollectionTable;
-import javax.persistence.Column;
-import javax.persistence.Convert;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.MapKeyJoinColumn;
-import javax.persistence.Table;
-import javax.persistence.Version;
+import javax.persistence.*;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -63,7 +45,9 @@ import us.freeandfair.corla.persistence.LongListConverter;
 @Entity
 @Cacheable(true)
 @Table(name = "comparison_audit")
-
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "audit_type")
+@DiscriminatorValue("PLURALITY")
 @SuppressWarnings({"PMD.ImmutableField", "PMD.ExcessiveClassLength",
     "PMD.CyclomaticComplexity", "PMD.GodClass", "PMD.ModifiedCyclomaticComplexity",
     "PMD.StdCyclomaticComplexity", "PMD.TooManyFields", "PMD.TooManyMethods",
