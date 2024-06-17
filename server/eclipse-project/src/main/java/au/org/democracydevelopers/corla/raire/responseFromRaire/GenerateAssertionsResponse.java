@@ -21,5 +21,15 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.raire.responseFromRaire;
 
-public class GenerateAssertionsResponse {
+/**
+ * The success response when a ContestRequest is sent to raire's generate-assertions endpoint. This
+ * simply returns the winner, as calculated by raire, along with the name of the contest for which
+ * the initial request was made.
+ * This record is identical to the record of the same name in raire-service. Used for
+ * deserialization.
+ *
+ * @param contestName The name of the contest.
+ * @param winner      The winner of the contest, as calculated by raire.
+ */
+public record GenerateAssertionsResponse(String contestName, String winner) {
 }

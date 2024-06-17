@@ -21,21 +21,28 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.vote;
 
+import org.apache.commons.csv.CSVRecord;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import us.freeandfair.corla.model.Choice;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A single IRV name-rank pair, part of an IRV vote (which may have several name-rank pairs).
- * The constructor parses the name-rank pair in the format expected in CO CVRs, that is,
- * name(rank), where the rank is a positive integer.
- * The comparator compares them by rank, ignoring the name.
+ * - The constructor parses the name-rank pair in the format expected in CO CVRs, that is,
+ *   name(rank), where the rank is a positive integer.
+ * - The comparator compares them by rank, ignoring the name.
  */
 public class IRVPreference implements Comparable<IRVPreference> {
 
   /**
    * Class-wide logger
    */
-  public static final Logger LOGGER = LogManager.getLogger(IRVPreference.class);
+  private static final Logger LOGGER = LogManager.getLogger(IRVPreference.class);
 
   public final int rank;
   public final String candidateName;
@@ -81,7 +88,7 @@ public class IRVPreference implements Comparable<IRVPreference> {
       }
     } catch (NumberFormatException | IndexOutOfBoundsException | IRVParsingException e) {
       final String prefix = "[IRVChoices constructor]";
-      final String errorMessage = "Couldn't parse candidate-preference: ";
+      final String errorMessage = "Could not parse candidate-preference: ";
       LOGGER.error(String.format("%s %s %s", prefix, errorMessage, nameWithRank), e);
       throw new IRVParsingException(errorMessage + nameWithRank);
     }
@@ -97,9 +104,8 @@ public class IRVPreference implements Comparable<IRVPreference> {
   }
 
   /**
-   * Returns the IRVPreference as a human-readable string with the candidate name followed by the
+   * @return the IRVPreference as a human-readable string with the candidate name followed by the
    * rank in parentheses, e.g. "Diego(1)".
-   * @return
    */
   public String toString() {
     return candidateName+"("+rank+")";

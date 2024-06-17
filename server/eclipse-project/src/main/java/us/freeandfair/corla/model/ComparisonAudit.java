@@ -501,6 +501,27 @@ public class ComparisonAudit implements PersistentEntity {
   }
 
   /**
+   * Risk limit achieved according to math.Audit.
+   * This has a fallback to 1.0 (max risk) when ``nothing is known''.
+   **/
+  public BigDecimal riskMeasurement() {
+    if (my_audited_sample_count > 0
+        && diluted_margin.compareTo(BigDecimal.ZERO) > 0) {
+      final BigDecimal result =  Audit.pValueApproximation(my_audited_sample_count,
+          diluted_margin,
+          my_gamma,
+          my_one_vote_under_count,
+          my_two_vote_under_count,
+          my_one_vote_over_count,
+          my_two_vote_over_count);
+      return result.setScale(3, BigDecimal.ROUND_HALF_UP);
+    } else {
+      // full risk (100%) when nothing is known
+      return BigDecimal.ONE;
+    }
+  }
+
+  /**
    * A scaling factor for the estimate, from 1 (when no samples have
    * been audited) upward.41
    The scaling factor grows as the ratio of

@@ -25,13 +25,10 @@ import au.org.democracydevelopers.corla.util.testUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
 import java.util.List;
 
-import static org.testng.AssertJUnit.*;
+import org.testng.annotations.*;
+import static org.testng.Assert.*;
 
 /**
  * Tests for proper interpretation of IRV choices, including proper interpretation of invalid
@@ -49,10 +46,7 @@ public class IRVChoicesTests {
   /**
    * Class-wide logger
    */
-  public static final Logger LOGGER = LogManager.getLogger(IRVPreference.class);
-
-  @Rule
-  public final ExpectedException exception = ExpectedException.none();
+  private static final Logger LOGGER = LogManager.getLogger(IRVChoicesTests.class);
 
   /**
    * Testing getValidIntent against Example 1 in the Guide. This removes duplicates before
@@ -135,9 +129,19 @@ public class IRVChoicesTests {
   }
 
   /**
+   * A blank vote is valid.
+   */
+  @Test
+  public void blankVoteIsValid() throws IRVParsingException {
+
+    IRVChoices b = new IRVChoices("");
+    assertTrue(b.isValid());
+    assertEquals(0, b.getValidIntentAsOrderedList().size());
+  }
+
+  /**
    * Other general validity tests for ballot interpretation,
-   * including applying single rules and checking the validity
-   * of the output.
+   * including a blank vote.
    * Valid choices.
    * @throws IRVParsingException never
    */
@@ -263,6 +267,19 @@ public class IRVChoicesTests {
   }
 
   /**
+   * Test rule 26.7.1 - removing overvotes (repeated preferences).
+   * Removes repeated 1st preference, leaving nothing.
+   * @throws IRVParsingException never
+   */
+  @Test
+  public void removeOvervotesTest5() throws IRVParsingException {
+    testUtils.log(LOGGER,"removeOvervotesTest4");
+
+    IRVChoices b = new IRVChoices("Alice(1),Bob(1)");
+    CollectionUtils.isEqualCollection(List.of(), b.getValidIntentAsOrderedList());
+  }
+
+  /**
    * Test rule 26.7.2 - removing skipped rankings.
    * Removes all but the first preference.
    * @throws IRVParsingException never
@@ -302,7 +319,7 @@ public class IRVChoicesTests {
   }
 
   /**
-   * Test rule 2 - removing skipped rankings.
+   * Test rule 26.7.2 - removing skipped rankings.
    * First rank skipped - remove all.
    * @throws IRVParsingException never
    */
@@ -311,6 +328,19 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeSkipsTest4");
 
     IRVChoices b = new IRVChoices("Alice(3),Bob(2),Chuan(4)");
+    assertEquals(0, b.getValidIntentAsOrderedList().size());
+  }
+
+  /**
+   * Test rule 26.7.2 - removing skipped rankings.
+   * First rank is not 1 - remove all.
+   * @throws IRVParsingException never
+   */
+  @Test
+  public void removeSkipsTest5() throws IRVParsingException {
+    testUtils.log(LOGGER,"removeSkipsTest4");
+
+    IRVChoices b = new IRVChoices("Alice(3)");
     assertEquals(0, b.getValidIntentAsOrderedList().size());
   }
 
