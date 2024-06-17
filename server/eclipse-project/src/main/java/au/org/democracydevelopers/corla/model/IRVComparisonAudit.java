@@ -36,7 +36,6 @@ import javax.persistence.Entity;
  * Stub of the IRVComparisonAudit class, which currently does nothing.
  */
 @Entity
-@DiscriminatorColumn(name = "audit_type")
 @DiscriminatorValue("IRV")
 public class IRVComparisonAudit extends ComparisonAudit {
 
