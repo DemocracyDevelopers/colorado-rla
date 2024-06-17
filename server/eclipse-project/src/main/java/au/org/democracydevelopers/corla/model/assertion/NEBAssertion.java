@@ -21,5 +21,60 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.assertion;
 
-public class NEBAssertion extends Assertion{
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import us.freeandfair.corla.model.CVRContestInfo;
+
+/**
+ * A Not Eliminated Before (NEB) assertion compares the tallies of two candidates W and L in
+ * the context where W is given all votes on which they are ranked first, and L is given all
+ * votes on which they appear before W (or they appear and W does not). This equates to comparing
+ * the minimum possible tally for W against the maximum possible tally for L while W is still
+ * continuing. If this assertion holds, it means that W can never be eliminated while L is
+ * still continuing, or that W will always have more votes than L.
+ */
+@Entity
+@DiscriminatorValue("NEB")
+public class NEBAssertion extends Assertion {
+
+  /**
+   * Class-wide logger.
+   */
+  private static final Logger LOGGER = LogManager.getLogger(NEBAssertion.class);
+
+  /**
+   * Construct an empty NEB assertion (for persistence).
+   */
+  public NEBAssertion(){
+    super();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  protected int score(final CVRContestInfo info){
+    final String prefix = "[score]";
+
+    // Get index of winner and loser in this CVR/ballot's ranking
+    final int winner_index = info.choices().indexOf(winner);
+    final int loser_index = info.choices().indexOf(loser);
+
+    int score = 0;
+
+    // If our winner is the first ranked candidate, we return a score of 1.
+    if (winner_index == 0){
+      score = 1;
+    }
+    // If our winner is not mentioned on the ballot, but the loser is, we return a score of -1.
+    // We also return a score of -1 if our loser is ranked higher than our winner.
+    else if(loser_index != -1 && (winner_index == -1 || loser_index < winner_index)){
+        score = -1;
+    }
+
+    LOGGER.debug(String.format("%s Score of %d computed for NEB Assertion ID %d, contest %s, vote %s",
+        prefix, score, id(), contestName, info.choices()));
+    return score;
+  }
 }

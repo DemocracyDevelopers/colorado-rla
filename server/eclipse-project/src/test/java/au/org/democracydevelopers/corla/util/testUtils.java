@@ -19,12 +19,17 @@ You should have received a copy of the GNU Affero General Public License along w
 raire-service. If not, see <https://www.gnu.org/licenses/>.
 */
 
-package au.org.democracydevelopers.corla;
+package au.org.democracydevelopers.corla.util;
 import org.apache.log4j.Logger;
 
 public class testUtils {
 
   /**
+   * Comparator for doubles within a specific tolerance.
+   */
+  public static final DoubleComparator doubleComparator = new DoubleComparator();
+
+  /*
    * Location of the tiny examples intended to be human-tallyable.
    */
   public static final String TINY_CSV_PATH = "src/test/resources/CSVs/Tiny-IRV-Examples/";
