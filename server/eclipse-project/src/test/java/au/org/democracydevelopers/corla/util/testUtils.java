@@ -25,7 +25,6 @@ import org.apache.log4j.Logger;
 public class testUtils {
 
   /**
-<<<<<<< HEAD:server/eclipse-project/src/test/java/au/org/democracydevelopers/corla/testUtils.java
    * Location of the tiny examples intended to be human-tallyable.
    */
   public static final String TINY_CSV_PATH = "src/test/resources/CSVs/Tiny-IRV-Examples/";
@@ -49,11 +48,11 @@ public class testUtils {
    * Location of examples that test expanded definition of Write-In string.
    */
   public static final String WRITEIN_CSV_PATH = "src/test/resources/CSVs/WriteIns/";
-=======
+
+  /**
    * Comparator for doubles within a specific tolerance.
    */
   public static final DoubleComparator doubleComparator = new DoubleComparator();
->>>>>>> refs/heads/AssertionClassesAndTests:server/eclipse-project/src/test/java/au/org/democracydevelopers/corla/util/testUtils.java
 
   /**
    * Print log statement indicating that a specific test has started running.
