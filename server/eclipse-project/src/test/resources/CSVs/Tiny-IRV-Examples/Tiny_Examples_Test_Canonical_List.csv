@@ -1,0 +1,5 @@
+CountyName,ContestName,ContestChoices
+Alamosa,TinyExample1,"Alice, Bob, Chuan"
+Arapahoe,TinyExample1,"Alice, Bob, Chuan"
+Arapahoe,PluralityExample1,"Diego,Eli,Farhad"
+Arapahoe,PluralityExample2,",Gertrude,Ho,Imogen "
