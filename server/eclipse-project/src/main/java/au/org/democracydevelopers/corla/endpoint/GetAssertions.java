@@ -21,16 +21,20 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.endpoint;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.WebTarget;
+import au.org.democracydevelopers.corla.raire.requestToRaire.GetAssertionsRequest;
+import jakarta.ws.rs.client.*;
+import jakarta.ws.rs.core.MediaType;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -39,11 +43,17 @@ import spark.Response;
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.endpoint.AbstractDoSDashboardEndpoint;
+import us.freeandfair.corla.model.Choice;
+import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.model.DoSDashboard;
 import us.freeandfair.corla.util.SparkHelper;
 
 
+/**
+ * The Get Assertions endpoint. Takes a GetAssertionsRequest, and an optional format parameter specifying CSV or JSON,
+ * defaulting to json. Returns a zip of all assertions for all IRV contests, in the requested format.
+ */
 public class GetAssertions extends AbstractDoSDashboardEndpoint {
 
     /**
@@ -126,45 +136,69 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
      */
     @Override
     public String endpointBody(final Request the_request, final Response the_response) {
+        final String prefix = "[endpointBody]";
 
         final Client client = ClientBuilder.newClient();
         final String raireUrl = Main.properties().getProperty(RAIRE_URL, "") + RAIRE_ENDPOINT;
-        WebTarget webTarget;
+        String suffix;
 
         // If csv was requested in the query parameter, hit the get-assertions-csv endpoint; default to json.
         String format = the_request.queryParamOrDefault(FORMAT_PARAM, JSON_SUFFIX);
         if (CSV_SUFFIX.equalsIgnoreCase(format)) {
-            webTarget = client.target(raireUrl + "-" + CSV_SUFFIX);
+            suffix = CSV_SUFFIX;
         } else {
-            webTarget = client.target(raireUrl + "-" + JSON_SUFFIX);
+            suffix = JSON_SUFFIX;
         }
+        WebTarget webTarget = client.target(raireUrl + "-" + suffix);
 
         // Use the DoS Dashboard to get the risk limit.
         final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
-        BigDecimal riskLimit = dosdb.auditInfo().riskLimit();
+        final OutputStream os;
+        try {
+            os = SparkHelper.getRaw(the_response).getOutputStream();
+            final ZipOutputStream zos = new ZipOutputStream(os);
 
-        // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
-        // collating the responses.
-        List<byte[]> raireResponses = new ArrayList<>();
+            // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
+            // collating the responses.
+            final List<ContestResult> IRVContestResults = IRVContestCollector.getIRVContestResults();
+            for (ContestResult cr : IRVContestResults) {
+                //  IRVContestResults.forEach(cr -> {
 
-        // Do stuff.
+                // Find the winner - there should only be one.
+                // TODO At the moment, the winner isn't yet set properly - will be set in the GenerateAssertions Endpoint.
+                // For now, tolerate > 1; later, check.
+                String winner = cr.getWinners().stream().findAny().get();
+                List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream().map(Choice::name).toList();
+                // Make the request.
+                GetAssertionsRequest getAssertionsRequest = new GetAssertionsRequest(
+                        cr.getContestName(),
+                        cr.getBallotCount().intValue(),
+                        candidates,
+                        winner,
+                        dosdb.auditInfo().riskLimit()
+                );
 
+                // Send it to the RAIRE service.
+                Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
+                var response = invocationBuilder.post(Entity.entity(getAssertionsRequest, MediaType.APPLICATION_JSON)
+                        , String.class);
+                LOGGER.info(String.format("%s %s", prefix, "Sent Assertion Request to RAIRE: " + getAssertionsRequest));
+                LOGGER.info(response);
 
-        // Return all the RAIRE responses to the endpoint as a zip file.
-        // This is a little fiddly because we have the RetrievedRaireResponse as a string inside a more
-        // complex json structure.
-        the_response.header("Content-Type", "application/zip");
-        the_response.header("Content-Disposition", "attachment; filename*=UTF-8''assertions.zip");
-        final OutputStream os = SparkHelper.getRaw(the_response).getOutputStream();
+                // Put the response into the .zip.
+                zos.putNextEntry(new ZipEntry(cr.getContestName() + "_assertions." + suffix));
+                zos.write(response.getBytes());
+                zos.closeEntry();
 
-        final ZipOutputStream zos = new ZipOutputStream(os);
-        for (byte[] raireResponse : raireResponses) {
-            zos.putNextEntry(new ZipEntry("GETTHECONTESTNAME AND SET THE SUFFIX" + "_assertions.json"));
-            zos.write(raireResponse);
-            zos.closeEntry();
+            }
+
+            // Return all the RAIRE responses to the endpoint as a zip file.
+            zos.close();
+        } catch (NoSuchElementException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-
-        zos.close();
         the_response.header("Content-Type", "application/zip");
         the_response.header("Content-Disposition", "attachment; filename*=UTF-8''assertions.zip");
         ok(the_response);
