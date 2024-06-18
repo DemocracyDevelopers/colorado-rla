@@ -22,7 +22,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.csv;
 
 import au.org.democracydevelopers.corla.model.ContestType;
-import au.org.democracydevelopers.corla.testUtils;
+import au.org.democracydevelopers.corla.util.testUtils;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 
 import org.testng.annotations.*;
 
-import static au.org.democracydevelopers.corla.testUtils.*;
+import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static org.testng.Assert.*;
 
 import static us.freeandfair.corla.query.CastVoteRecordQueries.getMatching;
