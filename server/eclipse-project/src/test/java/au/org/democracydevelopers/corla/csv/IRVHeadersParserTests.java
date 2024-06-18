@@ -22,7 +22,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.csv;
 
 import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
-import au.org.democracydevelopers.corla.testUtils;
+import au.org.democracydevelopers.corla.util.testUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -37,8 +37,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static au.org.democracydevelopers.corla.csv.IRVHeadersParser.validateIRVPreferenceHeaders;
-import static au.org.democracydevelopers.corla.testUtils.BAD_CSV_PATH;
-import static au.org.democracydevelopers.corla.testUtils.TINY_CSV_PATH;
+import static au.org.democracydevelopers.corla.util.testUtils.BAD_CSV_PATH;
+import static au.org.democracydevelopers.corla.util.testUtils.TINY_CSV_PATH;
 
 /**
  * Tests for various kinds of invalid IRV headers, such as those that don't have a consistent

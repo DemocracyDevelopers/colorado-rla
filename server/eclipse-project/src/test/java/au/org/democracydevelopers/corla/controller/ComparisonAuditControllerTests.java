@@ -24,7 +24,7 @@ package au.org.democracydevelopers.corla.controller;
 import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.model.IRVComparisonAudit;
 import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
-import au.org.democracydevelopers.corla.testUtils;
+import au.org.democracydevelopers.corla.util.testUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -49,7 +49,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static au.org.democracydevelopers.corla.testUtils.*;
+import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.query.CastVoteRecordQueries.getMatching;
 import static us.freeandfair.corla.query.ContestQueries.forCounties;
