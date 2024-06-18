@@ -28,7 +28,6 @@ import java.util.OptionalInt;
 
 import static us.freeandfair.corla.math.Audit.GAMMA;
 
-import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
