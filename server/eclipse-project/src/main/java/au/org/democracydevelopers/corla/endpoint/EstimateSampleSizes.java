@@ -21,5 +21,23 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.endpoint;
 
-public class EstimateSampleSizes {
+import spark.Request;
+import spark.Response;
+import us.freeandfair.corla.endpoint.AbstractDoSDashboardEndpoint;
+
+public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
+    @Override
+    protected String endpointBody(Request the_request, Response the_response) {
+        return "";
+    }
+
+    @Override
+    public EndpointType endpointType() {
+        return EndpointType.POST;
+    }
+
+    @Override
+    public String endpointName() {
+        return "";
+    }
 }

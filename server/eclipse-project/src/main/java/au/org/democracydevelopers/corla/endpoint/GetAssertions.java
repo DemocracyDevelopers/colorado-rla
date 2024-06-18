@@ -33,8 +33,10 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import au.org.democracydevelopers.corla.raire.requestToRaire.GetAssertionsRequest;
-import jakarta.ws.rs.client.*;
-import jakarta.ws.rs.core.MediaType;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -67,6 +69,11 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
     private static final String RAIRE_URL = "raire_url";
 
     /**
+     * RAIRE error code key.
+     */
+    private static final String RAIRE_ERROR_CODE = "error_code";
+
+    /**
      * RAIRE service endpoint name.
      */
     private static final String RAIRE_ENDPOINT = "/raire/get-assertions";
@@ -85,6 +92,12 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
      * String for "format" query parameter (value will be csv or json).
      */
     private static final String FORMAT_PARAM = "format";
+
+    /**
+     * The httpClient used for making requests to the raire-service.
+     */
+    CloseableHttpClient httpClient = HttpClients.createDefault();
+
 
     /**
      * The event to return for this endpoint.
@@ -108,11 +121,10 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
     }
 
     /**
-     * @return STATE authorization is necessary for this endpoint.
+     * @return No authorization is necessary for this endpoint.
      */
-    public AuthorizationType requiredAuthorization() {
-        return AuthorizationType.STATE;
-    }
+    // TODO: Clarify whether this should be STATE or NONE.
+    public AuthorizationType requiredAuthorization() { return AuthorizationType.NONE; }
 
     /**
      * {@inheritDoc}
@@ -138,7 +150,6 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
     public String endpointBody(final Request the_request, final Response the_response) {
         final String prefix = "[endpointBody]";
 
-        final Client client = ClientBuilder.newClient();
         final String raireUrl = Main.properties().getProperty(RAIRE_URL, "") + RAIRE_ENDPOINT;
         String suffix;
 
@@ -149,7 +160,6 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
         } else {
             suffix = JSON_SUFFIX;
         }
-        WebTarget webTarget = client.target(raireUrl + "-" + suffix);
 
         // Use the DoS Dashboard to get the risk limit.
         final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
@@ -167,7 +177,7 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
                 // Find the winner - there should only be one.
                 // TODO At the moment, the winner isn't yet set properly - will be set in the GenerateAssertions Endpoint.
                 // For now, tolerate > 1; later, check.
-                String winner = cr.getWinners().stream().findAny().get();
+                String winner = cr.getWinners().stream().findAny().orElse("UNKNOWN");
                 List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream().map(Choice::name).toList();
                 // Make the request.
                 GetAssertionsRequest getAssertionsRequest = new GetAssertionsRequest(
@@ -177,31 +187,45 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
                         winner,
                         dosdb.auditInfo().riskLimit()
                 );
+        HttpGet requestToRaire = new HttpGet(raireUrl + "-" + suffix);
 
                 // Send it to the RAIRE service.
-                Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-                var response = invocationBuilder.post(Entity.entity(getAssertionsRequest, MediaType.APPLICATION_JSON)
-                        , String.class);
-                LOGGER.info(String.format("%s %s", prefix, "Sent Assertion Request to RAIRE: " + getAssertionsRequest));
-                LOGGER.info(response);
+                HttpResponse raireResponse = httpClient.execute(requestToRaire);
+                LOGGER.debug(String.format("%s %s", prefix, "Sent Assertion Request to RAIRE: " + getAssertionsRequest));
 
-                // Put the response into the .zip.
+                if(raireResponse.getStatusLine().getStatusCode() != 200) {
+                   final String msg = ("Bad response from Raire service: "+raireResponse.getStatusLine().getReasonPhrase());
+                   LOGGER.error(String.format("%s %s", prefix, msg));
+                   throw new RuntimeException(msg);
+                }
+
+                // OK response. Put the file name into the .zip.
                 zos.putNextEntry(new ZipEntry(cr.getContestName() + "_assertions." + suffix));
-                zos.write(response.getBytes());
-                zos.closeEntry();
+                // If it's an error, put the error message into the zip.
+                if(raireResponse.containsHeader(RAIRE_ERROR_CODE)) {
+                    // TODO examine the error response
+                    String code = raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getValue();
+                    String message =   raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getElements()[0].toString();
+                    zos.write(message.getBytes());
+                } else {
+                    // Successful assertion retrieval. Write into zip.
+                    zos.write(raireResponse.getEntity().getContent().read());
+                }
 
+                zos.closeEntry();
             }
 
             // Return all the RAIRE responses to the endpoint as a zip file.
             zos.close();
-        } catch (NoSuchElementException e) {
-            throw new RuntimeException(e);
+            the_response.header("Content-Type", "application/zip");
+            the_response.header("Content-Disposition", "attachment; filename*=UTF-8''assertions.zip");
+            ok(the_response);
+            return my_endpoint_result.get();
+
         } catch (IOException e) {
+            final String msg = "Error creating zip file.";
+            LOGGER.error(String.format("%s %s", prefix, msg));
             throw new RuntimeException(e);
         }
-        the_response.header("Content-Type", "application/zip");
-        the_response.header("Content-Disposition", "attachment; filename*=UTF-8''assertions.zip");
-        ok(the_response);
-        return my_endpoint_result.get();
     }
 }

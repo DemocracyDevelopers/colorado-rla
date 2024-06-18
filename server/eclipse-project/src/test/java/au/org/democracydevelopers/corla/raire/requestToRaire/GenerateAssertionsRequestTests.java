@@ -21,7 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.raire.requestToRaire;
 
-import au.org.democracydevelopers.corla.testUtils;
+import au.org.democracydevelopers.corla.util.testUtils;
 import com.google.gson.Gson;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
