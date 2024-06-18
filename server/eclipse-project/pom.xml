@@ -314,6 +314,12 @@
 			<artifactId>maven-site-plugin</artifactId>
 			<version>3.7.1</version>
 		</dependency>
+		<!--Used for making the simple client that talks to raire-service.-->
+		<dependency>
+			<groupId>jakarta.ws.rs</groupId>
+			<artifactId>jakarta.ws.rs-api</artifactId>
+			<version>4.0.0</version>
+		</dependency>
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
