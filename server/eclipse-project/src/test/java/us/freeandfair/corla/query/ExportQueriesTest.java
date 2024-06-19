@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 
 import java.util.*;
 
+import org.junit.Ignore;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.*;
 
@@ -71,7 +72,7 @@ public class ExportQueriesTest {
   }
 
   // Note: the code this is testing is broken. JSON reports appear to be unused, so I'm ignoring it for now.
-  @Test(enabled = false)
+  @Test( enabled = false )
   public void jsonRowsTest() {
     String q = "SELECT seed FROM dos_dashboard";
     ByteArrayOutputStream os = new ByteArrayOutputStream();
