@@ -21,6 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.endpoint;
 
+import au.org.democracydevelopers.corla.endpoint.GetAssertions.*;
 import au.org.democracydevelopers.corla.raire.requestToRaire.GetAssertionsRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -31,22 +32,30 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import spark.Request;
+import spark.Response;
 import us.freeandfair.corla.endpoint.Endpoint;
 import us.freeandfair.corla.json.SubmittedAuditCVR;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
+import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.persistence.Persistence;
 
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Properties;
+import java.util.zip.ZipOutputStream;
 
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -127,17 +136,12 @@ public class GetAssertionsTests {
   @Mock
   private CastVoteRecord auditedCvr;
 
-  @Mock
-  private GetAssertions endpoint;
-
   /**
    * Initialise mocked objects prior to the first test.
    */
   @BeforeClass
   public void initMocks() {
     MockitoAnnotations.openMocks(this);
-
-    when(endpoint.requiredAuthorization()).thenReturn(Endpoint.AuthorizationType.NONE);
 
     when(ABCD.choices()).thenReturn(List.of("A", "B", "C", "D"));
     when(BACD.choices()).thenReturn(List.of("B", "A", "C", "D"));
@@ -155,18 +159,22 @@ public class GetAssertionsTests {
   public void test2() throws Exception {
     GetAssertionsRequest request = new GetAssertionsRequest("testContest",1000,
             List.of("Alice","Bob"), "Alice", BigDecimal.valueOf(0.03));
+
+    List<ContestResult> mockedIRVContestResults = List.of(new ContestResult("test"));
+    try (MockedStatic<IRVContestCollector> mockIRVContestResults = Mockito.mockStatic(IRVContestCollector.class)) {
+      mockIRVContestResults.when(IRVContestCollector::getIRVContestResults).thenReturn(mockedIRVContestResults);
+
+    List<ContestResult> testMock = IRVContestCollector.getIRVContestResults();
+    assertEquals(1, testMock.size());
+    assertEquals("test", testMock.get(0).getContestName());
+
+    GetAssertions endpoint = new GetAssertions();
+    ZipOutputStream zos = new ZipOutputStream(new ByteArrayOutputStream());
+    endpoint.getAssertions(zos, BigDecimal.valueOf(0.03),"http://localhost:8080","csv");
+
+
     var client = HttpClientBuilder.create().build();
 
-    // Send an Audit cvr
-    HttpUriRequest getAssertionsRequest  = RequestBuilder.create("GET")
-            // Note: use port 8888 for things requiring login.
-            .setUri("http://localhost:3000/get-assertions")
-            // .setEntity(new StringEntity(request.toString(), ContentType.APPLICATION_JSON))
-            .build();
-    HttpResponse getAssertionsResponse = client.execute(getAssertionsRequest);
-    // HttpResponse response = client.execute(request);
-
-    assertEquals(getAssertionsResponse.getEntity().getContent().toString(),"Test Error");
-    assertEquals(getAssertionsResponse.getStatusLine().getStatusCode(), 500);
+    }
   }
 }

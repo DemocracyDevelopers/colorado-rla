@@ -24,6 +24,7 @@ package au.org.democracydevelopers.corla.endpoint;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -50,7 +51,6 @@ import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.model.DoSDashboard;
 import us.freeandfair.corla.util.SparkHelper;
-
 
 /**
  * The Get Assertions endpoint. Takes a GetAssertionsRequest, and an optional format parameter specifying CSV or JSON,
@@ -163,62 +163,15 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
 
         // Use the DoS Dashboard to get the risk limit.
         final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
-        final OutputStream os;
+
         try {
-            os = SparkHelper.getRaw(the_response).getOutputStream();
-            final ZipOutputStream zos = new ZipOutputStream(os);
 
-            // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
-            // collating the responses.
-            final List<ContestResult> IRVContestResults = IRVContestCollector.getIRVContestResults();
-            for (ContestResult cr : IRVContestResults) {
-                //  IRVContestResults.forEach(cr -> {
+            final ZipOutputStream os = new ZipOutputStream(SparkHelper.getRaw(the_response).getOutputStream());
+            getAssertions(os, dosdb.auditInfo().riskLimit(), raireUrl, suffix);
 
-                // Find the winner - there should only be one.
-                // TODO At the moment, the winner isn't yet set properly - will be set in the GenerateAssertions Endpoint.
-                // For now, tolerate > 1; later, check.
-                String winner = cr.getWinners().stream().findAny().orElse("UNKNOWN");
-                List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream().map(Choice::name).toList();
-                // Make the request.
-                GetAssertionsRequest getAssertionsRequest = new GetAssertionsRequest(
-                        cr.getContestName(),
-                        cr.getBallotCount().intValue(),
-                        candidates,
-                        winner,
-                        dosdb.auditInfo().riskLimit()
-                );
-        HttpGet requestToRaire = new HttpGet(raireUrl + "-" + suffix);
-
-                // Send it to the RAIRE service.
-                HttpResponse raireResponse = httpClient.execute(requestToRaire);
-                LOGGER.debug(String.format("%s %s", prefix, "Sent Assertion Request to RAIRE: " + getAssertionsRequest));
-
-                if(raireResponse.getStatusLine().getStatusCode() != 200) {
-                   final String msg = ("Bad response from Raire service: "+raireResponse.getStatusLine().getReasonPhrase());
-                   LOGGER.error(String.format("%s %s", prefix, msg));
-                   throw new RuntimeException(msg);
-                }
-
-                // OK response. Put the file name into the .zip.
-                zos.putNextEntry(new ZipEntry(cr.getContestName() + "_assertions." + suffix));
-                // If it's an error, put the error message into the zip.
-                if(raireResponse.containsHeader(RAIRE_ERROR_CODE)) {
-                    // TODO examine the error response
-                    String code = raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getValue();
-                    String message =   raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getElements()[0].toString();
-                    zos.write(message.getBytes());
-                } else {
-                    // Successful assertion retrieval. Write into zip.
-                    zos.write(raireResponse.getEntity().getContent().read());
-                }
-
-                zos.closeEntry();
-            }
-
-            // Return all the RAIRE responses to the endpoint as a zip file.
-            zos.close();
             the_response.header("Content-Type", "application/zip");
             the_response.header("Content-Disposition", "attachment; filename*=UTF-8''assertions.zip");
+
             ok(the_response);
             return my_endpoint_result.get();
 
@@ -227,5 +180,70 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
             LOGGER.error(String.format("%s %s", prefix, msg));
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Do the actual work of getting the assertions.
+     * - Gather all the IRVContestResults
+     * - For each IRV contest, make a request to the raire-service get-assertions endpoint of the right format type
+     * - Collate all the results into a zip
+     * @param zos an output stream (to become a zip file)
+     * @param riskLimit the risk limit
+     * @param raireUrl the url where the raire-service is running
+     * @param suffix requested file type: "csv" or "json"
+     */
+    public void getAssertions(final ZipOutputStream zos, final BigDecimal riskLimit, String raireUrl, String suffix) throws IOException {
+        final String prefix = "[getAssertions]";
+
+        // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
+        // collating the responses.
+        final List<ContestResult> IRVContestResults = IRVContestCollector.getIRVContestResults();
+        for (ContestResult cr : IRVContestResults) {
+            //  IRVContestResults.forEach(cr -> {
+
+            // Find the winner - there should only be one.
+            // TODO At the moment, the winner isn't yet set properly - will be set in the GenerateAssertions Endpoint.
+            // For now, tolerate > 1; later, check.
+            String winner = cr.getWinners().stream().findAny().orElse("UNKNOWN");
+            List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream().map(Choice::name).toList();
+            // Make the request.
+            GetAssertionsRequest getAssertionsRequest = new GetAssertionsRequest(
+                    cr.getContestName(),
+                    cr.getBallotCount().intValue(),
+                    candidates,
+                    winner,
+                    riskLimit
+            );
+            HttpGet requestToRaire = new HttpGet(raireUrl + "-" + suffix);
+
+            // Send it to the RAIRE service.
+            // TODO log this error properly.
+            HttpResponse raireResponse = httpClient.execute(requestToRaire);
+            LOGGER.debug(String.format("%s %s", prefix, "Sent Assertion Request to RAIRE: " + getAssertionsRequest));
+
+            if(raireResponse.getStatusLine().getStatusCode() != 200) {
+                final String msg = ("Bad response from Raire service: "+raireResponse.getStatusLine().getReasonPhrase());
+                LOGGER.error(String.format("%s %s", prefix, msg));
+                throw new RuntimeException(msg);
+            }
+
+            // OK response. Put the file name into the .zip.
+            zos.putNextEntry(new ZipEntry(cr.getContestName() + "_assertions." + suffix));
+            // If it's an error, put the error message into the zip.
+            if(raireResponse.containsHeader(RAIRE_ERROR_CODE)) {
+                // TODO examine the error response
+                String code = raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getValue();
+                String message =   raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getElements()[0].toString();
+                zos.write(message.getBytes());
+            } else {
+                // Successful assertion retrieval. Write into zip.
+                zos.write(raireResponse.getEntity().getContent().read());
+            }
+
+            zos.closeEntry();
+        }
+
+        // Return all the RAIRE responses to the endpoint as a zip file.
+        zos.close();
     }
 }

@@ -24,6 +24,7 @@ import org.apache.log4j.Level;
 import org.eclipse.jetty.http.HttpStatus;
 import org.hibernate.HibernateException;
 
+import org.hibernate.service.spi.InjectService;
 import spark.HaltException;
 import spark.Request;
 import spark.Response;
