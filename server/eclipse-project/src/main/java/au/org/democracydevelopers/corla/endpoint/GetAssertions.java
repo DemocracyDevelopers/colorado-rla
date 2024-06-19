@@ -232,23 +232,25 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
             HttpResponse raireResponse = httpClient.execute(requestToRaire);
             LOGGER.debug(String.format("%s %s", prefix, "Sent Assertion Request to RAIRE: " + getAssertionsRequest));
 
-            if(raireResponse.getStatusLine().getStatusCode() != 200) {
-                final String msg = ("Bad response from Raire service: "+raireResponse.getStatusLine().getReasonPhrase());
+            int statusCode = raireResponse.getStatusLine().getStatusCode();
+            if(statusCode == 200) {
+                // OK response. Put the file name and data into the .zip.
+                // TODO Sanitize contest name.
+                zos.putNextEntry(new ZipEntry(cr.getContestName() + "_assertions." + suffix));
+                zos.write(raireResponse.getEntity().getContent().read());
+            } else if(raireResponse.containsHeader(RAIRE_ERROR_CODE)) {
+                // Error response about a specific contest, e.g. "NO_ASSERTIONS_PRESENT".
+                // Write into the zip file and keep going.
+                // TODO Sanitize contest name.
+                zos.putNextEntry(new ZipEntry(cr.getContestName() + "_assertions." + suffix));
+                String code = raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getValue();
+                zos.write(code.getBytes());
+            } else {
+                // Something went wrong with the connection.
+                final String msg = ("Bad response from Raire service: " + statusCode + ": "
+                        +raireResponse.getStatusLine().getReasonPhrase());
                 LOGGER.error(String.format("%s %s", prefix, msg));
                 throw new RuntimeException(msg);
-            }
-
-            // OK response. Put the file name into the .zip.
-            zos.putNextEntry(new ZipEntry(cr.getContestName() + "_assertions." + suffix));
-            // If it's an error, put the error message into the zip.
-            if(raireResponse.containsHeader(RAIRE_ERROR_CODE)) {
-                // TODO examine the error response
-                String code = raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getValue();
-                String message =   raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getElements()[0].toString();
-                zos.write(message.getBytes());
-            } else {
-                // Successful assertion retrieval. Write into zip.
-                zos.write(raireResponse.getEntity().getContent().read());
             }
 
             zos.closeEntry();

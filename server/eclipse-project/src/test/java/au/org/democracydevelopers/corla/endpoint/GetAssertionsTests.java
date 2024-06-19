@@ -23,12 +23,16 @@ package au.org.democracydevelopers.corla.endpoint;
 
 import au.org.democracydevelopers.corla.endpoint.GetAssertions.*;
 import au.org.democracydevelopers.corla.model.ContestType;
+import au.org.democracydevelopers.corla.raire.requestToRaire.GenerateAssertionsRequest;
 import au.org.democracydevelopers.corla.raire.requestToRaire.GetAssertionsRequest;
+import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -68,14 +72,27 @@ public class GetAssertionsTests {
 
   private static final Logger LOGGER = LogManager.getLogger(GetAssertionsTests.class);
 
+  private static final Gson GSON = new Gson();
+
+  private static String boulderMayoral = "City of Boulder Mayoral Candidates";
+
   private Choice alice = new Choice("Alice", "", false, false);
   private Choice bob = new Choice("Bob", "", false, false);
 
   private Contest testContest = new Contest("testContest", new County("testCounty", 1L), ContestType.IRV.toString(),
           List.of(alice, bob), 2, 1, 1);
 
-  private ContestResult mockedIRVContestResult = new ContestResult(testContest.name());
-  private List<ContestResult> mockedIRVContestResults = List.of(mockedIRVContestResult);
+  private List<Choice> boulderMayoralCandidates = List.of(
+          new Choice("Aaron Brockett", "", false, false),
+          new Choice("Nicole Speer", "", false, false),
+          new Choice("Bob Yates", "", false, false),
+          new Choice("Paul Tweedlie", "", false, false)
+  );
+
+  private Contest boulderMayoralContest = new Contest(boulderMayoral, new County("Boulder", 7L), ContestType.IRV.toString(),
+          boulderMayoralCandidates, 4, 1, 0);
+  private ContestResult boulderIRVContestResult = new ContestResult(boulderMayoral);
+  private List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult);
 
   /**
    * Container for the mock-up database.
@@ -116,10 +133,10 @@ public class GetAssertionsTests {
   public void initMocks() {
     MockitoAnnotations.openMocks(this);
 
-    mockedIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    mockedIRVContestResult.setBallotCount(1000L);
-    mockedIRVContestResult.setWinners(Set.of(alice.name()));
-    mockedIRVContestResult.addContests(Set.of(testContest));
+    boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+    boulderIRVContestResult.setBallotCount(100000L);
+    boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
+    boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
   }
 
 
@@ -127,23 +144,29 @@ public class GetAssertionsTests {
 
   @Test
   public void test2() throws Exception {
-    GetAssertionsRequest request = new GetAssertionsRequest("testContest",1000,
-            List.of("Alice","Bob"), "Alice", BigDecimal.valueOf(0.03));
 
     try (MockedStatic<IRVContestCollector> mockIRVContestResults = Mockito.mockStatic(IRVContestCollector.class)) {
       mockIRVContestResults.when(IRVContestCollector::getIRVContestResults).thenReturn(mockedIRVContestResults);
 
     List<ContestResult> testMock = IRVContestCollector.getIRVContestResults();
     assertEquals(1, testMock.size());
-    assertEquals("testContest", testMock.get(0).getContestName());
+    assertEquals(boulderMayoral, testMock.get(0).getContestName());
 
     GetAssertions endpoint = new GetAssertions();
     ZipOutputStream zos = new ZipOutputStream(new ByteArrayOutputStream());
     endpoint.getAssertions(zos, BigDecimal.valueOf(0.03),"http://localhost:8080/raire/get-assertions","csv");
 
+    CloseableHttpClient client = HttpClientBuilder.create().build();
+      GenerateAssertionsRequest generateAssertionsRequest = new GenerateAssertionsRequest(boulderMayoral,
+              100000, 5, boulderMayoralCandidates.stream().map(Choice::name).toList());
+      HttpPost generateAssertionsPost = new HttpPost("http://localhost:8080/raire/generate-assertions");
+      generateAssertionsPost.addHeader("content-type", "application/json");
+      generateAssertionsPost.setEntity(new StringEntity(GSON.toJson(generateAssertionsRequest)));
 
-    var client = HttpClientBuilder.create().build();
+      HttpResponse generateAssertionsResponse = client.execute(generateAssertionsPost);
 
+      ZipOutputStream zos2 = new ZipOutputStream(new ByteArrayOutputStream());
+      endpoint.getAssertions(zos2, BigDecimal.valueOf(0.03),"http://localhost:8080/raire/get-assertions","csv");
     }
   }
 }
