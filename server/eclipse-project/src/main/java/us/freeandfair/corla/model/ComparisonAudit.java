@@ -129,11 +129,12 @@ public class ComparisonAudit implements PersistentEntity {
           private BigDecimal my_gamma = Audit.GAMMA;
 
   /**
-   * The diluted margin
+   * The diluted margin. [Democracy Developers: this must be accessible and modifiable by
+   * child classes of ComparisonAudit, hence we have made this attribute protected.]
    */
   @Column(updatable = false, nullable = false,
           precision = PRECISION, scale = SCALE)
-          private BigDecimal diluted_margin = BigDecimal.ONE;
+          protected BigDecimal diluted_margin = BigDecimal.ONE;
 
   /**
    * The risk limit.
@@ -150,16 +151,20 @@ public class ComparisonAudit implements PersistentEntity {
 
   /**
    * The number of samples to audit overall assuming no further overstatements.
+   * [Democracy Developers: this must be accessible and modifiable by child classes of
+   * ComparisonAudit, hence we have made this attribute protected.]
    */
   @Column(nullable = false)
-  private Integer my_optimistic_samples_to_audit = 0;
+  protected Integer my_optimistic_samples_to_audit = 0;
 
   /**
    * The expected number of samples to audit overall assuming overstatements
    * continue at the current rate.
+   * [Democracy Developers: this must be accessible and modifiable by child classes of
+   * ComparisonAudit, hence we have made this attribute protected.]
    */
   @Column(nullable = false)
-  private Integer my_estimated_samples_to_audit = 0;
+  protected Integer my_estimated_samples_to_audit = 0;
 
   /**
    * The number of two-vote understatements recorded so far.
@@ -207,16 +212,20 @@ public class ComparisonAudit implements PersistentEntity {
   /**
    * A flag that indicates whether the optimistic ballots to audit
    * estimate needs to be recalculated.
+   * [Democracy Developers: this must be accessible and modifiable by child classes of
+   * ComparisonAudit, hence we have made this attribute protected.]
    */
   @Column(nullable = false)
-  private Boolean my_optimistic_recalculate_needed = true;
+  protected Boolean my_optimistic_recalculate_needed = true;
 
   /**
    * A flag that indicates whether the non-optimistic ballots to
-   * audit estimate needs to be recalculated
+   * audit estimate needs to be recalculated.
+   * [Democracy Developers: this must be accessible and modifiable by child classes of
+   * ComparisonAudit, hence we have made this attribute protected.]
    */
   @Column(nullable = false)
-  private Boolean my_estimated_recalculate_needed = true;
+  protected Boolean my_estimated_recalculate_needed = true;
 
   /**
    * The sequence of CastVoteRecord ids for this contest ordered by County id
