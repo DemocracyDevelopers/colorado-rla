@@ -109,10 +109,8 @@ public final class ContestQueries {
   public static void deleteForCounty(final Long the_county_id) {
     final Set<Contest> contests = 
         forCounty(Persistence.getByID(the_county_id, County.class));
-    if (contests != null) {
-      for (final Contest c : contests) {
-        Persistence.delete(c);
-      }
+    for (final Contest c : contests) {
+      Persistence.delete(c);
     }
     Persistence.flush();
   }
