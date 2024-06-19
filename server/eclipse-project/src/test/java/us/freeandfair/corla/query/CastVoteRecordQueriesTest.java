@@ -33,8 +33,8 @@ public class CastVoteRecordQueriesTest {
   private static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine")
           .withDatabaseName("corla")
           .withUsername("corlaadmin")
-            .withPassword("corlasecret")
-            .withInitScript("SQL/corlaInitEmpty.sql");
+          .withPassword("corlasecret")
+          .withInitScript("SQL/corlaInitEmpty.sql");
 
   @BeforeClass
   public static void beforeAll() {
