@@ -22,6 +22,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.endpoint;
 
 import au.org.democracydevelopers.corla.endpoint.GetAssertions.*;
+import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.raire.requestToRaire.GetAssertionsRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -43,10 +44,8 @@ import spark.Request;
 import spark.Response;
 import us.freeandfair.corla.endpoint.Endpoint;
 import us.freeandfair.corla.json.SubmittedAuditCVR;
-import us.freeandfair.corla.model.CVRContestInfo;
-import us.freeandfair.corla.model.CastVoteRecord;
+import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
-import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.persistence.Persistence;
 
 import java.io.ByteArrayOutputStream;
@@ -55,6 +54,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.zip.ZipOutputStream;
 
 import static org.mockito.Mockito.when;
@@ -67,6 +67,15 @@ import static org.testng.Assert.assertEquals;
 public class GetAssertionsTests {
 
   private static final Logger LOGGER = LogManager.getLogger(GetAssertionsTests.class);
+
+  private Choice alice = new Choice("Alice", "", false, false);
+  private Choice bob = new Choice("Bob", "", false, false);
+
+  private Contest testContest = new Contest("testContest", new County("testCounty", 1L), ContestType.IRV.toString(),
+          List.of(alice, bob), 2, 1, 1);
+
+  private ContestResult mockedIRVContestResult = new ContestResult(testContest.name());
+  private List<ContestResult> mockedIRVContestResults = List.of(mockedIRVContestResult);
 
   /**
    * Container for the mock-up database.
@@ -101,55 +110,16 @@ public class GetAssertionsTests {
   }
 
   /**
-   * Mocked CVRContestInfo representing the vote "A", "B", "C", "D".
-   */
-  @Mock
-  private CVRContestInfo ABCD;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "B", "A", "C", "D".
-   */
-  @Mock
-  private CVRContestInfo BACD;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "A".
-   */
-  @Mock
-  private CVRContestInfo A;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "B".
-   */
-  @Mock
-  private CVRContestInfo B;
-
-  /**
-   * Mocked CastVoteRecord to represent a CVR.
-   */
-  @Mock
-  private CastVoteRecord cvr;
-
-  /**
-   * Mocked CastVoteRecord to represent an audited CVR.
-   */
-  @Mock
-  private CastVoteRecord auditedCvr;
-
-  /**
    * Initialise mocked objects prior to the first test.
    */
   @BeforeClass
   public void initMocks() {
     MockitoAnnotations.openMocks(this);
 
-    when(ABCD.choices()).thenReturn(List.of("A", "B", "C", "D"));
-    when(BACD.choices()).thenReturn(List.of("B", "A", "C", "D"));
-    // when(blank.choices()).thenReturn(List.of());
-    when(A.choices()).thenReturn(List.of("A"));
-    when(B.choices()).thenReturn(List.of("B"));
-
-    when(cvr.id()).thenReturn(1L);
+    mockedIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+    mockedIRVContestResult.setBallotCount(1000L);
+    mockedIRVContestResult.setWinners(Set.of(alice.name()));
+    mockedIRVContestResult.addContests(Set.of(testContest));
   }
 
 
@@ -160,17 +130,16 @@ public class GetAssertionsTests {
     GetAssertionsRequest request = new GetAssertionsRequest("testContest",1000,
             List.of("Alice","Bob"), "Alice", BigDecimal.valueOf(0.03));
 
-    List<ContestResult> mockedIRVContestResults = List.of(new ContestResult("test"));
     try (MockedStatic<IRVContestCollector> mockIRVContestResults = Mockito.mockStatic(IRVContestCollector.class)) {
       mockIRVContestResults.when(IRVContestCollector::getIRVContestResults).thenReturn(mockedIRVContestResults);
 
     List<ContestResult> testMock = IRVContestCollector.getIRVContestResults();
     assertEquals(1, testMock.size());
-    assertEquals("test", testMock.get(0).getContestName());
+    assertEquals("testContest", testMock.get(0).getContestName());
 
     GetAssertions endpoint = new GetAssertions();
     ZipOutputStream zos = new ZipOutputStream(new ByteArrayOutputStream());
-    endpoint.getAssertions(zos, BigDecimal.valueOf(0.03),"http://localhost:8080","csv");
+    endpoint.getAssertions(zos, BigDecimal.valueOf(0.03),"http://localhost:8080/raire/get-assertions","csv");
 
 
     var client = HttpClientBuilder.create().build();

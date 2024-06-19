@@ -34,8 +34,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import au.org.democracydevelopers.corla.raire.requestToRaire.GetAssertionsRequest;
+import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.LogManager;
@@ -62,6 +65,11 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
      * Class-wide logger
      */
     public static final Logger LOGGER = LogManager.getLogger(GetAssertions.class);
+
+    /**
+     * GSON, for serialising requests.
+     */
+    Gson gson = new Gson();
 
     /**
      * Identify RAIRE service URL from config.
@@ -206,6 +214,7 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
             // For now, tolerate > 1; later, check.
             String winner = cr.getWinners().stream().findAny().orElse("UNKNOWN");
             List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream().map(Choice::name).toList();
+
             // Make the request.
             GetAssertionsRequest getAssertionsRequest = new GetAssertionsRequest(
                     cr.getContestName(),
@@ -214,7 +223,9 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
                     winner,
                     riskLimit
             );
-            HttpGet requestToRaire = new HttpGet(raireUrl + "-" + suffix);
+            HttpPost requestToRaire = new HttpPost(raireUrl + "-" + suffix);
+            requestToRaire.addHeader("content-type", "application/json");
+            requestToRaire.setEntity(new StringEntity(gson.toJson(getAssertionsRequest)));
 
             // Send it to the RAIRE service.
             // TODO log this error properly.
