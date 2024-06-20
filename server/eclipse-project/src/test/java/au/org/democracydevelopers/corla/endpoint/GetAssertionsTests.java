@@ -237,6 +237,7 @@ public class GetAssertionsTests {
           InputStream bais = new ByteArrayInputStream(bytes);
           ZipInputStream in = new ZipInputStream(bais);
           ZipEntry firstEntry = in.getNextEntry();
+          assertNotNull(firstEntry);
           assertEquals(firstEntry.getName(), "CityofBoulderMayoralCandidates_assertions.json");
           ZipEntry secondEntry = in.getNextEntry();
           assertEquals("TinyExample1" + "_assertions.json", secondEntry.getName());
