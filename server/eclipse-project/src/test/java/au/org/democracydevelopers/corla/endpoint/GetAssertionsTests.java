@@ -23,11 +23,13 @@ package au.org.democracydevelopers.corla.endpoint;
 
 import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.util.testUtils;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.model.*;
@@ -40,6 +42,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipInputStream;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.Assert.assertNull;
 import static org.testng.Assert.assertEquals;
 
@@ -56,29 +59,36 @@ public class GetAssertionsTests {
 
     private static final Logger LOGGER = LogManager.getLogger(GetAssertionsTests.class);
 
-    private static String boulderMayoral = "City of Boulder Mayoral Candidates";
-    private static String tinyIRV = "TinyExample1";
+    private final static String boulderMayoral = "City of Boulder Mayoral Candidates";
+    private final static String tinyIRV = "TinyExample1";
 
-    private Choice alice = new Choice("Alice", "", false, false);
-    private Choice bob = new Choice("Bob", "", false, false);
-    private Choice chuan = new Choice("Chuan", "", false, false);
+    private final Choice alice = new Choice("Alice", "", false, false);
+    private final Choice bob = new Choice("Bob", "", false, false);
+    private final Choice chuan = new Choice("Chuan", "", false, false);
 
-    private List<Choice> boulderMayoralCandidates = List.of(
+    private final List<Choice> boulderMayoralCandidates = List.of(
             new Choice("Aaron Brockett", "", false, false),
             new Choice("Nicole Speer", "", false, false),
             new Choice("Bob Yates", "", false, false),
             new Choice("Paul Tweedlie", "", false, false)
     );
 
-    // IRV Contests for mocking the IRVContestCollector.
-    private Contest tinyIRVExample = new Contest(tinyIRV, new County("Arapahoe", 3L), ContestType.IRV.toString(),
+    /**
+     * Two IRV Contests for mocking the IRVContestCollector.
+     */
+    private final Contest tinyIRVExample = new Contest(tinyIRV, new County("Arapahoe", 3L), ContestType.IRV.toString(),
             List.of(alice, bob, chuan), 3, 1, 0);
-    private ContestResult tinyIRVContestResult = new ContestResult(tinyIRV);
-    private Contest boulderMayoralContest = new Contest(boulderMayoral, new County("Boulder", 7L), ContestType.IRV.toString(),
+    private final ContestResult tinyIRVContestResult = new ContestResult(tinyIRV);
+    private final Contest boulderMayoralContest = new Contest(boulderMayoral, new County("Boulder", 7L), ContestType.IRV.toString(),
             boulderMayoralCandidates, 4, 1, 0);
-    private ContestResult boulderIRVContestResult = new ContestResult(boulderMayoral);
-    private List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult, tinyIRVContestResult);
+    private final ContestResult boulderIRVContestResult = new ContestResult(boulderMayoral);
+    private final List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult, tinyIRVContestResult);
 
+
+    /**
+     * Wiremock server for mocking the raire service.
+     */
+    final WireMockServer wireMockRaireServer = new WireMockServer();
 
     /**
      * Initialise mocked objects prior to the first test.
@@ -96,8 +106,25 @@ public class GetAssertionsTests {
         tinyIRVContestResult.setBallotCount(10L);
         tinyIRVContestResult.setWinners(Set.of("Alice"));
         tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
+
+        wireMockRaireServer.start();
+        configureFor("localhost", wireMockRaireServer.port());
+        stubFor(post(urlEqualTo("/raire/get-assertions-csv"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody("Test csv")));
+        stubFor(post(urlEqualTo("/raire/get-assertions-json"))
+                .willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json")
+                .withBody("Test json")));
     }
 
+    @AfterClass
+    public void closeMocks() {
+        wireMockRaireServer.stop();
+    }
 
     /**
      * Calls the getAssertions main endpoint function, for csv, and checks that the right file names are present in the
@@ -114,7 +141,7 @@ public class GetAssertionsTests {
             GetAssertions endpoint = new GetAssertions();
             ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
             ZipOutputStream zos = new ZipOutputStream(bytesOut);
-            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), "http://localhost:8080/raire/get-assertions", "csv");
+            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), wireMockRaireServer.baseUrl()+"/raire/get-assertions", "csv");
 
             byte[] bytes = bytesOut.toByteArray();
             InputStream bais = new ByteArrayInputStream(bytes);
