@@ -149,7 +149,7 @@ public final class CastVoteRecordQueries {
     } catch (final PersistenceException e) {
       Main.LOGGER.error(COULD_NOT_QUERY_DATABASE);
     }
-    if (result == null) {
+    if (result == OptionalLong.empty()) {
       Main.LOGGER.debug("found no CVRs for type " + the_type);
     } else {
       Main.LOGGER.debug("query succeeded, returning CVR stream");
@@ -222,7 +222,7 @@ public final class CastVoteRecordQueries {
     } catch (final PersistenceException e) {
       Main.LOGGER.error(COULD_NOT_QUERY_DATABASE);
     }
-    if (result == null) {
+    if (result == OptionalLong.empty()) {
       Main.LOGGER.debug("found no CVRs for county " + the_county + ", type " + the_type);
     } else {
       Main.LOGGER.debug("query succeeded, returning CVR stream");
@@ -323,6 +323,7 @@ public final class CastVoteRecordQueries {
       final TypedQuery<CastVoteRecord> query = s.createQuery(cq);
       final List<CastVoteRecord> query_results = query.getResultList();
       // if there's exactly one result, return that
+      // TODO the else branch here shouldn't return null?
       if (query_results.size() == 1) {
         result = query_results.get(0);
       }
@@ -352,6 +353,9 @@ public final class CastVoteRecordQueries {
   public static Map<Integer, CastVoteRecord> get(final Long the_county_id,
                                                  final RecordType the_type,
                                                  final List<Integer> the_sequence_numbers) {
+
+    // TODO: this doesn't handle the case where two CVRs in the same county have the same sequence number.
+    // TODO: There should probably be a DB error or something if that happens.
     Map<Integer, CastVoteRecord> result = null;
     final Set<Integer> unique_numbers = new HashSet<>(the_sequence_numbers);
 

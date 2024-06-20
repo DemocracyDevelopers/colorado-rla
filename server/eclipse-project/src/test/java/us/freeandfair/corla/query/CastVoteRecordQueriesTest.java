@@ -1,26 +1,24 @@
 package us.freeandfair.corla.query;
 
 import java.lang.reflect.Method;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
 
 import org.hibernate.LockMode;
 import org.hibernate.Session;
+import org.hibernate.query.Query;
+import org.jetbrains.annotations.NotNull;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.*;
 
 import static org.testng.Assert.*;
 
 import java.time.Instant;
-import java.util.Properties;
+import java.util.Optional;
+import java.util.function.*;
+import java.util.stream.*;
 
 import us.freeandfair.corla.asm.PersistentASMState;
-import us.freeandfair.corla.model.CastVoteRecord;
-import us.freeandfair.corla.model.Contest;
-import us.freeandfair.corla.model.Choice;
-import us.freeandfair.corla.model.County;
-import us.freeandfair.corla.model.CVRContestInfo;
-import us.freeandfair.corla.model.CVRAuditInfo;
+import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.Setup;
 
@@ -54,7 +52,11 @@ public class CastVoteRecordQueriesTest {
 
   @AfterMethod
   public static void afterEach() {
-    Persistence.rollbackTransaction();
+    try {
+      Persistence.rollbackTransaction();
+    } catch (IllegalStateException e) {
+      // Sometimes our tests intentionally kill the DB.
+    }
   }
 
   @AfterClass
@@ -190,4 +192,130 @@ public class CastVoteRecordQueriesTest {
     assertEquals(acvrs, result);
   }
 
+  @Test
+  public void testGetMatching() {
+    Set<CastVoteRecord> expected = new HashSet<>();
+
+    assertEquals(expected, CastVoteRecordQueries.getMatching(CastVoteRecord.RecordType.UPLOADED).collect(Collectors.toSet()));
+    assertEquals(expected, CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.UPLOADED).collect(Collectors.toSet()));
+
+    CastVoteRecord cvr = noisyCVRSetup();
+    expected.add(cvr);
+
+    assertEquals(expected, CastVoteRecordQueries.getMatching(CastVoteRecord.RecordType.UPLOADED).collect(Collectors.toSet()));
+    assertEquals(expected, CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.UPLOADED).collect(Collectors.toSet()));
+  }
+
+  @Test(expectedExceptions = IllegalStateException.class)
+  public void testGetMatchingDBError() {
+    Persistence.commitTransaction();
+    CastVoteRecordQueries.getMatching(CastVoteRecord.RecordType.UPLOADED);
+  }
+
+  @Test
+  public void testGetMatchingNoCVRTable (){
+    // Drop the CVR table, which should cause a different error in getMatching
+    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record");
+    q.executeUpdate();
+    assertNull(CastVoteRecordQueries.getMatching(CastVoteRecord.RecordType.UPLOADED));
+    assertNull(CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.UPLOADED));
+  }
+
+  @Test
+  public void testCountMatching() {
+    assertEquals(OptionalLong.of(0), CastVoteRecordQueries.countMatching(CastVoteRecord.RecordType.UPLOADED));
+    assertEquals(OptionalLong.of(0), CastVoteRecordQueries.countMatching(1L, CastVoteRecord.RecordType.UPLOADED));
+    CastVoteRecord cvr = noisyCVRSetup();
+    assertEquals(OptionalLong.of(1), CastVoteRecordQueries.countMatching(CastVoteRecord.RecordType.UPLOADED));
+    assertEquals(OptionalLong.of(1), CastVoteRecordQueries.countMatching(1L, CastVoteRecord.RecordType.UPLOADED));
+  }
+
+  @Test(expectedExceptions = IllegalStateException.class)
+  public void testCountMatchingDBError() {
+    Persistence.commitTransaction();
+    CastVoteRecordQueries.countMatching(CastVoteRecord.RecordType.UPLOADED);
+  }
+
+  @Test
+  public void testCountMatchingNoCVRTable (){
+    // Drop the CVR table, which should cause a different error in getMatching
+    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record");
+    q.executeUpdate();
+    assertEquals(OptionalLong.empty(), CastVoteRecordQueries.countMatching(CastVoteRecord.RecordType.UPLOADED));
+    assertEquals(OptionalLong.empty(), CastVoteRecordQueries.countMatching(1L, CastVoteRecord.RecordType.UPLOADED));
+  }
+
+  @Test
+  public void testGetSingle() {
+    // We don't have any records yet
+    assertNull(CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, 1));
+
+    CastVoteRecord expected = noisyCVRSetup();
+    assertEquals(expected, CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, 1));
+
+    // Now we have two CVRs with the same county, recordType, and sequenceNumber
+    noisyCVRSetup(2);
+    assertNull(CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, 1));
+  }
+
+  @Test
+  public void testGetSingleDBError() {
+    // Drop the CVR table, which should cause a different error in getMatching
+    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record");
+    q.executeUpdate();
+    assertNull(CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, 1));
+
+  }
+
+  @Test
+  public void testGetMulti() {
+    List<Integer> sequence_numbers = new ArrayList<>();
+    Map<Integer, CastVoteRecord> expected = new HashMap<>();
+    // We don't have any records yet
+    assertEquals(expected, CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, sequence_numbers));
+
+    List<CVRContestInfo> contest_info = noisyContestSetup();
+
+    CastVoteRecord cvr = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
+            null,
+            1L,
+            1,
+            1,
+            1,
+            "1",
+            1,
+            "1",
+            "a",
+            contest_info);
+    Persistence.save(cvr);
+    expected.put(1, cvr);
+    sequence_numbers.add(1);
+    assertEquals(expected, CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, sequence_numbers));
+
+    // Now we have two CVRs with the same county, recordType, and sequenceNumber
+    CastVoteRecord second = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
+            null,
+            1L,
+            1,
+            2,
+            1,
+            "1",
+            1,
+            "1",
+            "a",
+            contest_info);
+    Persistence.saveOrUpdate(second);
+
+    sequence_numbers.add(2);
+    expected.put(2, second);
+    assertEquals(expected, CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, sequence_numbers));
+  }
+
+  @Test
+  public void testGetMultiDBError() {
+    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record");
+    q.executeUpdate();
+    assertNull(CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, new ArrayList<>()));
+  }
 }
+
