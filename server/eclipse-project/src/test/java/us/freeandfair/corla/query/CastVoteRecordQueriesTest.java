@@ -217,7 +217,7 @@ public class CastVoteRecordQueriesTest {
   @Test
   public void testGetMatchingNoCVRTable (){
     // Drop the CVR table, which should cause a different error in getMatching
-    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record");
+    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record CASCADE");
     q.executeUpdate();
     assertNull(CastVoteRecordQueries.getMatching(CastVoteRecord.RecordType.UPLOADED));
     assertNull(CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.UPLOADED));
@@ -241,7 +241,7 @@ public class CastVoteRecordQueriesTest {
   @Test
   public void testCountMatchingNoCVRTable (){
     // Drop the CVR table, which should cause a different error in getMatching
-    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record");
+    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record CASCADE");
     q.executeUpdate();
     assertEquals(OptionalLong.empty(), CastVoteRecordQueries.countMatching(CastVoteRecord.RecordType.UPLOADED));
     assertEquals(OptionalLong.empty(), CastVoteRecordQueries.countMatching(1L, CastVoteRecord.RecordType.UPLOADED));
@@ -263,7 +263,7 @@ public class CastVoteRecordQueriesTest {
   @Test
   public void testGetSingleDBError() {
     // Drop the CVR table, which should cause a different error in getMatching
-    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record");
+    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record CASCADE");
     q.executeUpdate();
     assertNull(CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, 1));
 
@@ -315,7 +315,7 @@ public class CastVoteRecordQueriesTest {
 
   @Test
   public void testGetMultiDBError() {
-    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record");
+    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record CASCADE");
     q.executeUpdate();
     assertNull(CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, new ArrayList<>()));
   }
