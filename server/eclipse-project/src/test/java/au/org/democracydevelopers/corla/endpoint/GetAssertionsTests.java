@@ -23,7 +23,6 @@ package au.org.democracydevelopers.corla.endpoint;
 
 import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.util.testUtils;
-import com.google.gson.Gson;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.mockito.MockedStatic;
@@ -56,8 +55,6 @@ import static org.testng.Assert.assertEquals;
 public class GetAssertionsTests {
 
     private static final Logger LOGGER = LogManager.getLogger(GetAssertionsTests.class);
-
-    private static final Gson GSON = new Gson();
 
     private static String boulderMayoral = "City of Boulder Mayoral Candidates";
     private static String tinyIRV = "TinyExample1";
@@ -160,6 +157,10 @@ public class GetAssertionsTests {
     }
 
 
+    /**
+     * Checks that, when given a bad endpoint url, a runtime exception is thrown (CSV).
+     * @throws Exception always.
+     */
     @Test(expectedExceptions = RuntimeException.class)
     public void badURLThrowsRuntimeExceptionCSV() throws Exception {
         testUtils.log(LOGGER, "badURLThrowsRuntimeExceptionCSV");
@@ -183,6 +184,10 @@ public class GetAssertionsTests {
         }
     }
 
+    /**
+     * Checks that, when given a bad endpoint url, a runtime exception is thrown (CSV).
+     * @throws Exception always.
+     */
     @Test(expectedExceptions = RuntimeException.class)
     public void badURLThrowsRuntimeExceptionJSON() throws Exception {
         testUtils.log(LOGGER, "badURLThrowsRuntimeExceptionJSON");
