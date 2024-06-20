@@ -42,6 +42,15 @@ import static java.util.Collections.max;
 
 /**
  * A class representing the state of a single audited IRV contest across one or more counties.
+ * When an IRVComparisonAudit is constructed, the base ComparisonAudit constructor is called.
+ * This will invoke methods to compute initial sample sizes for the audit. For IRV audits,
+ * however, these initial sample sizes will not be meaningful as the audit's assertions are
+ * not loaded until the ComparisonAudit base constructor finished. The IRVComparisonAudit
+ * constructor will load the relevant assertions from the database (populating the audit's
+ * assertions list), compute the audit's diluted margin, and then reinvoke the sample size
+ * computation methods. This class overrides some of the methods in the base ComparisonAudit
+ * class: recalculateSamplesToAudit(); initialSamplesToAudit(); computeDiscrepancy();
+ * riskMeasurement(); removeDiscrepancy(); and recordDiscrepancy().
  */
 @Entity
 @DiscriminatorValue("IRV")
@@ -227,7 +236,9 @@ public class IRVComparisonAudit extends ComparisonAudit {
   public int initialSamplesToAudit() {
     if(assertions == null){
       // We have not associated assertions with this audit yet.
-      // In this case, we simply ignore the call.
+      // In this case, we simply ignore the call. Whether this is an error depends on whether
+      // this method is invoked in the constructor of the ComparisonAudit class. At this point,
+      // the IRVComparisonAudit's assertions list will not have been initialised.
       return 0;
     }
 
@@ -303,13 +314,9 @@ public class IRVComparisonAudit extends ComparisonAudit {
     LOGGER.debug(String.format("%s Computing discrepancy between CVR ID %d and audited ballot, " +
         "contest %s.", prefix, cvr.id(), contestName));
 
-    if(assertions == null){
-      // This should not happen; if it does, something has gone wrong.
-      final String msg = String.format("%s IRVComparison audit for contest %s has not set its " +
-          "assertions list yet (it is null).", prefix, contestName);
-      LOGGER.error(msg);
-      throw new RuntimeException(msg);
-    }
+    // Check that the IRVComparisonAudit's assertions have been initialised. This will throw
+    // a RuntimeException if they have not, and log an appropriate error message.
+    nullAssertionsCheck(prefix);
 
     LOGGER.debug(String.format("%s Contest %s: Calling computeDiscrepancy() for each assertion.",
         prefix, contestName));
@@ -367,13 +374,9 @@ public class IRVComparisonAudit extends ComparisonAudit {
     final String prefix = "[riskMeasurement]";
     final String contestName = getContestName();
 
-    if(assertions == null){
-      // This should never happen, and indicates an error.
-      final String msg = String.format("%s IRVComparisonAudit ID %d for contest %s, null " +
-          "assertions list.", prefix, id(), contestName);
-      LOGGER.error(msg);
-      throw new RuntimeException(msg);
-    }
+    // Check that the IRVComparisonAudit's assertions have been initialised. This will throw
+    // a RuntimeException if they have not.
+    nullAssertionsCheck(prefix);
 
     BigDecimal risk = BigDecimal.ONE;
     if(!assertions.isEmpty()){
@@ -395,13 +398,166 @@ public class IRVComparisonAudit extends ComparisonAudit {
     return risk;
   }
 
-  // Does nothing - TODO.
+  /**
+   * Removes the specified over/understatement or other discrepancy (the valid range is -2 to 2:
+   * -2 and -1 are understatements, 0 is a discrepancy that doesn't affect the RLA calculations,
+   * and 1 and 2 are overstatements) corresponding to the given audited ballot. This is typically
+   * done when a new interpretation is submitted for a ballot that has already been interpreted
+   * (i,e. a ballot is being re-audited). Note that a given CVR/audited ballot can be associated
+   * with different types of discrepancies across the audit's set of assertions. In the overall
+   * discrepancy counts in the ComparisonAudit base class, the maximum of these per-assertion
+   * discrepancies will be used when deciding what type counter to increment/decrement.
+   *
+   * @param theRecord The CVRAuditInfo record that generated the discrepancy.
+   * @param theType The type of discrepancy to remove.
+   * @exception IllegalArgumentException if an invalid discrepancy type is specified, or a null
+   * CVRAuditInfo record is provided.
+   */
   @Override
-  public void removeDiscrepancy(final CVRAuditInfo the_record, final int the_type) {
+  public void removeDiscrepancy(final CVRAuditInfo theRecord, final int theType) {
+    final String contestName = getContestName();
+    final String prefix = String.format("[riskMeasurement] IRVComparisonAudit ID %d for " +
+        "contest %s:", id(), contestName);
+
+    // Check that the IRVComparisonAudit's assertions have been initialised. This will throw
+    // a RuntimeException if they have not.
+    nullAssertionsCheck(prefix);
+
+    // Check that the CVRAuditInfo and discrepancy type are valid.
+    recordTypeCheck(prefix, theRecord, theType);
+
+    try {
+      LOGGER.debug(
+          String.format("%s removing discrepancy associated with CVR %d (maximum type %d).",
+              prefix, theRecord.cvr().id(), theType));
+      // Remove the discrepancy associated with the given CVRAuditInfo (CVR/ACVR pair), if one
+      // exists, in each of the audit's assertions.
+      boolean removed = false;
+      for (Assertion a : assertions) {
+        removed = removed || a.removeDiscrepancy(theRecord);
+      }
+
+      // Update the discrepancy tallies in the base ComparisonAudit class, for reporting purposes,
+      // and the flag for indicating that a sample size recalculation is needed, *if* we did
+      // indeed remove a discrepancy from at least one of this audit's assertions.
+      if(removed) {
+        super.removeDiscrepancy(theRecord, theType);
+      }
+      LOGGER.debug(String.format("%s total number of overstatements (%f), optimistic sample " +
+              "recalculate needed (%s), estimated sample recalculate needed (%s),", prefix,
+          getOverstatements(), my_optimistic_recalculate_needed, my_estimated_recalculate_needed));
+
+    } catch(Exception e){
+      final String msg = String.format("%s an error arose in the removal of discrepancies " +
+          "associated with CVR %d (maximum type %d).", prefix, theRecord.cvr().id(), theType);
+      LOGGER.error(msg);
+      throw new RuntimeException(msg);
+    }
   }
 
-  // Does nothing - TODO.
+  /**
+   * Checks if the given CVRAuditInfo contains a discrepancy with respect to one or more of this
+   * audit's assertions. If so, it removes the discrepancy from the internal records of the
+   * assertion. The CVRAuditInfo details the ID of the CVR involved in the discrepancy. The
+   * given discrepancy type (an integer between -2 and 2, inclusive) represents the value of
+   * the maximum discrepancy associated with the CVRAuditInfo and one of this audit's assertions.
+   * The count for this discrepancy type (theType) is incremented in the base ComparisonAudit's
+   * totals.
+   *
+   * @param theRecord The CVRAuditInfo record that generated the discrepancy.
+   * @param theType The type of discrepancy to remove.
+   * @exception IllegalArgumentException if an invalid discrepancy type is specified, or a null
+   * CVRAuditInfo record is provided.
+   */
   @Override
-  public void recordDiscrepancy(final CVRAuditInfo the_record, final int the_type) {
+  public void recordDiscrepancy(final CVRAuditInfo theRecord, final int theType) {
+    final String contestName = getContestName();
+    final String prefix = String.format("[recordDiscrepancy] IRVComparisonAudit ID %d for " +
+        "contest %s:", id(), contestName);
+
+    // Check that the IRVComparisonAudit's assertions have been initialised. This will throw
+    // a RuntimeException if they have not.
+    nullAssertionsCheck(prefix);
+
+    // Check that the CVRAuditInfo and discrepancy type are valid. This method will throw an
+    // IllegalArgumentException if they are not.
+    recordTypeCheck(prefix, theRecord, theType);
+
+    try {
+      // Iterate over the assertions for this audit, check that the CVR in the CVRAuditInfo is
+      // listed in their discrepancy map, and if so, record it as a discrepancy in its internal
+      // totals. Note that the CVR may represent a different type of discrepancy from assertion to
+      // assertion (not necessarily of type 'theType'). The parameter 'theType' will represent the
+      // maximum discrepancy associated with CVR/ACVR pair and one of this audit's assertions. Note
+      // that a given CVR/ACVR pair can only be associated with a single discrepancy per assertion.
+      boolean recorded = false;
+      for (Assertion a : assertions) {
+        recorded = recorded || a.recordDiscrepancy(theRecord);
+      }
+
+      // Update the discrepancy tallies in the base ComparisonAudit class, for reporting purposes,
+      // and the flag for indicating that a sample size recalculation is needed, *if* we did
+      // record a discrepancy against at least one of this audit's assertions.
+      if(recorded) {
+        super.removeDiscrepancy(theRecord, theType);
+      }
+      LOGGER.debug(String.format("%s total number of overstatements (%f), optimistic sample " +
+              "recalculate needed (%s), estimated sample recalculate needed (%s),", prefix,
+          getOverstatements(), my_optimistic_recalculate_needed, my_estimated_recalculate_needed));
+
+    } catch(Exception e){
+      final String msg = String.format("%s an error arose in the recording of discrepancies " +
+          "associated with CVR %d (maximum type %d).", prefix, theRecord.cvr().id(), theType);
+      LOGGER.error(msg);
+      throw new RuntimeException(msg);
+    }
+  }
+
+  /**
+   * This method checks whether this IRVComparisonAudit's list of assertions has been
+   * appropriately initialised, and throws a RunTimeException if not. It takes a string identifying
+   * the method making this check, to use in logging an appropriate error message.
+   * @param prefix String identifying the IRVComparisonAudit method that is performing this check.
+   */
+  private void nullAssertionsCheck(final String prefix){
+    if(assertions == null){
+      final String msg = String.format("%s IRVComparisonAudit ID %d for contest %s, null " +
+          "assertions list.", prefix, id(), getContestName());
+      LOGGER.error(msg);
+      throw new RuntimeException(msg);
+    }
+  }
+
+  /**
+   * Checks that the given CVRAuditInfo and discrepancy type are valid: that the CVRAuditInfo
+   * record is not null (and its CVR is not null); and that the discrepancy type falls in the
+   * range -2 to 2. An IllegalArgumentException is logged and thrown otherwise.
+   * @param prefix Information (for logging) detailing the method calling this check.
+   * @param theRecord The CVRAuditInfo being checked.
+   * @param theType The discrepancy type being checked.
+   * @throws IllegalArgumentException when the given CVRAuditInfo and discrepancy types are not
+   * valid.
+   */
+  private void recordTypeCheck(final String prefix, final CVRAuditInfo theRecord, final int theType){
+    if(theRecord == null){
+      // This is an error, and should not happen.
+      final String msg = String.format("%s null CVRAuditInfo provided.", prefix);
+      LOGGER.error(msg);
+      throw new IllegalArgumentException(msg);
+    }
+
+    if(theRecord.cvr() == null){
+      // This is an error, and should not happen.
+      final String msg = String.format("%s null CVR in CVRAuditInfo provided.", prefix);
+      LOGGER.error(msg);
+      throw new IllegalArgumentException(msg);
+    }
+
+    if(theType < -2 || theType > 2){
+      // This is an error, and should not happen.
+      final String msg = String.format("%s invalid discrepancy type provided of %d.", prefix, theType);
+      LOGGER.error(msg);
+      throw new IllegalArgumentException(msg);
+    }
   }
 }

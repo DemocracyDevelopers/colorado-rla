@@ -521,12 +521,19 @@ public abstract class Assertion implements PersistentEntity {
    * If so, increment the counters for its discrepancy type. A RuntimeException will be thrown
    * if the discrepancy type associated with this CVR-ACVR pair is not valid (i.e., not one of the
    * defined types).
-   * @param the_record CVRAuditInfo representing the CVR-ACVR pair that has resulted in a discrepancy.
+   * @param theRecord CVRAuditInfo representing the CVR-ACVR pair that has resulted in a discrepancy.
+   * @return a boolean indicating if a discrepancy associated with the given CVRAuditInfo was
+   * recorded against the totals of at least one of this audit's assertions.
    */
-  public void recordDiscrepancy(final CVRAuditInfo the_record) {
+  public boolean recordDiscrepancy(final CVRAuditInfo theRecord) {
     final String prefix = "[recordDiscrepancy]";
-    if(cvrDiscrepancy.containsKey(the_record.id())){
-      final int theType = cvrDiscrepancy.get(the_record.id());
+
+    // Flag which will be set to true if we do increase the assertion's internal discrepancy
+    // counts.
+    boolean recorded = false;
+
+    if(cvrDiscrepancy.containsKey(theRecord.id())){
+      final int theType = cvrDiscrepancy.get(theRecord.id());
       switch (theType) {
         case -2 -> twoVoteUnderCount += 1;
         case -1 -> oneVoteUnderCount += 1;
@@ -544,33 +551,42 @@ public abstract class Assertion implements PersistentEntity {
       LOGGER.debug(String.format("%s Discrepancy of type %d added to Assertion ID %d,"+
           "contest %s, CVR ID %d. New totals: 1 vote understatements %d; 1 vote overstatements %d; " +
           "2 vote understatements %d; 2 vote overstatements %d; other %d.", prefix, theType, id,
-          contestName, the_record.id(), oneVoteUnderCount, oneVoteOverCount, twoVoteUnderCount,
+          contestName, theRecord.id(), oneVoteUnderCount, oneVoteOverCount, twoVoteUnderCount,
           twoVoteOverCount, otherCount));
+
+      recorded = true;
     }
     else{
-      final String msg = String.format("%s Attempt to record a discrepancy in Assertion ID %d " +
-              "contest %s, CVR ID %s, but no record of a pre-computed discrepancy associated with " +
-              "that CVR exists. No increase to discrepancy totals: 1 vote understatements %d; " +
-              "1 vote overstatements %d; 2 vote understatements %d; 2 vote overstatements %d; other %d.",
-              prefix, id, contestName, the_record.id(), oneVoteUnderCount, oneVoteOverCount,
-              twoVoteUnderCount, twoVoteOverCount, otherCount);
-      LOGGER.error(msg);
-      throw new RuntimeException(msg);
+      final String msg = String.format("%s Assertion ID %d contest %s, CVR ID %s: no record of " +
+          " a pre-computed discrepancy associated with that CVR. No increase to assertion discrepancy " +
+          "totals: 1 vote understatements %d; 1 vote overstatements %d; 2 vote understatements %d; " +
+          "2 vote overstatements %d; other %d.", prefix, id, contestName, theRecord.id(),
+          oneVoteUnderCount, oneVoteOverCount, twoVoteUnderCount, twoVoteOverCount, otherCount);
+      LOGGER.debug(msg);
     }
+
+    return recorded;
   }
 
   /**
    * Removes discrepancies relating to a given CVR-ACVR comparison. (This is relevant when
    * ballots are 'un-audited' to be subsequently re-audited). A RuntimeException will be thrown
    * if an invalid discrepancy type has been stored in this assertion.
-   * @param the_record The CVRAuditInfo record that generated the discrepancy.
+   * @param theRecord The CVRAuditInfo record that generated the discrepancy.
+   * @return a boolean indicating if a discrepancy associated with the given CVRAuditInfo was
+   * removed from this assertion's totals.
    */
-  public void removeDiscrepancy(final CVRAuditInfo the_record) {
+  public boolean removeDiscrepancy(final CVRAuditInfo theRecord) {
     final String prefix = "[removeDiscrepancy]";
+
+    // Flag which will be set to true if we do remove a discrepancy from the assertions
+    // internal totals.
+    boolean removed = false;
+
     // Check if this CVR-ACVR pair produced a discrepancy with respect to this assertion.
     // (Note the CVRAuditInfo ID is always the CVR ID).
-    if(cvrDiscrepancy.containsKey(the_record.id())){
-      final int theType = cvrDiscrepancy.get(the_record.id());
+    if(cvrDiscrepancy.containsKey(theRecord.id())){
+      final int theType = cvrDiscrepancy.get(theRecord.id());
       switch (theType) {
         case -2 -> twoVoteUnderCount -= 1;
         case -1 -> oneVoteUnderCount -= 1;
@@ -584,30 +600,31 @@ public abstract class Assertion implements PersistentEntity {
           throw new RuntimeException(msg);
         }
       }
-      cvrDiscrepancy.remove(the_record.id());
+      cvrDiscrepancy.remove(theRecord.id());
       LOGGER.debug(String.format("%s Discrepancy of type %d removed from Assertion ID %d,"+
               "contest %s, CVR ID %d. New totals: 1 vote understatements %d; 1 vote overstatements %d; " +
               "2 vote understatements %d; 2 vote overstatements %d; other %d.", prefix, theType, id,
-              contestName, the_record.id(), oneVoteUnderCount, oneVoteOverCount, twoVoteUnderCount,
+              contestName, theRecord.id(), oneVoteUnderCount, oneVoteOverCount, twoVoteUnderCount,
               twoVoteOverCount, otherCount));
+      removed = true;
     }
     else{
-      final String msg = String.format("%s Attempt to remove a discrepancy in Assertion ID %d " +
-              "contest %s, CVR ID %s, but no record of a pre-computed discrepancy associated with " +
-              "that CVR exists. No increase to discrepancy totals: 1 vote understatements %d; " +
-              "1 vote overstatements %d; 2 vote understatements %d; 2 vote overstatements %d; other %d.",
-              prefix, id, contestName, the_record.id(), oneVoteUnderCount, oneVoteOverCount,
-              twoVoteUnderCount, twoVoteOverCount, otherCount);
-      LOGGER.error(msg);
-      throw new RuntimeException(msg);
+      final String msg = String.format("%s Assertion ID %d contest %s, CVR ID %s: no record of a " +
+          "pre-computed discrepancy associated with that CVR. No change to discrepancy totals: " +
+          "1 vote understatements %d; 1 vote overstatements %d; 2 vote understatements %d; 2 vote " +
+          "overstatements %d; other %d.", prefix, id, contestName, theRecord.id(), oneVoteUnderCount,
+          oneVoteOverCount, twoVoteUnderCount, twoVoteOverCount, otherCount);
+      LOGGER.debug(msg);
     }
 
     if(min(List.of(oneVoteOverCount, oneVoteUnderCount, twoVoteUnderCount, otherCount)) < 0) {
       final String msg = String.format("%s Negative discrepancy counts in Assertion ID %d, " +
-          "contest %s when removing discrepancy for CVR %d.", prefix, id, contestName, the_record.id());
+          "contest %s when removing discrepancy for CVR %d.", prefix, id, contestName, theRecord.id());
       LOGGER.error(msg);
       throw new RuntimeException(msg);
     }
+
+    return removed;
   }
 
   /**
