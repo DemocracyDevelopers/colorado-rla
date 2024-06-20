@@ -23,7 +23,6 @@ package au.org.democracydevelopers.corla.endpoint;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.zip.ZipEntry;

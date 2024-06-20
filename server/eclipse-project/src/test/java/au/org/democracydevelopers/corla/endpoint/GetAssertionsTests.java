@@ -21,54 +21,28 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.endpoint;
 
-import au.org.democracydevelopers.corla.endpoint.GetAssertions.*;
 import au.org.democracydevelopers.corla.model.ContestType;
-import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
-import au.org.democracydevelopers.corla.raire.requestToRaire.GenerateAssertionsRequest;
-import au.org.democracydevelopers.corla.raire.requestToRaire.GetAssertionsRequest;
-import au.org.democracydevelopers.corla.raire.responseFromRaire.RaireServiceErrors;
 import au.org.democracydevelopers.corla.util.testUtils;
 import com.google.gson.Gson;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import spark.Request;
-import spark.Response;
-import us.freeandfair.corla.endpoint.Endpoint;
-import us.freeandfair.corla.json.SubmittedAuditCVR;
 import us.freeandfair.corla.model.*;
-import us.freeandfair.corla.model.CastVoteRecord.RecordType;
-import us.freeandfair.corla.persistence.Persistence;
 
 import java.io.*;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipInputStream;
 
 import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /**
  * Test the GetAssertions endpoint, both CSV and JSON versions. The response is supposed to be a zip file containing
