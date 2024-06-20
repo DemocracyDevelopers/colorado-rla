@@ -415,7 +415,7 @@ public final class CastVoteRecordQueries {
     } catch (final PersistenceException e) {
       Main.LOGGER.error(COULD_NOT_QUERY_DATABASE);
     }
-    if (result == null) {
+    if (result.isEmpty()) {
       Main.LOGGER.debug("found no CVRs with ids " + the_ids);
       return new ArrayList<>();
     } else {

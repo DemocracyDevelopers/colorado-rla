@@ -3,11 +3,13 @@ package us.freeandfair.corla.query;
 import java.lang.reflect.Method;
 import java.util.*;
 
+import org.antlr.v4.runtime.misc.Array2DHashSet;
 import org.hibernate.LockMode;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.jetbrains.annotations.NotNull;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
 import org.testng.annotations.*;
 
 import static org.testng.Assert.*;
@@ -316,6 +318,152 @@ public class CastVoteRecordQueriesTest {
     Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record");
     q.executeUpdate();
     assertNull(CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, new ArrayList<>()));
+  }
+
+  @Test
+  public void testGetIDs() {
+    List<Long> ids = new ArrayList<>();
+    List<CastVoteRecord> expected = new ArrayList<>();
+    // We don't have any records yet
+    assertEquals(expected, CastVoteRecordQueries.get(ids));
+
+    // Make sure that a bad lookup also returns nothing
+    ids.add(4L);
+    assertEquals(expected, CastVoteRecordQueries.get(ids));
+    ids.clear();
+
+    List<CVRContestInfo> contest_info = noisyContestSetup();
+
+    CastVoteRecord cvr = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
+            null,
+            1L,
+            1,
+            1,
+            1,
+            "1",
+            1,
+            "1",
+            "a",
+            contest_info);
+    Persistence.save(cvr);
+    expected.add(cvr);
+    ids.add(cvr.id());
+    assertEquals(expected, CastVoteRecordQueries.get(ids));
+
+    // Now we have two CVRs with the same county, recordType, and sequenceNumber
+    CastVoteRecord second = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
+            null,
+            1L,
+            1,
+            2,
+            1,
+            "1",
+            1,
+            "1",
+            "a",
+            contest_info);
+    Persistence.saveOrUpdate(second);
+
+    ids.add(second.id());
+    expected.add(second);
+    assertEquals(expected, CastVoteRecordQueries.get(ids));
+
+  }
+  @Test
+  public void testGetIDsDBError() {
+    Persistence.commitTransaction();
+    List<Long> list = new ArrayList<>();
+    list.add(1L);
+    assertEquals(new ArrayList<>(), CastVoteRecordQueries.get(list));
+  }
+
+  @Test
+  public void testAtPositionTribute() {
+    Tribute tribute = new Tribute();
+    tribute.countyId = 1L;
+    tribute.scannerId = 1;
+    tribute.batchId = "1";
+    tribute.ballotPosition = 1;
+
+    CastVoteRecord expected = noisyCVRSetup();
+
+    assertEquals(expected, CastVoteRecordQueries.atPosition(tribute));
+  }
+
+
+  @Test
+  public void testAtPositionTributes() {
+    List<CVRContestInfo> contest_info = noisyContestSetup();
+    Tribute tribute = new Tribute();
+    tribute.countyId = 1L;
+    tribute.scannerId = 1;
+    tribute.batchId = "1";
+    tribute.ballotPosition = 1;
+
+    tribute.setUri();
+
+    List<Tribute> tributes = new ArrayList<>();
+
+    List<CastVoteRecord> expected = new ArrayList<>();
+    assertEquals(expected, CastVoteRecordQueries.atPosition(tributes));
+
+    tributes.add(tribute);
+    CastVoteRecord cvr = noisyCVRSetup(1, contest_info);
+    expected.add(cvr);
+
+    assertEquals(expected, CastVoteRecordQueries.atPosition(tributes));
+
+    // Create a fake tribute to cause a branch at line 504 in CastVoteRecordQueries.java
+    tribute = new Tribute();
+    tribute.countyId = 1L;
+    tribute.scannerId = 1;
+    tribute.batchId = "1";
+    tribute.ballotPosition = 5;
+
+    tribute.setUri();
+    tributes.add(tribute);
+
+    System.out.println(expected);
+    assertEquals(CastVoteRecordQueries.atPosition(tributes), expected);
+  }
+
+  @Test
+  public void testPositionAtLots() {
+    List<CVRContestInfo> contest_info = noisyContestSetup();
+    Tribute tribute;
+    CastVoteRecord cvr;
+
+    List<Tribute> tributes = new ArrayList<>();
+    List<CastVoteRecord> expected = new ArrayList<>();
+
+    // Now we need to test chunking, so add a whole lotta tributes
+    // These are not the greatest CVRs in the world, they are just a tribute
+    for (int i = 0; i < 2000; i++) {
+      tribute = new Tribute();
+      tribute.countyId = 1L;
+      tribute.scannerId = 1;
+      tribute.batchId = "1";
+      tribute.ballotPosition = i;
+      tribute.setUri();
+
+      tributes.add(tribute);
+
+      cvr = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
+              null,
+              1L,
+              i,
+              1,
+              1,
+              "1",
+              i,
+              "1",
+              "a",
+              contest_info);
+      Persistence.save(cvr);
+      expected.add(cvr);
+    }
+
+    assertEquals(CastVoteRecordQueries.atPosition(tributes), expected);
   }
 }
 
