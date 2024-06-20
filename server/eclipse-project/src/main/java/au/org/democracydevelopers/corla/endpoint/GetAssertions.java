@@ -212,11 +212,17 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
         for (ContestResult cr : IRVContestResults) {
             //  IRVContestResults.forEach(cr -> {
 
-            // Find the winner - there should only be one.
+            // Find the winner (there should only be one), candidates and contest name.
             // TODO At the moment, the winner isn't yet set properly - will be set in the GenerateAssertions Endpoint.
+            // See https://github.com/DemocracyDevelopers/colorado-rla/issues/73
             // For now, tolerate > 1; later, check.
             String winner = cr.getWinners().stream().findAny().orElse("UNKNOWN");
-            List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream().map(Choice::name).toList();
+            List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream()
+                    .map(Choice::name).toList();
+
+            // Remove non-word characters for saving into .zip file; set up the zip next entry.
+            String sanitizedContestName = cr.getContestName().replaceAll("[\\W]", "");
+            zos.putNextEntry(new ZipEntry(sanitizedContestName + "_assertions." + suffix));
 
             // Make the request.
             GetAssertionsRequest getAssertionsRequest = new GetAssertionsRequest(
@@ -231,27 +237,30 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
             requestToRaire.setEntity(new StringEntity(gson.toJson(getAssertionsRequest)));
 
             // Send it to the RAIRE service.
-            // TODO log this error properly.
             HttpResponse raireResponse = httpClient.execute(requestToRaire);
-            LOGGER.debug(String.format("%s %s", prefix, "Sent Assertion Request to RAIRE: " + getAssertionsRequest));
+            LOGGER.debug(String.format("%s %s.", prefix, "Sent Assertion Request to Raire service for "
+                    + getAssertionsRequest.contestName));
 
             int statusCode = raireResponse.getStatusLine().getStatusCode();
             if(statusCode == 200) {
                 // OK response. Put the file name and data into the .zip.
-                // TODO Sanitize contest name.
-                zos.putNextEntry(new ZipEntry(cr.getContestName() + "_assertions." + suffix));
-                // zos.write(raireResponse.getEntity().getContent().read());
+
+                LOGGER.debug(String.format("%s %s.", prefix, "OK response received from RAIRE for "
+                        + getAssertionsRequest.contestName));
                 IOUtils.copy(raireResponse.getEntity().getContent(), zos);
+
             } else if(raireResponse.containsHeader(RAIRE_ERROR_CODE)) {
                 // Error response about a specific contest, e.g. "NO_ASSERTIONS_PRESENT".
-                // Write into the zip file and keep going.
-                // TODO Sanitize contest name.
-                zos.putNextEntry(new ZipEntry(cr.getContestName() + "_assertions." + suffix));
+                // Write the error into the zip file and continue.
+
                 String code = raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getValue();
+                LOGGER.debug(String.format("%s %s %s.", prefix, "Error response " + code, "received from RAIRE for "
+                        + getAssertionsRequest.contestName));
                 zos.write(code.getBytes(StandardCharsets.UTF_8));
-                // zos.write(code.getBytes());
+
             } else {
-                // Something went wrong with the connection.
+                // Something went wrong with the connection. Cannot continue.
+
                 final String msg = ("Bad response from Raire service: " + statusCode + ": "
                         +raireResponse.getStatusLine().getReasonPhrase());
                 LOGGER.error(String.format("%s %s", prefix, msg));
