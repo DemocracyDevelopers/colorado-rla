@@ -29,6 +29,7 @@ import org.apache.log4j.Logger;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -43,6 +44,7 @@ import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipInputStream;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.testng.Assert.assertEquals;
 
@@ -147,6 +149,7 @@ public class GetAssertionsTests {
             InputStream bais = new ByteArrayInputStream(bytes);
             ZipInputStream in = new ZipInputStream(bais);
             ZipEntry firstEntry = in.getNextEntry();
+            assertNotNull(firstEntry);
             assertEquals(firstEntry.getName(), "CityofBoulderMayoralCandidates_assertions.csv");
             ZipEntry secondEntry = in.getNextEntry();
             assertEquals("TinyExample1" + "_assertions.csv", secondEntry.getName());
@@ -175,8 +178,10 @@ public class GetAssertionsTests {
             InputStream bais = new ByteArrayInputStream(bytes);
             ZipInputStream in = new ZipInputStream(bais);
             ZipEntry firstEntry = in.getNextEntry();
+            assertNotNull(firstEntry);
             assertEquals(firstEntry.getName(), "CityofBoulderMayoralCandidates_assertions.json");
             ZipEntry secondEntry = in.getNextEntry();
+            assertNotNull(secondEntry);
             assertEquals("TinyExample1" + "_assertions.json", secondEntry.getName());
             ZipEntry thirdEntry = in.getNextEntry();
             assertNull(thirdEntry);
@@ -203,8 +208,10 @@ public class GetAssertionsTests {
             InputStream bais = new ByteArrayInputStream(bytes);
             ZipInputStream in = new ZipInputStream(bais);
             ZipEntry firstEntry = in.getNextEntry();
+            Assert.assertNotNull(firstEntry);
             assertEquals(firstEntry.getName(), "CityofBoulderMayoralCandidates_assertions.json");
             ZipEntry secondEntry = in.getNextEntry();
+            assertNotNull(secondEntry);
             assertEquals("TinyExample1" + "_assertions.json", secondEntry.getName());
             ZipEntry thirdEntry = in.getNextEntry();
             assertNull(thirdEntry);
