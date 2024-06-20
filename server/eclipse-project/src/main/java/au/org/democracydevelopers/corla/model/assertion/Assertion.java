@@ -635,7 +635,7 @@ public abstract class Assertion implements PersistentEntity {
       LOGGER.debug(msg);
     }
 
-    if(min(List.of(oneVoteOverCount, oneVoteUnderCount, twoVoteUnderCount, otherCount)) < 0) {
+    if(min(List.of(oneVoteOverCount, oneVoteUnderCount, twoVoteOverCount, twoVoteUnderCount, otherCount)) < 0) {
       final String msg = String.format("%s Negative discrepancy counts in Assertion ID %d, " +
           "contest %s when removing discrepancy for CVR %d.", prefix, id, contestName, theRecord.id());
       LOGGER.error(msg);
