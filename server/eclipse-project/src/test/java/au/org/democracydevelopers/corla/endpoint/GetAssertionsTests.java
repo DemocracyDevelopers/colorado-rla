@@ -77,6 +77,7 @@ import static org.testng.Assert.assertTrue;
  * - API testing
  * - Testing for retrieving the data from the zip.
  * - Testing that the service throws appropriate exceptions if the raire service connection isn't set up properly.
+ * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/125">...</a>
  */
 public class GetAssertionsTests {
 
@@ -107,36 +108,6 @@ public class GetAssertionsTests {
     private ContestResult boulderIRVContestResult = new ContestResult(boulderMayoral);
     private List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult, tinyIRVContestResult);
 
-    /**
-     * Container for the mock-up database.
-     */
-    static PostgreSQLContainer<?> postgres
-            = new PostgreSQLContainer<>("postgres:15-alpine")
-            // None of these actually have to be the same as the real database (except its name), but this
-            // makes it easy to match the setup scripts.
-            .withDatabaseName("corla")
-            .withUsername("corlaadmin")
-            .withPassword("corlasecret")
-            .withInitScript("SQL/corlaInit.sql");
-
-    @BeforeClass
-    public static void beforeAll() {
-        postgres.start();
-        Properties hibernateProperties = new Properties();
-        hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
-        hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
-        hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
-        hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
-        hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
-        Persistence.setProperties(hibernateProperties);
-        Persistence.beginTransaction();
-
-    }
-
-    @AfterClass
-    public static void afterAll() {
-        postgres.stop();
-    }
 
     /**
      * Initialise mocked objects prior to the first test.
