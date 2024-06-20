@@ -389,6 +389,13 @@ public abstract class Assertion implements PersistentEntity {
       // We have no discrepancy: recorded votes are the same on both the CVR and audited ballot.
       LOGGER.debug(String.format("%s CVR ID %d, Assertion ID %d, contest %s, no discrepancy.",
           prefix, cvr.id(), id, contestName));
+
+      if(cvrDiscrepancy.containsKey(cvr.id())){
+        // We can only get here if the CVR was re-audited.
+        cvrDiscrepancy.remove(cvr.id());
+        LOGGER.debug(String.format("%s CVR ID %d, Assertion ID %d, contest %s, prior computed " +
+            "discrepancy removed from assertion's records.", prefix, cvr.id(), id, contestName));
+      }
       return OptionalInt.empty();
     }
 
@@ -502,7 +509,7 @@ public abstract class Assertion implements PersistentEntity {
 
     if(acvrInfo.get().consensus() == ConsensusValue.NO){
       // The audited ballot has no consensus, we treat it as a Phantom Ballot.
-      // Return a worst case audited ballot score of -1.
+      // Return the worst case audited ballot score of -1.
       LOGGER.debug(String.format("%s audited ballot for CVR ID %d has no consensus, " +
               "audited ballot score is -1 for Assertion ID %d.", prefix, cvrID, id));
       return -1;
@@ -520,7 +527,8 @@ public abstract class Assertion implements PersistentEntity {
    * discrepancy is relevant for this assertion (if it is present in its cvrDiscrepancy map).
    * If so, increment the counters for its discrepancy type. A RuntimeException will be thrown
    * if the discrepancy type associated with this CVR-ACVR pair is not valid (i.e., not one of the
-   * defined types).
+   * defined types). This method is designed to be called 'n' times for a given CVRAuditInfo if
+   * the associated CVR appears 'n' times in the sample.
    * @param theRecord CVRAuditInfo representing the CVR-ACVR pair that has resulted in a discrepancy.
    * @return a boolean indicating if a discrepancy associated with the given CVRAuditInfo was
    * recorded against the totals of at least one of this audit's assertions.
@@ -571,7 +579,11 @@ public abstract class Assertion implements PersistentEntity {
   /**
    * Removes discrepancies relating to a given CVR-ACVR comparison. (This is relevant when
    * ballots are 'un-audited' to be subsequently re-audited). A RuntimeException will be thrown
-   * if an invalid discrepancy type has been stored in this assertion.
+   * if an invalid discrepancy type has been stored in this assertion. Note that we do not remove
+   * the CVR ID from the cvrDiscrepancy map. This is because there may be multiple instances of the
+   * discrepancy counted in the assertion's totals (e.g, if the CVR appears multiple times in the
+   * sample to be audited). This method is designed to be called 'n' times for a given CVRAuditInfo if
+   * the associated CVR appears 'n' times in the sample.
    * @param theRecord The CVRAuditInfo record that generated the discrepancy.
    * @return a boolean indicating if a discrepancy associated with the given CVRAuditInfo was
    * removed from this assertion's totals.
@@ -600,7 +612,13 @@ public abstract class Assertion implements PersistentEntity {
           throw new RuntimeException(msg);
         }
       }
-      cvrDiscrepancy.remove(theRecord.id());
+
+      // Note that we do not remove the CVR ID from the cvrDiscrepancy map. This is because there
+      // may be multiple instances of the discrepancy counted in the assertion's totals (e.g, if
+      // the CVR appears multiple times in the sample to be audited). If a ballot is reaudited,
+      // and a determination made that a discrepancy does not exist, the entry in cvrDiscrepancies
+      // will be updated via the computeDiscrepancy() method.
+
       LOGGER.debug(String.format("%s Discrepancy of type %d removed from Assertion ID %d,"+
               "contest %s, CVR ID %d. New totals: 1 vote understatements %d; 1 vote overstatements %d; " +
               "2 vote understatements %d; 2 vote overstatements %d; other %d.", prefix, theType, id,

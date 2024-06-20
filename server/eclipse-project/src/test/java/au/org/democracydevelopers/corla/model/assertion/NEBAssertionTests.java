@@ -585,7 +585,7 @@ public class NEBAssertionTests {
     assertEquals(0, a.twoVoteUnderCount.intValue());
     assertEquals(0, a.otherCount.intValue());
 
-    assertEquals(Map.of(), a.cvrDiscrepancy);
+    assertEquals(Map.of(1L, 1), a.cvrDiscrepancy);
   }
 
   /**
@@ -609,7 +609,7 @@ public class NEBAssertionTests {
     assertEquals(0, a.twoVoteUnderCount.intValue());
     assertEquals(0, a.otherCount.intValue());
 
-    assertEquals(Map.of(), a.cvrDiscrepancy);
+    assertEquals(Map.of(1L, -1), a.cvrDiscrepancy);
   }
 
   /**
@@ -633,7 +633,7 @@ public class NEBAssertionTests {
     assertEquals(0, a.twoVoteUnderCount.intValue());
     assertEquals(0, a.otherCount.intValue());
 
-    assertEquals(Map.of(), a.cvrDiscrepancy);
+    assertEquals(Map.of(1L, 2), a.cvrDiscrepancy);
   }
 
   /**
@@ -657,7 +657,7 @@ public class NEBAssertionTests {
     assertEquals(0, a.twoVoteUnderCount.intValue());
     assertEquals(0, a.otherCount.intValue());
 
-    assertEquals(Map.of(), a.cvrDiscrepancy);
+    assertEquals(Map.of(1L, -2), a.cvrDiscrepancy);
   }
 
   /**
@@ -681,7 +681,7 @@ public class NEBAssertionTests {
     assertEquals(0, a.twoVoteUnderCount.intValue());
     assertEquals(0, a.otherCount.intValue());
 
-    assertEquals(Map.of(), a.cvrDiscrepancy);
+    assertEquals(Map.of(1L, 0), a.cvrDiscrepancy);
   }
 
   /**
@@ -706,7 +706,7 @@ public class NEBAssertionTests {
     assertEquals(1, a.twoVoteUnderCount.intValue());
     assertEquals(1, a.otherCount.intValue());
 
-    assertEquals(Map.of(1L, 0, 2L, 1, 3L, -2), a.cvrDiscrepancy);
+    assertEquals(Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 1), a.cvrDiscrepancy);
   }
 
   /**
@@ -731,7 +731,7 @@ public class NEBAssertionTests {
     assertEquals(0, a.twoVoteUnderCount.intValue());
     assertEquals(1, a.otherCount.intValue());
 
-    assertEquals(Map.of(1L, 0, 2L, 1, 3L, -1), a.cvrDiscrepancy);
+    assertEquals(Map.of(1L, 0, 2L, 1, 3L, -1, 4L, -1), a.cvrDiscrepancy);
   }
 
   /**
@@ -756,7 +756,7 @@ public class NEBAssertionTests {
     assertEquals(1, a.twoVoteUnderCount.intValue());
     assertEquals(0, a.otherCount.intValue());
 
-    assertEquals(Map.of(1L, 2, 2L, 1, 3L, -2), a.cvrDiscrepancy);
+    assertEquals(Map.of(1L, 2, 2L, 1, 3L, -2, 4L, 2), a.cvrDiscrepancy);
   }
 
   /**
@@ -781,7 +781,7 @@ public class NEBAssertionTests {
     assertEquals(1, a.twoVoteUnderCount.intValue());
     assertEquals(1, a.otherCount.intValue());
 
-    assertEquals(Map.of(1L, 0, 2L, 1, 3L, -2), a.cvrDiscrepancy);
+    assertEquals(Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -2), a.cvrDiscrepancy);
   }
 
   /**
@@ -806,7 +806,7 @@ public class NEBAssertionTests {
     assertEquals(1, a.twoVoteUnderCount.intValue());
     assertEquals(1, a.otherCount.intValue());
 
-    assertEquals(Map.of(1L, 0, 2L, 1, 3L, -2), a.cvrDiscrepancy);
+    assertEquals(Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0), a.cvrDiscrepancy);
   }
 
   /**
