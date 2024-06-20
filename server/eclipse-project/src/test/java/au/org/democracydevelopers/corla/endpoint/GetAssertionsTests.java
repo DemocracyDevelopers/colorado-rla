@@ -170,7 +170,7 @@ public class GetAssertionsTests {
     //   byte[] buffer = new byte[((int) firstEntry.getSize())];
     in.read(buffer, 0, 21);
     String data = buffer.toString();
-    // TODO - findout how to get data.
+    // TODO - find out how to get data.
       //  assertTrue(data.equalsIgnoreCase(RaireServiceErrors.RaireErrorCodes.NO_ASSERTIONS_PRESENT.toString()));
 
     CloseableHttpClient client = HttpClientBuilder.create().build();

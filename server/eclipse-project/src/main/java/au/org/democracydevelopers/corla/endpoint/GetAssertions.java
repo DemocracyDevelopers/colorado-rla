@@ -53,6 +53,12 @@ import us.freeandfair.corla.util.SparkHelper;
 /**
  * The Get Assertions endpoint. Takes a GetAssertionsRequest, and an optional format parameter specifying CSV or JSON,
  * defaulting to json. Returns a zip of all assertions for all IRV contests, in the requested format.
+ * For example, hitting /get-assertions?format=csv will produce a zip of all the assertions exported in csv format;
+ * omitting the query parameter, or requesting anything other than csv, will produce a zip of all the assertions in
+ * json format.
+ * If the raire service returns a specific error for a particular contest, e.g. NO_ASSERTIONS_PRESENT, a file is made
+ * for that contest containing the error string, which is then included in the zip.
+ * If the raire service endpoint returns a 4xx error, this throws a RuntimeException.
  */
 public class GetAssertions extends AbstractDoSDashboardEndpoint {
 
