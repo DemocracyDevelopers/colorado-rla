@@ -28,6 +28,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import javax.swing.text.html.Option;
 
 import org.hibernate.Session;
 import org.hibernate.query.Query;
@@ -204,8 +205,9 @@ public final class BallotManifestInfoQueries {
       cq.select(root).where(cb.and(disjuncts.toArray(new Predicate[disjuncts.size()])));
       final TypedQuery<BallotManifestInfo> query = s.createQuery(cq);
       result = new HashSet<BallotManifestInfo>(query.getResultList());
-    } catch (final PersistenceException e) {
+    } catch (PersistenceException e) {
       Main.LOGGER.error("Exception when reading ballot manifests from database: ", e);
+      return Optional.empty();
     }
     return result.stream().findFirst();
   }
