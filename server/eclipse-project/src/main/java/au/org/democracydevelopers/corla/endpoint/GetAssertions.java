@@ -22,16 +22,9 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.endpoint;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -39,7 +32,6 @@ import au.org.democracydevelopers.corla.raire.requestToRaire.GetAssertionsReques
 import com.google.gson.Gson;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -67,7 +59,7 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
     /**
      * Class-wide logger
      */
-    public static final Logger LOGGER = LogManager.getLogger(GetAssertions.class);
+    private static final Logger LOGGER = LogManager.getLogger(GetAssertions.class);
 
     /**
      * GSON, for serialising requests.
