@@ -23,6 +23,7 @@ package au.org.democracydevelopers.corla.endpoint;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -232,6 +233,9 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
                     winner,
                     riskLimit
             );
+            // TODO possibly we should be checking whether a valid URL has been set before we call it.
+            // Need to make sure that the exceptions we catch match the ones this will throw if that is wrong.
+            // See https://github.com/orgs/DemocracyDevelopers/projects/1/views/1?pane=issue&itemId=68081868
             HttpPost requestToRaire = new HttpPost(raireUrl + "-" + suffix);
             requestToRaire.addHeader("content-type", "application/json");
             requestToRaire.setEntity(new StringEntity(gson.toJson(getAssertionsRequest)));

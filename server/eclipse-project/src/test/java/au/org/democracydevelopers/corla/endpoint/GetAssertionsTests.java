@@ -23,9 +23,11 @@ package au.org.democracydevelopers.corla.endpoint;
 
 import au.org.democracydevelopers.corla.endpoint.GetAssertions.*;
 import au.org.democracydevelopers.corla.model.ContestType;
+import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
 import au.org.democracydevelopers.corla.raire.requestToRaire.GenerateAssertionsRequest;
 import au.org.democracydevelopers.corla.raire.requestToRaire.GetAssertionsRequest;
 import au.org.democracydevelopers.corla.raire.responseFromRaire.RaireServiceErrors;
+import au.org.democracydevelopers.corla.util.testUtils;
 import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -63,6 +65,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipInputStream;
 
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -70,141 +73,191 @@ import static org.testng.Assert.assertTrue;
 /**
  * Test the GetAssertions endpoint, both CSV and JSON versions. The response is supposed to be a zip file containing
  * the assertions.
+ * TODO This really isn't a completely comprehensive set of tests yet. We also need:
+ * - API testing
+ * - Testing for retrieving the data from the zip.
+ * - Testing that the service throws appropriate exceptions if the raire service connection isn't set up properly.
  */
 public class GetAssertionsTests {
 
-  private static final Logger LOGGER = LogManager.getLogger(GetAssertionsTests.class);
+    private static final Logger LOGGER = LogManager.getLogger(GetAssertionsTests.class);
 
-  private static final Gson GSON = new Gson();
+    private static final Gson GSON = new Gson();
 
-  private static String boulderMayoral = "City of Boulder Mayoral Candidates";
+    private static String boulderMayoral = "City of Boulder Mayoral Candidates";
+    private static String tinyIRV = "TinyExample1";
 
-  private Choice alice = new Choice("Alice", "", false, false);
-  private Choice bob = new Choice("Bob", "", false, false);
+    private Choice alice = new Choice("Alice", "", false, false);
+    private Choice bob = new Choice("Bob", "", false, false);
+    private Choice chuan = new Choice("Chuan", "", false, false);
 
-  private Contest testContest = new Contest("testContest", new County("testCounty", 1L), ContestType.IRV.toString(),
-          List.of(alice, bob), 2, 1, 1);
+    private List<Choice> boulderMayoralCandidates = List.of(
+            new Choice("Aaron Brockett", "", false, false),
+            new Choice("Nicole Speer", "", false, false),
+            new Choice("Bob Yates", "", false, false),
+            new Choice("Paul Tweedlie", "", false, false)
+    );
 
-  private List<Choice> boulderMayoralCandidates = List.of(
-          new Choice("Aaron Brockett", "", false, false),
-          new Choice("Nicole Speer", "", false, false),
-          new Choice("Bob Yates", "", false, false),
-          new Choice("Paul Tweedlie", "", false, false)
-  );
+    // IRV Contests for mocking the IRVContestCollector.
+    private Contest tinyIRVExample = new Contest(tinyIRV, new County("Arapahoe", 3L), ContestType.IRV.toString(),
+            List.of(alice, bob, chuan), 3, 1, 0);
+    private ContestResult tinyIRVContestResult = new ContestResult(tinyIRV);
+    private Contest boulderMayoralContest = new Contest(boulderMayoral, new County("Boulder", 7L), ContestType.IRV.toString(),
+            boulderMayoralCandidates, 4, 1, 0);
+    private ContestResult boulderIRVContestResult = new ContestResult(boulderMayoral);
+    private List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult, tinyIRVContestResult);
 
-  private Contest boulderMayoralContest = new Contest(boulderMayoral, new County("Boulder", 7L), ContestType.IRV.toString(),
-          boulderMayoralCandidates, 4, 1, 0);
-  private ContestResult boulderIRVContestResult = new ContestResult(boulderMayoral);
-  private List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult);
+    /**
+     * Container for the mock-up database.
+     */
+    static PostgreSQLContainer<?> postgres
+            = new PostgreSQLContainer<>("postgres:15-alpine")
+            // None of these actually have to be the same as the real database (except its name), but this
+            // makes it easy to match the setup scripts.
+            .withDatabaseName("corla")
+            .withUsername("corlaadmin")
+            .withPassword("corlasecret")
+            .withInitScript("SQL/corlaInit.sql");
 
-  /**
-   * Container for the mock-up database.
-   */
-  static PostgreSQLContainer<?> postgres
-          = new PostgreSQLContainer<>("postgres:15-alpine")
-          // None of these actually have to be the same as the real database (except its name), but this
-          // makes it easy to match the setup scripts.
-          .withDatabaseName("corla")
-          .withUsername("corlaadmin")
-          .withPassword("corlasecret")
-          // .withInitScripts("corlaInit.sql","contest.sql");
-          .withInitScript("SQL/corlaInit.sql");
+    @BeforeClass
+    public static void beforeAll() {
+        postgres.start();
+        Properties hibernateProperties = new Properties();
+        hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
+        hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
+        hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
+        hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
+        hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
+        Persistence.setProperties(hibernateProperties);
+        Persistence.beginTransaction();
 
-  @BeforeClass
-  public static void beforeAll() {
-    postgres.start();
-    Properties hibernateProperties = new Properties();
-    hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
-    hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
-    hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
-    hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
-    hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
-    Persistence.setProperties(hibernateProperties);
-    Persistence.beginTransaction();
-
-  }
-
-  @AfterClass
-  public static void afterAll() {
-    postgres.stop();
-  }
-
-  /**
-   * Initialise mocked objects prior to the first test.
-   */
-  @BeforeClass
-  public void initMocks() {
-    MockitoAnnotations.openMocks(this);
-
-    boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    boulderIRVContestResult.setBallotCount(100000L);
-    boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
-    boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
-  }
-
-
-
-
-  @Test
-  public void test2() throws Exception {
-
-    try (MockedStatic<IRVContestCollector> mockIRVContestResults = Mockito.mockStatic(IRVContestCollector.class)) {
-      mockIRVContestResults.when(IRVContestCollector::getIRVContestResults).thenReturn(mockedIRVContestResults);
-
-    List<ContestResult> testMock = IRVContestCollector.getIRVContestResults();
-    assertEquals(1, testMock.size());
-    assertEquals(boulderMayoral, testMock.get(0).getContestName());
-
-    GetAssertions endpoint = new GetAssertions();
-    ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-    ZipOutputStream zos = new ZipOutputStream(bytesOut);
-    endpoint.getAssertions(zos, BigDecimal.valueOf(0.03),"http://localhost:8080/raire/get-assertions","csv");
-
-    // Now read it out again.
-    byte[] bytes = bytesOut.toByteArray();
-    InputStream bais = new ByteArrayInputStream(bytes);
-    ZipInputStream in = new ZipInputStream(bais);
-    ZipEntry firstEntry  = in.getNextEntry();
-    assertEquals(boulderMayoral+"_assertions.csv", firstEntry.getName());
-    byte[] buffer = new byte[21];
-    //   byte[] buffer = new byte[((int) firstEntry.getSize())];
-    in.read(buffer, 0, 21);
-    String data = buffer.toString();
-    // TODO - find out how to get data.
-      //  assertTrue(data.equalsIgnoreCase(RaireServiceErrors.RaireErrorCodes.NO_ASSERTIONS_PRESENT.toString()));
-
-    CloseableHttpClient client = HttpClientBuilder.create().build();
-    GenerateAssertionsRequest generateAssertionsRequest = new GenerateAssertionsRequest(boulderMayoral,
-            100000, 5, boulderMayoralCandidates.stream().map(Choice::name).toList());
-    HttpPost generateAssertionsPost = new HttpPost("http://localhost:8080/raire/generate-assertions");
-    generateAssertionsPost.addHeader("content-type", "application/json");
-    generateAssertionsPost.setEntity(new StringEntity(GSON.toJson(generateAssertionsRequest)));
-
-    HttpResponse generateAssertionsResponse = client.execute(generateAssertionsPost);
-
-    GenerateAssertionsRequest generateAssertionsRequest2 = new GenerateAssertionsRequest("TinyExample1",
-            10, 5, List.of("Alice","Bob","Chuan"));
-      HttpPost generateAssertionsPost2 = new HttpPost("http://localhost:8080/raire/generate-assertions");
-      generateAssertionsPost2.addHeader("content-type", "application/json");
-      generateAssertionsPost2.setEntity(new StringEntity(GSON.toJson(generateAssertionsRequest2)));
-
-
-      HttpResponse generateAssertionsResponse2 = client.execute(generateAssertionsPost2);
-
-
-    ByteArrayOutputStream bytesOut2 = new ByteArrayOutputStream();
-    ZipOutputStream zos2 = new ZipOutputStream(bytesOut2);
-    endpoint.getAssertions(zos2, BigDecimal.valueOf(0.03),"http://localhost:8080/raire/get-assertions","csv");
-
-    // Now read it out again.
-    byte[] bytes2 = bytesOut.toByteArray();
-    InputStream bais2 = new ByteArrayInputStream(bytes2);
-    ZipInputStream in2 = new ZipInputStream(bais2);
-    ZipEntry firstEntry2  = in2.getNextEntry();
-    assertEquals(boulderMayoral+"_assertions.csv", firstEntry2.getName());
-    ZipEntry secondEntry2 = in2.getNextEntry();
-    assertEquals("TinyExample1"+"_assertions.csv", secondEntry2.getName());
-    // TODO - findout how to get data.
     }
-  }
+
+    @AfterClass
+    public static void afterAll() {
+        postgres.stop();
+    }
+
+    /**
+     * Initialise mocked objects prior to the first test.
+     */
+    @BeforeClass
+    public void initMocks() {
+        MockitoAnnotations.openMocks(this);
+
+        boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+        boulderIRVContestResult.setBallotCount(100000L);
+        boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
+        boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
+
+        tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+        tinyIRVContestResult.setBallotCount(10L);
+        tinyIRVContestResult.setWinners(Set.of("Alice"));
+        tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
+    }
+
+
+    /**
+     * Calls the getAssertions main endpoint function, for csv, and checks that the right file names are present in the
+     * zip.
+     * @throws Exception never.
+     */
+    @Test
+    public void rightFileNamesInZipCSV() throws Exception {
+        testUtils.log(LOGGER, "rightFileNamesInZipCSV");
+
+        try (MockedStatic<IRVContestCollector> mockIRVContestResults = Mockito.mockStatic(IRVContestCollector.class)) {
+            mockIRVContestResults.when(IRVContestCollector::getIRVContestResults).thenReturn(mockedIRVContestResults);
+
+            GetAssertions endpoint = new GetAssertions();
+            ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+            ZipOutputStream zos = new ZipOutputStream(bytesOut);
+            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), "http://localhost:8080/raire/get-assertions", "csv");
+
+            byte[] bytes = bytesOut.toByteArray();
+            InputStream bais = new ByteArrayInputStream(bytes);
+            ZipInputStream in = new ZipInputStream(bais);
+            ZipEntry firstEntry = in.getNextEntry();
+            assertEquals(firstEntry.getName(), "CityofBoulderMayoralCandidates_assertions.csv");
+            ZipEntry secondEntry = in.getNextEntry();
+            assertEquals("TinyExample1" + "_assertions.csv", secondEntry.getName());
+            ZipEntry thirdEntry = in.getNextEntry();
+            assertNull(thirdEntry);
+        }
+    }
+
+    /**
+     * Calls the getAssertions main endpoint function, for json, and checks that the right file names are present in the
+     * zip.
+     * @throws Exception never.
+     */
+    @Test
+    public void rightFileNamesInZipJSON() throws Exception {
+        testUtils.log(LOGGER, "rightFileNamesInZipJSON");
+        try (MockedStatic<IRVContestCollector> mockIRVContestResults = Mockito.mockStatic(IRVContestCollector.class)) {
+            mockIRVContestResults.when(IRVContestCollector::getIRVContestResults).thenReturn(mockedIRVContestResults);
+
+            GetAssertions endpoint = new GetAssertions();
+            ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+            ZipOutputStream zos = new ZipOutputStream(bytesOut);
+            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), "http://localhost:8080/raire/get-assertions", "json");
+
+            byte[] bytes = bytesOut.toByteArray();
+            InputStream bais = new ByteArrayInputStream(bytes);
+            ZipInputStream in = new ZipInputStream(bais);
+            ZipEntry firstEntry = in.getNextEntry();
+            assertEquals(firstEntry.getName(), "CityofBoulderMayoralCandidates_assertions.json");
+            ZipEntry secondEntry = in.getNextEntry();
+            assertEquals("TinyExample1" + "_assertions.json", secondEntry.getName());
+            ZipEntry thirdEntry = in.getNextEntry();
+            assertNull(thirdEntry);
+        }
+    }
+
+
+    @Test(expectedExceptions = RuntimeException.class)
+    public void badURLThrowsRuntimeExceptionCSV() throws Exception {
+        testUtils.log(LOGGER, "badURLThrowsRuntimeExceptionCSV");
+        try (MockedStatic<IRVContestCollector> mockIRVContestResults = Mockito.mockStatic(IRVContestCollector.class)) {
+            mockIRVContestResults.when(IRVContestCollector::getIRVContestResults).thenReturn(mockedIRVContestResults);
+
+            GetAssertions endpoint = new GetAssertions();
+            ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+            ZipOutputStream zos = new ZipOutputStream(bytesOut);
+            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), "http://localhost:8080/bad-url", "csv");
+
+            byte[] bytes = bytesOut.toByteArray();
+            InputStream bais = new ByteArrayInputStream(bytes);
+            ZipInputStream in = new ZipInputStream(bais);
+            ZipEntry firstEntry = in.getNextEntry();
+            assertEquals(firstEntry.getName(), "CityofBoulderMayoralCandidates_assertions.json");
+            ZipEntry secondEntry = in.getNextEntry();
+            assertEquals("TinyExample1" + "_assertions.json", secondEntry.getName());
+            ZipEntry thirdEntry = in.getNextEntry();
+            assertNull(thirdEntry);
+        }
+    }
+
+    @Test(expectedExceptions = RuntimeException.class)
+    public void badURLThrowsRuntimeExceptionJSON() throws Exception {
+        testUtils.log(LOGGER, "badURLThrowsRuntimeExceptionJSON");
+        try (MockedStatic<IRVContestCollector> mockIRVContestResults = Mockito.mockStatic(IRVContestCollector.class)) {
+          mockIRVContestResults.when(IRVContestCollector::getIRVContestResults).thenReturn(mockedIRVContestResults);
+
+          GetAssertions endpoint = new GetAssertions();
+          ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+          ZipOutputStream zos = new ZipOutputStream(bytesOut);
+          endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), "http://localhost:8080/bad-url", "json");
+
+          byte[] bytes = bytesOut.toByteArray();
+          InputStream bais = new ByteArrayInputStream(bytes);
+          ZipInputStream in = new ZipInputStream(bais);
+          ZipEntry firstEntry = in.getNextEntry();
+          assertEquals(firstEntry.getName(), "CityofBoulderMayoralCandidates_assertions.json");
+          ZipEntry secondEntry = in.getNextEntry();
+          assertEquals("TinyExample1" + "_assertions.json", secondEntry.getName());
+          ZipEntry thirdEntry = in.getNextEntry();
+          assertNull(thirdEntry);
+        }
+    }
 }
