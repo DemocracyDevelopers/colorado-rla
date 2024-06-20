@@ -22,9 +22,11 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.endpoint;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -35,6 +37,7 @@ import java.util.zip.ZipOutputStream;
 
 import au.org.democracydevelopers.corla.raire.requestToRaire.GetAssertionsRequest;
 import com.google.gson.Gson;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -169,13 +172,15 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
             suffix = JSON_SUFFIX;
         }
 
-        // Use the DoS Dashboard to get the risk limit.
-        final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
+        // Use the DoS Dashboard to get the risk limit; default to 0 if none is specified.
+        // This is a safe default because the true risk limit cannot be smaller.
+        BigDecimal riskLimit = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class).auditInfo().riskLimit();
+        riskLimit = riskLimit == null ? BigDecimal.ZERO : riskLimit;
 
         try {
 
             final ZipOutputStream os = new ZipOutputStream(SparkHelper.getRaw(the_response).getOutputStream());
-            getAssertions(os, dosdb.auditInfo().riskLimit(), raireUrl, suffix);
+            getAssertions(os, riskLimit, raireUrl, suffix);
 
             the_response.header("Content-Type", "application/zip");
             the_response.header("Content-Disposition", "attachment; filename*=UTF-8''assertions.zip");
@@ -237,14 +242,16 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
                 // OK response. Put the file name and data into the .zip.
                 // TODO Sanitize contest name.
                 zos.putNextEntry(new ZipEntry(cr.getContestName() + "_assertions." + suffix));
-                zos.write(raireResponse.getEntity().getContent().read());
+                // zos.write(raireResponse.getEntity().getContent().read());
+                IOUtils.copy(raireResponse.getEntity().getContent(), zos);
             } else if(raireResponse.containsHeader(RAIRE_ERROR_CODE)) {
                 // Error response about a specific contest, e.g. "NO_ASSERTIONS_PRESENT".
                 // Write into the zip file and keep going.
                 // TODO Sanitize contest name.
                 zos.putNextEntry(new ZipEntry(cr.getContestName() + "_assertions." + suffix));
                 String code = raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getValue();
-                zos.write(code.getBytes());
+                zos.write(code.getBytes(StandardCharsets.UTF_8));
+                // zos.write(code.getBytes());
             } else {
                 // Something went wrong with the connection.
                 final String msg = ("Bad response from Raire service: " + statusCode + ": "

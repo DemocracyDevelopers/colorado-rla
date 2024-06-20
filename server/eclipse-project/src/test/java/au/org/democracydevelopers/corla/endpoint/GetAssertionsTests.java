@@ -25,6 +25,7 @@ import au.org.democracydevelopers.corla.endpoint.GetAssertions.*;
 import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.raire.requestToRaire.GenerateAssertionsRequest;
 import au.org.democracydevelopers.corla.raire.requestToRaire.GetAssertionsRequest;
+import au.org.democracydevelopers.corla.raire.responseFromRaire.RaireServiceErrors;
 import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -52,17 +53,19 @@ import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.persistence.Persistence;
 
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import java.util.zip.ZipInputStream;
 
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Test the GetAssertions endpoint, both CSV and JSON versions. The response is supposed to be a zip file containing
@@ -153,20 +156,55 @@ public class GetAssertionsTests {
     assertEquals(boulderMayoral, testMock.get(0).getContestName());
 
     GetAssertions endpoint = new GetAssertions();
-    ZipOutputStream zos = new ZipOutputStream(new ByteArrayOutputStream());
+    ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+    ZipOutputStream zos = new ZipOutputStream(bytesOut);
     endpoint.getAssertions(zos, BigDecimal.valueOf(0.03),"http://localhost:8080/raire/get-assertions","csv");
 
+    // Now read it out again.
+    byte[] bytes = bytesOut.toByteArray();
+    InputStream bais = new ByteArrayInputStream(bytes);
+    ZipInputStream in = new ZipInputStream(bais);
+    ZipEntry firstEntry  = in.getNextEntry();
+    assertEquals(boulderMayoral+"_assertions.csv", firstEntry.getName());
+    byte[] buffer = new byte[21];
+    //   byte[] buffer = new byte[((int) firstEntry.getSize())];
+    in.read(buffer, 0, 21);
+    String data = buffer.toString();
+    // TODO - findout how to get data.
+      //  assertTrue(data.equalsIgnoreCase(RaireServiceErrors.RaireErrorCodes.NO_ASSERTIONS_PRESENT.toString()));
+
     CloseableHttpClient client = HttpClientBuilder.create().build();
-      GenerateAssertionsRequest generateAssertionsRequest = new GenerateAssertionsRequest(boulderMayoral,
-              100000, 5, boulderMayoralCandidates.stream().map(Choice::name).toList());
-      HttpPost generateAssertionsPost = new HttpPost("http://localhost:8080/raire/generate-assertions");
-      generateAssertionsPost.addHeader("content-type", "application/json");
-      generateAssertionsPost.setEntity(new StringEntity(GSON.toJson(generateAssertionsRequest)));
+    GenerateAssertionsRequest generateAssertionsRequest = new GenerateAssertionsRequest(boulderMayoral,
+            100000, 5, boulderMayoralCandidates.stream().map(Choice::name).toList());
+    HttpPost generateAssertionsPost = new HttpPost("http://localhost:8080/raire/generate-assertions");
+    generateAssertionsPost.addHeader("content-type", "application/json");
+    generateAssertionsPost.setEntity(new StringEntity(GSON.toJson(generateAssertionsRequest)));
 
-      HttpResponse generateAssertionsResponse = client.execute(generateAssertionsPost);
+    HttpResponse generateAssertionsResponse = client.execute(generateAssertionsPost);
 
-      ZipOutputStream zos2 = new ZipOutputStream(new ByteArrayOutputStream());
-      endpoint.getAssertions(zos2, BigDecimal.valueOf(0.03),"http://localhost:8080/raire/get-assertions","csv");
+    GenerateAssertionsRequest generateAssertionsRequest2 = new GenerateAssertionsRequest("TinyExample1",
+            10, 5, List.of("Alice","Bob","Chuan"));
+      HttpPost generateAssertionsPost2 = new HttpPost("http://localhost:8080/raire/generate-assertions");
+      generateAssertionsPost2.addHeader("content-type", "application/json");
+      generateAssertionsPost2.setEntity(new StringEntity(GSON.toJson(generateAssertionsRequest2)));
+
+
+      HttpResponse generateAssertionsResponse2 = client.execute(generateAssertionsPost2);
+
+
+    ByteArrayOutputStream bytesOut2 = new ByteArrayOutputStream();
+    ZipOutputStream zos2 = new ZipOutputStream(bytesOut2);
+    endpoint.getAssertions(zos2, BigDecimal.valueOf(0.03),"http://localhost:8080/raire/get-assertions","csv");
+
+    // Now read it out again.
+    byte[] bytes2 = bytesOut.toByteArray();
+    InputStream bais2 = new ByteArrayInputStream(bytes2);
+    ZipInputStream in2 = new ZipInputStream(bais2);
+    ZipEntry firstEntry2  = in2.getNextEntry();
+    assertEquals(boulderMayoral+"_assertions.csv", firstEntry2.getName());
+    ZipEntry secondEntry2 = in2.getNextEntry();
+    assertEquals("TinyExample1"+"_assertions.csv", secondEntry2.getName());
+    // TODO - findout how to get data.
     }
   }
 }
