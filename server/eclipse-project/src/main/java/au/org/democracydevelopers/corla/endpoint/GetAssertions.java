@@ -132,8 +132,7 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
     /**
      * @return No authorization is necessary for this endpoint.
      */
-    // TODO: Clarify whether this should be STATE or NONE.
-    public AuthorizationType requiredAuthorization() { return AuthorizationType.NONE; }
+    public AuthorizationType requiredAuthorization() { return AuthorizationType.STATE; }
 
     /**
      * {@inheritDoc}
