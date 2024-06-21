@@ -576,13 +576,15 @@ public final class CastVoteRecordQueries {
     q.setLong("countyId", cvr.countyID());
     q.setString("imprintedId", cvr.imprintedID());
 
-    final Long result = (Long) q.getSingleResult();
-
-    if (null == result) {
+    try {
+      return (Long) q.getSingleResult();
+    } catch (final PersistenceException e) {
+      // the DB had a problem!
+      // TODO: Technically this should probably be an error code?
+      // TODO: Otherwise there's no way to discern this from a CVR with no revisions?
       return 0L;
-    } else {
-      return result;
     }
+
   }
 
   /**
