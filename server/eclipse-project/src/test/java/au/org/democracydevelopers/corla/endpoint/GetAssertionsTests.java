@@ -30,14 +30,16 @@ import org.apache.log4j.Logger;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.model.*;
 
 import java.io.*;
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -113,7 +115,7 @@ public class GetAssertionsTests {
      * Base url - this is set up to use the wiremock server, but could be set here to wherever you have the
      * raire-service running to test with that directly.
      */
-    String baseUrl;
+    static String baseUrl;
 
     /**
      * Initialise mocked objects prior to the first test.
@@ -153,123 +155,106 @@ public class GetAssertionsTests {
         wireMockRaireServer.stop();
     }
 
+
     /**
-     * Calls the getAssertions main endpoint function, for csv, and checks that the right file names are present in the
+     * Test data for the two valid IRV contests, with json and csv.  This gives the successfully-sanitized version of
+     * the contest names.
+     */
+    @DataProvider(name = "TwoIRVContests")
+    public static String[][] TwoIRVContests() {
+        return new String[][]{
+                {"CityofBoulderMayoralCandidates", tinyIRV, "json"},
+                {"CityofBoulderMayoralCandidates", tinyIRV, "csv"}
+        };
+    }
+
+    /**
+     * Calls the getAssertions main endpoint function and checks that the right file names are present in the
      * zip.
      * @throws Exception never.
      */
-    @Test
-    public void rightFileNamesInZipCSV() throws Exception {
-        testUtils.log(LOGGER, "rightFileNamesInZipCSV");
-
+    @Test(dataProvider = "TwoIRVContests")
+    public void rightFileNamesInZip(String contestName1, String contestName2, String suffix) throws Exception {
+        testUtils.log(LOGGER, "rightFileNamesInZip");
         try (MockedStatic<IRVContestCollector> mockIRVContestResults = Mockito.mockStatic(IRVContestCollector.class)) {
             mockIRVContestResults.when(IRVContestCollector::getIRVContestResults).thenReturn(mockedIRVContestResults);
 
             GetAssertions endpoint = new GetAssertions();
             ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
             ZipOutputStream zos = new ZipOutputStream(bytesOut);
-            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), baseUrl + getAssertionsEndpoint, "csv");
+            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), baseUrl + getAssertionsEndpoint, suffix);
 
             byte[] bytes = bytesOut.toByteArray();
             InputStream bais = new ByteArrayInputStream(bytes);
             ZipInputStream in = new ZipInputStream(bais);
             ZipEntry firstEntry = in.getNextEntry();
             assertNotNull(firstEntry);
-            assertEquals(firstEntry.getName(), "CityofBoulderMayoralCandidates_assertions.csv");
-            ZipEntry secondEntry = in.getNextEntry();
-            assertEquals("TinyExample1" + "_assertions.csv", secondEntry.getName());
-            ZipEntry thirdEntry = in.getNextEntry();
-            assertNull(thirdEntry);
-        }
-    }
-
-    /**
-     * Calls the getAssertions main endpoint function, for json, and checks that the right file names are present in the
-     * zip.
-     * @throws Exception never.
-     */
-    @Test
-    public void rightFileNamesInZipJSON() throws Exception {
-        testUtils.log(LOGGER, "rightFileNamesInZipJSON");
-        try (MockedStatic<IRVContestCollector> mockIRVContestResults = Mockito.mockStatic(IRVContestCollector.class)) {
-            mockIRVContestResults.when(IRVContestCollector::getIRVContestResults).thenReturn(mockedIRVContestResults);
-
-            GetAssertions endpoint = new GetAssertions();
-            ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-            ZipOutputStream zos = new ZipOutputStream(bytesOut);
-            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), baseUrl + getAssertionsEndpoint, "json");
-
-            byte[] bytes = bytesOut.toByteArray();
-            InputStream bais = new ByteArrayInputStream(bytes);
-            ZipInputStream in = new ZipInputStream(bais);
-            ZipEntry firstEntry = in.getNextEntry();
-            assertNotNull(firstEntry);
-            assertEquals(firstEntry.getName(), "CityofBoulderMayoralCandidates_assertions.json");
+            assertEquals(firstEntry.getName(), contestName1 + "_assertions." + suffix);
             ZipEntry secondEntry = in.getNextEntry();
             assertNotNull(secondEntry);
-            assertEquals("TinyExample1" + "_assertions.json", secondEntry.getName());
-            ZipEntry thirdEntry = in.getNextEntry();
-            assertNull(thirdEntry);
-        }
-    }
-
-
-    /**
-     * Checks that, when given a bad endpoint url, a runtime exception is thrown (CSV).
-     * @throws Exception always.
-     */
-    @Test(expectedExceptions = RuntimeException.class)
-    public void badURLThrowsRuntimeExceptionCSV() throws Exception {
-        testUtils.log(LOGGER, "badURLThrowsRuntimeExceptionCSV");
-        try (MockedStatic<IRVContestCollector> mockIRVContestResults = Mockito.mockStatic(IRVContestCollector.class)) {
-            mockIRVContestResults.when(IRVContestCollector::getIRVContestResults).thenReturn(mockedIRVContestResults);
-
-            GetAssertions endpoint = new GetAssertions();
-            ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-            ZipOutputStream zos = new ZipOutputStream(bytesOut);
-            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), baseUrl + "/badUrl", "csv");
-
-            byte[] bytes = bytesOut.toByteArray();
-            InputStream bais = new ByteArrayInputStream(bytes);
-            ZipInputStream in = new ZipInputStream(bais);
-            ZipEntry firstEntry = in.getNextEntry();
-            Assert.assertNotNull(firstEntry);
-            assertEquals(firstEntry.getName(), "CityofBoulderMayoralCandidates_assertions.json");
-            ZipEntry secondEntry = in.getNextEntry();
-            assertNotNull(secondEntry);
-            assertEquals("TinyExample1" + "_assertions.json", secondEntry.getName());
+            assertEquals(secondEntry.getName(), contestName2 + "_assertions." + suffix);
             ZipEntry thirdEntry = in.getNextEntry();
             assertNull(thirdEntry);
         }
     }
 
     /**
-     * Checks that, when given a bad endpoint url, a runtime exception is thrown (CSV).
+     * Good urls with bad endpoints.
+     */
+    @DataProvider(name = "SampleBadEndpoints")
+    public static String[][] SampleBadEndpoints() {
+        return new String[][]{
+                {baseUrl + "/badUrl", "csv"},
+                {baseUrl + "/badUrl", "json"}
+        };
+    }
+
+    /**
+     * Checks that, when given a bad endpoint, a runtime exception is thrown, for both csv and json.
      * @throws Exception always.
      */
-    @Test(expectedExceptions = RuntimeException.class)
-    public void badURLThrowsRuntimeExceptionJSON() throws Exception {
-        testUtils.log(LOGGER, "badURLThrowsRuntimeExceptionJSON");
+    @Test(dataProvider ="SampleBadEndpoints", expectedExceptions = RuntimeException.class)
+    public void badEndpointThrowsRuntimeException(String url, String suffix) throws Exception {
+        testUtils.log(LOGGER, "badEndpointThrowsRuntimeException");
         try (MockedStatic<IRVContestCollector> mockIRVContestResults
                      = Mockito.mockStatic(IRVContestCollector.class)) {
-          mockIRVContestResults.when(IRVContestCollector::getIRVContestResults)
-                  .thenReturn(mockedIRVContestResults);
+            mockIRVContestResults.when(IRVContestCollector::getIRVContestResults)
+                    .thenReturn(mockedIRVContestResults);
 
-          GetAssertions endpoint = new GetAssertions();
-          ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-          ZipOutputStream zos = new ZipOutputStream(bytesOut);
-          endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), baseUrl + "/badUrl", "json");
+            GetAssertions endpoint = new GetAssertions();
+            ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+            ZipOutputStream zos = new ZipOutputStream(bytesOut);
+            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), url, suffix);
+        }
+    }
 
-          byte[] bytes = bytesOut.toByteArray();
-          InputStream bais = new ByteArrayInputStream(bytes);
-          ZipInputStream in = new ZipInputStream(bais);
-          ZipEntry firstEntry = in.getNextEntry();
-          assertNotNull(firstEntry);
-          assertEquals(firstEntry.getName(), "CityofBoulderMayoralCandidates_assertions.json");
-          ZipEntry secondEntry = in.getNextEntry();
-          assertEquals("TinyExample1" + "_assertions.json", secondEntry.getName());
-          ZipEntry thirdEntry = in.getNextEntry();
-          assertNull(thirdEntry);
+    /**
+     * Bad urls.
+     */
+    @DataProvider(name = "SampleBadUrls")
+    public static String[][] SampleBadUrls() {
+        return new String[][]{
+                {"completelyNotAUrl" + "/badUrl", "csv"},
+                {"completelyNotAUrl" + "/badUrl", "json"}
+        };
+    }
+
+    /**
+     * Checks that, when given a bad url, an appropriate url-parsing exception is thrown, for both csv and json.
+     * @throws Exception always.
+     */
+    @Test(dataProvider ="SampleBadUrls", expectedExceptions = {MalformedURLException.class, URISyntaxException.class})
+    public void badUrlThrowsUrlException(String url, String suffix) throws Exception {
+        testUtils.log(LOGGER, "badUrlThrowsUrlException");
+        try (MockedStatic<IRVContestCollector> mockIRVContestResults
+                     = Mockito.mockStatic(IRVContestCollector.class)) {
+            mockIRVContestResults.when(IRVContestCollector::getIRVContestResults)
+                    .thenReturn(mockedIRVContestResults);
+
+            GetAssertions endpoint = new GetAssertions();
+            ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+            ZipOutputStream zos = new ZipOutputStream(bytesOut);
+            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), url, suffix);
         }
     }
 }
