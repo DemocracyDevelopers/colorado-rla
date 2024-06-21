@@ -209,7 +209,7 @@ public class ContestQueriesTest {
         assertEquals(ContestQueries.deleteForCounty(-1L), 0);
 
         // Test what happens when forCounty returns null
-        Query q = Persistence.currentSession().createNativeQuery("DROP TABLE contest");
+        Query q = Persistence.currentSession().createNativeQuery("DROP TABLE contest CASCADE");
         q.executeUpdate();
         assertEquals(ContestQueries.deleteForCounty(1L), -1);
     }
