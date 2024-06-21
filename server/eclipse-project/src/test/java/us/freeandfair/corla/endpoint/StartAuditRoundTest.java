@@ -2,9 +2,8 @@ package us.freeandfair.corla.endpoint;
 
 import static org.testng.Assert.assertEquals;
 
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testng.annotations.*;
 
 import us.freeandfair.corla.asm.CountyDashboardASM;
 import us.freeandfair.corla.model.County;
@@ -12,24 +11,52 @@ import us.freeandfair.corla.model.CountyDashboard;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.Setup;
 
+import java.util.Properties;
+
 @Test(groups = {"integration"})
 public class StartAuditRoundTest {
 
   private StartAuditRoundTest() {};
+  /**
+   * Container for the mock-up database.
+   */
+  static PostgreSQLContainer<?> postgres
+          = new PostgreSQLContainer<>("postgres:15-alpine")
+          // None of these actually have to be the same as the real database (except its name), but this
+          // makes it easy to match the setup scripts.
+          .withDatabaseName("corla")
+          .withUsername("corlaadmin")
+          .withPassword("corlasecret")
+          // .withInitScripts("corlaInit.sql","contest.sql");
+          .withInitScript("SQL/corlaInitEmpty.sql");
 
+  @BeforeClass
+  public static void beforeAll() {
+    postgres.start();
+    Properties hibernateProperties = new Properties();
+    hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
+    hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
+    hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
+    hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
+    hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
+    Persistence.setProperties(hibernateProperties);
+    Persistence.beginTransaction();
 
-  @BeforeTest()
-  public void setUp() {
-    Setup.setProperties();
+  }
+
+  @AfterClass
+  public static void afterAll() {
+    postgres.stop();
+  }
+
+  @BeforeMethod
+  public static void beforeEach() {
     Persistence.beginTransaction();
   }
 
-  @AfterTest()
-  public void tearDown() {
-    try {
-      Persistence.rollbackTransaction();
-    } catch (Exception e) {
-    }
+  @AfterMethod
+  public static void afterEach() {
+    Persistence.rollbackTransaction();
   }
 
   // this test doesn't do much yet
