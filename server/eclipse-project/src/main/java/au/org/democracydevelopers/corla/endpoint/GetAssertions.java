@@ -23,6 +23,9 @@ package au.org.democracydevelopers.corla.endpoint;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -32,6 +35,7 @@ import au.org.democracydevelopers.corla.raire.requestToRaire.GetAssertionsReques
 import com.google.gson.Gson;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -111,7 +115,7 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
     /**
      * The event to return for this endpoint.
      */
-    private final ThreadLocal<ASMEvent> my_event = new ThreadLocal<ASMEvent>();
+    private final ThreadLocal<ASMEvent> my_event = new ThreadLocal<>();
 
     /**
      * {@inheritDoc}
@@ -185,6 +189,10 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
             ok(the_response);
             return my_endpoint_result.get();
 
+        } catch (URISyntaxException | MalformedURLException e) {
+            final String msg = "Bad configuration of raire-service url - check the config file.";
+            LOGGER.error(String.format("%s %s", prefix, msg));
+            throw new RuntimeException(e);
         } catch (IOException e) {
             final String msg = "Error creating zip file.";
             LOGGER.error(String.format("%s %s", prefix, msg));
@@ -202,14 +210,14 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
      * @param raireUrl the url where the raire-service is running
      * @param suffix requested file type: "csv" or "json"
      */
-    public void getAssertions(final ZipOutputStream zos, final BigDecimal riskLimit, String raireUrl, String suffix) throws IOException {
+    public void getAssertions(final ZipOutputStream zos, final BigDecimal riskLimit, String raireUrl, String suffix)
+            throws IOException, URISyntaxException {
         final String prefix = "[getAssertions]";
 
         // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
         // collating the responses.
         final List<ContestResult> IRVContestResults = IRVContestCollector.getIRVContestResults();
         for (ContestResult cr : IRVContestResults) {
-            //  IRVContestResults.forEach(cr -> {
 
             // Find the winner (there should only be one), candidates and contest name.
             // TODO At the moment, the winner isn't yet set properly - will be set in the GenerateAssertions Endpoint.
@@ -231,10 +239,10 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
                     winner,
                     riskLimit
             );
-            // TODO possibly we should be checking whether a valid URL has been set before we call it.
-            // Need to make sure that the exceptions we catch match the ones this will throw if that is wrong.
-            // See https://github.com/orgs/DemocracyDevelopers/projects/1/views/1?pane=issue&itemId=68081868
-            HttpPost requestToRaire = new HttpPost(raireUrl + "-" + suffix);
+
+            // Throws URISyntaxException or MalformedURLException if the raireUrl is invalid.
+            var uri = new URL(raireUrl + "-" + suffix).toURI();
+            HttpPost requestToRaire = new HttpPost(uri);
             requestToRaire.addHeader("content-type", "application/json");
             requestToRaire.setEntity(new StringEntity(gson.toJson(getAssertionsRequest)));
 
@@ -244,7 +252,7 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
                     + getAssertionsRequest.contestName));
 
             int statusCode = raireResponse.getStatusLine().getStatusCode();
-            if(statusCode == 200) {
+            if(statusCode == HttpStatus.SC_OK) {
                 // OK response. Put the file name and data into the .zip.
 
                 LOGGER.debug(String.format("%s %s.", prefix, "OK response received from RAIRE for "
