@@ -30,7 +30,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -1844,8 +1843,8 @@ public class NEBAssertionTests {
    * in error. The n+1'th call the removeDiscrepancy should throw an exception.
    */
   @Test(expectedExceptions = RuntimeException.class)
-  public void testNEBExcessRemovalCausesError(){
-    log(LOGGER, "testNEBExcessRemovalCausesError");
+  public void testNEBExcessRemovalCausesErrorTwoVoteOver(){
+    log(LOGGER, "testNEBExcessRemovalCausesErrorTwoVoteOver");
 
     final int N = 2;
     CVRAuditInfo info = new CVRAuditInfo();
@@ -1861,6 +1860,101 @@ public class NEBAssertionTests {
     }
   }
 
+  /**
+   * Test the re-auditing of a ballot where a prior discrepancy is recorded against the
+   * associated CVR (a two vote understatement). The existing discrepancies associated with the
+   * 'n' copies of the CVR in the sample are removed, but removeDiscrepancy() is called n+1 times
+   * in error. The n+1'th call the removeDiscrepancy should throw an exception.
+   */
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testNEBExcessRemovalCausesErrorTwoVoteUnder(){
+    log(LOGGER, "testNEBExcessRemovalCausesErrorTwoVoteUnder");
+
+    final int N = 2;
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a1 = createNEBAssertion("B", "F", TC, 50, 0.1,
+        8, Map.of(1L, -2), 0, 0, 0,
+        N, 0);
+
+    // Try to remove too many copies of the discrepancy
+    for(int i = 0; i <= N; ++i) {
+      assertTrue(a1.removeDiscrepancy(info));
+    }
+  }
+
+  /**
+   * Test the re-auditing of a ballot where a prior discrepancy is recorded against the
+   * associated CVR (a one vote understatement). The existing discrepancies associated with the
+   * 'n' copies of the CVR in the sample are removed, but removeDiscrepancy() is called n+1 times
+   * in error. The n+1'th call the removeDiscrepancy should throw an exception.
+   */
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testNEBExcessRemovalCausesErrorOneVoteUnder(){
+    log(LOGGER, "testNEBExcessRemovalCausesErrorOneVoteUnder");
+
+    final int N = 2;
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a1 = createNEBAssertion("B", "F", TC, 50, 0.1,
+        8, Map.of(1L, -1), 0, N, 0,
+        0, 0);
+
+    // Try to remove too many copies of the discrepancy
+    for(int i = 0; i <= N; ++i) {
+      assertTrue(a1.removeDiscrepancy(info));
+    }
+  }
+
+  /**
+   * Test the re-auditing of a ballot where a prior discrepancy is recorded against the
+   * associated CVR (a one vote overstatement). The existing discrepancies associated with the
+   * 'n' copies of the CVR in the sample are removed, but removeDiscrepancy() is called n+1 times
+   * in error. The n+1'th call the removeDiscrepancy should throw an exception.
+   */
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testNEBExcessRemovalCausesErrorOneVoteOver(){
+    log(LOGGER, "testNEBExcessRemovalCausesErrorOneVoteOver");
+
+    final int N = 2;
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a1 = createNEBAssertion("B", "F", TC, 50, 0.1,
+        8, Map.of(1L, 1), N, 0, 0,
+        0, 0);
+
+    // Try to remove too many copies of the discrepancy
+    for(int i = 0; i <= N; ++i) {
+      assertTrue(a1.removeDiscrepancy(info));
+    }
+  }
+
+  /**
+   * Test the re-auditing of a ballot where a prior discrepancy is recorded against the
+   * associated CVR (a one vote overstatement). The existing discrepancies associated with the
+   * 'n' copies of the CVR in the sample are removed, but removeDiscrepancy() is called n+1 times
+   * in error. The n+1'th call the removeDiscrepancy should throw an exception.
+   */
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testNEBExcessRemovalCausesErrorOther(){
+    log(LOGGER, "testNEBExcessRemovalCausesErrorOther");
+
+    final int N = 2;
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a1 = createNEBAssertion("B", "F", TC, 50, 0.1,
+        8, Map.of(1L, 0), 0, 0, 0,
+        0, N);
+
+    // Try to remove too many copies of the discrepancy
+    for(int i = 0; i <= N; ++i) {
+      assertTrue(a1.removeDiscrepancy(info));
+    }
+  }
 
   /**
    * Reset the CVR and audited CVR mock objects with the given parameters.
