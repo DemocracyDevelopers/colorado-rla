@@ -31,7 +31,9 @@ import au.org.democracydevelopers.corla.model.assertion.NENAssertion;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
+import java.util.Map;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.mockito.Mock;
@@ -157,8 +159,11 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
     final List<Assertion> assertions = ca.getAssertions();
     assertEquals(1, assertions.size());
 
-    assert(assertions.get(0) instanceof NEBAssertion);
+    checkNEBAssertion(assertions.get(0), "Alice", "Bob", 0, 0, 0,
+        0, 0, 23, 23, 1, Map.of(), 0.32);
   }
+
+
 
   /**
    * Create an IRVComparisonAudit for a contest with one NEN assertion stored in the database. This
@@ -176,7 +181,9 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
     final List<Assertion> assertions = ca.getAssertions();
     assertEquals(1, assertions.size());
 
-    assert(assertions.get(0) instanceof NENAssertion);
+    checkNENAssertion(assertions.get(0), "Alice", "Charlie", List.of("Alice","Charlie",
+            "Diego","Bob"), 0, 0, 0, 0, 0, 61,
+        61, 1, Map.of(), 0.12);
   }
 
   /**
@@ -207,5 +214,75 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
 
     assertEquals(0, testUtils.doubleComparator.compare(
         dilutedMargin, ca.getDilutedMargin().doubleValue()));
+  }
+
+  /**
+   * Check that the given NEB assertion has the given characteristics.
+   * @param a Assertion to check.
+   * @param winner Expected winner of the assertion.
+   * @param loser Expected loser of the assertion.
+   * @param oneOver Expected number of one vote overstatements.
+   * @param twoOver Expected number of two vote overstatements.
+   * @param oneUnder Expected number of one vote understatements.
+   * @param twoUnder Expected number of two vote understatements.
+   * @param other Expected number of "other" discrepancies.
+   * @param optimistic Expected optimistic sample size.
+   * @param estimated Expected estimated sample size.
+   * @param risk Expected current risk of the assertion.
+   * @param cvrDiscrepancy Expected CVR ID-discrepancy map.
+   * @param dilutedMargin Expected diluted margin.
+   */
+  private void checkNEBAssertion(final Assertion a, final String winner, final String loser,
+      int oneOver, int twoOver, int oneUnder, int twoUnder, int other, int optimistic,
+      int estimated, double risk, final Map<Long,Integer> cvrDiscrepancy, double dilutedMargin){
+
+    assert(a instanceof NEBAssertion);
+
+    final String expected = String.format("%s NEB %s: oneOver = %d; two Over = %d; oneUnder = %d, " +
+            "twoUnder = %d; other = %d; optimistic = %d; estimated = %d; risk %f.", winner, loser,
+        oneOver, twoOver, oneUnder, twoUnder, other, optimistic, estimated,
+        BigDecimal.valueOf(risk).setScale(Assertion.RISK_DECIMALS, RoundingMode.HALF_UP));
+
+    assertEquals(expected, a.getDescription());
+    assertEquals(cvrDiscrepancy, a.getCvrDiscrepancy());
+
+    assertEquals(0, testUtils.doubleComparator.compare(dilutedMargin,
+        a.getDilutedMargin().doubleValue()));
+  }
+
+  /**
+   * Check that the given NEN assertion has the given characteristics.
+   * @param a Assertion to check.
+   * @param winner Expected winner of the assertion.
+   * @param loser Expected loser of the assertion.
+   * @param continuing Expected list of assumed continuing candidates.
+   * @param oneOver Expected number of one vote overstatements.
+   * @param twoOver Expected number of two vote overstatements.
+   * @param oneUnder Expected number of one vote understatements.
+   * @param twoUnder Expected number of two vote understatements.
+   * @param other Expected number of "other" discrepancies.
+   * @param optimistic Expected optimistic sample size.
+   * @param estimated Expected estimated sample size.
+   * @param risk Expected current risk of the assertion.
+   * @param cvrDiscrepancy Expected CVR ID-discrepancy map.
+   * @param dilutedMargin Expected diluted margin.
+   */
+  private void checkNENAssertion(final Assertion a, final String winner, final String loser,
+      final List<String> continuing, int oneOver, int twoOver, int oneUnder, int twoUnder, int other,
+      int optimistic, int estimated, double risk, final Map<Long,Integer> cvrDiscrepancy, double dilutedMargin){
+
+    assert(a instanceof NENAssertion);
+
+    final String expected = String.format("%s NEN %s assuming (%s) are continuing: oneOver = %d; " +
+            "two Over = %d; oneUnder = %d, twoUnder = %d; other = %d; optimistic = %d; estimated = %d; " +
+            "risk %f.", winner, loser, continuing, oneOver, twoOver, oneUnder, twoUnder, other,
+            optimistic, estimated, BigDecimal.valueOf(risk).setScale(Assertion.RISK_DECIMALS,
+            RoundingMode.HALF_UP));
+
+    assertEquals(expected, a.getDescription());
+    assertEquals(cvrDiscrepancy, a.getCvrDiscrepancy());
+
+    assertEquals(0, testUtils.doubleComparator.compare(dilutedMargin,
+        a.getDilutedMargin().doubleValue()));
   }
 }

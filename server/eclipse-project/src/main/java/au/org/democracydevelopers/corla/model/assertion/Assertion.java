@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -253,6 +254,19 @@ public abstract class Assertion implements PersistentEntity {
     return dilutedMargin;
   }
 
+  /**
+   * Get an (unmodifiable) map of the assertion's CRV ID-discrepancy records. This is used
+   * for testing purposes.
+   */
+  public Map<Long,Integer> getCvrDiscrepancy(){
+    return Collections.unmodifiableMap(cvrDiscrepancy);
+  }
+
+  /**
+   * Return a string representation of a subset of this assertion's data. This is used for
+   * testing purposes.
+   */
+  public abstract String getDescription();
 
   /**
    * Given a number of audited samples, and the total number of overstatements experienced thus far,
