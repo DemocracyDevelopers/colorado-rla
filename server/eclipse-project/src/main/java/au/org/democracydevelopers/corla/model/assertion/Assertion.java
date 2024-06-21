@@ -142,7 +142,7 @@ public abstract class Assertion implements PersistentEntity {
    * List of candidates that the assertion assumes are 'continuing' in the assertion's context.
    */
   @ElementCollection(fetch = FetchType.EAGER)
-  @CollectionTable(name = "assertion_context", joinColumns = @JoinColumn(name = "id"))
+  @CollectionTable(name = "assertion_assumed_continuing", joinColumns = @JoinColumn(name = "id"))
   @Column(name = "assumed_continuing", updatable = false, nullable = false)
   protected List<String> assumedContinuing = new ArrayList<>();
 

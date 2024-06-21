@@ -22,6 +22,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.model;
 
 import au.org.democracydevelopers.corla.query.AssertionQueries;
+import com.google.inject.internal.util.ImmutableList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -127,7 +128,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
     // the database whose contest name matches that in the given contestResult). If an
     // unexpected error arises in retrieving this data from the database, matching() will throw
     // a RunTimeException.
-    assertions = AssertionQueries.matching(contestResult.getContestName());
+    assertions = AssertionQueries.matching(contestName);
 
     LOGGER.debug(String.format("%s retrieved %d assertions for contest %s.",
         prefix, assertions.size(), contestName));
@@ -536,6 +537,15 @@ public class IRVComparisonAudit extends ComparisonAudit {
       LOGGER.error(msg);
       throw new RuntimeException(msg);
     }
+  }
+
+  /**
+   * This method is used purely in testing to inspect the assertions present in the
+   * IRVComparisonAudit, returned as an ImmutableList.
+   * @return An ImmutableList of the assertions present in this IRVComparisonAudit.
+   */
+  public ImmutableList<Assertion> getAssertions(){
+    return ImmutableList.<Assertion>builder().addAll(assertions).build();
   }
 
   /**
