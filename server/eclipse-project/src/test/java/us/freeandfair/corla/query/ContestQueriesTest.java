@@ -2,6 +2,7 @@ package us.freeandfair.corla.query;
 
 import net.sf.ehcache.search.aggregator.Count;
 import org.hibernate.TransientObjectException;
+import org.hibernate.query.Query;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.*;
 import us.freeandfair.corla.model.*;
@@ -195,17 +196,23 @@ public class ContestQueriesTest {
         expected = new HashSet<>(contests);
         assertEquals(ContestQueries.forCounty(county), expected);
 
-        ContestQueries.deleteForCounty(county.id());
+        assertEquals(ContestQueries.deleteForCounty(county.id()), 10);
 
         expected = new HashSet<>();
         assertEquals(ContestQueries.forCounty(county), expected);
 
         // This should be a no-op as county.contests is null
-        ContestQueries.deleteForCounty(county.id());
+        assertEquals(ContestQueries.deleteForCounty(county.id()), 0);
         assertEquals(ContestQueries.forCounty(county), expected);
 
         // See what happens when we pass an invalid county
-        ContestQueries.deleteForCounty(-1L);
+        assertEquals(ContestQueries.deleteForCounty(-1L), 0);
+
+        // Test what happens when forCounty returns null
+        Query q = Persistence.currentSession().createNativeQuery("DROP TABLE contest");
+        q.executeUpdate();
+        assertEquals(ContestQueries.deleteForCounty(1L), -1);
     }
+
 
 }
