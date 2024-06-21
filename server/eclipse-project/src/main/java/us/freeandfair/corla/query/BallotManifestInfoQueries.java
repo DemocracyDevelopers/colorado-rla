@@ -204,7 +204,7 @@ public final class BallotManifestInfoQueries {
       cq.select(root).where(cb.and(disjuncts.toArray(new Predicate[disjuncts.size()])));
       final TypedQuery<BallotManifestInfo> query = s.createQuery(cq);
       result = new HashSet<BallotManifestInfo>(query.getResultList());
-    } catch (PersistenceException e) {
+    } catch (final PersistenceException e) {
       Main.LOGGER.error("Exception when reading ballot manifests from database: ", e);
       return Optional.empty();
     }
