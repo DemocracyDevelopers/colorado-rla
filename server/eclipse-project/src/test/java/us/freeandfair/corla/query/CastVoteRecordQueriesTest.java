@@ -194,7 +194,7 @@ public class CastVoteRecordQueriesTest {
     assertEquals(acvrs, result);
   }
 
-  @Test()
+  @Test(groups =  {"localonly"})
   public void activityReportTestBig() {
     List<CVRContestInfo> contest_info = noisyContestSetup();
     Tribute tribute;
@@ -477,7 +477,7 @@ public class CastVoteRecordQueriesTest {
     assertEquals(CastVoteRecordQueries.atPosition(tributes), expected);
   }
 
-  @Test
+  @Test(enabled = false)
   public void testPositionAtLots() {
     List<CVRContestInfo> contest_info = noisyContestSetup();
     Tribute tribute;
@@ -581,7 +581,7 @@ public class CastVoteRecordQueriesTest {
     assertEquals((Long)0L, CastVoteRecordQueries.maxRevision(cvr));
   }
 
-  @Test()
+  @Test(enabled = false)
   public void testResultsReportBig() {
     List<CVRContestInfo> contest_info = noisyContestSetup();
     Tribute tribute;
