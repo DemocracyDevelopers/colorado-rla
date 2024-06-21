@@ -478,7 +478,7 @@ public final class CastVoteRecordQueries {
           return t.getUri();
         }))
             // is it faster to let the db do this with an except query?
-            .filter(t -> !foundUris.contains(t.getUri())).map(t -> phantomRecord(t))
+            .filter(t -> !foundUris.contains(t.getUri())).map(CastVoteRecordQueries::phantomRecord)
             .map(Persistence::persist).collect(Collectors.toSet());
 
     results.addAll(phantomRecords);
@@ -500,8 +500,10 @@ public final class CastVoteRecordQueries {
     }
 
     final List<CastVoteRecord> returnList =
-        randomOrder.stream().filter(cvr -> null != cvr).collect(Collectors.toList());
+        randomOrder.stream().filter(Objects::nonNull).collect(Collectors.toList());
     if (returnList.size() != uris.size()) {
+      // TODO: I'm pretty sure this code is unreachable, since any time |URIs| < |return|, we
+      // TODO: make phantoms until they equal. Maybe take this out?
       // we got a problem here
       Main.LOGGER
           .error("something went wrong with atPosition - returnList.size() != uris.size()");
