@@ -53,6 +53,22 @@ import us.freeandfair.corla.persistence.PersistentEntity;
  * of RAIRE assertion. Assertions are created and stored in the database by raire-service. They
  * are audited by colorado-rla. During this process, the record of discrepancies attached to
  * the assertion will be updated, as well as its estimated sample sizes and risk.
+ *
+ * A NOTE ON DISCREPANCY MANAGEMENT:
+ * The class level comment of the IRVComparisonAudit class describes how discrepancies are
+ * managed by ComparisonAudit's.
+ *
+ * Of particular note for assertions:
+ * If a discrepancy is found with respect to an assertion, the CVR ID and discrepancy type will be
+ * stored in its cvrDiscrepancy map. Each assertion has its own recordDiscrepancy() and
+ * removeDiscrepancy() method. When their recordDiscrepancy() method is called, its cvrDiscrepancy
+ * map will be looked up to find the right discrepancy type, and the assertion's internal discrepancy
+ * totals updated. Similarly, when removeDiscrepancy() is called, the cvrDiscrepancy map will be
+ * looked up to find the discrepancy type, and the assertion's discrepancy totals updated. The CVR
+ * ID - discrepancy type entry in its cvrDiscrepancy() map is not removed, however, it is only
+ * removed if computeDiscrepancy() is called again and either a different or no discrepancy is found.
+ * Note that recordDiscrepancy() and removeDiscrepancy() is designed to be called N times for a
+ * particular CVR/audited ballot pair if that ballot appears N times in the sample.
  */
 @Entity
 @Table(name = "assertion")

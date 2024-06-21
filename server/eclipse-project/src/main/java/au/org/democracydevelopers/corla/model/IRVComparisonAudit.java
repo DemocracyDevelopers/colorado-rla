@@ -47,10 +47,35 @@ import static java.util.Collections.max;
  * however, these initial sample sizes will not be meaningful as the audit's assertions are
  * not loaded until the ComparisonAudit base constructor finished. The IRVComparisonAudit
  * constructor will load the relevant assertions from the database (populating the audit's
- * assertions list), compute the audit's diluted margin, and then reinvoke the sample size
+ * assertions list), compute the audit's diluted margin, and then re-invoke the sample size
  * computation methods. This class overrides some of the methods in the base ComparisonAudit
  * class: recalculateSamplesToAudit(); initialSamplesToAudit(); computeDiscrepancy();
  * riskMeasurement(); removeDiscrepancy(); and recordDiscrepancy().
+ *
+ * DISCREPANCY MANAGEMENT
+ * Colorado-rla uses the following logic for computing and storing discrepancies:
+ * 1. Call the ComparisonAudit's computeDiscrepancy() method given a CVR and audited ballot.
+ * Return any discrepancy found as an OptionalInt.
+ * 2. If there was a discrepancy, call the ComparisonAudit's recordDiscrepancy() method N times
+ * where N is the number of times the ballot appears in the sample (sampling is by replacement).
+ *
+ * RE-AUDITING OF BALLOTS:
+ * If a ballot is being re-audited, all discrepancies associated with the matching CVR are
+ * removed by calling removeDiscrepancy() N times where N is the number of times the ballot
+ * appears in the sample. Steps 1, and 2 if needed, above are then performed.
+ *
+ * For IRV audits, a CVR and audited ballot may represent a different type of discrepancy for
+ * different assertions, or a discrepancy for some assertions and not for others. When this
+ * class' computeDiscrepancy() method is called, a corresponding method in each of the audit's
+ * assertions is called. If a discrepancy is found with respect to an assertion, the CVR ID and
+ * discrepancy type will be stored in its cvrDiscrepancy map. Each assertion has its own
+ * recordDiscrepancy() and removeDiscrepancy() method. When their recordDiscrepancy() method
+ * is called, its cvrDiscrepancy map will be looked up to find the right discrepancy type, and the
+ * assertion's internal discrepancy totals updated. Similarly, when removeDiscrepancy() is called,
+ * the cvrDiscrepancy map will be looked up to find the discrepancy type, and the assertion's
+ * discrepancy totals updated. The CVR ID - discrepancy type entry in its cvrDiscrepancy() map
+ * is not removed, however, it is only removed if computeDiscrepancy() is called again and either
+ * a different or no discrepancy is found.
  */
 @Entity
 @DiscriminatorValue("IRV")

@@ -57,6 +57,7 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
  * -- Removal of a pre-recorded discrepancy.
  * -- Scoring of NEB assertions.
  * -- Computation of discrepancies for NEB assertions.
+ * -- The logic involved in the re-auditing of ballots.
  * Refer to the Guide to RAIRE for details on how NEB assertions are scored, and how
  * discrepancies are computed (Part 2, Appendix A).
  */
