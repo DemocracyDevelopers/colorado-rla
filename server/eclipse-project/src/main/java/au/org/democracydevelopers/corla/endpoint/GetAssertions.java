@@ -190,12 +190,12 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
             return my_endpoint_result.get();
 
         } catch (URISyntaxException | MalformedURLException e) {
-            final String msg = "Bad configuration of raire-service url - check the config file.";
-            LOGGER.error(String.format("%s %s", prefix, msg));
-            throw new RuntimeException(e);
+            final String msg = "Bad configuration of raire-service url: " + raireUrl + ". Fix the config file.";
+            LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
+            throw new RuntimeException(msg);
         } catch (IOException e) {
             final String msg = "Error creating zip file.";
-            LOGGER.error(String.format("%s %s", prefix, msg));
+            LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
             throw new RuntimeException(e);
         }
     }
@@ -217,22 +217,22 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
         // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
         // collating the responses.
         final List<ContestResult> IRVContestResults = IRVContestCollector.getIRVContestResults();
-        for (ContestResult cr : IRVContestResults) {
+        for (final ContestResult cr : IRVContestResults) {
 
             // Find the winner (there should only be one), candidates and contest name.
             // TODO At the moment, the winner isn't yet set properly - will be set in the GenerateAssertions Endpoint.
             // See https://github.com/DemocracyDevelopers/colorado-rla/issues/73
             // For now, tolerate > 1; later, check.
-            String winner = cr.getWinners().stream().findAny().orElse("UNKNOWN");
-            List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream()
+            final String winner = cr.getWinners().stream().findAny().orElse("UNKNOWN");
+            final List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream()
                     .map(Choice::name).toList();
 
             // Remove non-word characters for saving into .zip file; set up the zip next entry.
-            String sanitizedContestName = cr.getContestName().replaceAll("[\\W]", "");
+            final String sanitizedContestName = cr.getContestName().replaceAll("[\\W]", "");
             zos.putNextEntry(new ZipEntry(sanitizedContestName + "_assertions." + suffix));
 
             // Make the request.
-            GetAssertionsRequest getAssertionsRequest = new GetAssertionsRequest(
+            final GetAssertionsRequest getAssertionsRequest = new GetAssertionsRequest(
                     cr.getContestName(),
                     cr.getBallotCount().intValue(),
                     candidates,
@@ -241,17 +241,16 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
             );
 
             // Throws URISyntaxException or MalformedURLException if the raireUrl is invalid.
-            var uri = new URL(raireUrl + "-" + suffix).toURI();
-            HttpPost requestToRaire = new HttpPost(uri);
+            final HttpPost requestToRaire = new HttpPost(new URL(raireUrl + "-" + suffix).toURI());
             requestToRaire.addHeader("content-type", "application/json");
             requestToRaire.setEntity(new StringEntity(gson.toJson(getAssertionsRequest)));
 
             // Send it to the RAIRE service.
-            HttpResponse raireResponse = httpClient.execute(requestToRaire);
+            final HttpResponse raireResponse = httpClient.execute(requestToRaire);
             LOGGER.debug(String.format("%s %s.", prefix, "Sent Assertion Request to Raire service for "
                     + getAssertionsRequest.contestName));
 
-            int statusCode = raireResponse.getStatusLine().getStatusCode();
+            final int statusCode = raireResponse.getStatusLine().getStatusCode();
             if(statusCode == HttpStatus.SC_OK) {
                 // OK response. Put the file name and data into the .zip.
 
@@ -263,7 +262,7 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
                 // Error response about a specific contest, e.g. "NO_ASSERTIONS_PRESENT".
                 // Write the error into the zip file and continue.
 
-                String code = raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getValue();
+                final String code = raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getValue();
                 LOGGER.debug(String.format("%s %s %s.", prefix, "Error response " + code, "received from RAIRE for "
                         + getAssertionsRequest.contestName));
                 zos.write(code.getBytes(StandardCharsets.UTF_8));
@@ -271,8 +270,8 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
             } else {
                 // Something went wrong with the connection. Cannot continue.
 
-                final String msg = ("Bad response from Raire service: " + statusCode + ": "
-                        +raireResponse.getStatusLine().getReasonPhrase());
+                final String msg = "Bad response from Raire service for contest " + getAssertionsRequest.contestName
+                        + ":" + statusCode + " " + raireResponse.getStatusLine().getReasonPhrase();
                 LOGGER.error(String.format("%s %s", prefix, msg));
                 throw new RuntimeException(msg);
             }

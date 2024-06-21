@@ -37,7 +37,7 @@ public class IRVContestCollector {
 
         // The above should be sufficient, but just in case, check that each contest we found _all_ matches IRV, and
         // throw a RuntimeException if not.
-        for (ContestResult cr : results) {
+        for (final ContestResult cr : results) {
             if (cr.getContests().stream().map(Contest::description)
                     .anyMatch(d -> !d.equalsIgnoreCase(ContestType.IRV.toString()))) {
                 LOGGER.error(String.format("%s %s %s", prefix, msg, cr.getContestName()));

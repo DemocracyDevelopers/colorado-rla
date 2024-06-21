@@ -24,6 +24,7 @@ package au.org.democracydevelopers.corla.endpoint;
 import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.util.testUtils;
 import com.github.tomakehurst.wiremock.WireMockServer;
+import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.mockito.MockedStatic;
@@ -54,6 +55,7 @@ import static org.testng.Assert.assertEquals;
  * TODO This really isn't a completely comprehensive set of tests yet. We also need:
  * - API testing
  * - Testing for retrieving the data from the zip.
+ * - More comprehensive testing of filename sanitization (from contest names).
  * - Testing that the service throws appropriate exceptions if the raire service connection isn't set up properly.
  * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/125">...</a>
  */
@@ -61,6 +63,9 @@ public class GetAssertionsTests {
 
     private static final Logger LOGGER = LogManager.getLogger(GetAssertionsTests.class);
 
+    /**
+     * Two IRV contests for mocking the IRVContestCollector: Boulder Mayoral '23 and a tiny constructed example.
+     */
     private final static String boulderMayoral = "City of Boulder Mayoral Candidates";
     private final static String tinyIRV = "TinyExample1";
 
@@ -75,9 +80,6 @@ public class GetAssertionsTests {
             new Choice("Paul Tweedlie", "", false, false)
     );
 
-    /**
-     * Two IRV Contests for mocking the IRVContestCollector.
-     */
     private final Contest tinyIRVExample = new Contest(tinyIRV, new County("Arapahoe", 3L), ContestType.IRV.toString(),
             List.of(alice, bob, chuan), 3, 1, 0);
     private final ContestResult tinyIRVContestResult = new ContestResult(tinyIRV);
@@ -86,11 +88,32 @@ public class GetAssertionsTests {
     private final ContestResult boulderIRVContestResult = new ContestResult(boulderMayoral);
     private final List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult, tinyIRVContestResult);
 
+    /**
+     * Endpoint for getting assertions.
+     */
+    final String getAssertionsEndpoint = "/raire/get-assertions";
+
+    /**
+     * JSON suffix.
+     */
+    final String json = "json";
+
+    /**
+     * CSV suffix.
+     */
+    final String csv = "csv";
 
     /**
      * Wiremock server for mocking the raire service.
+     * (Note the default of 8080 clashes with the raire-service default, so this is different.)
      */
-    final WireMockServer wireMockRaireServer = new WireMockServer();
+    final WireMockServer wireMockRaireServer = new WireMockServer(8111);
+
+    /**
+     * Base url - this is set up to use the wiremock server, but could be set here to wherever you have the
+     * raire-service running to test with that directly.
+     */
+    String baseUrl;
 
     /**
      * Initialise mocked objects prior to the first test.
@@ -110,17 +133,19 @@ public class GetAssertionsTests {
         tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
 
         wireMockRaireServer.start();
+        baseUrl = wireMockRaireServer.baseUrl();
         configureFor("localhost", wireMockRaireServer.port());
-        stubFor(post(urlEqualTo("/raire/get-assertions-csv"))
+        stubFor(post(urlEqualTo(getAssertionsEndpoint + "-" + csv))
                 .willReturn(aResponse()
-                        .withStatus(200)
+                        .withStatus(HttpStatus.SC_OK)
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody("Test csv")));
-        stubFor(post(urlEqualTo("/raire/get-assertions-json"))
+        stubFor(post(urlEqualTo(getAssertionsEndpoint + "-" + json))
                 .willReturn(aResponse()
-                .withStatus(200)
+                .withStatus(HttpStatus.SC_OK)
                 .withHeader("Content-Type", "application/json")
                 .withBody("Test json")));
+
     }
 
     @AfterClass
@@ -143,7 +168,7 @@ public class GetAssertionsTests {
             GetAssertions endpoint = new GetAssertions();
             ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
             ZipOutputStream zos = new ZipOutputStream(bytesOut);
-            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), wireMockRaireServer.baseUrl()+"/raire/get-assertions", "csv");
+            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), baseUrl + getAssertionsEndpoint, "csv");
 
             byte[] bytes = bytesOut.toByteArray();
             InputStream bais = new ByteArrayInputStream(bytes);
@@ -172,7 +197,7 @@ public class GetAssertionsTests {
             GetAssertions endpoint = new GetAssertions();
             ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
             ZipOutputStream zos = new ZipOutputStream(bytesOut);
-            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), "http://localhost:8080/raire/get-assertions", "json");
+            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), baseUrl + getAssertionsEndpoint, "json");
 
             byte[] bytes = bytesOut.toByteArray();
             InputStream bais = new ByteArrayInputStream(bytes);
@@ -202,7 +227,7 @@ public class GetAssertionsTests {
             GetAssertions endpoint = new GetAssertions();
             ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
             ZipOutputStream zos = new ZipOutputStream(bytesOut);
-            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), "http://localhost:8080/bad-url", "csv");
+            endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), baseUrl + "/badUrl", "csv");
 
             byte[] bytes = bytesOut.toByteArray();
             InputStream bais = new ByteArrayInputStream(bytes);
@@ -225,13 +250,15 @@ public class GetAssertionsTests {
     @Test(expectedExceptions = RuntimeException.class)
     public void badURLThrowsRuntimeExceptionJSON() throws Exception {
         testUtils.log(LOGGER, "badURLThrowsRuntimeExceptionJSON");
-        try (MockedStatic<IRVContestCollector> mockIRVContestResults = Mockito.mockStatic(IRVContestCollector.class)) {
-          mockIRVContestResults.when(IRVContestCollector::getIRVContestResults).thenReturn(mockedIRVContestResults);
+        try (MockedStatic<IRVContestCollector> mockIRVContestResults
+                     = Mockito.mockStatic(IRVContestCollector.class)) {
+          mockIRVContestResults.when(IRVContestCollector::getIRVContestResults)
+                  .thenReturn(mockedIRVContestResults);
 
           GetAssertions endpoint = new GetAssertions();
           ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
           ZipOutputStream zos = new ZipOutputStream(bytesOut);
-          endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), "http://localhost:8080/bad-url", "json");
+          endpoint.getAssertions(zos, BigDecimal.valueOf(0.03), baseUrl + "/badUrl", "json");
 
           byte[] bytes = bytesOut.toByteArray();
           InputStream bais = new ByteArrayInputStream(bytes);
