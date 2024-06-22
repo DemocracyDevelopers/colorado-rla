@@ -277,12 +277,12 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
     Path path = Paths.get(BOULDER_CSV_PATH + "Boulder-2023-Coordinated-CVR-Redactions-removed.csv");
     Reader reader = Files.newBufferedReader(path);
 
-    DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Denver"),
+    DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Boulder"),
             blank, true);
     assertTrue(parser.parse().success);
 
     // There should be 38 contests. Check their metadata.
-    List<Contest> contests = forCounties(Set.of(fromString("Denver")));
+    List<Contest> contests = forCounties(Set.of(fromString("Boulder")));
     assertEquals(38, contests.size());
 
     Contest boulderMayoral = contests.get(0);
@@ -492,7 +492,7 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
 
     // Check that the number of cvrs is correct. We have redacted CVRs, so the total is slightly
     // less than the actual official count of 119757.
-    List<CastVoteRecord> cvrs = getMatching(fromString("Denver").id(),
+    List<CastVoteRecord> cvrs = getMatching(fromString("Boulder").id(),
         CastVoteRecord.RecordType.UPLOADED).toList();
     assertEquals(cvrs.size(), 118669);
     CastVoteRecord cvr1 = cvrs.get(0);
