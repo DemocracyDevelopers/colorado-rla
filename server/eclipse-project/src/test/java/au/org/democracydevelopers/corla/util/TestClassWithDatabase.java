@@ -62,6 +62,7 @@ public abstract class TestClassWithDatabase {
     return new PostgreSQLContainer<>("postgres:15-alpine")
         // None of these actually have to be the same as the real database (except its name),
         // but this makes it easy to match the setup scripts.
+        // .withExposedPorts(port)
         .withDatabaseName("corla")
         .withUsername("corlaadmin")
         .withPassword("corlasecret")

@@ -40,6 +40,7 @@ import us.freeandfair.corla.csv.DominionCVRExportParser;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 
+import javax.transaction.Transactional;
 import java.io.IOException;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -64,6 +65,7 @@ import static us.freeandfair.corla.query.CountyQueries.fromString;
  * - an all-plurality contest is made into a (plain, plurality) ComparisonAudit,
  * - a mixed-type contest, or a contest that is neither plurality nor IRV, throws an error.
  */
+@Transactional
 public class ComparisonAuditControllerTests extends TestClassWithDatabase {
 
   /**

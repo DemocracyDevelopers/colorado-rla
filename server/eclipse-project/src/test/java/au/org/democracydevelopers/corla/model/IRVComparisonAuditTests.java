@@ -49,9 +49,12 @@ import us.freeandfair.corla.model.AuditStatus;
 import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.persistence.Persistence;
 
+import javax.transaction.Transactional;
+
 /**
  * This class contains tests for the functionality present in IRVComparisonAudit.
  */
+@Transactional
 public class IRVComparisonAuditTests extends TestClassWithDatabase {
 
   private static final Logger LOGGER = LogManager.getLogger(IRVComparisonAuditTests.class);
