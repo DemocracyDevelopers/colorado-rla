@@ -439,7 +439,7 @@ public class CastVoteRecordQueriesTest extends TestClassWithDatabase {
     assertEquals(CastVoteRecordQueries.atPosition(tributes), expected);
   }
 
-  @Test(enabled = false)
+  @Test
   public void testPositionAtLots() {
     List<CVRContestInfo> contest_info = noisyContestSetup();
     Tribute tribute;
@@ -543,7 +543,7 @@ public class CastVoteRecordQueriesTest extends TestClassWithDatabase {
     assertEquals((Long)0L, CastVoteRecordQueries.maxRevision(cvr));
   }
 
-  @Test(enabled = false)
+  @Test
   public void testResultsReportBig() {
     List<CVRContestInfo> contest_info = noisyContestSetup();
     Tribute tribute;
