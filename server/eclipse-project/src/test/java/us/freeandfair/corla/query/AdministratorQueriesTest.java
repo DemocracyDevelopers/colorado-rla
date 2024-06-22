@@ -5,6 +5,7 @@ import org.testng.annotations.*;
 import us.freeandfair.corla.model.Administrator;
 import us.freeandfair.corla.model.County;
 import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.util.TestClassWithDatabase;
 
 import java.util.Properties;
 
@@ -12,42 +13,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
 @Test
-public class AdministratorQueriesTest {
-
-    /**
-     * Container for the mock-up database.
-     */
-    private static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine")
-            .withDatabaseName("corla")
-            .withUsername("corlaadmin")
-            .withPassword("corlasecret")
-            .withInitScript("SQL/corlaInitEmpty.sql");
-
-    @BeforeClass
-    public static void beforeAll() {
-        postgres.start();
-        Properties hibernateProperties = new Properties();
-        hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
-        hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
-        hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
-        hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
-        hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
-        Persistence.setProperties(hibernateProperties);
-    }
-    @BeforeMethod
-    public static void beforeEach() {
-        Persistence.beginTransaction();
-    }
-
-    @AfterMethod
-    public static void afterEach() {
-        Persistence.rollbackTransaction();
-    }
-
-    @AfterClass
-    public static void afterall() {
-        postgres.stop();
-    }
+public class AdministratorQueriesTest extends TestClassWithDatabase {
 
     @Test
     public void testByUsernameState() {

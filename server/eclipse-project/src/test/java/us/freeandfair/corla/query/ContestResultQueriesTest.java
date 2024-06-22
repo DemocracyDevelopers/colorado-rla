@@ -14,49 +14,10 @@ import us.freeandfair.corla.model.CountyContestResult;
 import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.model.Contest;
 import us.freeandfair.corla.model.County;
+import us.freeandfair.corla.util.TestClassWithDatabase;
 
 @Test(groups = {"integration"})
-public class ContestResultQueriesTest {
-
-  /**
-   * Container for the mock-up database.
-   */
-  static PostgreSQLContainer<?> postgres
-          = new PostgreSQLContainer<>("postgres:15-alpine")
-          // None of these actually have to be the same as the real database (except its name), but this
-          // makes it easy to match the setup scripts.
-          .withDatabaseName("corla")
-          .withUsername("corlaadmin")
-          .withPassword("corlasecret")
-          // .withInitScripts("corlaInit.sql","contest.sql");
-          .withInitScript("SQL/corlaInitEmpty.sql");
-
-  @BeforeClass
-  public static void beforeAll() {
-    postgres.start();
-    Properties hibernateProperties = new Properties();
-    hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
-    hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
-    hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
-    hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
-    hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
-    Persistence.setProperties(hibernateProperties);
-
-  }
-
-  @AfterClass
-  public static void afterAll() {
-    postgres.stop();
-  }
-
-  @BeforeMethod
-  public static void beforeEach() {
-    Persistence.beginTransaction();
-  }
-
-  @AfterMethod
-  public static void afterEach() { Persistence.rollbackTransaction(); }
-
+public class ContestResultQueriesTest extends TestClassWithDatabase {
 
   @Test()
   public void findOrCreateTest() {
