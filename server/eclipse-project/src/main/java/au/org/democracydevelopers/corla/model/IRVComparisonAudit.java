@@ -185,7 +185,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
   @Override
   protected void recalculateSamplesToAudit() {
     if(assertions == null){
-      // We have not associated assertions with this audit yet. When an IRVComparisonAudit
+      // We have not associated assertions with this audit yet. When an IRVComparisonAudit is
       // constructed, we call the base class constructor first. The ComparisonAudit constructor
       // calls sample size computation methods. So, this method may end up being called before
       // the IRVComparisonAudit constructor has completed its setup (retrieving assertions from
@@ -530,7 +530,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
       // and the flag for indicating that a sample size recalculation is needed, *if* we did
       // record a discrepancy against at least one of this audit's assertions.
       if(recorded) {
-        super.removeDiscrepancy(theRecord, theType);
+        super.recordDiscrepancy(theRecord, theType);
       }
       LOGGER.debug(String.format("%s total number of overstatements (%f), optimistic sample " +
               "recalculate needed (%s), estimated sample recalculate needed (%s),", prefix,
