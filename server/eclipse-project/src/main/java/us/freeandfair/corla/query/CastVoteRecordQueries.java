@@ -243,7 +243,7 @@ public final class CastVoteRecordQueries {
     newChoice = (newChoice.substring(0, newChoice.length() - 1));
     newChoice = (newChoice.substring(1, newChoice.length()));
 
-    String escapedOldChoice = oldChoice.replaceAll("\"", Matcher.quoteReplacement("\\\\\""));
+    String escapedOldChoice = oldChoice.replaceAll("\"", Matcher.quoteReplacement("\\\\\"")).replace("?", "\\?");
 
        final Query q = s
         // this will only fix the first match, which is what we want, because
