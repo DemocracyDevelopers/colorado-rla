@@ -83,6 +83,12 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
   private ContestResult oneNENNEBContestResult;
 
   /**
+   * Mock of a ContestResult for the contest 'Multi-County Contest 1'.
+   */
+  @Mock
+  private ContestResult multiCountyContestResult;
+
+  /**
    * Mock of a ContestResult for a contest with no assertions.
    */
   @Mock
@@ -104,7 +110,7 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
    * Initialise mocked objects prior to the first test. Note that the diluted margin
    * returned by ContestResult's for IRV will not have a sensible value, and it will
    * not be used for IRV computations. For testing purposes, we should set it with
-   * varied values and ensure that the audit itself is contrycted properly.
+   * varied values and ensure that the audit itself is contructed properly.
    */
   @BeforeClass
   public void initMocks() {
@@ -115,6 +121,8 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
     when(oneNEBContestResult.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.10));
     when(oneNENNEBContestResult.getContestName()).thenReturn("One NEN NEB Assertion Contest");
     when(oneNENNEBContestResult.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.03));
+    when(multiCountyContestResult.getContestName()).thenReturn("Multi-County Contest 1");
+    when(multiCountyContestResult.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.001));
     when(doesNotExistContestResult.getContestName()).thenReturn("Does Not Exist");
     when(doesNotExistContestResult.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.98));
   }
@@ -170,7 +178,7 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
 
   /**
    * Create an IRVComparisonAudit for a contest with one NEN assertion stored in the database. This
-   * assertion has a diluted margin of 0.32.
+   * assertion has a diluted margin of 0.12.
    */
   @Test
   public void testCreateIRVAuditOneNENAssertion(){
@@ -187,6 +195,59 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
     checkNENAssertion(assertions.get(0), "Alice", "Charlie", List.of("Alice","Charlie",
             "Diego","Bob"), 0, 0, 0, 0, 0, 61,
         61, 1, Map.of(), 0.12);
+  }
+
+  /**
+   * Create an IRVComparisonAudit for a contest with one NEN and one NEB assertion stored in the
+   * database. The smallest diluted margin across these assertions is 0.1.
+   */
+  @Test
+  public void testCreateIRVAuditOneNENNEBAssertion(){
+    testUtils.log(LOGGER, "testCreateIRVAuditOneNENNEBAssertion");
+    IRVComparisonAudit ca = new IRVComparisonAudit(oneNENNEBContestResult, AssertionTests.riskLimit3,
+        AuditReason.COUNTY_WIDE_CONTEST);
+
+    checkIRVComparisonAudit(ca, AssertionTests.riskLimit3, AuditReason.COUNTY_WIDE_CONTEST,
+        AuditStatus.NOT_STARTED, 0.1);
+
+    final List<Assertion> assertions = ca.getAssertions();
+    assertEquals(2, assertions.size());
+
+    checkNEBAssertion(assertions.get(0), "Amanda", "Liesl", 0, 0,
+        0, 0, 0, 73, 73, 1, Map.of(), 0.1);
+
+    checkNENAssertion(assertions.get(1), "Amanda", "Wendell", List.of("Liesl","Wendell",
+            "Amanda"), 0, 0, 0, 0, 0, 15,
+        15, 1, Map.of(), 0.5);
+  }
+
+  /**
+   * Create an IRVComparisonAudit for a multi-county contest with two NEBs and one NEN stored in the
+   * database. The smallest diluted margin across these assertions is 0.1.
+   */
+  @Test
+  public void testCreateIRVAuditMultiCountyContest(){
+    testUtils.log(LOGGER, "testCreateIRVAuditMultiCountyContest");
+    IRVComparisonAudit ca = new IRVComparisonAudit(multiCountyContestResult,
+        AssertionTests.riskLimit3, AuditReason.CLOSE_CONTEST);
+
+    checkIRVComparisonAudit(ca, AssertionTests.riskLimit3, AuditReason.CLOSE_CONTEST,
+        AuditStatus.NOT_STARTED, 0.001);
+
+    final List<Assertion> assertions = ca.getAssertions();
+    assertEquals(3, assertions.size());
+
+    checkNEBAssertion(assertions.get(0), "Charlie C. Chaplin", "Alice P. Mangrove",
+        0, 0, 0, 0, 0, 729, 729,
+        1, Map.of(), 0.01);
+
+    checkNEBAssertion(assertions.get(1), "Alice P. Mangrove", "Al (Bob) Jones",
+        0, 0, 0, 0, 0, 105, 105,
+        1, Map.of(), 0.07);
+
+    checkNENAssertion(assertions.get(2), "Alice P. Mangrove", "West W. Westerson",
+        List.of("West W. Westerson","Alice P. Mangrove"), 0, 0, 0,
+        0, 0, 7287, 7287, 1, Map.of(), 0.001);
   }
 
   /**

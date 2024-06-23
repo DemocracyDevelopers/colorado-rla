@@ -154,6 +154,11 @@ public class IRVComparisonAudit extends ComparisonAudit {
         // they will not have been computed correctly for IRV.
         optimisticSamplesToAudit();
         estimatedSamplesToAudit();
+
+        LOGGER.debug(String.format("%s Created IRVComparisonAudit for contest %s: status = %s; " +
+                "reason = %s; diluted margin = %f; assertions = %d; optimistic = %d; estimated = %d",
+            prefix, contestName, auditStatus(), auditReason(), diluted_margin, assertions.size(),
+            my_optimistic_samples_to_audit, my_estimated_samples_to_audit));
       }
     } catch(Exception e){
       final String msg = String.format("%s An unexpected error arose during diluted margin " +

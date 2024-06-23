@@ -1,3 +1,16 @@
+create sequence hibernate_sequence;
+
+alter sequence hibernate_sequence owner to corlaadmin;
+
+create table assertion_context
+(
+    id                 bigint       not null,
+    assumed_continuing varchar(255) not null
+);
+
+alter table assertion_context
+    owner to corlaadmin;
+
 create table asm_state
 (
     id           bigint       not null
@@ -18,9 +31,9 @@ create table assertion
     id                          bigserial
         primary key,
     contest_name                varchar(255)     not null,
-    current_risk                numeric(19, 2)   not null,
+    current_risk                numeric(10, 8)   not null,
     difficulty                  double precision not null,
-    diluted_margin              numeric(19, 2)   not null,
+    diluted_margin              numeric(10, 8)   not null,
     estimated_samples_to_audit  integer          not null,
     loser                       varchar(255)     not null,
     margin                      integer          not null,
@@ -40,7 +53,7 @@ alter table assertion
 create table assertion_assumed_continuing
 (
     id                 bigint       not null
-        constraint fki0lyp4tghtpohaa9ma6kv2174
+        constraint fk357sixi5a6nt1sus8jdk1pcpn
             references assertion,
     assumed_continuing varchar(255) not null
 );

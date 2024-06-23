@@ -1,5 +1,7 @@
 package us.freeandfair.corla.controllers;
 
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testng.annotations.*;
 import us.freeandfair.corla.controller.BallotSelection;
 import us.freeandfair.corla.controller.BallotSelection.Selection;
 import us.freeandfair.corla.controller.BallotSelection.Segment;
@@ -17,27 +19,16 @@ import us.freeandfair.corla.persistence.Persistence;
 
 import java.time.Instant;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 import java.util.function.Function;
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.AfterTest;
 import static org.testng.Assert.*;
 
+import org.hibernate.Session;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.query.Setup;
 
@@ -48,18 +39,46 @@ public class BallotSelectionTest {
 
   private Boolean return_cvr = true;
 
-  @BeforeTest()
-  public void setUp() {
-    Setup.setProperties();
+  /**
+   * Container for the mock-up database.
+   */
+  static PostgreSQLContainer<?> postgres
+          = new PostgreSQLContainer<>("postgres:15-alpine")
+          // None of these actually have to be the same as the real database (except its name), but this
+          // makes it easy to match the setup scripts.
+          .withDatabaseName("corla")
+          .withUsername("corlaadmin")
+          .withPassword("corlasecret")
+          // .withInitScripts("corlaInit.sql","contest.sql");
+          .withInitScript("SQL/corlaInitEmpty.sql");
+
+  @BeforeClass
+  public static void beforeAll() {
+    postgres.start();
+    Properties hibernateProperties = new Properties();
+    hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
+    hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
+    hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
+    hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
+    hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
+    Persistence.setProperties(hibernateProperties);
+    Persistence.beginTransaction();
+
+  }
+
+  @AfterClass
+  public static void afterAll() {
+    postgres.stop();
+  }
+
+  @BeforeMethod
+  public static void beforeEach() {
     Persistence.beginTransaction();
   }
 
-  @AfterTest()
-  public void tearDown() {
-    try {
-      Persistence.rollbackTransaction();
-    } catch (Exception e) {
-    }
+  @AfterMethod
+  public static void afterEach() {
+    Persistence.rollbackTransaction();
   }
 
   @Test()
@@ -112,6 +131,18 @@ public class BallotSelectionTest {
     CastVoteRecord cvr4 = fakeCVR(4);
     List<CastVoteRecord> exampleCVRs = Stream.of(cvr1, cvr3, cvr2, cvr2).collect(Collectors.toList());
     List<CastVoteRecord> exampleCVRs2 = Stream.of(cvr3, cvr4).collect(Collectors.toList());
+
+    // We have to create a BallotManifestInfo object so that the later
+    // sequence lookup code can match the batch_id.
+    BallotManifestInfo bmi = new BallotManifestInfo(64L,
+            1,
+            "Batch1",
+            64,
+            "Storage",
+            1L,
+            64L);
+    Persistence.saveOrUpdate(bmi);
+
     // have to keep the raw data separate from the ordered, sorted data
     segment.addCvrs(exampleCVRs);
     segment.addCvrIds(exampleCVRs);
