@@ -1,25 +1,73 @@
-/*
-Democracy Developers IRV extensions to colorado-rla.
-
-@copyright 2024 Colorado Department of State
-
-These IRV extensions are designed to connect to a running instance of the raire 
-service (https://github.com/DemocracyDevelopers/raire-service), in order to 
-generate assertions that can be audited using colorado-rla.
-
-The colorado-rla IRV extensions are free software: you can redistribute it and/or modify it under the terms
-of the GNU Affero General Public License as published by the Free Software Foundation, either
-version 3 of the License, or (at your option) any later version.
-
-The colorado-rla IRV extensions are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with
-raire-service. If not, see <https://www.gnu.org/licenses/>.
-*/
-
 package au.org.democracydevelopers.corla.endpoint;
 
-public class EstimateSampleSizes {
+import spark.Request;
+import spark.Response;
+import us.freeandfair.corla.asm.ASMEvent;
+import us.freeandfair.corla.endpoint.AbstractDoSDashboardEndpoint;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
+/**
+ * Non-functional stub.
+ */
+public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
+
+    /**
+     * Class-wide logger
+     */
+    private static final Logger LOGGER = LogManager.getLogger(EstimateSampleSizes.class);
+
+    /**
+     * The event to return for this endpoint.
+     */
+    private final ThreadLocal<ASMEvent> my_event = new ThreadLocal<ASMEvent>();
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public EndpointType endpointType() {
+        return EndpointType.GET;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String endpointName() {
+        return "/estimate-sample-sizes";
+    }
+
+    /**
+     * @return STATE authorization is necessary for this endpoint.
+     */
+    public AuthorizationType requiredAuthorization() {
+        return AuthorizationType.STATE;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected ASMEvent endpointEvent() {
+        return my_event.get();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void reset() {
+        my_event.set(null);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String endpointBody(final Request the_request, final Response the_response) {
+        return my_endpoint_result.get();
+    }
+
 }
