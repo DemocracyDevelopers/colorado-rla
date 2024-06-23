@@ -255,13 +255,10 @@ public class IRVComparisonAudit extends ComparisonAudit {
   }
 
   /**
-   * This method is currently not being used in the base class. However, if it starts being used
-   * in the future, we need an IRV version for IRV audits. Consequently, we provide the IRV
-   * version here. This method computes and returns the initial (optimistic) sample size
-   * for the audit. This is computed by calling the optimistic sample size computation method
-   * of each of the audit's assertions, and returning the maximum of these. A RuntimeException is
-   * thrown if an unexpected error arises in computing optimistic sample sizes for each assertion.
-   * @return the optimistic sample size for the audit.
+   * This method computes and returns the initial (optimistic) sample size for the audit. This is
+   * computed by calling an initial sample size computation method in each assertion, and returning
+   * the maximum of the returned values.
+   * @return the initial (optimistic) sample size for the audit.
    */
   @Override
   public int initialSamplesToAudit() {
@@ -277,19 +274,19 @@ public class IRVComparisonAudit extends ComparisonAudit {
     final String contestName = getContestName();
 
     try {
-      LOGGER.debug(String.format("%s computing the initial samples to audit for the IRV contest %s.",
-        prefix, contestName));
+      LOGGER.debug(String.format("%s computing the initial optimistic samples to audit for the " +
+              "IRV contest %s.", prefix, contestName));
 
       if (assertions.isEmpty()) {
         LOGGER.debug(String.format("%s No assertions for contest %s; returning an initial sample " +
             "size of 0.", prefix, contestName));
         return 0;
       } else {
-        LOGGER.debug(String.format("%s calling computeOptimisticSamplesToAudit() for each " +
+        LOGGER.debug(String.format("%s calling computeInitialOptimisticSamplesToAudit() for each " +
             "assertion in contest %s given risk limit %f.", prefix, contestName, getRiskLimit()));
         final int samples = max(assertions.stream().map(a ->
-            a.computeOptimisticSamplesToAudit(getRiskLimit())).toList());
-        LOGGER.debug(String.format("%s optimistic sample size of %d computed for contest %s.",
+            a.computeInitialOptimisticSamplesToAudit(getRiskLimit())).toList());
+        LOGGER.debug(String.format("%s initial optimistic sample size of %d computed for contest %s.",
             prefix, samples, contestName));
         return samples;
       }

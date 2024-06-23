@@ -320,6 +320,32 @@ public abstract class Assertion implements PersistentEntity {
   }
 
   /**
+   * For the given risk limit, compute the expected initial (optimistic) number of samples to audit
+   * for this assertion. This calculation calls Audit::optimistic() with zero's for each discrepancy
+   * count. This method does not change any of this assertion's internal sample size attributes.
+   *
+   * @param riskLimit The risk limit of the audit.
+   * @return The initial (optimistic) number of samples we expect we will need to sample to
+   * audit this assertion.
+   */
+  public Integer computeInitialOptimisticSamplesToAudit(BigDecimal riskLimit){
+    final String prefix = "[computeInitialOptimisticSamplesToAudit]";
+
+    LOGGER.debug(String.format("%s Calling Audit::optimistic() with parameters: risk limit " +
+            "%f; diluted margin %f; gamma %f; two vote under count 0; one vote under count 0; " +
+            "one vote over count 0; two vote over count 0.", prefix, riskLimit, dilutedMargin, Audit.GAMMA));
+
+    // Call the colorado-rla audit math; update optimistic_samples_to_audit and return new value.
+    final int initialOptimistic = Audit.optimistic(riskLimit, dilutedMargin, Audit.GAMMA,
+        0, 0, 0, 0).intValue();
+
+    LOGGER.debug(String.format("%s Computed initial optimistic samples to audit for Assertion %d" +
+        " of %s ballots.", prefix, id, initialOptimistic));
+
+    return initialOptimistic;
+  }
+
+  /**
    * Compute and return the estimated number of samples to audit for this assertion, given the
    * number of ballots audited thus far and number of observed overstatements. This method takes
    * the current optimistic number of ballots to sample for the assertion, and applies a scaling
