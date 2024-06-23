@@ -483,4 +483,28 @@ public class AssertionTests {
       assertEquals(cvrDiscrepancies, a.cvrDiscrepancy);
     }
   }
+
+
+  /**
+   * Checks that the discrepancy counts in the given assertion 'a' are equal to the given
+   * parameters.
+   * @param a Assertion to check.
+   * @param oneOver Expected number of one vote overstatements.
+   * @param oneUnder Expected number of one vote understatements.
+   * @param twoOver Expected number of two vote overstatements.
+   * @param twoUnder Expected number of two vote understatements.
+   * @param other Expected number of other discrepancies.
+   * @param cvrDiscrepancy Expected internal map of CVR ID to discrepancy type.
+   */
+  public static void checkCountsDiscrepancyMap(final Assertion a, int oneOver, int oneUnder,
+      int twoOver, int twoUnder, int other, final Map<Long,Integer> cvrDiscrepancy){
+
+    assertEquals(a.oneVoteOverCount.intValue(), oneOver);
+    assertEquals(a.oneVoteUnderCount.intValue(), oneUnder);
+    assertEquals(a.twoVoteOverCount.intValue(), twoOver);
+    assertEquals(a.twoVoteUnderCount.intValue(), twoUnder);
+    assertEquals(a.otherCount.intValue(), other);
+
+    assertEquals(a.cvrDiscrepancy, cvrDiscrepancy);
+  }
 }

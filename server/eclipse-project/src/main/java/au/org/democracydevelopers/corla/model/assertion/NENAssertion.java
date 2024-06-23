@@ -22,7 +22,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.model.assertion;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import org.apache.log4j.LogManager;
@@ -80,6 +79,16 @@ public class NENAssertion extends Assertion {
     LOGGER.debug(String.format("%s Score of %d computed for NEN Assertion ID %d, contest %s, vote %s",
         prefix, score, id(), contestName, info.choices()));
     return score;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public String getDescription(){
+    return String.format("%s NEN %s assuming (%s) are continuing: oneOver = %d; two Over = %d; " +
+        "oneUnder = %d, twoUnder = %d; other = %d; optimistic = %d; estimated = %d; risk %f.",
+        winner, loser, assumedContinuing, oneVoteOverCount, twoVoteOverCount, oneVoteUnderCount,
+        twoVoteUnderCount, otherCount, optimisticSamplesToAudit, estimatedSamplesToAudit, currentRisk);
   }
 
 }

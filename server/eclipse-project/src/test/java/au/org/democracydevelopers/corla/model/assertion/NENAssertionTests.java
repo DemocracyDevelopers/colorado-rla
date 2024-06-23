@@ -23,10 +23,13 @@ package au.org.democracydevelopers.corla.model.assertion;
 
 import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.TC;
 import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.checkComputeDiscrepancy;
+import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.checkCountsDiscrepancyMap;
 import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.countsEqual;
 import static au.org.democracydevelopers.corla.util.testUtils.log;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -54,6 +57,7 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
  * -- Removal of a pre-recorded discrepancy.
  * -- Scoring of NEN assertions.
  * -- Computation of discrepancies.
+ * -- The logic involved in the re-auditing of ballots.
  * Refer to the Guide to RAIRE for details on how NEN assertions are scored, and how
  * discrepancies are computed (Part 2, Appendix A.)
  */
@@ -238,7 +242,7 @@ public class NENAssertionTests {
    * there, the value matching the ID key is retrieved and the associated discrepancy type
    * incremented. If it is not there, then the discrepancy counts are not changed.
    */
-  @Test(expectedExceptions = {RuntimeException.class})
+  @Test
   public void testNENRecordNoMatch1(){
     log(LOGGER, "testNENRecordNoMatch1");
     CVRAuditInfo info = new CVRAuditInfo();
@@ -248,15 +252,17 @@ public class NENAssertionTests {
         0.1, 8, Map.of(), 0, 0, 0,
         0, 0);
 
-    a.recordDiscrepancy(info);
+    assertFalse(a.recordDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of());
   }
+
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) in the context where no discrepancy has
    * been computed for the given CVR-ACVR pair, and the assertion has some discrepancies recorded
    * already. It should not change the assertion's discrepancy counts.
    */
-  @Test(expectedExceptions = {RuntimeException.class})
+  @Test
   public void testNENRecordNoMatch2(){
     log(LOGGER, "testNENRecordNoMatch2");
     CVRAuditInfo info = new CVRAuditInfo();
@@ -266,7 +272,9 @@ public class NENAssertionTests {
         0.1, 8,  Map.of(2L, -1, 3L, 1), 1,
         1, 0, 0, 0);
 
-    a.recordDiscrepancy(info);
+    assertFalse(a.recordDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 1, 1, 0, 0, 0,
+        Map.of(2L, -1, 3L, 1));
   }
 
   /**
@@ -283,13 +291,8 @@ public class NENAssertionTests {
         0.1, 8,  Map.of(1L, 1), 0, 0,
         0, 0, 0);
 
-    a.recordDiscrepancy(info);
-
-    assertEquals(1, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(0, a.twoVoteUnderCount.intValue());
-    assertEquals(0, a.otherCount.intValue());
+    assertTrue(a.recordDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 1, 0, 0, 0, 0, Map.of(1L, 1));
   }
 
   /**
@@ -306,13 +309,8 @@ public class NENAssertionTests {
         0.1, 8,  Map.of(1L, -1), 0, 0,
         0, 0, 0);
 
-    a.recordDiscrepancy(info);
-
-    assertEquals(0, a.oneVoteOverCount.intValue());
-    assertEquals(1, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(0, a.twoVoteUnderCount.intValue());
-    assertEquals(0, a.otherCount.intValue());
+    assertTrue(a.recordDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 0, 1, 0, 0, 0, Map.of(1L, -1));
   }
 
   /**
@@ -329,13 +327,8 @@ public class NENAssertionTests {
         0.1, 8,  Map.of(1L, 2), 0, 0,
         0, 0, 0);
 
-    a.recordDiscrepancy(info);
-
-    assertEquals(0, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(1, a.twoVoteOverCount.intValue());
-    assertEquals(0, a.twoVoteUnderCount.intValue());
-    assertEquals(0, a.otherCount.intValue());
+    assertTrue(a.recordDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 0, 0, 1, 0, 0, Map.of(1L, 2));
   }
 
   /**
@@ -352,13 +345,8 @@ public class NENAssertionTests {
         0.1, 8, Map.of(1L, -2), 0, 0, 0,
         0, 0);
 
-    a.recordDiscrepancy(info);
-
-    assertEquals(0, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(1, a.twoVoteUnderCount.intValue());
-    assertEquals(0, a.otherCount.intValue());
+    assertTrue(a.recordDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 0, 0, 0, 1, 0, Map.of(1L, -2));
   }
 
   /**
@@ -375,13 +363,8 @@ public class NENAssertionTests {
         0.1, 8,  Map.of(1L, 0), 0, 0, 0,
         0, 0);
 
-    a.recordDiscrepancy(info);
-
-    assertEquals(0, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(0, a.twoVoteUnderCount.intValue());
-    assertEquals(1, a.otherCount.intValue());
+    assertTrue(a.recordDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 1, Map.of(1L, 0));
   }
 
   /**
@@ -398,13 +381,9 @@ public class NENAssertionTests {
         0.1, 8,  Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 1),
         1, 0, 0, 1, 1);
 
-    a.recordDiscrepancy(info);
-
-    assertEquals(2, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(1, a.twoVoteUnderCount.intValue());
-    assertEquals(1, a.otherCount.intValue());
+    assertTrue(a.recordDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 2, 0, 0, 1, 1,
+        Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 1));
   }
 
   /**
@@ -421,13 +400,9 @@ public class NENAssertionTests {
         0.1, 8,  Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -1),
         1, 0, 0, 1, 1);
 
-    a.recordDiscrepancy(info);
-
-    assertEquals(1, a.oneVoteOverCount.intValue());
-    assertEquals(1, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(1, a.twoVoteUnderCount.intValue());
-    assertEquals(1, a.otherCount.intValue());
+    assertTrue(a.recordDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 1, 1, 0, 1, 1,
+        Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -1));
   }
 
   /**
@@ -444,13 +419,9 @@ public class NENAssertionTests {
         0.1, 8,  Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 2),
         1, 0, 0, 1, 1);
 
-    a.recordDiscrepancy(info);
-
-    assertEquals(1, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(1, a.twoVoteOverCount.intValue());
-    assertEquals(1, a.twoVoteUnderCount.intValue());
-    assertEquals(1, a.otherCount.intValue());
+    assertTrue(a.recordDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 1, 0, 1, 1, 1,
+        Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 2));
   }
 
   /**
@@ -467,13 +438,9 @@ public class NENAssertionTests {
         0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -2),
         1, 0, 0, 1, 1);
 
-    a.recordDiscrepancy(info);
-
-    assertEquals(1, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(2, a.twoVoteUnderCount.intValue());
-    assertEquals(1, a.otherCount.intValue());
+    assertTrue(a.recordDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 1, 0, 0, 2, 1,
+        Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -2));
   }
 
   /**
@@ -490,13 +457,9 @@ public class NENAssertionTests {
         0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0),
         1, 0, 0, 1, 1);
 
-    a.recordDiscrepancy(info);
-
-    assertEquals(1, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(1, a.twoVoteUnderCount.intValue());
-    assertEquals(2, a.otherCount.intValue());
+    assertTrue(a.recordDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 1, 0, 0, 1, 2,
+        Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0));
   }
 
 
@@ -510,7 +473,7 @@ public class NENAssertionTests {
    * decremented, and the ID removed from the map. If it is not there, then the discrepancy counts
    * and the map are not changed.
    */
-  @Test(expectedExceptions = {RuntimeException.class})
+  @Test
   public void testNENRemoveNoMatch1(){
     log(LOGGER, "testNENRemoveNoMatch1");
     CVRAuditInfo info = new CVRAuditInfo();
@@ -520,7 +483,8 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(), 0, 0,
         0, 0, 0);
 
-    a.removeDiscrepancy(info);
+    assertFalse(a.removeDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of());
   }
 
   /**
@@ -528,7 +492,7 @@ public class NENAssertionTests {
    * been computed for the given CVR-ACVR pair, and the assertion has some discrepancies recorded
    * already. It should not change the assertion's discrepancy counts.
    */
-  @Test(expectedExceptions = {RuntimeException.class})
+  @Test
   public void testNENRemoveNoMatch2(){
     log(LOGGER, "testNENRemoveNoMatch2");
     CVRAuditInfo info = new CVRAuditInfo();
@@ -538,7 +502,9 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(2L, -1, 3L, 1),
         1, 1, 0, 0, 0);
 
-    a.removeDiscrepancy(info);
+    assertFalse(a.removeDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 1, 1, 0, 0, 0,
+        Map.of(2L, -1, 3L, 1));
   }
 
   /**
@@ -554,15 +520,8 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(1L, 1), 1,
         0, 0, 0, 0);
 
-    a.removeDiscrepancy(info);
-
-    assertEquals(0, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(0, a.twoVoteUnderCount.intValue());
-    assertEquals(0, a.otherCount.intValue());
-
-    assertEquals(Map.of(), a.cvrDiscrepancy);
+    assertTrue(a.removeDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of(1L, 1));
   }
 
   /**
@@ -578,15 +537,8 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(1L, -1), 0,
         1, 0, 0, 0);
 
-    a.removeDiscrepancy(info);
-
-    assertEquals(0, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(0, a.twoVoteUnderCount.intValue());
-    assertEquals(0, a.otherCount.intValue());
-
-    assertEquals(Map.of(), a.cvrDiscrepancy);
+    assertTrue(a.removeDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of(1L, -1));
   }
 
   /**
@@ -602,15 +554,8 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(1L, 2), 0,
         0, 1, 0, 0);
 
-    a.removeDiscrepancy(info);
-
-    assertEquals(0, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(0, a.twoVoteUnderCount.intValue());
-    assertEquals(0, a.otherCount.intValue());
-
-    assertEquals(Map.of(), a.cvrDiscrepancy);
+    assertTrue(a.removeDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of(1L, 2));
   }
 
   /**
@@ -626,15 +571,8 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(1L, -2), 0,
         0, 0, 1, 0);
 
-    a.removeDiscrepancy(info);
-
-    assertEquals(0, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(0, a.twoVoteUnderCount.intValue());
-    assertEquals(0, a.otherCount.intValue());
-
-    assertEquals(Map.of(), a.cvrDiscrepancy);
+    assertTrue(a.removeDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of(1L, -2));
   }
 
   /**
@@ -650,15 +588,8 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(1L, 0), 0,
         0, 0, 0, 1);
 
-    a.removeDiscrepancy(info);
-
-    assertEquals(0, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(0, a.twoVoteUnderCount.intValue());
-    assertEquals(0, a.otherCount.intValue());
-
-    assertEquals(Map.of(), a.cvrDiscrepancy);
+    assertTrue(a.removeDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of(1L, 0));
   }
 
   /**
@@ -675,15 +606,9 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
             4L, 1), 2, 0, 0, 1, 1);
 
-    a.removeDiscrepancy(info);
-
-    assertEquals(1, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(1, a.twoVoteUnderCount.intValue());
-    assertEquals(1, a.otherCount.intValue());
-
-    assertEquals(Map.of(1L, 0, 2L, 1, 3L, -2), a.cvrDiscrepancy);
+    assertTrue(a.removeDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 1, 0, 0, 1, 1,
+        Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 1));
   }
 
   /**
@@ -700,15 +625,9 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -1,
             4L, -1), 1, 2, 0, 0, 1);
 
-    a.removeDiscrepancy(info);
-
-    assertEquals(1, a.oneVoteOverCount.intValue());
-    assertEquals(1, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(0, a.twoVoteUnderCount.intValue());
-    assertEquals(1, a.otherCount.intValue());
-
-    assertEquals(Map.of(1L, 0, 2L, 1, 3L, -1), a.cvrDiscrepancy);
+    assertTrue(a.removeDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 1, 1, 0, 0, 1,
+        Map.of(1L, 0, 2L, 1, 3L, -1, 4L, -1));
   }
 
   /**
@@ -725,15 +644,9 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(1L, 2, 2L, 1, 3L, -2,
             4L, 2), 1, 0, 2, 1, 0);
 
-    a.removeDiscrepancy(info);
-
-    assertEquals(1, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(1, a.twoVoteOverCount.intValue());
-    assertEquals(1, a.twoVoteUnderCount.intValue());
-    assertEquals(0, a.otherCount.intValue());
-
-    assertEquals(Map.of(1L, 2, 2L, 1, 3L, -2), a.cvrDiscrepancy);
+    assertTrue(a.removeDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 1, 0, 1, 1, 0,
+        Map.of(1L, 2, 2L, 1, 3L, -2, 4L, 2));
   }
 
   /**
@@ -750,15 +663,9 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
             4L, -2), 1, 0, 0, 2, 1);
 
-    a.removeDiscrepancy(info);
-
-    assertEquals(1, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(1, a.twoVoteUnderCount.intValue());
-    assertEquals(1, a.otherCount.intValue());
-
-    assertEquals(Map.of(1L, 0, 2L, 1, 3L, -2), a.cvrDiscrepancy);
+    assertTrue(a.removeDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 1, 0, 0, 1, 1,
+        Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -2));
   }
 
   /**
@@ -775,15 +682,9 @@ public class NENAssertionTests {
         50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
             4L, 0), 1, 0, 0, 1, 2);
 
-    a.removeDiscrepancy(info);
-
-    assertEquals(1, a.oneVoteOverCount.intValue());
-    assertEquals(0, a.oneVoteUnderCount.intValue());
-    assertEquals(0, a.twoVoteOverCount.intValue());
-    assertEquals(1, a.twoVoteUnderCount.intValue());
-    assertEquals(1, a.otherCount.intValue());
-
-    assertEquals(Map.of(1L, 0, 2L, 1, 3L, -2), a.cvrDiscrepancy);
+    assertTrue(a.removeDiscrepancy(info));
+    checkCountsDiscrepancyMap(a, 1, 0, 0, 1, 1,
+        Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0));
   }
 
 
@@ -995,14 +896,10 @@ public class NENAssertionTests {
     // None of the above calls to computeDiscrepancy should have produced a discrepancy.
     assert(d1.isEmpty() && d2.isEmpty() && d3.isEmpty() && d4.isEmpty());
 
-    assert(countsEqual(a1, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(), a1.cvrDiscrepancy);
-    assert(countsEqual(a2, 0, 0, 0, 0, 0));
-    assertEquals(Map.of(), a2.cvrDiscrepancy);
-    assert(countsEqual(a3, 0, 1, 0, 0, 0));
-    assertEquals(Map.of(2L, 2), a3.cvrDiscrepancy);
-    assert(countsEqual(a4, 1, 0, 0, 0, 0));
-    assertEquals(Map.of(2L, 1), a4.cvrDiscrepancy);
+    checkCountsDiscrepancyMap(a1, 0, 0, 0, 0, 0, Map.of());
+    checkCountsDiscrepancyMap(a2, 0, 0, 0, 0, 0, Map.of());
+    checkCountsDiscrepancyMap(a3, 0, 0, 1, 0, 0, Map.of(2L,2));
+    checkCountsDiscrepancyMap(a4, 1, 0, 0, 0, 0, Map.of(2L,1));
   }
 
   /**
@@ -1920,6 +1817,212 @@ public class NENAssertionTests {
 
     checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1, a2, a3), -1, Map.of(1L, -1),
         0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Test the re-auditing of a ballot where a prior discrepancy is recorded against the
+   * associated CVR (a one vote understatement). The existing discrepancies associated with the
+   * 'n' copies of the CVR in the sample are removed, and discrepancy computation repeated. In this
+   * case, n = 1 and the new discrepancy is a one vote overstatement.
+   */
+  @Test()
+  public void testNENReauditBallot1(){
+    log(LOGGER, String.format("testNENReauditBallot1[%s]", RecordType.REAUDITED));
+    resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.REAUDITED);
+
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a1 = createNENAssertion("A", "B", TC, List.of("A","B"), 50,
+        0.1, 8, Map.of(1L, -1), 0, 1,
+        0, 0, 0);
+
+    assertTrue(a1.removeDiscrepancy(info));
+
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), 1, Map.of(1L, 1),
+        0, 0, 0, 0, 0);
+
+    assertTrue(a1.recordDiscrepancy(info));
+    assert(countsEqual(a1, 1, 0, 0, 0, 0));
+  }
+
+  /**
+   * Test the re-auditing of a ballot where a prior discrepancy is recorded against the
+   * associated CVR (a two vote overstatement). The existing discrepancies associated with the
+   * 'n' copies of the CVR in the sample are removed, and discrepancy computation repeated. In this
+   * case, n = 2 and the new discrepancy is a one vote understatement.
+   */
+  @Test()
+  public void testNENReauditBallot2(){
+    log(LOGGER, String.format("testNENReauditBallot2[%s]", RecordType.REAUDITED));
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, RecordType.REAUDITED);
+
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a1 = createNENAssertion("B", "F", TC, List.of("A","B","F"), 50,
+        0.1, 8, Map.of(1L, 2), 0, 0, 2,
+        0, 0);
+
+    assertTrue(a1.removeDiscrepancy(info));
+    assertTrue(a1.removeDiscrepancy(info));
+
+    checkComputeDiscrepancy(cvr, auditedCvr, List.of(a1), -1, Map.of(1L, -1),
+        0, 0, 0, 0, 0);
+
+    assertTrue(a1.recordDiscrepancy(info));
+    assertTrue(a1.recordDiscrepancy(info));
+    assert(countsEqual(a1, 0, 0, 2, 0, 0));
+  }
+
+  /**
+   * Test the re-auditing of a ballot where a prior discrepancy is recorded against the
+   * associated CVR (an "other" discrepancy). The existing discrepancies associated with the
+   * 'n' copies of the CVR in the sample are removed, and discrepancy computation repeated. In this
+   * case, n = 5 and there is no new discrepancy.
+   */
+  @Test()
+  public void testNENReauditBallot3(){
+    log(LOGGER, String.format("testNENReauditBallot3[%s]", RecordType.REAUDITED));
+    resetMocks(ABCD, ABCD, RecordType.UPLOADED, ConsensusValue.YES, RecordType.REAUDITED);
+
+    final int N = 5;
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a1 = createNENAssertion("B", "F", TC, List.of("B","F"), 50,
+        0.1, 8, Map.of(1L, 0), 0, 0, 0,
+        0, N);
+
+    for(int i = 0; i < N; ++i) {
+      assertTrue(a1.removeDiscrepancy(info));
+    }
+
+    OptionalInt d1 = a1.computeDiscrepancy(cvr, auditedCvr);
+    assert(d1.isEmpty());
+
+    assertEquals(Map.of(), a1.cvrDiscrepancy);
+    assert(countsEqual(a1, 0, 0, 0, 0, 0));
+  }
+
+  /**
+   * Test the re-auditing of a ballot where a prior discrepancy is recorded against the
+   * associated CVR (a two vote overstatement). The existing discrepancies associated with the
+   * 'n' copies of the CVR in the sample are removed, but removeDiscrepancy() is called n+1 times
+   * in error. The n+1'th call the removeDiscrepancy should throw an exception.
+   */
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testNENExcessRemovalCausesErrorTwoVoteOver(){
+    log(LOGGER, "testNENExcessRemovalCausesErrorToVoteOver");
+
+    final int N = 2;
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a1 = createNENAssertion("B", "F", TC, List.of("A", "B"), 50,
+        0.1, 8, Map.of(1L, 2), 0, 0,
+        N, 0, 0);
+
+    // Try to remove too many copies of the discrepancy
+    for(int i = 0; i <= N; ++i) {
+      assertTrue(a1.removeDiscrepancy(info));
+    }
+  }
+
+  /**
+   * Test the re-auditing of a ballot where a prior discrepancy is recorded against the
+   * associated CVR (a two vote understatement). The existing discrepancies associated with the
+   * 'n' copies of the CVR in the sample are removed, but removeDiscrepancy() is called n+1 times
+   * in error. The n+1'th call the removeDiscrepancy should throw an exception.
+   */
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testNEBExcessRemovalCausesErrorTwoVoteUnder(){
+    log(LOGGER, "testNEBExcessRemovalCausesErrorTwoVoteUnder");
+
+    final int N = 2;
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a1 = createNENAssertion("B", "F", TC, List.of("A", "B"), 50,
+        0.1, 8, Map.of(1L, -2), 0, 0,
+        0, N, 0);
+
+    // Try to remove too many copies of the discrepancy
+    for(int i = 0; i <= N; ++i) {
+      assertTrue(a1.removeDiscrepancy(info));
+    }
+  }
+
+  /**
+   * Test the re-auditing of a ballot where a prior discrepancy is recorded against the
+   * associated CVR (a one vote understatement). The existing discrepancies associated with the
+   * 'n' copies of the CVR in the sample are removed, but removeDiscrepancy() is called n+1 times
+   * in error. The n+1'th call the removeDiscrepancy should throw an exception.
+   */
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testNEBExcessRemovalCausesErrorOneVoteUnder(){
+    log(LOGGER, "testNEBExcessRemovalCausesErrorOneVoteUnder");
+
+    final int N = 2;
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a1 = createNENAssertion("B", "F", TC, List.of("A", "B"), 50,
+        0.1, 8, Map.of(1L, -1), 0, 1,
+        0, 0, 0);
+
+    // Try to remove too many copies of the discrepancy
+    for(int i = 0; i <= N; ++i) {
+      assertTrue(a1.removeDiscrepancy(info));
+    }
+  }
+
+  /**
+   * Test the re-auditing of a ballot where a prior discrepancy is recorded against the
+   * associated CVR (a one vote overstatement). The existing discrepancies associated with the
+   * 'n' copies of the CVR in the sample are removed, but removeDiscrepancy() is called n+1 times
+   * in error. The n+1'th call the removeDiscrepancy should throw an exception.
+   */
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testNEBExcessRemovalCausesErrorOneVoteOver(){
+    log(LOGGER, "testNEBExcessRemovalCausesErrorOneVoteOver");
+
+    final int N = 2;
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a1 = createNENAssertion("B", "F", TC, List.of("A", "B"), 50,
+        0.1, 8, Map.of(1L, 1), N, 0,
+        0, 0, 0);
+
+    // Try to remove too many copies of the discrepancy
+    for(int i = 0; i <= N; ++i) {
+      assertTrue(a1.removeDiscrepancy(info));
+    }
+  }
+
+  /**
+   * Test the re-auditing of a ballot where a prior discrepancy is recorded against the
+   * associated CVR (a one vote overstatement). The existing discrepancies associated with the
+   * 'n' copies of the CVR in the sample are removed, but removeDiscrepancy() is called n+1 times
+   * in error. The n+1'th call the removeDiscrepancy should throw an exception.
+   */
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testNEBExcessRemovalCausesErrorOther(){
+    log(LOGGER, "testNEBExcessRemovalCausesErrorOther");
+
+    final int N = 2;
+    CVRAuditInfo info = new CVRAuditInfo();
+    info.setID(1L);
+
+    Assertion a1 = createNENAssertion("B", "F", TC, List.of("A", "B"), 50,
+        0.1, 8, Map.of(1L, 0), 0, 0,
+        0, 0, N);
+
+    // Try to remove too many copies of the discrepancy
+    for(int i = 0; i <= N; ++i) {
+      assertTrue(a1.removeDiscrepancy(info));
+    }
   }
 
   /**

@@ -23,3 +23,4 @@ us.freeandfair.corla.model.UploadedFile
 au.org.democracydevelopers.corla.model.assertion.Assertion
 au.org.democracydevelopers.corla.model.assertion.NEBAssertion
 au.org.democracydevelopers.corla.model.assertion.NENAssertion
+au.org.democracydevelopers.corla.model.IRVComparisonAudit

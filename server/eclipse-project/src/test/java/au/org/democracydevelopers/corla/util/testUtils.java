@@ -22,6 +22,9 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.util;
 import org.apache.log4j.Logger;
 
+/**
+ * This class contains utilities for use in testing.
+ */
 public class testUtils {
 
   /**
@@ -60,5 +63,4 @@ public class testUtils {
   public static void log(Logger logger, String test){
     logger.debug(String.format("RUNNING TEST: %s.",test));
   }
-
 }

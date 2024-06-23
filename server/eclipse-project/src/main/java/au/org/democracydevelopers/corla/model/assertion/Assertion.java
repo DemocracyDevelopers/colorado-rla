@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,7 @@ import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
+import us.freeandfair.corla.model.ComparisonAudit;
 import us.freeandfair.corla.persistence.PersistentEntity;
 
 /**
@@ -53,12 +55,33 @@ import us.freeandfair.corla.persistence.PersistentEntity;
  * of RAIRE assertion. Assertions are created and stored in the database by raire-service. They
  * are audited by colorado-rla. During this process, the record of discrepancies attached to
  * the assertion will be updated, as well as its estimated sample sizes and risk.
+ *
+ * A NOTE ON DISCREPANCY MANAGEMENT:
+ * The class level comment of the IRVComparisonAudit class describes how discrepancies are
+ * managed by ComparisonAudit's.
+ *
+ * Of particular note for assertions:
+ * If a discrepancy is found with respect to an assertion, the CVR ID and discrepancy type will be
+ * stored in its cvrDiscrepancy map. Each assertion has its own recordDiscrepancy() and
+ * removeDiscrepancy() method. When their recordDiscrepancy() method is called, its cvrDiscrepancy
+ * map will be looked up to find the right discrepancy type, and the assertion's internal discrepancy
+ * totals updated. Similarly, when removeDiscrepancy() is called, the cvrDiscrepancy map will be
+ * looked up to find the discrepancy type, and the assertion's discrepancy totals updated. The CVR
+ * ID - discrepancy type entry in its cvrDiscrepancy() map is not removed, however, it is only
+ * removed if computeDiscrepancy() is called again and either a different or no discrepancy is found.
+ * Note that recordDiscrepancy() and removeDiscrepancy() is designed to be called N times for a
+ * particular CVR/audited ballot pair if that ballot appears N times in the sample.
  */
 @Entity
 @Table(name = "assertion")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "assertion_type")
 public abstract class Assertion implements PersistentEntity {
+
+  /**
+   * Number of decimal places to report Assertion risk level.
+   */
+  public final static int RISK_DECIMALS = 3;
 
   /**
    * Class-wide logger.
@@ -108,20 +131,22 @@ public abstract class Assertion implements PersistentEntity {
    * colorado-rla code base, and the implementation of the methods provided in Audit, we are using a
    * BigDecimal).
    */
-  @Column(name = "diluted_margin", updatable = false, nullable = false)
-  protected BigDecimal dilutedMargin = BigDecimal.valueOf(0);
+  @Column(name = "diluted_margin", updatable = false, nullable = false,
+      precision = ComparisonAudit.PRECISION, scale = ComparisonAudit.SCALE)
+  protected BigDecimal dilutedMargin = BigDecimal.ZERO;
 
   /**
    * Assertion difficulty, as estimated by raire-java.
    */
-  @Column(name = "difficulty", updatable = false, nullable = false)
+  @Column(name = "difficulty", updatable = false, nullable = false,
+      precision = ComparisonAudit.PRECISION, scale = ComparisonAudit.SCALE)
   protected double difficulty = 0;
 
   /**
    * List of candidates that the assertion assumes are 'continuing' in the assertion's context.
    */
   @ElementCollection(fetch = FetchType.EAGER)
-  @CollectionTable(name = "assertion_context", joinColumns = @JoinColumn(name = "id"))
+  @CollectionTable(name = "assertion_assumed_continuing", joinColumns = @JoinColumn(name = "id"))
   @Column(name = "assumed_continuing", updatable = false, nullable = false)
   protected List<String> assumedContinuing = new ArrayList<>();
 
@@ -191,7 +216,8 @@ public abstract class Assertion implements PersistentEntity {
    * Current risk of the assertion. We initialize this risk to 1, as when we have no information we
    * assume maximum risk.
    */
-  @Column(name = "current_risk", nullable = false)
+  @Column(name = "current_risk", nullable = false,
+      precision = ComparisonAudit.PRECISION, scale = ComparisonAudit.SCALE)
   protected BigDecimal currentRisk = BigDecimal.valueOf(1);
 
   /**
@@ -225,6 +251,26 @@ public abstract class Assertion implements PersistentEntity {
     return version;
   }
 
+  /**
+   * Get the assertion's diluted margin.
+   */
+  public BigDecimal getDilutedMargin(){
+    return dilutedMargin;
+  }
+
+  /**
+   * Get an (unmodifiable) map of the assertion's CRV ID-discrepancy records. This is used
+   * for testing purposes.
+   */
+  public Map<Long,Integer> getCvrDiscrepancy(){
+    return Collections.unmodifiableMap(cvrDiscrepancy);
+  }
+
+  /**
+   * Return a string representation of a subset of this assertion's data. This is used for
+   * testing purposes.
+   */
+  public abstract String getDescription();
 
   /**
    * Given a number of audited samples, and the total number of overstatements experienced thus far,
@@ -271,6 +317,32 @@ public abstract class Assertion implements PersistentEntity {
         " of %s ballots.", prefix, id, optimisticSamplesToAudit));
 
     return optimisticSamplesToAudit;
+  }
+
+  /**
+   * For the given risk limit, compute the expected initial (optimistic) number of samples to audit
+   * for this assertion. This calculation calls Audit::optimistic() with zero's for each discrepancy
+   * count. This method does not change any of this assertion's internal sample size attributes.
+   *
+   * @param riskLimit The risk limit of the audit.
+   * @return The initial (optimistic) number of samples we expect we will need to sample to
+   * audit this assertion.
+   */
+  public Integer computeInitialOptimisticSamplesToAudit(BigDecimal riskLimit){
+    final String prefix = "[computeInitialOptimisticSamplesToAudit]";
+
+    LOGGER.debug(String.format("%s Calling Audit::optimistic() with parameters: risk limit " +
+            "%f; diluted margin %f; gamma %f; two vote under count 0; one vote under count 0; " +
+            "one vote over count 0; two vote over count 0.", prefix, riskLimit, dilutedMargin, Audit.GAMMA));
+
+    // Call the colorado-rla audit math; update optimistic_samples_to_audit and return new value.
+    final int initialOptimistic = Audit.optimistic(riskLimit, dilutedMargin, Audit.GAMMA,
+        0, 0, 0, 0).intValue();
+
+    LOGGER.debug(String.format("%s Computed initial optimistic samples to audit for Assertion %d" +
+        " of %s ballots.", prefix, id, initialOptimistic));
+
+    return initialOptimistic;
   }
 
   /**
@@ -327,14 +399,12 @@ public abstract class Assertion implements PersistentEntity {
    * zero results, we check if this occurred because there was no difference in the votes
    * recorded on the CVR and audited ballot. If so, we return an empty OptionalInt indicating
    * that there is no discrepancy. Otherwise, we wrap the discrepancy in an OptionalInt and return.
+   * A RuntimeException will be thrown if a null 'cvr' or 'auditedCVR' is provided.
    * @param cvr        The CVR that the machine saw.
    * @param auditedCVR The ACVR that the human audit board saw.
-   * @throws RuntimeException if a null cvr or auditedCVR record is provided.
    * @return an optional int that is present if there is a discrepancy and absent otherwise.
    */
-  public OptionalInt computeDiscrepancy(final CastVoteRecord cvr, final CastVoteRecord auditedCVR)
-    throws RuntimeException
-  {
+  public OptionalInt computeDiscrepancy(final CastVoteRecord cvr, final CastVoteRecord auditedCVR) {
     final String prefix = "[computeDiscrepancy]";
 
     if(cvr == null || auditedCVR == null){
@@ -379,6 +449,13 @@ public abstract class Assertion implements PersistentEntity {
       // We have no discrepancy: recorded votes are the same on both the CVR and audited ballot.
       LOGGER.debug(String.format("%s CVR ID %d, Assertion ID %d, contest %s, no discrepancy.",
           prefix, cvr.id(), id, contestName));
+
+      if(cvrDiscrepancy.containsKey(cvr.id())){
+        // We can only get here if the CVR was re-audited.
+        cvrDiscrepancy.remove(cvr.id());
+        LOGGER.debug(String.format("%s CVR ID %d, Assertion ID %d, contest %s, prior computed " +
+            "discrepancy removed from assertion's records.", prefix, cvr.id(), id, contestName));
+      }
       return OptionalInt.empty();
     }
 
@@ -399,12 +476,12 @@ public abstract class Assertion implements PersistentEntity {
    * the CVR is a phantom (i.e., it is missing), the worst case score (for a CVR) of 1 will be
    * returned.  A 1 will produce the highest discrepancy value when combined with an audited ballot
    * score, as the formula used is CVRScore - AuditedBallotScore. Otherwise, the assertion's
-   * scoring method will be applied to the vote recorded in the CVR's CVRContestInfo.
+   * scoring method will be applied to the vote recorded in the CVR's CVRContestInfo. A
+   * RuntimeException will be thrown if a null 'cvr' is provided,
    * @param cvr The CVR to be scored in relation to this assertion.
-   * @throws RuntimeException if a null cvr record is provided.
    * @return a value of 0, -1, or 1 representing the CVR's score in relation to this assertion.
    */
-  private int scoreCVR(final CastVoteRecord cvr) throws RuntimeException {
+  private int scoreCVR(final CastVoteRecord cvr) {
     final String prefix = "[scoreCVR]";
 
     if(cvr == null){
@@ -450,15 +527,15 @@ public abstract class Assertion implements PersistentEntity {
    * case score (for an audited ballot) of -1 will be returned. A -1 will produce the highest
    * discrepancy value when combined with a CVR score, as the formula used is CVRScore -
    * AuditedBallotScore. Otherwise, the assertion's scoring method will be applied to the vote recorded
-   * in the audited ballot's CVRContestInfo.
+   * in the audited ballot's CVRContestInfo. A RuntimeException is thrown if a null 'auditedCVR'
+   * is provided.
    * @param cvrID The ID of the CVR corresponding to this audited ballot (note: colorado-rla is
    *              a little flaky in its assignment of IDs to audited CVR records, so it is safest
    *              to supply this as a parameter rather than trying to access it from the record).
    * @param auditedCVR The audited ballot to be scored in relation to this assertion.
-   * @throws RuntimeException if a null auditedCVR record is provided.
    * @return a value of 0, -1, or 1 representing the audited ballot's score in relation to this assertion.
    */
-  private int scoreAuditedBallot(long cvrID, final CastVoteRecord auditedCVR) throws RuntimeException{
+  private int scoreAuditedBallot(long cvrID, final CastVoteRecord auditedCVR) {
     final String prefix = "[scoreAuditedBallot]";
 
     if(auditedCVR == null){
@@ -492,7 +569,7 @@ public abstract class Assertion implements PersistentEntity {
 
     if(acvrInfo.get().consensus() == ConsensusValue.NO){
       // The audited ballot has no consensus, we treat it as a Phantom Ballot.
-      // Return a worst case audited ballot score of -1.
+      // Return the worst case audited ballot score of -1.
       LOGGER.debug(String.format("%s audited ballot for CVR ID %d has no consensus, " +
               "audited ballot score is -1 for Assertion ID %d.", prefix, cvrID, id));
       return -1;
@@ -508,15 +585,23 @@ public abstract class Assertion implements PersistentEntity {
   /**
    * For a given CVRAuditInfo capturing a discrepancy between a CVR and ACVR, check if the
    * discrepancy is relevant for this assertion (if it is present in its cvrDiscrepancy map).
-   * If so, increment the counters for its discrepancy type.
-   * @param the_record   CVRAuditInfo representing the CVR-ACVR pair that has resulted in a discrepancy.
-   * @throws RuntimeException if the discrepancy type associated with this CVR-ACVR pair
-   * is not valid (i.e., not one of the defined types).
+   * If so, increment the counters for its discrepancy type. A RuntimeException will be thrown
+   * if the discrepancy type associated with this CVR-ACVR pair is not valid (i.e., not one of the
+   * defined types). This method is designed to be called 'n' times for a given CVRAuditInfo if
+   * the associated CVR appears 'n' times in the sample.
+   * @param theRecord CVRAuditInfo representing the CVR-ACVR pair that has resulted in a discrepancy.
+   * @return a boolean indicating if a discrepancy associated with the given CVRAuditInfo was
+   * recorded against the totals of at least one of this audit's assertions.
    */
-  public void recordDiscrepancy(final CVRAuditInfo the_record) throws RuntimeException {
+  public boolean recordDiscrepancy(final CVRAuditInfo theRecord) {
     final String prefix = "[recordDiscrepancy]";
-    if(cvrDiscrepancy.containsKey(the_record.id())){
-      final int theType = cvrDiscrepancy.get(the_record.id());
+
+    // Flag which will be set to true if we do increase the assertion's internal discrepancy
+    // counts.
+    boolean recorded = false;
+
+    if(cvrDiscrepancy.containsKey(theRecord.id())){
+      final int theType = cvrDiscrepancy.get(theRecord.id());
       switch (theType) {
         case -2 -> twoVoteUnderCount += 1;
         case -1 -> oneVoteUnderCount += 1;
@@ -534,34 +619,46 @@ public abstract class Assertion implements PersistentEntity {
       LOGGER.debug(String.format("%s Discrepancy of type %d added to Assertion ID %d,"+
           "contest %s, CVR ID %d. New totals: 1 vote understatements %d; 1 vote overstatements %d; " +
           "2 vote understatements %d; 2 vote overstatements %d; other %d.", prefix, theType, id,
-          contestName, the_record.id(), oneVoteUnderCount, oneVoteOverCount, twoVoteUnderCount,
+          contestName, theRecord.id(), oneVoteUnderCount, oneVoteOverCount, twoVoteUnderCount,
           twoVoteOverCount, otherCount));
+
+      recorded = true;
     }
     else{
-      final String msg = String.format("%s Attempt to record a discrepancy in Assertion ID %d " +
-              "contest %s, CVR ID %s, but no record of a pre-computed discrepancy associated with " +
-              "that CVR exists. No increase to discrepancy totals: 1 vote understatements %d; " +
-              "1 vote overstatements %d; 2 vote understatements %d; 2 vote overstatements %d; other %d.",
-              prefix, id, contestName, the_record.id(), oneVoteUnderCount, oneVoteOverCount,
-              twoVoteUnderCount, twoVoteOverCount, otherCount);
-      LOGGER.error(msg);
-      throw new RuntimeException(msg);
+      final String msg = String.format("%s Assertion ID %d contest %s, CVR ID %s: no record of " +
+          " a pre-computed discrepancy associated with that CVR. No increase to assertion discrepancy " +
+          "totals: 1 vote understatements %d; 1 vote overstatements %d; 2 vote understatements %d; " +
+          "2 vote overstatements %d; other %d.", prefix, id, contestName, theRecord.id(),
+          oneVoteUnderCount, oneVoteOverCount, twoVoteUnderCount, twoVoteOverCount, otherCount);
+      LOGGER.debug(msg);
     }
+
+    return recorded;
   }
 
   /**
    * Removes discrepancies relating to a given CVR-ACVR comparison. (This is relevant when
-   * ballots are 'un-audited' to be subsequently re-audited).
-   *
-   * @param the_record The CVRAuditInfo record that generated the discrepancy.
-   * @throws RuntimeException if an invalid discrepancy type has been stored in this assertion.
+   * ballots are 'un-audited' to be subsequently re-audited). A RuntimeException will be thrown
+   * if an invalid discrepancy type has been stored in this assertion. Note that we do not remove
+   * the CVR ID from the cvrDiscrepancy map. This is because there may be multiple instances of the
+   * discrepancy counted in the assertion's totals (e.g, if the CVR appears multiple times in the
+   * sample to be audited). This method is designed to be called 'n' times for a given CVRAuditInfo if
+   * the associated CVR appears 'n' times in the sample.
+   * @param theRecord The CVRAuditInfo record that generated the discrepancy.
+   * @return a boolean indicating if a discrepancy associated with the given CVRAuditInfo was
+   * removed from this assertion's totals.
    */
-  public void removeDiscrepancy(final CVRAuditInfo the_record) throws RuntimeException {
+  public boolean removeDiscrepancy(final CVRAuditInfo theRecord) {
     final String prefix = "[removeDiscrepancy]";
+
+    // Flag which will be set to true if we do remove a discrepancy from the assertions
+    // internal totals.
+    boolean removed = false;
+
     // Check if this CVR-ACVR pair produced a discrepancy with respect to this assertion.
     // (Note the CVRAuditInfo ID is always the CVR ID).
-    if(cvrDiscrepancy.containsKey(the_record.id())){
-      final int theType = cvrDiscrepancy.get(the_record.id());
+    if(cvrDiscrepancy.containsKey(theRecord.id())){
+      final int theType = cvrDiscrepancy.get(theRecord.id());
       switch (theType) {
         case -2 -> twoVoteUnderCount -= 1;
         case -1 -> oneVoteUnderCount -= 1;
@@ -575,31 +672,70 @@ public abstract class Assertion implements PersistentEntity {
           throw new RuntimeException(msg);
         }
       }
-      cvrDiscrepancy.remove(the_record.id());
+
+      // Note that we do not remove the CVR ID from the cvrDiscrepancy map. This is because there
+      // may be multiple instances of the discrepancy counted in the assertion's totals (e.g, if
+      // the CVR appears multiple times in the sample to be audited). If a ballot is reaudited,
+      // and a determination made that a discrepancy does not exist, the entry in cvrDiscrepancies
+      // will be updated via the computeDiscrepancy() method.
+
       LOGGER.debug(String.format("%s Discrepancy of type %d removed from Assertion ID %d,"+
               "contest %s, CVR ID %d. New totals: 1 vote understatements %d; 1 vote overstatements %d; " +
               "2 vote understatements %d; 2 vote overstatements %d; other %d.", prefix, theType, id,
-              contestName, the_record.id(), oneVoteUnderCount, oneVoteOverCount, twoVoteUnderCount,
+              contestName, theRecord.id(), oneVoteUnderCount, oneVoteOverCount, twoVoteUnderCount,
               twoVoteOverCount, otherCount));
+      removed = true;
     }
     else{
-      final String msg = String.format("%s Attempt to remove a discrepancy in Assertion ID %d " +
-              "contest %s, CVR ID %s, but no record of a pre-computed discrepancy associated with " +
-              "that CVR exists. No increase to discrepancy totals: 1 vote understatements %d; " +
-              "1 vote overstatements %d; 2 vote understatements %d; 2 vote overstatements %d; other %d.",
-              prefix, id, contestName, the_record.id(), oneVoteUnderCount, oneVoteOverCount,
-              twoVoteUnderCount, twoVoteOverCount, otherCount);
+      final String msg = String.format("%s Assertion ID %d contest %s, CVR ID %s: no record of a " +
+          "pre-computed discrepancy associated with that CVR. No change to discrepancy totals: " +
+          "1 vote understatements %d; 1 vote overstatements %d; 2 vote understatements %d; 2 vote " +
+          "overstatements %d; other %d.", prefix, id, contestName, theRecord.id(), oneVoteUnderCount,
+          oneVoteOverCount, twoVoteUnderCount, twoVoteOverCount, otherCount);
+      LOGGER.debug(msg);
+    }
+
+    if(min(List.of(oneVoteOverCount, oneVoteUnderCount, twoVoteOverCount, twoVoteUnderCount, otherCount)) < 0) {
+      final String msg = String.format("%s Negative discrepancy counts in Assertion ID %d, " +
+          "contest %s when removing discrepancy for CVR %d.", prefix, id, contestName, theRecord.id());
       LOGGER.error(msg);
       throw new RuntimeException(msg);
     }
 
-    if(min(List.of(oneVoteOverCount, oneVoteUnderCount, twoVoteUnderCount, otherCount)) < 0) {
-      final String msg = String.format("%s Negative discrepancy counts in Assertion ID %d, " +
-          "contest %s when removing discrepancy for CVR %d.", prefix, id, contestName, the_record.id());
-      LOGGER.error(msg);
-      throw new RuntimeException(msg);
-    }
+    return removed;
   }
+
+  /**
+   * Compute the current level of risk achieved for this assertion given a specified
+   * audited sample count and gamma value. Audit.pValueApproximation is used to compute
+   * this risk using the diluted margin of the assertion, and the recorded number of
+   * one/two vote understatements and one/two vote overstatements. The assertions 'currentRisk'
+   * attribute is updated, and the computed risk returned.
+   * @param auditedSampleCount  Number of ballots audited.
+   * @return Level of risk achieved for this assertion.
+   */
+  public BigDecimal riskMeasurement(int auditedSampleCount){
+    final String prefix = "[riskMeasurement]";
+    if (auditedSampleCount > 0 && dilutedMargin.doubleValue() > 0) {
+      LOGGER.debug(String.format("%s Assertion ID %d, contest %s, calling " +
+          "Audit.pValueApproximation() with parameters: audited sample count %d; diluted margin " +
+          "%f; gamma %f; one vote under count %d; two vote under count %d; one vote over count " +
+          "%d; two vote over count %d.", prefix, id, contestName, auditedSampleCount, dilutedMargin,
+          Audit.GAMMA, oneVoteUnderCount, twoVoteUnderCount, oneVoteOverCount, twoVoteOverCount));
+
+      currentRisk = Audit.pValueApproximation(auditedSampleCount, dilutedMargin, Audit.GAMMA,
+          oneVoteUnderCount, twoVoteUnderCount, oneVoteOverCount, twoVoteOverCount).setScale(
+              RISK_DECIMALS, RoundingMode.HALF_UP);
+    } else {
+      // Full risk (100%) when nothing is known
+      currentRisk = BigDecimal.ONE;
+    }
+
+    LOGGER.debug(String.format("%s Assertion ID %d, contest %s, risk %f.", prefix, id,
+        contestName, currentRisk));
+    return currentRisk;
+  }
+
 
   /**
    * Computes the Score for the given vote in the context of this assertion. For details on how
