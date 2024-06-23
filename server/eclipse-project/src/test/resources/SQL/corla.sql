@@ -730,20 +730,6 @@ create index idx_uploaded_file_county
     on uploaded_file (county_id);
 
 --
--- Name: hibernate_sequence; Type: SEQUENCE; Schema: public; Owner: corlaadmin
---
-
-CREATE SEQUENCE public.hibernate_sequence
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.hibernate_sequence OWNER TO corlaadmin;
-
---
 -- Name: hibernate_sequence; Type: SEQUENCE SET; Schema: public; Owner: corlaadmin
 --
 
