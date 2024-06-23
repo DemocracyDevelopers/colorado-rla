@@ -1,3 +1,6 @@
+--
+-- Basic setup to represent the point just before anyone has started uploading data.
+-- Includes counties, administrators, dashboards and asm states.
 
 --
 -- Data for Name: asm_state; Type: TABLE DATA; Schema: public; Owner: corlaadmin
@@ -133,70 +136,75 @@ INSERT INTO public.asm_state (id, asm_class, asm_identity, state_class, state_va
 INSERT INTO public.asm_state (id, asm_class, asm_identity, state_class, state_value, version) VALUES (44766, 'us.freeandfair.corla.asm.CountyDashboardASM', '43', 'us.freeandfair.corla.asm.ASMState$CountyDashboardState', 'COUNTY_INITIAL_STATE', 0);
 INSERT INTO public.asm_state (id, asm_class, asm_identity, state_class, state_value, version) VALUES (44767, 'us.freeandfair.corla.asm.AuditBoardDashboardASM', '43', 'us.freeandfair.corla.asm.ASMState$AuditBoardDashboardState', 'AUDIT_INITIAL_STATE', 0);
 
-INSERT INTO county (id, name) VALUES (44, 'Morgan');
-INSERT INTO county (id, name) VALUES (45, 'Otero');
-INSERT INTO county (id, name) VALUES (46, 'Ouray');
-INSERT INTO county (id, name) VALUES (47, 'Park');
-INSERT INTO county (id, name) VALUES (48, 'Phillips');
-INSERT INTO county (id, name) VALUES (49, 'Pitkin');
-INSERT INTO county (id, name) VALUES (50, 'Prowers');
-INSERT INTO county (id, name) VALUES (51, 'Pueblo');
-INSERT INTO county (id, name) VALUES (52, 'Rio Blanco');
-INSERT INTO county (id, name) VALUES (53, 'Rio Grande');
-INSERT INTO county (id, name) VALUES (10, 'Clear Creek');
-INSERT INTO county (id, name) VALUES (54, 'Routt');
-INSERT INTO county (id, name) VALUES (11, 'Conejos');
-INSERT INTO county (id, name) VALUES (55, 'Saguache');
-INSERT INTO county (id, name) VALUES (12, 'Costilla');
-INSERT INTO county (id, name) VALUES (56, 'San Juan');
-INSERT INTO county (id, name) VALUES (13, 'Crowley');
-INSERT INTO county (id, name) VALUES (57, 'San Miguel');
-INSERT INTO county (id, name) VALUES (14, 'Custer');
-INSERT INTO county (id, name) VALUES (58, 'Sedgwick');
-INSERT INTO county (id, name) VALUES (15, 'Delta');
-INSERT INTO county (id, name) VALUES (59, 'Summit');
-INSERT INTO county (id, name) VALUES (16, 'Denver');
-INSERT INTO county (id, name) VALUES (17, 'Dolores');
-INSERT INTO county (id, name) VALUES (18, 'Douglas');
-INSERT INTO county (id, name) VALUES (19, 'Eagle');
-INSERT INTO county (id, name) VALUES (1, 'Adams');
-INSERT INTO county (id, name) VALUES (2, 'Alamosa');
-INSERT INTO county (id, name) VALUES (3, 'Arapahoe');
-INSERT INTO county (id, name) VALUES (4, 'Archuleta');
-INSERT INTO county (id, name) VALUES (5, 'Baca');
-INSERT INTO county (id, name) VALUES (6, 'Bent');
-INSERT INTO county (id, name) VALUES (7, 'Boulder');
-INSERT INTO county (id, name) VALUES (8, 'Chaffee');
-INSERT INTO county (id, name) VALUES (9, 'Cheyenne');
-INSERT INTO county (id, name) VALUES (60, 'Teller');
-INSERT INTO county (id, name) VALUES (61, 'Washington');
-INSERT INTO county (id, name) VALUES (62, 'Weld');
-INSERT INTO county (id, name) VALUES (63, 'Yuma');
-INSERT INTO county (id, name) VALUES (20, 'Elbert');
-INSERT INTO county (id, name) VALUES (64, 'Broomfield');
-INSERT INTO county (id, name) VALUES (21, 'El Paso');
-INSERT INTO county (id, name) VALUES (22, 'Fremont');
-INSERT INTO county (id, name) VALUES (23, 'Garfield');
-INSERT INTO county (id, name) VALUES (24, 'Gilpin');
-INSERT INTO county (id, name) VALUES (25, 'Grand');
-INSERT INTO county (id, name) VALUES (26, 'Gunnison');
-INSERT INTO county (id, name) VALUES (27, 'Hinsdale');
-INSERT INTO county (id, name) VALUES (28, 'Huerfano');
-INSERT INTO county (id, name) VALUES (29, 'Jackson');
-INSERT INTO county (id, name) VALUES (30, 'Jefferson');
-INSERT INTO county (id, name) VALUES (31, 'Kiowa');
-INSERT INTO county (id, name) VALUES (32, 'Kit Carson');
-INSERT INTO county (id, name) VALUES (33, 'Lake');
-INSERT INTO county (id, name) VALUES (34, 'La Plata');
-INSERT INTO county (id, name) VALUES (35, 'Larimer');
-INSERT INTO county (id, name) VALUES (36, 'Las Animas');
-INSERT INTO county (id, name) VALUES (37, 'Lincoln');
-INSERT INTO county (id, name) VALUES (38, 'Logan');
-INSERT INTO county (id, name) VALUES (39, 'Mesa');
-INSERT INTO county (id, name) VALUES (40, 'Mineral');
-INSERT INTO county (id, name) VALUES (41, 'Moffat');
-INSERT INTO county (id, name) VALUES (42, 'Montezuma');
-INSERT INTO county (id, name) VALUES (43, 'Montrose');
+
+--
+-- Data for Name: county; Type: TABLE DATA; Schema: public; Owner: corlaadmin
+--
+
+INSERT INTO public.county (id, name, version) VALUES (44, 'Morgan', 0);
+INSERT INTO public.county (id, name, version) VALUES (45, 'Otero', 0);
+INSERT INTO public.county (id, name, version) VALUES (46, 'Ouray', 0);
+INSERT INTO public.county (id, name, version) VALUES (47, 'Park', 0);
+INSERT INTO public.county (id, name, version) VALUES (48, 'Phillips', 0);
+INSERT INTO public.county (id, name, version) VALUES (49, 'Pitkin', 0);
+INSERT INTO public.county (id, name, version) VALUES (50, 'Prowers', 0);
+INSERT INTO public.county (id, name, version) VALUES (51, 'Pueblo', 0);
+INSERT INTO public.county (id, name, version) VALUES (52, 'Rio Blanco', 0);
+INSERT INTO public.county (id, name, version) VALUES (53, 'Rio Grande', 0);
+INSERT INTO public.county (id, name, version) VALUES (10, 'Clear Creek', 0);
+INSERT INTO public.county (id, name, version) VALUES (54, 'Routt', 0);
+INSERT INTO public.county (id, name, version) VALUES (11, 'Conejos', 0);
+INSERT INTO public.county (id, name, version) VALUES (55, 'Saguache', 0);
+INSERT INTO public.county (id, name, version) VALUES (12, 'Costilla', 0);
+INSERT INTO public.county (id, name, version) VALUES (56, 'San Juan', 0);
+INSERT INTO public.county (id, name, version) VALUES (13, 'Crowley', 0);
+INSERT INTO public.county (id, name, version) VALUES (57, 'San Miguel', 0);
+INSERT INTO public.county (id, name, version) VALUES (14, 'Custer', 0);
+INSERT INTO public.county (id, name, version) VALUES (58, 'Sedgwick', 0);
+INSERT INTO public.county (id, name, version) VALUES (15, 'Delta', 0);
+INSERT INTO public.county (id, name, version) VALUES (59, 'Summit', 0);
+INSERT INTO public.county (id, name, version) VALUES (16, 'Denver', 0);
+INSERT INTO public.county (id, name, version) VALUES (17, 'Dolores', 0);
+INSERT INTO public.county (id, name, version) VALUES (18, 'Douglas', 0);
+INSERT INTO public.county (id, name, version) VALUES (19, 'Eagle', 0);
+INSERT INTO public.county (id, name, version) VALUES (1, 'Adams', 0);
+INSERT INTO public.county (id, name, version) VALUES (2, 'Alamosa', 0);
+INSERT INTO public.county (id, name, version) VALUES (3, 'Arapahoe', 0);
+INSERT INTO public.county (id, name, version) VALUES (4, 'Archuleta', 0);
+INSERT INTO public.county (id, name, version) VALUES (5, 'Baca', 0);
+INSERT INTO public.county (id, name, version) VALUES (6, 'Bent', 0);
+INSERT INTO public.county (id, name, version) VALUES (7, 'Boulder', 0);
+INSERT INTO public.county (id, name, version) VALUES (8, 'Chaffee', 0);
+INSERT INTO public.county (id, name, version) VALUES (9, 'Cheyenne', 0);
+INSERT INTO public.county (id, name, version) VALUES (60, 'Teller', 0);
+INSERT INTO public.county (id, name, version) VALUES (61, 'Washington', 0);
+INSERT INTO public.county (id, name, version) VALUES (62, 'Weld', 0);
+INSERT INTO public.county (id, name, version) VALUES (63, 'Yuma', 0);
+INSERT INTO public.county (id, name, version) VALUES (20, 'Elbert', 0);
+INSERT INTO public.county (id, name, version) VALUES (64, 'Broomfield', 0);
+INSERT INTO public.county (id, name, version) VALUES (21, 'El Paso', 0);
+INSERT INTO public.county (id, name, version) VALUES (22, 'Fremont', 0);
+INSERT INTO public.county (id, name, version) VALUES (23, 'Garfield', 0);
+INSERT INTO public.county (id, name, version) VALUES (24, 'Gilpin', 0);
+INSERT INTO public.county (id, name, version) VALUES (25, 'Grand', 0);
+INSERT INTO public.county (id, name, version) VALUES (26, 'Gunnison', 0);
+INSERT INTO public.county (id, name, version) VALUES (27, 'Hinsdale', 0);
+INSERT INTO public.county (id, name, version) VALUES (28, 'Huerfano', 0);
+INSERT INTO public.county (id, name, version) VALUES (29, 'Jackson', 0);
+INSERT INTO public.county (id, name, version) VALUES (30, 'Jefferson', 0);
+INSERT INTO public.county (id, name, version) VALUES (31, 'Kiowa', 0);
+INSERT INTO public.county (id, name, version) VALUES (32, 'Kit Carson', 0);
+INSERT INTO public.county (id, name, version) VALUES (33, 'Lake', 0);
+INSERT INTO public.county (id, name, version) VALUES (34, 'La Plata', 0);
+INSERT INTO public.county (id, name, version) VALUES (35, 'Larimer', 0);
+INSERT INTO public.county (id, name, version) VALUES (36, 'Las Animas', 0);
+INSERT INTO public.county (id, name, version) VALUES (37, 'Lincoln', 0);
+INSERT INTO public.county (id, name, version) VALUES (38, 'Logan', 0);
+INSERT INTO public.county (id, name, version) VALUES (39, 'Mesa', 0);
+INSERT INTO public.county (id, name, version) VALUES (40, 'Mineral', 0);
+INSERT INTO public.county (id, name, version) VALUES (41, 'Moffat', 0);
+INSERT INTO public.county (id, name, version) VALUES (42, 'Montezuma', 0);
+INSERT INTO public.county (id, name, version) VALUES (43, 'Montrose', 0);
 
 
 --
@@ -267,3 +275,86 @@ INSERT INTO public.county_dashboard (id, audit_board_count, driving_contests, au
 INSERT INTO public.county_dashboard (id, audit_board_count, driving_contests, audit_timestamp, audited_prefix_length, audited_sample_count, ballots_audited, ballots_in_manifest, current_round_index, cvr_import_error_message, cvr_import_state, cvr_import_timestamp, cvrs_imported, disagreements, discrepancies, version, county_id, cvr_file_id, manifest_file_id) VALUES (41, NULL, '[]', NULL, NULL, NULL, 0, 0, NULL, NULL, 'NOT_ATTEMPTED', '2024-06-05 16:10:02.150592', 0, '{}', '{}', 0, 41, NULL, NULL);
 INSERT INTO public.county_dashboard (id, audit_board_count, driving_contests, audit_timestamp, audited_prefix_length, audited_sample_count, ballots_audited, ballots_in_manifest, current_round_index, cvr_import_error_message, cvr_import_state, cvr_import_timestamp, cvrs_imported, disagreements, discrepancies, version, county_id, cvr_file_id, manifest_file_id) VALUES (42, NULL, '[]', NULL, NULL, NULL, 0, 0, NULL, NULL, 'NOT_ATTEMPTED', '2024-06-05 16:10:02.154801', 0, '{}', '{}', 0, 42, NULL, NULL);
 INSERT INTO public.county_dashboard (id, audit_board_count, driving_contests, audit_timestamp, audited_prefix_length, audited_sample_count, ballots_audited, ballots_in_manifest, current_round_index, cvr_import_error_message, cvr_import_state, cvr_import_timestamp, cvrs_imported, disagreements, discrepancies, version, county_id, cvr_file_id, manifest_file_id) VALUES (43, NULL, '[]', NULL, NULL, NULL, 0, 0, NULL, NULL, 'NOT_ATTEMPTED', '2024-06-05 16:10:02.159136', 0, '{}', '{}', 0, 43, NULL, NULL);
+
+--
+-- Data for Name: dos_dashboard; Type: TABLE DATA; Schema: public; Owner: corlaadmin
+--
+
+INSERT INTO public.dos_dashboard (id, canonical_choices, canonical_contests, election_date, election_type, public_meeting_date, risk_limit, seed, version) VALUES (0, '{}', '{}', NULL, NULL, NULL, NULL, NULL, 0);
+
+--
+-- Data for Name: administrator; Type: TABLE DATA; Schema: public; Owner: corlaadmin
+--
+
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-1, 'State Administrator 1', NULL, NULL, 'STATE', 'stateadmin1', 0, NULL);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-2, 'State Administrator 2', NULL, NULL, 'STATE', 'stateadmin2', 0, NULL);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-3, 'State Administrator 3', NULL, NULL, 'STATE', 'stateadmin3', 0, NULL);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-4, 'State Administrator 4', NULL, NULL, 'STATE', 'stateadmin4', 0, NULL);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-5, 'State Administrator 5', NULL, NULL, 'STATE', 'stateadmin5', 0, NULL);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-6, 'State Administrator 6', NULL, NULL, 'STATE', 'stateadmin6', 0, NULL);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-7, 'State Administrator 7', NULL, NULL, 'STATE', 'stateadmin7', 0, NULL);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-8, 'State Administrator 8', NULL, NULL, 'STATE', 'stateadmin8', 0, NULL);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-101, 'County Administrator 1', NULL, NULL, 'COUNTY', 'countyadmin1', 0, 1);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-102, 'County Administrator 2', NULL, NULL, 'COUNTY', 'countyadmin2', 0, 2);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-103, 'County Administrator 3', NULL, NULL, 'COUNTY', 'countyadmin3', 0, 3);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-104, 'County Administrator 4', NULL, NULL, 'COUNTY', 'countyadmin4', 0, 4);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-105, 'County Administrator 5', NULL, NULL, 'COUNTY', 'countyadmin5', 0, 5);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-106, 'County Administrator 6', NULL, NULL, 'COUNTY', 'countyadmin6', 0, 6);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-107, 'County Administrator 7', NULL, NULL, 'COUNTY', 'countyadmin7', 0, 7);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-108, 'County Administrator 8', NULL, NULL, 'COUNTY', 'countyadmin8', 0, 8);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-109, 'County Administrator 9', NULL, NULL, 'COUNTY', 'countyadmin9', 0, 9);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-110, 'County Administrator 10', NULL, NULL, 'COUNTY', 'countyadmin10', 0, 10);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-111, 'County Administrator 11', NULL, NULL, 'COUNTY', 'countyadmin11', 0, 11);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-112, 'County Administrator 12', NULL, NULL, 'COUNTY', 'countyadmin12', 0, 12);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-113, 'County Administrator 13', NULL, NULL, 'COUNTY', 'countyadmin13', 0, 13);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-114, 'County Administrator 14', NULL, NULL, 'COUNTY', 'countyadmin14', 0, 14);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-115, 'County Administrator 15', NULL, NULL, 'COUNTY', 'countyadmin15', 0, 15);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-116, 'County Administrator 16', NULL, NULL, 'COUNTY', 'countyadmin16', 0, 16);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-117, 'County Administrator 17', NULL, NULL, 'COUNTY', 'countyadmin17', 0, 17);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-118, 'County Administrator 18', NULL, NULL, 'COUNTY', 'countyadmin18', 0, 18);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-119, 'County Administrator 19', NULL, NULL, 'COUNTY', 'countyadmin19', 0, 19);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-120, 'County Administrator 20', NULL, NULL, 'COUNTY', 'countyadmin20', 0, 20);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-121, 'County Administrator 21', NULL, NULL, 'COUNTY', 'countyadmin21', 0, 21);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-122, 'County Administrator 22', NULL, NULL, 'COUNTY', 'countyadmin22', 0, 22);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-123, 'County Administrator 23', NULL, NULL, 'COUNTY', 'countyadmin23', 0, 23);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-124, 'County Administrator 24', NULL, NULL, 'COUNTY', 'countyadmin24', 0, 24);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-125, 'County Administrator 25', NULL, NULL, 'COUNTY', 'countyadmin25', 0, 25);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-126, 'County Administrator 26', NULL, NULL, 'COUNTY', 'countyadmin26', 0, 26);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-127, 'County Administrator 27', NULL, NULL, 'COUNTY', 'countyadmin27', 0, 27);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-128, 'County Administrator 28', NULL, NULL, 'COUNTY', 'countyadmin28', 0, 28);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-129, 'County Administrator 29', NULL, NULL, 'COUNTY', 'countyadmin29', 0, 29);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-130, 'County Administrator 30', NULL, NULL, 'COUNTY', 'countyadmin30', 0, 30);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-131, 'County Administrator 31', NULL, NULL, 'COUNTY', 'countyadmin31', 0, 31);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-132, 'County Administrator 32', NULL, NULL, 'COUNTY', 'countyadmin32', 0, 32);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-133, 'County Administrator 33', NULL, NULL, 'COUNTY', 'countyadmin33', 0, 33);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-134, 'County Administrator 34', NULL, NULL, 'COUNTY', 'countyadmin34', 0, 34);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-135, 'County Administrator 35', NULL, NULL, 'COUNTY', 'countyadmin35', 0, 35);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-136, 'County Administrator 36', NULL, NULL, 'COUNTY', 'countyadmin36', 0, 36);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-137, 'County Administrator 37', NULL, NULL, 'COUNTY', 'countyadmin37', 0, 37);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-138, 'County Administrator 38', NULL, NULL, 'COUNTY', 'countyadmin38', 0, 38);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-139, 'County Administrator 39', NULL, NULL, 'COUNTY', 'countyadmin39', 0, 39);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-140, 'County Administrator 40', NULL, NULL, 'COUNTY', 'countyadmin40', 0, 40);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-141, 'County Administrator 41', NULL, NULL, 'COUNTY', 'countyadmin41', 0, 41);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-142, 'County Administrator 42', NULL, NULL, 'COUNTY', 'countyadmin42', 0, 42);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-143, 'County Administrator 43', NULL, NULL, 'COUNTY', 'countyadmin43', 0, 43);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-144, 'County Administrator 44', NULL, NULL, 'COUNTY', 'countyadmin44', 0, 44);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-145, 'County Administrator 45', NULL, NULL, 'COUNTY', 'countyadmin45', 0, 45);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-146, 'County Administrator 46', NULL, NULL, 'COUNTY', 'countyadmin46', 0, 46);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-147, 'County Administrator 47', NULL, NULL, 'COUNTY', 'countyadmin47', 0, 47);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-148, 'County Administrator 48', NULL, NULL, 'COUNTY', 'countyadmin48', 0, 48);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-149, 'County Administrator 49', NULL, NULL, 'COUNTY', 'countyadmin49', 0, 49);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-150, 'County Administrator 10', NULL, NULL, 'COUNTY', 'countyadmin50', 0, 50);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-151, 'County Administrator 51', NULL, NULL, 'COUNTY', 'countyadmin51', 0, 51);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-152, 'County Administrator 52', NULL, NULL, 'COUNTY', 'countyadmin52', 0, 52);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-153, 'County Administrator 53', NULL, NULL, 'COUNTY', 'countyadmin53', 0, 53);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-154, 'County Administrator 54', NULL, NULL, 'COUNTY', 'countyadmin54', 0, 54);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-155, 'County Administrator 55', NULL, NULL, 'COUNTY', 'countyadmin55', 0, 55);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-156, 'County Administrator 56', NULL, NULL, 'COUNTY', 'countyadmin56', 0, 56);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-157, 'County Administrator 57', NULL, NULL, 'COUNTY', 'countyadmin57', 0, 57);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-158, 'County Administrator 58', NULL, NULL, 'COUNTY', 'countyadmin58', 0, 58);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-159, 'County Administrator 59', NULL, NULL, 'COUNTY', 'countyadmin59', 0, 59);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-160, 'County Administrator 60', NULL, NULL, 'COUNTY', 'countyadmin60', 0, 60);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-161, 'County Administrator 61', NULL, NULL, 'COUNTY', 'countyadmin61', 0, 61);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-162, 'County Administrator 62', NULL, NULL, 'COUNTY', 'countyadmin62', 0, 62);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-163, 'County Administrator 63', NULL, NULL, 'COUNTY', 'countyadmin63', 0, 63);
+INSERT INTO public.administrator (id, full_name, last_login_time, last_logout_time, type, username, version, county_id) VALUES (-164, 'County Administrator 64', NULL, NULL, 'COUNTY', 'countyadmin64', 0, 64);

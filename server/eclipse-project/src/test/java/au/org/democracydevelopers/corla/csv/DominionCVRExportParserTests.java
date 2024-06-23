@@ -96,7 +96,6 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
 
     var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
     ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
-
   }
 
   @AfterClass
@@ -240,7 +239,7 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
 
     // There are 10 votes, with respective valid interpretations as below:
     List<CVRContestInfo> cvrs = getMatching(fromString("Gilpin").id(), CastVoteRecord.RecordType.UPLOADED)
-        .map(cvr -> cvr.contestInfoForContest(contest)).collect(Collectors.toList());
+        .map(cvr -> cvr.contestInfoForContest(contest)).toList();
     assertEquals(10, cvrs.size());
 
     // Raw: "Alice(1),Alice(2),Bob(2),Chuan(3)
