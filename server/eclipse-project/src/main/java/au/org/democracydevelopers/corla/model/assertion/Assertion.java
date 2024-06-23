@@ -42,6 +42,7 @@ import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
+import us.freeandfair.corla.model.ComparisonAudit;
 import us.freeandfair.corla.persistence.PersistentEntity;
 
 /**
@@ -130,13 +131,15 @@ public abstract class Assertion implements PersistentEntity {
    * colorado-rla code base, and the implementation of the methods provided in Audit, we are using a
    * BigDecimal).
    */
-  @Column(name = "diluted_margin", updatable = false, nullable = false)
-  protected BigDecimal dilutedMargin = BigDecimal.valueOf(0);
+  @Column(name = "diluted_margin", updatable = false, nullable = false,
+      precision = ComparisonAudit.PRECISION, scale = ComparisonAudit.SCALE)
+  protected BigDecimal dilutedMargin = BigDecimal.ZERO;
 
   /**
    * Assertion difficulty, as estimated by raire-java.
    */
-  @Column(name = "difficulty", updatable = false, nullable = false)
+  @Column(name = "difficulty", updatable = false, nullable = false,
+      precision = ComparisonAudit.PRECISION, scale = ComparisonAudit.SCALE)
   protected double difficulty = 0;
 
   /**
@@ -213,7 +216,8 @@ public abstract class Assertion implements PersistentEntity {
    * Current risk of the assertion. We initialize this risk to 1, as when we have no information we
    * assume maximum risk.
    */
-  @Column(name = "current_risk", nullable = false)
+  @Column(name = "current_risk", nullable = false,
+      precision = ComparisonAudit.PRECISION, scale = ComparisonAudit.SCALE)
   protected BigDecimal currentRisk = BigDecimal.valueOf(1);
 
   /**
