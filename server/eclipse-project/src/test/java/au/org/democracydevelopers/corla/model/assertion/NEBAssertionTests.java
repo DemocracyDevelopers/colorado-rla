@@ -1838,6 +1838,53 @@ public class NEBAssertionTests {
   }
 
   /**
+   * Test the Assertion::computeOptimisticSamplesToAudit() method for NEB assertions
+   * with varying diluted margins and discrepancies.
+   */
+  @Test
+  public void computeOptimisticSamplesToAudit(){
+    Assertion a1 = createNEBAssertion("A", "B", TC, 100, 0.01,
+        100, Map.of(), 0, 0, 0, 0, 0);
+
+    assertEquals(a1.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 729);
+
+    Assertion a2 = createNEBAssertion("B", "C", TC, 159, 0.0159,
+        159, Map.of(), 1, 1, 1, 1, 1);
+
+    assertEquals(a2.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 767);
+
+    Assertion a3 = createNEBAssertion("D", "E", TC, 1, 0.00001,
+        1000, Map.of(1L, -1, 2L, 0, 3L, 1), 1,
+        1, 0, 0, 1);
+
+    assertEquals(a3.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 783434);
+
+    Assertion a4 = createNEBAssertion("F", "G", TC, 1235, 0.12345,
+        50, Map.of(1L, -2), 0, 0, 0,
+        1, 0);
+
+    assertEquals(a4.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 40);
+
+    Assertion a5 = createNEBAssertion("H", "I", TC, 3325, 0.33247528,
+        17, Map.of(1L, 1, 2L, 2), 1, 0,
+        1, 0, 0);
+
+    assertEquals(a5.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 47);
+
+    Assertion a6 = createNEBAssertion("B", "C", TC, 159, 0.0159,
+        159, Map.of(1L, -1, 2L, -2, 3L, 0), 0, 1,
+        0, 1, 1);
+
+    assertEquals(a6.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 253);
+
+    Assertion a7 = createNEBAssertion("B", "C", TC, 159, 0.0159,
+        159, Map.of(1L, -1, 2L, -2), 0, 1,
+        0, 1, 0);
+
+    assertEquals(a7.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 253);
+  }
+
+  /**
    * Reset the CVR and audited CVR mock objects with the given parameters.
    * @param cvrInfo CVRContestInfo for the CVR.
    * @param acvrInfo CVRContestInfo for the audited ballot.
