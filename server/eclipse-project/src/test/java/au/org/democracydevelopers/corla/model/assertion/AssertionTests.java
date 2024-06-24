@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Parameters;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 
@@ -108,6 +109,15 @@ public class AssertionTests {
     };
   }
 
+  /**
+   * A parameter set consisting of a series of varying current audited sample counts.
+   */
+  @DataProvider(name = "AuditSampleNumbers")
+  public static Object[][] auditSampleNumbers(){
+    return new Object[][]{
+        {0}, {1}, {2}, {10}, {50}, {100}, {500}, {1500}, {5000}
+    };
+  }
   /**
    * Returns a set of varying parameters to supply when constructing assertions to test
    * sample size computations. To test sample size calculation, we consider the following dimensions:
