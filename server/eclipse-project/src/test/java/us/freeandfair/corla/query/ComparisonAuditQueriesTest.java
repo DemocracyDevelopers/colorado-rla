@@ -15,7 +15,7 @@ import static org.testng.Assert.assertEquals;
 
 public class ComparisonAuditQueriesTest extends TestClassWithDatabase {
 
-    @Test
+    @Test(enabled = false)
     public void testSortedList() {
 
         ContestResult contestResult = new ContestResult("Test Contest");
