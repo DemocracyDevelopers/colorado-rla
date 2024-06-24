@@ -1803,6 +1803,41 @@ public class NEBAssertionTests {
   }
 
   /**
+   * Test the Assertion::computeInitialOptimisticSamplesToAudit() method for NEB assertions
+   * with varying diluted margins.
+   */
+  @Test
+  public void testNEBInitialOptimisticSampleSize(){
+    Assertion a1 = createNEBAssertion("A", "B", TC, 100, 0.01,
+        100, Map.of(), 0, 0, 0, 0, 0);
+
+    assertEquals(a1.computeInitialOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 729);
+
+    Assertion a2 = createNEBAssertion("B", "C", TC, 159, 0.0159,
+        159, Map.of(), 0, 0, 0, 0, 0);
+
+    assertEquals(a2.computeInitialOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 392);
+
+    Assertion a3 = createNEBAssertion("D", "E", TC, 1, 0.00001,
+        1000, Map.of(1L, -1, 2L, 0, 3L, 1), 1,
+        1, 0, 0, 1);
+
+    assertEquals(a3.computeInitialOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 728698);
+
+    Assertion a4 = createNEBAssertion("F", "G", TC, 1235, 0.12345,
+        50, Map.of(1L, -2), 0, 0, 0,
+        1, 0);
+
+    assertEquals(a4.computeInitialOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 51);
+
+    Assertion a5 = createNEBAssertion("H", "I", TC, 3325, 0.33247528,
+        17, Map.of(1L, 1, 2L, 2), 1, 0,
+        1, 0, 0);
+
+    assertEquals(a5.computeInitialOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 22);
+  }
+
+  /**
    * Reset the CVR and audited CVR mock objects with the given parameters.
    * @param cvrInfo CVRContestInfo for the CVR.
    * @param acvrInfo CVRContestInfo for the audited ballot.
