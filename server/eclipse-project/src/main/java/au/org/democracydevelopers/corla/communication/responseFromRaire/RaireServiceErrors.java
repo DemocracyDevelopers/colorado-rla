@@ -18,7 +18,7 @@ You should have received a copy of the GNU Affero General Public License along w
 raire-service. If not, see <https://www.gnu.org/licenses/>.
 */
 
-package au.org.democracydevelopers.corla.raire.responseFromRaire;
+package au.org.democracydevelopers.corla.communication.responseFromRaire;
 
 /**
  * Errors sent back from the raire service via http headers. The fields exactly match the

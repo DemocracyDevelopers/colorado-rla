@@ -19,7 +19,7 @@ You should have received a copy of the GNU Affero General Public License along w
 raire-service. If not, see <https://www.gnu.org/licenses/>.
 */
 
-package au.org.democracydevelopers.corla.raire.responseFromRaire;
+package au.org.democracydevelopers.corla.communication.responseFromRaire;
 
 /**
  * The success response when a ContestRequest is sent to raire's generate-assertions endpoint. This

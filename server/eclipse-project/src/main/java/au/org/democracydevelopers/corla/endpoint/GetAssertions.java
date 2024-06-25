@@ -31,23 +31,18 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import au.org.democracydevelopers.corla.raire.requestToRaire.GetAssertionsRequest;
-import com.google.gson.Gson;
+import au.org.democracydevelopers.corla.communication.requestToRaire.GetAssertionsRequest;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import spark.Request;
 import spark.Response;
 import us.freeandfair.corla.Main;
-import us.freeandfair.corla.asm.ASMEvent;
-import us.freeandfair.corla.endpoint.AbstractDoSDashboardEndpoint;
 import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.persistence.Persistence;
@@ -64,32 +59,12 @@ import us.freeandfair.corla.util.SparkHelper;
  * for that contest containing the error string, which is then included in the zip.
  * If the raire service endpoint returns a 4xx error, this throws a RuntimeException.
  */
-public class GetAssertions extends AbstractDoSDashboardEndpoint {
+public class GetAssertions extends AbstractAllIrvEndpoint {
 
     /**
      * Class-wide logger
      */
     private static final Logger LOGGER = LogManager.getLogger(GetAssertions.class);
-
-    /**
-     * GSON, for serialising requests.
-     */
-    Gson gson = new Gson();
-
-    /**
-     * Identify RAIRE service URL from config.
-     */
-    private static final String RAIRE_URL = "raire_url";
-
-    /**
-     * RAIRE error code key.
-     */
-    private static final String RAIRE_ERROR_CODE = "error_code";
-
-    /**
-     * RAIRE service endpoint name.
-     */
-    private static final String RAIRE_ENDPOINT = "/raire/get-assertions";
 
     /**
      * RAIRE service suffix for csv.
@@ -107,17 +82,6 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
     private static final String FORMAT_PARAM = "format";
 
     /**
-     * The httpClient used for making requests to the raire-service.
-     */
-    CloseableHttpClient httpClient = HttpClients.createDefault();
-
-
-    /**
-     * The event to return for this endpoint.
-     */
-    private final ThreadLocal<ASMEvent> my_event = new ThreadLocal<>();
-
-    /**
      * {@inheritDoc}
      */
     @Override
@@ -132,28 +96,6 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
     public String endpointName() {
         return "/get-assertions";
     }
-
-    /**
-     * @return No authorization is necessary for this endpoint.
-     */
-    public AuthorizationType requiredAuthorization() { return AuthorizationType.STATE; }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected ASMEvent endpointEvent() {
-        return my_event.get();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void reset() {
-        my_event.set(null);
-    }
-
 
     /**
      * {@inheritDoc}
