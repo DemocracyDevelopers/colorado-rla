@@ -216,7 +216,7 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
 
         // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
         // collating the responses.
-        final List<ContestResult> IRVContestResults = IRVContestCollector.getIRVContestResults();
+        final List<ContestResult> IRVContestResults = AbstractAllIrvEndpoint.getIRVContestResults();
         for (final ContestResult cr : IRVContestResults) {
 
             // Find the winner (there should only be one), candidates and contest name.

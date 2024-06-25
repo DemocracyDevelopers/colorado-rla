@@ -176,8 +176,8 @@ public class GetAssertionsTests {
     @Test(dataProvider = "TwoIRVContests")
     public void rightFileNamesInZip(String contestName1, String contestName2, String suffix) throws Exception {
         testUtils.log(LOGGER, "rightFileNamesInZip");
-        try (MockedStatic<IRVContestCollector> mockIRVContestResults = Mockito.mockStatic(IRVContestCollector.class)) {
-            mockIRVContestResults.when(IRVContestCollector::getIRVContestResults).thenReturn(mockedIRVContestResults);
+        try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults = Mockito.mockStatic(AbstractAllIrvEndpoint.class)) {
+            mockIRVContestResults.when(AbstractAllIrvEndpoint::getIRVContestResults).thenReturn(mockedIRVContestResults);
 
             GetAssertions endpoint = new GetAssertions();
             ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
@@ -216,9 +216,9 @@ public class GetAssertionsTests {
     @Test(dataProvider ="SampleBadEndpoints", expectedExceptions = RuntimeException.class)
     public void badEndpointThrowsRuntimeException(String url, String suffix) throws Exception {
         testUtils.log(LOGGER, "badEndpointThrowsRuntimeException");
-        try (MockedStatic<IRVContestCollector> mockIRVContestResults
-                     = Mockito.mockStatic(IRVContestCollector.class)) {
-            mockIRVContestResults.when(IRVContestCollector::getIRVContestResults)
+        try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults
+                     = Mockito.mockStatic(AbstractAllIrvEndpoint.class)) {
+            mockIRVContestResults.when(AbstractAllIrvEndpoint::getIRVContestResults)
                     .thenReturn(mockedIRVContestResults);
 
             GetAssertions endpoint = new GetAssertions();
@@ -246,9 +246,9 @@ public class GetAssertionsTests {
     @Test(dataProvider ="SampleBadUrls", expectedExceptions = {MalformedURLException.class, URISyntaxException.class})
     public void badUrlThrowsUrlException(String url, String suffix) throws Exception {
         testUtils.log(LOGGER, "badUrlThrowsUrlException");
-        try (MockedStatic<IRVContestCollector> mockIRVContestResults
-                     = Mockito.mockStatic(IRVContestCollector.class)) {
-            mockIRVContestResults.when(IRVContestCollector::getIRVContestResults)
+        try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults
+                     = Mockito.mockStatic(AbstractAllIrvEndpoint.class)) {
+            mockIRVContestResults.when(AbstractAllIrvEndpoint::getIRVContestResults)
                     .thenReturn(mockedIRVContestResults);
 
             GetAssertions endpoint = new GetAssertions();
