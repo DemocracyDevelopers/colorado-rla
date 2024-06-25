@@ -24,10 +24,13 @@ package au.org.democracydevelopers.corla.controller;
 import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.model.IRVComparisonAudit;
 import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.ext.ScriptUtils;
+import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -37,6 +40,7 @@ import us.freeandfair.corla.csv.DominionCVRExportParser;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 
+import javax.transaction.Transactional;
 import java.io.IOException;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -61,7 +65,8 @@ import static us.freeandfair.corla.query.CountyQueries.fromString;
  * - an all-plurality contest is made into a (plain, plurality) ComparisonAudit,
  * - a mixed-type contest, or a contest that is neither plurality nor IRV, throws an error.
  */
-public class ComparisonAuditControllerTests {
+@Transactional
+public class ComparisonAuditControllerTests extends TestClassWithDatabase {
 
   /**
    * Class-wide logger
@@ -71,14 +76,7 @@ public class ComparisonAuditControllerTests {
   /**
    * Container for the mock-up database.
    */
-  static PostgreSQLContainer<?> postgres
-      = new PostgreSQLContainer<>("postgres:15-alpine")
-      // None of these actually have to be the same as the real database (except its name), but this
-      // makes it easy to match the setup scripts.
-      .withDatabaseName("corla")
-      .withUsername("corlaadmin")
-      .withPassword("corlasecret")
-      .withInitScript("SQL/corla-three-candidates-ten-votes-inconsistent-types.sql");
+  static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
    * Blank properties for submitting to the DominionCVRExportParser instance.
@@ -103,14 +101,13 @@ public class ComparisonAuditControllerTests {
   @BeforeClass
   public static void beforeAll() {
     postgres.start();
-    Properties hibernateProperties = new Properties();
-    hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
-    hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
-    hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
-    hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
-    hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
-    Persistence.setProperties(hibernateProperties);
-    Persistence.beginTransaction();
+    Persistence.setProperties(createHibernateProperties(postgres));
+
+    var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    ScriptUtils.runInitScript(containerDelegate,
+            "SQL/co-counties.sql");
+    ScriptUtils.runInitScript(containerDelegate,
+            "SQL/corla-three-candidates-ten-votes-inconsistent-types.sql");
 
   }
 

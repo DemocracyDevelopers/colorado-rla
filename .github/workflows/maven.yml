@@ -35,3 +35,6 @@ jobs:
 
     - name: Classic Tests
       run: cd server/eclipse-project; mvn -Dtest='us.freeandfair.corla.**' test
+    
+    - name: IRV Tests
+      run: cd server/eclipse-project; mvn -Dtest='au.org.democracydevelopers.corla.**' test
