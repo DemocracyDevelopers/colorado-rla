@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
 import org.testng.annotations.DataProvider;
-import org.testng.annotations.Parameters;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 

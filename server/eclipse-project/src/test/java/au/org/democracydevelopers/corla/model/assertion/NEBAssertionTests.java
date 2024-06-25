@@ -42,7 +42,6 @@ import org.apache.log4j.Logger;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.CVRAuditInfo;
