@@ -1967,6 +1967,19 @@ public class NEBAssertionTests {
     assertEquals(a7.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), 253);
     assertEquals(a7.optimisticSamplesToAudit.intValue(), 253);
     assertEquals(a7.estimatedSamplesToAudit.intValue(), 253);
+
+    Assertion a8 = createNEBAssertion("B", "C", TC, 159, 0.0159,
+            159, Map.of(1L, -1, 2L, -2, 3L, 1, 4L, 1, 5L,
+            2, 6L, 2, 7L, 1), 3, 1, 2,
+            1, 0);
+
+    scalingFactor = auditedSampleCount == 0 ? 1 : 1 + (5.0/(double)auditedSampleCount);
+    sample = (int)ceil(1434*scalingFactor);
+
+    a8.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3);
+    assertEquals(a8.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
+    assertEquals(a8.optimisticSamplesToAudit.intValue(), 1434);
+    assertEquals(a8.estimatedSamplesToAudit.intValue(), sample);
   }
 
   /**

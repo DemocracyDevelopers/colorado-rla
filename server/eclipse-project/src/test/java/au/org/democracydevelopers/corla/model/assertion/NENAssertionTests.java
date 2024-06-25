@@ -26,6 +26,7 @@ import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.ch
 import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.checkCountsDiscrepancyMap;
 import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.countsEqual;
 import static au.org.democracydevelopers.corla.util.testUtils.log;
+import static java.lang.Math.ceil;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -2113,6 +2114,97 @@ public class NENAssertionTests {
 
     assertEquals(a7.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 253);
     assertEquals(a7.optimisticSamplesToAudit.intValue(), 253);
+  }
+
+  /**
+   * Test the Assertion::computeEstimatedSamplesToAudit() method for NEN assertions
+   * with varying diluted margins, discrepancies, and current audited sample count.
+   */
+  @Test(dataProvider = "AuditSampleNumbers", dataProviderClass = AssertionTests.class)
+  public void computeEstimatedSamplesToAudit(int auditedSampleCount){
+    Assertion a1 = createNENAssertion("A", "B", TC, List.of("A","B"),100,
+        0.01, 100, Map.of(), 0, 0, 0,
+        0, 0);
+
+    a1.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3);
+    assertEquals(a1.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), 729);
+    assertEquals(a1.optimisticSamplesToAudit.intValue(), 729);
+    assertEquals(a1.estimatedSamplesToAudit.intValue(), 729);
+
+    Assertion a2 = createNENAssertion("B", "C", TC, List.of("B","C"),159,
+        0.0159, 159, Map.of(), 1, 1, 1,
+        1, 1);
+
+    a2.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5);
+    double scalingFactor = auditedSampleCount == 0 ? 1 : 1 + (2.0/(double)auditedSampleCount);
+    int sample = (int)ceil(767*scalingFactor);
+    assertEquals(a2.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
+    assertEquals(a2.optimisticSamplesToAudit.intValue(), 767);
+    assertEquals(a2.estimatedSamplesToAudit.intValue(), sample);
+
+    Assertion a3 = createNENAssertion("D", "E", TC, List.of("D","E"),1,
+        0.00001, 1000, Map.of(1L, -1, 2L, 0, 3L, 1),
+        1, 1, 0, 0, 1);
+
+    a3.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3);
+    scalingFactor = auditedSampleCount == 0 ? 1 : 1 + (1.0/(double)auditedSampleCount);
+    sample = (int)ceil(783434*scalingFactor);
+    assertEquals(a3.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
+    assertEquals(a3.optimisticSamplesToAudit.intValue(), 783434);
+    assertEquals(a3.estimatedSamplesToAudit.intValue(), sample);
+
+    Assertion a4 = createNENAssertion("F", "G", TC, List.of("F","G"),1235,
+        0.12345, 50, Map.of(1L, -2, 2L, 1), 1,
+        0, 0, 1, 0);
+
+    a4.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5);
+    scalingFactor = auditedSampleCount == 0 ? 1 : 1 + (1.0/(double)auditedSampleCount);
+    sample = (int)ceil(51*scalingFactor);
+    assertEquals(a4.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
+    assertEquals(a4.optimisticSamplesToAudit.intValue(), 51);
+    assertEquals(a4.estimatedSamplesToAudit.intValue(), sample);
+
+    Assertion a5 = createNENAssertion("H", "I", TC, List.of("H","I"),3325,
+        0.33247528, 17, Map.of(1L, 1, 2L, 2), 1,
+        0, 1, 0, 0);
+
+    a5.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3);
+    scalingFactor = auditedSampleCount == 0 ? 1 : 1 + (2.0/(double)auditedSampleCount);
+    sample = (int)ceil(47*scalingFactor);
+    assertEquals(a5.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
+    assertEquals(a5.optimisticSamplesToAudit.intValue(), 47);
+    assertEquals(a5.estimatedSamplesToAudit.intValue(), sample);
+
+    Assertion a6 = createNENAssertion("B", "C", TC, List.of("B","C"),159,
+        0.0159, 159, Map.of(1L, -1, 2L, -2, 3L, 0),
+        0, 1, 0, 1, 1);
+
+    a6.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5);
+    assertEquals(a6.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), 253);
+    assertEquals(a6.optimisticSamplesToAudit.intValue(), 253);
+    assertEquals(a6.estimatedSamplesToAudit.intValue(), 253);
+
+    Assertion a7 = createNENAssertion("B", "C", TC, List.of("B","C"),159,
+        0.0159, 159, Map.of(1L, -1, 2L, -2), 0,
+        1, 0, 1, 0);
+
+    a7.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5);
+    assertEquals(a7.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), 253);
+    assertEquals(a7.optimisticSamplesToAudit.intValue(), 253);
+    assertEquals(a7.estimatedSamplesToAudit.intValue(), 253);
+
+    Assertion a8 = createNENAssertion("B", "C", TC, List.of("B","C"),159,
+        0.0159, 159, Map.of(1L, -1, 2L, -2, 3L, 1,
+            4L, 1, 5L, 2, 6L, 2, 7L, 1), 3, 1,
+        2, 1, 0);
+
+    scalingFactor = auditedSampleCount == 0 ? 1 : 1 + (5.0/(double)auditedSampleCount);
+    sample = (int)ceil(1434*scalingFactor);
+
+    a8.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3);
+    assertEquals(a8.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
+    assertEquals(a8.optimisticSamplesToAudit.intValue(), 1434);
+    assertEquals(a8.estimatedSamplesToAudit.intValue(), sample);
   }
 
   /**
