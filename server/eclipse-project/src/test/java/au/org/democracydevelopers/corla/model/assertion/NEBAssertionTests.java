@@ -21,10 +21,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.assertion;
 
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.TC;
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.checkComputeDiscrepancy;
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.checkCountsDiscrepancyMap;
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.countsEqual;
 import static au.org.democracydevelopers.corla.util.testUtils.log;
 import static java.lang.Math.ceil;
 import static org.mockito.Mockito.when;
@@ -39,7 +35,6 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -47,7 +42,6 @@ import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.CVRAuditInfo;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
-import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 
 
@@ -63,57 +57,9 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
  * Refer to the Guide to RAIRE for details on how NEB assertions are scored, and how
  * discrepancies are computed (Part 2, Appendix A).
  */
-public class NEBAssertionTests {
+public class NEBAssertionTests extends AssertionTests {
 
   private static final Logger LOGGER = LogManager.getLogger(NEBAssertionTests.class);
-
-  /**
-   * Establish a mocked CVRContestInfo for use in testing Assertion scoring.
-   */
-  @Mock
-  private CVRContestInfo cvrInfo;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "A", "B", "C", "D".
-   */
-  @Mock
-  private CVRContestInfo ABCD;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "B", "A", "C", "D".
-   */
-  @Mock
-  private CVRContestInfo BACD;
-
-  /**
-   * Mocked CVRContestInfo representing a blank vote.
-   */
-  @Mock
-  private CVRContestInfo blank;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "A".
-   */
-  @Mock
-  private CVRContestInfo A;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "B".
-   */
-  @Mock
-  private CVRContestInfo B;
-
-  /**
-   * Mocked CastVoteRecord to represent a CVR.
-   */
-  @Mock
-  private CastVoteRecord cvr;
-
-  /**
-   * Mocked CastVoteRecord to represent an audited CVR.
-   */
-  @Mock
-  private CastVoteRecord auditedCvr;
 
   /**
    * Test NEB assertion: Alice NEB Chuan
@@ -1979,24 +1925,6 @@ public class NEBAssertionTests {
     assertEquals(a8.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
     assertEquals(a8.optimisticSamplesToAudit.intValue(), 1434);
     assertEquals(a8.estimatedSamplesToAudit.intValue(), sample);
-  }
-
-  /**
-   * Reset the CVR and audited CVR mock objects with the given parameters.
-   * @param cvrInfo CVRContestInfo for the CVR.
-   * @param acvrInfo CVRContestInfo for the audited ballot.
-   * @param cvrRecType Record type for the CVR.
-   * @param acvrConsensus Consensys value for the audited ballot.
-   * @param acvrRecType Record type for the audited ballot.
-   */
-  private void resetMocks(CVRContestInfo cvrInfo, CVRContestInfo acvrInfo, RecordType cvrRecType,
-      ConsensusValue acvrConsensus, RecordType acvrRecType){
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(cvrInfo));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(acvrInfo));
-
-    when(acvrInfo.consensus()).thenReturn(acvrConsensus);
-    when(cvr.recordType()).thenReturn(cvrRecType);
-    when(auditedCvr.recordType()).thenReturn(acvrRecType);
   }
 
   /**

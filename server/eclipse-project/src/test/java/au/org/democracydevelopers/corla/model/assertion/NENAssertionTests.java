@@ -21,10 +21,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.assertion;
 
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.TC;
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.checkComputeDiscrepancy;
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.checkCountsDiscrepancyMap;
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.countsEqual;
 import static au.org.democracydevelopers.corla.util.testUtils.log;
 import static java.lang.Math.ceil;
 import static org.mockito.Mockito.when;
@@ -39,15 +35,11 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.CVRAuditInfo;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
-import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 
 /**
@@ -62,69 +54,9 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
  * Refer to the Guide to RAIRE for details on how NEN assertions are scored, and how
  * discrepancies are computed (Part 2, Appendix A.)
  */
-public class NENAssertionTests {
+public class NENAssertionTests extends AssertionTests {
 
   private static final Logger LOGGER = LogManager.getLogger(NENAssertionTests.class);
-
-  /**
-   * Establish a mocked CVRContestInfo for use in testing Assertion scoring.
-   */
-  @Mock
-  private CVRContestInfo cvrInfo;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "A", "B", "C", "D".
-   */
-  @Mock
-  private CVRContestInfo ABCD;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "B", "A", "C", "D".
-   */
-  @Mock
-  private CVRContestInfo BACD;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "D", "A", "B", "C".
-   */
-  @Mock
-  private CVRContestInfo DABC;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "B", "A".
-   */
-  @Mock
-  private CVRContestInfo BA;
-
-  /**
-   * Mocked CVRContestInfo representing a blank vote.
-   */
-  @Mock
-  private CVRContestInfo blank;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "A".
-   */
-  @Mock
-  private CVRContestInfo A;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "B".
-   */
-  @Mock
-  private CVRContestInfo B;
-
-  /**
-   * Mocked CastVoteRecord to represent a CVR.
-   */
-  @Mock
-  private CastVoteRecord cvr;
-
-  /**
-   * Mocked CastVoteRecord to represent an audited CVR.
-   */
-  @Mock
-  private CastVoteRecord auditedCvr;
 
 
   /**
@@ -141,23 +73,6 @@ public class NENAssertionTests {
       "Test Contest", List.of("Alice", "Chuan", "Bob"), 50, 0.1,
       8, Map.of(), 0, 0, 0, 0, 0);
 
-  /**
-   * Initialise mocked objects prior to the first test.
-   */
-  @BeforeClass
-  public void initMocks() {
-    MockitoAnnotations.openMocks(this);
-
-    when(ABCD.choices()).thenReturn(List.of("A", "B", "C", "D"));
-    when(BACD.choices()).thenReturn(List.of("B", "A", "C", "D"));
-    when(DABC.choices()).thenReturn(List.of("D", "A", "B", "C"));
-    when(BA.choices()).thenReturn(List.of("B", "A"));
-    when(blank.choices()).thenReturn(List.of());
-    when(A.choices()).thenReturn(List.of("A"));
-    when(B.choices()).thenReturn(List.of("B"));
-
-    when(cvr.id()).thenReturn(1L);
-  }
 
   /**
    * This suite of tests verifies the optimistic sample size computation for NEN assertions.
@@ -2240,23 +2155,6 @@ public class NENAssertionTests {
     return a;
   }
 
-  /**
-   * Reset the CVR and audited CVR mock objects with the given parameters.
-   * @param cvrInfo CVRContestInfo for the CVR.
-   * @param acvrInfo CVRContestInfo for the audited ballot.
-   * @param cvrRecType Record type for the CVR.
-   * @param acvrConsensus Consensys value for the audited ballot.
-   * @param acvrRecType Record type for the audited ballot.
-   */
-  private void resetMocks(CVRContestInfo cvrInfo, CVRContestInfo acvrInfo, RecordType cvrRecType,
-      ConsensusValue acvrConsensus, RecordType acvrRecType){
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(cvrInfo));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(acvrInfo));
-
-    when(acvrInfo.consensus()).thenReturn(acvrConsensus);
-    when(cvr.recordType()).thenReturn(cvrRecType);
-    when(auditedCvr.recordType()).thenReturn(acvrRecType);
-  }
 
   /**
    * Return a set of NEN assertions for use when testing discrepancy computation on arbitrary

@@ -89,3 +89,18 @@ INSERT INTO assertion_assumed_continuing values (23, 'H');
 INSERT INTO assertion_assumed_continuing values (23, 'I');
 INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (23, 1, 1);
 INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (23, 2, 2);
+
+
+INSERT INTO contest (county_id, id, version, description, name, sequence_number, votes_allowed, winners_allowed) VALUES (4,9,0,'IRV','Mixed Contest',9,4,1);
+INSERT INTO assertion (assertion_type, contest_name, difficulty, diluted_margin, loser, margin, current_risk, estimated_samples_to_audit, one_vote_over_count, one_vote_under_count, optimistic_samples_to_audit, other_count, two_vote_over_count, two_vote_under_count, version, winner) values ('NEB', 'Mixed Contest', 100, 0.01, 'B', 100, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'A');
+INSERT INTO assertion (assertion_type, contest_name, difficulty, diluted_margin, loser, margin, current_risk, estimated_samples_to_audit, one_vote_over_count, one_vote_under_count, optimistic_samples_to_audit, other_count, two_vote_over_count, two_vote_under_count, version, winner) values ('NEN', 'Mixed Contest', 100, 0.01, 'C', 100, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'A');
+INSERT INTO assertion_assumed_continuing values (25, 'A');
+INSERT INTO assertion_assumed_continuing values (25, 'B');
+
+INSERT INTO assertion (assertion_type, contest_name, difficulty, diluted_margin, loser, margin, current_risk, estimated_samples_to_audit, one_vote_over_count, one_vote_under_count, optimistic_samples_to_audit, other_count, two_vote_over_count, two_vote_under_count, version, winner) values ('NEB', 'Mixed Contest', 159, 0.0159, 'C', 159, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'B');
+
+INSERT INTO assertion (assertion_type, contest_name, difficulty, diluted_margin, loser, margin, current_risk, estimated_samples_to_audit, one_vote_over_count, one_vote_under_count, optimistic_samples_to_audit, other_count, two_vote_over_count, two_vote_under_count, version, winner) values ('NEN', 'Mixed Contest', 159, 0.0159, 'F', 159, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'A');
+INSERT INTO assertion_assumed_continuing values (27, 'B');
+INSERT INTO assertion_assumed_continuing values (27, 'C');
+
+INSERT INTO assertion (assertion_type, contest_name, difficulty, diluted_margin, loser, margin, current_risk, estimated_samples_to_audit, one_vote_over_count, one_vote_under_count, optimistic_samples_to_audit, other_count, two_vote_over_count, two_vote_under_count, version, winner) values ('NEB', 'Mixed Contest', 50, 0.12345, 'G', 1235, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'F');

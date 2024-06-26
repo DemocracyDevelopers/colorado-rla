@@ -24,15 +24,28 @@ package au.org.democracydevelopers.corla.model.assertion;
 import static java.lang.Math.ceil;
 import static java.lang.Math.log;
 import static java.lang.Math.max;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalInt;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.ext.ScriptUtils;
+import org.testcontainers.jdbc.JdbcDatabaseDelegate;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
+import us.freeandfair.corla.model.CVRContestInfo;
+import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
+import us.freeandfair.corla.persistence.Persistence;
 
 /**
  * This class does not contain any tests, but provides utilities for use by the
@@ -44,7 +57,72 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
  * assertion subclasses in potentially unforeseen ways. This extra level of testing will
  * reduce the likelihood of future programming errors if this eventuates.
  */
-public class AssertionTests {
+public class AssertionTests extends TestClassWithDatabase {
+
+  /**
+   * Container for the mock-up database.
+   */
+  protected static PostgreSQLContainer<?> postgres = createTestContainer();
+
+  /**
+   * Establish a mocked CVRContestInfo for use in testing Assertion scoring.
+   */
+  @Mock
+  protected CVRContestInfo cvrInfo;
+
+  /**
+   * Mocked CVRContestInfo representing the vote "A", "B", "C", "D".
+   */
+  @Mock
+  protected CVRContestInfo ABCD;
+
+  /**
+   * Mocked CVRContestInfo representing the vote "B", "A", "C", "D".
+   */
+  @Mock
+  protected CVRContestInfo BACD;
+
+  /**
+   * Mocked CVRContestInfo representing the vote "D", "A", "B", "C".
+   */
+  @Mock
+  protected CVRContestInfo DABC;
+
+  /**
+   * Mocked CVRContestInfo representing the vote "B", "A".
+   */
+  @Mock
+  protected CVRContestInfo BA;
+
+  /**
+   * Mocked CVRContestInfo representing a blank vote.
+   */
+  @Mock
+  protected CVRContestInfo blank;
+
+  /**
+   * Mocked CVRContestInfo representing the vote "A".
+   */
+  @Mock
+  protected CVRContestInfo A;
+
+  /**
+   * Mocked CVRContestInfo representing the vote "B".
+   */
+  @Mock
+  protected CVRContestInfo B;
+
+  /**
+   * Mocked CastVoteRecord to represent a CVR.
+   */
+  @Mock
+  protected CastVoteRecord cvr;
+
+  /**
+   * Mocked CastVoteRecord to represent an audited CVR.
+   */
+  @Mock
+  protected CastVoteRecord auditedCvr;
 
   /**
    * Constant representing a test contest name.
@@ -95,6 +173,62 @@ public class AssertionTests {
    * List of candidates called "W", "L", and "O".
    */
   public static final List<String> wlo = List.of("W", "L", "O");
+
+  /**
+   * Start the test container and establish persistence properties before the first test.
+   */
+  @BeforeClass
+  public static void beforeAll() {
+    postgres.start();
+    Persistence.setProperties(createHibernateProperties(postgres));
+
+    var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    ScriptUtils.runInitScript(containerDelegate, "SQL/simple-assertions.sql");
+  }
+
+  /**
+   * After all test have run, stop the test container.
+   */
+  @AfterClass
+  public static void afterAll() {
+    postgres.stop();
+  }
+
+  /**
+   * Initialise mocked objects prior to the first test.
+   */
+  @BeforeClass
+  public void initMocks() {
+    MockitoAnnotations.openMocks(this);
+
+    when(ABCD.choices()).thenReturn(List.of("A", "B", "C", "D"));
+    when(BACD.choices()).thenReturn(List.of("B", "A", "C", "D"));
+    when(DABC.choices()).thenReturn(List.of("D", "A", "B", "C"));
+    when(BA.choices()).thenReturn(List.of("B", "A"));
+    when(blank.choices()).thenReturn(List.of());
+    when(A.choices()).thenReturn(List.of("A"));
+    when(B.choices()).thenReturn(List.of("B"));
+
+    when(cvr.id()).thenReturn(1L);
+  }
+
+  /**
+   * Reset the CVR and audited CVR mock objects with the given parameters.
+   * @param cvrInfo CVRContestInfo for the CVR.
+   * @param acvrInfo CVRContestInfo for the audited ballot.
+   * @param cvrRecType Record type for the CVR.
+   * @param acvrConsensus Consensys value for the audited ballot.
+   * @param acvrRecType Record type for the audited ballot.
+   */
+  protected void resetMocks(CVRContestInfo cvrInfo, CVRContestInfo acvrInfo, RecordType cvrRecType,
+      ConsensusValue acvrConsensus, RecordType acvrRecType){
+    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(cvrInfo));
+    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(acvrInfo));
+
+    when(acvrInfo.consensus()).thenReturn(acvrConsensus);
+    when(cvr.recordType()).thenReturn(cvrRecType);
+    when(auditedCvr.recordType()).thenReturn(acvrRecType);
+  }
 
   /**
    * A parameter set consisting of two audited ballot record types (AUDITOR_ENTERED and REAUDITED).

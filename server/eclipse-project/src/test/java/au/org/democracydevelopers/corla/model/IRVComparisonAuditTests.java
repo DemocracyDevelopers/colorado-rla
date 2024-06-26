@@ -35,6 +35,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.mockito.Mock;
@@ -47,20 +48,18 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.model.AuditReason;
 import us.freeandfair.corla.model.AuditStatus;
+import us.freeandfair.corla.model.CVRContestInfo;
+import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
+import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.persistence.Persistence;
 
 /**
  * This class contains tests for the functionality present in IRVComparisonAudit.
  */
-public class IRVComparisonAuditTests extends TestClassWithDatabase {
+public class IRVComparisonAuditTests extends AssertionTests {
 
   private static final Logger LOGGER = LogManager.getLogger(IRVComparisonAuditTests.class);
-
-  /**
-   * Container for the mock-up database.
-   */
-  static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
    * Mock of a ContestResult for the contest 'One NEB Assertion Contest'.
@@ -111,25 +110,19 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
   private ContestResult testEstimationMixedAssertions;
 
   /**
-   * Start the test container and establish persistence properties before the first test.
+   * Mock of a ContestResult for the contest 'Mixed Contest'.
    */
-  @BeforeClass
-  public static void beforeAll() {
-    postgres.start();
-    Persistence.setProperties(createHibernateProperties(postgres));
-
-    var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
-    ScriptUtils.runInitScript(containerDelegate, "SQL/simple-assertions.sql");
-  }
+  @Mock
+  private ContestResult mixedContest;
 
   /**
    * Initialise mocked objects prior to the first test. Note that the diluted margin
    * returned by ContestResult's for IRV will not have a sensible value, and it will
    * not be used for IRV computations. For testing purposes, we should set it with
-   * varied values and ensure that the audit itself is contructed properly.
+   * varied values and ensure that the audit itself is constructed properly.
    */
   @BeforeClass
-  public void initMocks() {
+  public void initContestResultMocks() {
     MockitoAnnotations.openMocks(this);
     when(oneNENContestResult.getContestName()).thenReturn("One NEN Assertion Contest");
     when(oneNENContestResult.getDilutedMargin()).thenReturn(BigDecimal.ZERO);
@@ -147,15 +140,10 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
     when(testEstimationNENOnly.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.01));
     when(testEstimationMixedAssertions.getContestName()).thenReturn("Test Estimation Mixed Assertions");
     when(testEstimationMixedAssertions.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.01));
+    when(mixedContest.getContestName()).thenReturn("Mixed Contest");
+    when(mixedContest.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.01));
   }
 
-  /**
-   * After all test have run, stop the test container.
-   */
-  @AfterClass
-  public static void afterAll() {
-    postgres.stop();
-  }
 
   /**
    * Create an IRVComparisonAudit for a contest with no assertions in the database.
@@ -391,6 +379,80 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
         1, Map.of(1L, 1, 2L, 2), 0.33247528);
 
     assertEquals(729, ca.initialSamplesToAudit());
+  }
+
+  /**
+   * Create and return an IRVComparisonAudit for the contest 'Mixed Contest'.
+   * @return IRVComparisonAudit for the contest 'Mixed Contest'.
+   */
+  private IRVComparisonAudit createIRVComparisonAuditMixed(){
+    IRVComparisonAudit ca = new IRVComparisonAudit(mixedContest,
+        AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS);
+
+    checkIRVComparisonAudit(ca, AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS,
+        AuditStatus.NOT_STARTED, 0.01);
+
+    final List<Assertion> assertions = ca.getAssertions();
+    assertEquals(5, assertions.size());
+
+    return ca;
+  }
+
+  /**
+   * Check that an IRVComparisonAudit will recognise when there is no discrepancy between a CVR and
+   * audited ballot. The given vote configuration is used as the CVRContestInfo field in the CVR and
+   * audited ballot CastVoteRecords.
+   * @param info A vote configuration.
+   */
+  public void testComputeDiscrepancyNone(CVRContestInfo info, RecordType auditedType) {
+    log(LOGGER, String.format("testComputeDiscrepancyNone[%s;%s]", info.choices(), auditedType));
+    resetMocks(info, info, RecordType.UPLOADED, ConsensusValue.YES, auditedType);
+    IRVComparisonAudit ca = createIRVComparisonAuditMixed();
+    assert(ca.computeDiscrepancy(cvr, auditedCvr).isEmpty());
+
+    for(int i = -2; i <= 2; ++i) {
+      assertEquals(0, ca.discrepancyCount(i));
+    }
+  }
+
+  /**
+   * Two CastVoteRecord's with a blank vote will not trigger a discrepancy.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNone1(RecordType auditedType){
+    testComputeDiscrepancyNone(blank, auditedType);
+  }
+
+  /**
+   * Two CastVoteRecord's with a single vote for "A" will not trigger a discrepancy.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNone2(RecordType auditedType){
+    testComputeDiscrepancyNone(A, auditedType);
+  }
+
+  /**
+   * Two CastVoteRecord's with a single vote for "B" will not trigger a discrepancy.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNone3(RecordType auditedType){
+    testComputeDiscrepancyNone(B, auditedType);
+  }
+
+  /**
+   * Two CastVoteRecord's with a vote for "A", "B", "C", "D" will not trigger a discrepancy.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testNENComputeDiscrepancyNone4(RecordType auditedType){
+    testComputeDiscrepancyNone(ABCD, auditedType);
+  }
+
+  /**
+   * Two CastVoteRecord's with a vote for "B", "A", "C", "D" will not trigger a discrepancy.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testNENComputeDiscrepancyNone5(RecordType auditedType){
+    testComputeDiscrepancyNone(BACD, auditedType);
   }
 
   /**
