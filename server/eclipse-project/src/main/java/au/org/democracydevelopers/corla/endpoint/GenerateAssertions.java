@@ -44,6 +44,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -132,7 +133,6 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
         // No contest was requested - generate for all.
         responseData = generateAllAssertions(IRVContestResults, timeLimitSeconds, raireUrl);
       } else {
-        // TODO throw the right kind of exception, or make sure we deal with it.
         ContestResult cr = IRVContestResults.stream()
             .filter(r -> r.getContestName().equalsIgnoreCase(contestName)).findAny().orElseThrow();
         responseData = List.of(generateAssertionsUpdateWinners(cr, timeLimitSeconds, raireUrl));
@@ -147,7 +147,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
       final String msg = "Bad configuration of raire-service url: " + raireUrl + ". Fix the config file.";
       LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
       throw new RuntimeException(msg);
-    } catch (NullPointerException e) {
+    } catch (NoSuchElementException | NullPointerException e) {
       final String msg = "Non-existent or non-IRV contest in Generate Assertions request:";
       LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
       throw new RuntimeException(msg + contestName);
@@ -168,14 +168,13 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
    * @param timeLimitSeconds  the time limit for raire assertion generation, per contest.
    * @param raireUrl          the url where the raire-service is running.
    */
-  public List<GenerateAssertionsResponseWithErrors> generateAllAssertions(List<ContestResult> IRVContestResults,
+  protected List<GenerateAssertionsResponseWithErrors> generateAllAssertions(List<ContestResult> IRVContestResults,
                                                                             int timeLimitSeconds, String raireUrl) throws IOException, URISyntaxException {
     final String prefix = "[generateAllAssertions]";
 
     final List<GenerateAssertionsResponseWithErrors> responseData = new ArrayList<>();
 
     // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
-    // collating the responses.
     for (final ContestResult cr : IRVContestResults) {
       GenerateAssertionsResponseWithErrors response = generateAssertionsUpdateWinners(cr, timeLimitSeconds, raireUrl);
           responseData.add(response);
@@ -251,6 +250,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
      * @param cr         the contest result, i.e. aggregaged (possibly cross-county) IRV contest.
      * @param candidates the list of candidate names.
      * @param winner     the winner, as determined by raire.
+     *                   // TODO This is currently non-functional - see Issue #136 <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/136">...</a>
      */
   private void updateWinnersAndLosers(ContestResult cr, List<String> candidates, String winner) {
     cr.setWinners(Set.of(winner));

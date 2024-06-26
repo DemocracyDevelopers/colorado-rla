@@ -108,7 +108,6 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
 
         // Find all the ContestResults with any that match IRV.
         List<ContestResult> results = ContestCounter.countAllContests().stream()
-                .peek(cr -> cr.setAuditReason(AuditReason.OPPORTUNISTIC_BENEFITS))
                 .filter(cr -> cr.getContests().stream().map(Contest::description)
                         .anyMatch(d -> d.equalsIgnoreCase(ContestType.IRV.toString()))).toList();
 
