@@ -22,7 +22,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.communication.responseToColoradoRla;
 
 import java.beans.ConstructorProperties;
-import java.util.Objects;
 
 /**
  * The response to be sent to colorado-rla after a GenerateAssertionsRequest.
@@ -33,9 +32,9 @@ import java.util.Objects;
  * times out, there will be both a statement of that error and a real winner.
  */
 public final class GenerateAssertionsResponseWithErrors {
-    private final String contestName;
-    private final String winner;
-    private final String raireError;
+    public final String contestName;
+    public final String winner;
+    public final String raireError;
 
     /**
      * @param contestName The name of the contest.
