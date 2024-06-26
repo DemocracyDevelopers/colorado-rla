@@ -2032,6 +2032,7 @@ public class NENAssertionTests {
    */
   @Test
   public void testNENInitialOptimisticSampleSize(){
+    log(LOGGER, "testNENInitialOptimisticSampleSize");
     Assertion a1 = createNENAssertion("A", "B", TC, List.of("A", "B"),100, 0.01,
         100, Map.of(), 0, 0, 0, 0, 0);
 
@@ -2067,6 +2068,7 @@ public class NENAssertionTests {
    */
   @Test
   public void computeOptimisticSamplesToAudit(){
+    log(LOGGER, "computeOptimisticSamplesToAudit");
     Assertion a1 = createNENAssertion("A", "B", TC, List.of("A", "B"),100, 0.01,
         100, Map.of(), 0, 0, 0, 0, 0);
 
@@ -2122,6 +2124,7 @@ public class NENAssertionTests {
    */
   @Test(dataProvider = "AuditSampleNumbers", dataProviderClass = AssertionTests.class)
   public void computeEstimatedSamplesToAudit(int auditedSampleCount){
+    log(LOGGER, String.format("computeEstimatedSamplesToAudit[%d]",auditedSampleCount));
     Assertion a1 = createNENAssertion("A", "B", TC, List.of("A","B"),100,
         0.01, 100, Map.of(), 0, 0, 0,
         0, 0);

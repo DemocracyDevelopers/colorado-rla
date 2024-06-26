@@ -21,6 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model;
 
+import static au.org.democracydevelopers.corla.util.testUtils.log;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -92,6 +93,24 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
   private ContestResult doesNotExistContestResult;
 
   /**
+   * Mock of a ContestResult for the contest 'Test Estimation NEB Only'.
+   */
+  @Mock
+  private ContestResult testEstimationNEBOnly;
+
+  /**
+   * Mock of a ContestResult for the contest 'Test Estimation NEN Only'.
+   */
+  @Mock
+  private ContestResult testEstimationNENOnly;
+
+  /**
+   * Mock of a ContestResult for the contest 'Test Estimation Mixed Assertions'.
+   */
+  @Mock
+  private ContestResult testEstimationMixedAssertions;
+
+  /**
    * Start the test container and establish persistence properties before the first test.
    */
   @BeforeClass
@@ -122,6 +141,12 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
     when(multiCountyContestResult.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.001));
     when(doesNotExistContestResult.getContestName()).thenReturn("Does Not Exist");
     when(doesNotExistContestResult.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.98));
+    when(testEstimationNEBOnly.getContestName()).thenReturn("Test Estimation NEB Only");
+    when(testEstimationNEBOnly.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.01));
+    when(testEstimationNENOnly.getContestName()).thenReturn("Test Estimation NEN Only");
+    when(testEstimationNENOnly.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.01));
+    when(testEstimationMixedAssertions.getContestName()).thenReturn("Test Estimation Mixed Assertions");
+    when(testEstimationMixedAssertions.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.01));
   }
 
   /**
@@ -245,6 +270,127 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
     checkNENAssertion(assertions.get(2), "Alice P. Mangrove", "West W. Westerson",
         List.of("West W. Westerson","Alice P. Mangrove"), 0, 0, 0,
         0, 0, 7287, 7287, 1, Map.of(), 0.001);
+  }
+
+  /**
+   * Test the IRVComparisonAudit::initialSamplesToAudit() method for a fresh IRVComparisonAudit
+   * containing only NEB assertions.
+   */
+  @Test
+  public void testInitialOptimisticSampleSizeNEBOnly(){
+    log(LOGGER, "testInitialOptimisticSampleSizeNEBOnly");
+    IRVComparisonAudit ca = new IRVComparisonAudit(testEstimationNEBOnly,
+        AssertionTests.riskLimit3, AuditReason.CLOSE_CONTEST);
+
+    checkIRVComparisonAudit(ca, AssertionTests.riskLimit3, AuditReason.CLOSE_CONTEST,
+        AuditStatus.NOT_STARTED, 0.01);
+
+    final List<Assertion> assertions = ca.getAssertions();
+    assertEquals(4, assertions.size());
+
+    checkNEBAssertion(assertions.get(0), "A", "B",
+        0, 0, 0, 0, 0, 729, 729,
+        1, Map.of(), 0.01);
+
+    checkNEBAssertion(assertions.get(1), "B", "C",
+        0, 0, 0, 0, 0, 459, 459,
+        1, Map.of(), 0.0159);
+
+    checkNEBAssertion(assertions.get(2), "F", "G",
+        0, 0, 0, 1, 0, 48, 48,
+        1, Map.of(1L, -2), 0.12345);
+
+    checkNEBAssertion(assertions.get(3), "H", "I",
+        1, 1, 0, 0, 0, 47, 47,
+        1, Map.of(1L, 1, 2L, 2), 0.33247528);
+
+    assertEquals(729, ca.initialSamplesToAudit());
+  }
+
+  /**
+   * Test the IRVComparisonAudit::initialSamplesToAudit() method for a fresh IRVComparisonAudit
+   * containing only NEN assertions.
+   */
+  @Test
+  public void testInitialOptimisticSampleSizeNENOnly(){
+    log(LOGGER, "testInitialOptimisticSampleSizeNENOnly");
+    IRVComparisonAudit ca = new IRVComparisonAudit(testEstimationNENOnly,
+        AssertionTests.riskLimit3, AuditReason.CLOSE_CONTEST);
+
+    checkIRVComparisonAudit(ca, AssertionTests.riskLimit3, AuditReason.CLOSE_CONTEST,
+        AuditStatus.NOT_STARTED, 0.01);
+
+    final List<Assertion> assertions = ca.getAssertions();
+    assertEquals(4, assertions.size());
+
+    checkNENAssertion(assertions.get(0), "A", "B", List.of("A","B"),
+        0, 0, 0, 0, 0, 729, 729,
+        1, Map.of(), 0.01);
+
+    checkNENAssertion(assertions.get(1), "B", "C", List.of("B","C"),
+        0, 0, 0, 0, 0, 459, 459,
+        1, Map.of(), 0.0159);
+
+    checkNENAssertion(assertions.get(2), "F", "G", List.of("F","G"),
+        0, 0, 0, 1, 0, 48, 48,
+        1, Map.of(1L, -2), 0.12345);
+
+    checkNENAssertion(assertions.get(3), "H", "I", List.of("H","I"),
+        1, 1, 0, 0, 0, 47, 47,
+        1, Map.of(1L, 1, 2L, 2), 0.33247528);
+
+    assertEquals(729, ca.initialSamplesToAudit());
+  }
+
+  /**
+   * Test the IRVComparisonAudit::initialSamplesToAudit() method for a fresh IRVComparisonAudit
+   * containing only NEN assertions.
+   */
+  @Test
+  public void testInitialOptimisticSampleSizeMixedAssertions(){
+    log(LOGGER, "testInitialOptimisticSampleSizeMixedAssertions");
+    IRVComparisonAudit ca = new IRVComparisonAudit(testEstimationMixedAssertions,
+        AssertionTests.riskLimit3, AuditReason.CLOSE_CONTEST);
+
+    checkIRVComparisonAudit(ca, AssertionTests.riskLimit3, AuditReason.CLOSE_CONTEST,
+        AuditStatus.NOT_STARTED, 0.01);
+
+    final List<Assertion> assertions = ca.getAssertions();
+    assertEquals(8, assertions.size());
+
+    checkNEBAssertion(assertions.get(0), "A", "B",
+        0, 0, 0, 0, 0, 729, 729,
+        1, Map.of(), 0.01);
+
+    checkNEBAssertion(assertions.get(1), "B", "C",
+        0, 0, 0, 0, 0, 459, 459,
+        1, Map.of(), 0.0159);
+
+    checkNEBAssertion(assertions.get(2), "F", "G",
+        0, 0, 0, 1, 0, 48, 48,
+        1, Map.of(1L, -2), 0.12345);
+
+    checkNEBAssertion(assertions.get(3), "H", "I",
+        1, 1, 0, 0, 0, 47, 47,
+        1, Map.of(1L, 1, 2L, 2), 0.33247528);
+
+    checkNENAssertion(assertions.get(4), "A", "B", List.of("A","B"),
+        0, 0, 0, 0, 0, 729, 729,
+        1, Map.of(), 0.01);
+
+    checkNENAssertion(assertions.get(5), "B", "C", List.of("B","C"),
+        0, 0, 0, 0, 0, 459, 459,
+        1, Map.of(), 0.0159);
+
+    checkNENAssertion(assertions.get(6), "F", "G", List.of("F","G"),
+        0, 0, 0, 1, 0, 48, 48,
+        1, Map.of(1L, -2), 0.12345);
+
+    checkNENAssertion(assertions.get(7), "H", "I", List.of("H","I"),
+        1, 1, 0, 0, 0, 47, 47,
+        1, Map.of(1L, 1, 2L, 2), 0.33247528);
+
+    assertEquals(729, ca.initialSamplesToAudit());
   }
 
   /**
