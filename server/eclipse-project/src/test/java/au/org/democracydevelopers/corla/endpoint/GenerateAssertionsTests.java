@@ -68,6 +68,9 @@ import static org.testng.Assert.assertEquals;
  */
 public class GenerateAssertionsTests {
 
+  /**
+   * Class-wide logger.
+   */
   private static final Logger LOGGER = LogManager.getLogger(GenerateAssertionsTests.class);
 
   /**
@@ -158,7 +161,7 @@ public class GenerateAssertionsTests {
 
   /**
    * Calls the generateAssertions main endpoint function and checks that the right winners are
-   * returned, for the two default contests (Boulder and TinyIRV).
+   * returned, for the two example contests (Boulder and TinyIRV).
    *
    * @throws Exception never.
    */
@@ -181,7 +184,6 @@ public class GenerateAssertionsTests {
 
   /**
    * Checks that, when given a bad endpoint, a runtime exception is thrown.
-   *
    * @throws Exception always.
    */
   @Test(expectedExceptions = RuntimeException.class)
@@ -195,7 +197,6 @@ public class GenerateAssertionsTests {
 
   /**
    * Checks that, when given a bad url, an appropriate url-parsing exception is thrown, for both csv and json.
-   *
    * @throws Exception always.
    */
   @Test(expectedExceptions = {MalformedURLException.class, URISyntaxException.class})
@@ -207,4 +208,20 @@ public class GenerateAssertionsTests {
     GenerateAssertions endpoint = new GenerateAssertions();
     endpoint.generateAllAssertions(mockedIRVContestResults, 5, url);
   }
+
+  /**
+   * Checks that, when given a bad url, an appropriate url-parsing exception is thrown, for both csv and json.
+   * @throws Exception always.
+   */
+  @Test(expectedExceptions = {MalformedURLException.class, URISyntaxException.class})
+  public void nonExistentContestThrowsException() throws Exception {
+    testUtils.log(LOGGER, "badUrlThrowsUrlException");
+
+    String url = "completelyNotAUrl" + "/badUrl";
+
+    GenerateAssertions endpoint = new GenerateAssertions();
+    endpoint.generateAllAssertions(mockedIRVContestResults, 5, url);
+  }
+
+
 }

@@ -27,6 +27,7 @@ import au.org.democracydevelopers.corla.communication.responseToColoradoRla.Gene
 import com.google.gson.JsonSyntaxException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
@@ -39,13 +40,11 @@ import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.model.ContestResult;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -128,34 +127,19 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
     // Get all the IRV contest results.
     final List<ContestResult> IRVContestResults = AbstractAllIrvEndpoint.getIRVContestResults();
 
-    try {
-      if (contestName.isBlank()) {
-        // No contest was requested - generate for all.
-        responseData = generateAllAssertions(IRVContestResults, timeLimitSeconds, raireUrl);
-      } else {
-        ContestResult cr = IRVContestResults.stream()
-            .filter(r -> r.getContestName().equalsIgnoreCase(contestName)).findAny().orElseThrow();
-        responseData = List.of(generateAssertionsUpdateWinners(cr, timeLimitSeconds, raireUrl));
-      }
-
-      the_response.header("Content-Type", "application/json");
-
-      okJSON(the_response, Main.GSON.toJson(responseData));
-      return my_endpoint_result.get();
-
-    } catch (URISyntaxException | MalformedURLException e) {
-      final String msg = "Bad configuration of raire-service url: " + raireUrl + ". Fix the config file.";
-      LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
-      throw new RuntimeException(msg);
-    } catch (NoSuchElementException | NullPointerException e) {
-      final String msg = "Non-existent or non-IRV contest in Generate Assertions request:";
-      LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
-      throw new RuntimeException(msg + contestName);
-    } catch (IOException e) {
-      final String msg = "Error creating zip file.";
-      LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
-      throw new RuntimeException(e);
+    // try {
+    if (contestName.isBlank()) {
+      // No contest was requested - generate for all.
+      responseData = generateAllAssertions(IRVContestResults, timeLimitSeconds, raireUrl);
+    } else {
+      responseData = List.of(generateAssertionsUpdateWinners(IRVContestResults, contestName, timeLimitSeconds, raireUrl));
     }
+
+    the_response.header("Content-Type", "application/json");
+
+    okJSON(the_response, Main.GSON.toJson(responseData));
+    return my_endpoint_result.get();
+
   }
 
   /**
@@ -176,21 +160,22 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
 
     // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
     for (final ContestResult cr : IRVContestResults) {
-      GenerateAssertionsResponseWithErrors response = generateAssertionsUpdateWinners(cr, timeLimitSeconds, raireUrl);
+      GenerateAssertionsResponseWithErrors response = generateAssertionsUpdateWinners(IRVContestResults, cr.getContestName(), timeLimitSeconds, raireUrl);
           responseData.add(response);
       }
 
       return responseData;
     }
 
-
-  private GenerateAssertionsResponseWithErrors generateAssertionsUpdateWinners(ContestResult cr,
-    int timeLimitSeconds, String raireUrl) throws IOException, URISyntaxException, JsonSyntaxException {
+  protected GenerateAssertionsResponseWithErrors generateAssertionsUpdateWinners(List<ContestResult> IRVContestResults,
+              String contestName, int timeLimitSeconds, String raireUrl) {
     final String prefix = "[generateAssertions]";
 
+    try {
+    final ContestResult cr = IRVContestResults.stream()
+        .filter(r -> r.getContestName().equalsIgnoreCase(contestName)).findAny().orElseThrow();
     final List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream()
         .map(Choice::name).toList();
-    final String contestName = cr.getContestName();
 
     // Make the request.
     final GenerateAssertionsRequest generateAssertionsRequest = new GenerateAssertionsRequest(
@@ -237,12 +222,38 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
     } else {
       // Something went wrong with the connection. Cannot continue.
 
-      final String msg = "Bad response from Raire service for contest " + generateAssertionsRequest.contestName
-          + ":" + statusCode + " " + raireResponse.getStatusLine().getReasonPhrase();
+      final String msg = "Connection failure with Raire service."
+          + statusCode + " " + raireResponse.getStatusLine().getReasonPhrase();
       LOGGER.error(String.format("%s %s", prefix, msg));
       throw new RuntimeException(msg);
     }
+  } catch (URISyntaxException | MalformedURLException e) {
+final String msg = "Bad configuration of Raire service url: " + raireUrl + ". Fix the config file.";
+      LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
+    throw new RuntimeException(msg);
+    } catch (NoSuchElementException | NullPointerException e) {
+      final String msg = "Non-existent or non-IRV contest in Generate Assertions request:";
+      LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
+      throw new RuntimeException(msg + contestName);
+    } catch (JsonSyntaxException e) {
+      final String msg = "Error interpreting raire response for contest ";
+      LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
+      throw new RuntimeException(e);
+    } catch (UnsupportedEncodingException e) {
+      final String msg = "Error generating request to raire for contest ";
+      LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
+      throw new RuntimeException(msg + contestName + e.getMessage());
+    } catch (ClientProtocolException e) {
+      final String msg = "Error sending request to raire for contest ";
+      LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
+      throw new RuntimeException(msg + contestName + e.getMessage());
+    } catch (IOException e) {
+      final String msg = "I/O error during generate assertions attempt for contest ";
+      LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
+      throw new RuntimeException(msg + contestName + e.getMessage());
+    }
   }
+
 
     /**
      * Update the contestresults in the database according to RAIRE's assessed winners. Set all
