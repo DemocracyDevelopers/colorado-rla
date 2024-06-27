@@ -50,6 +50,8 @@ import us.freeandfair.corla.model.ContestResult;
 
 /**
  * This class contains tests for the functionality present in IRVComparisonAudit.
+ * TODO: tests for removing discrepancies -2, -1, 0, 1, 2
+ * TODO: tests for risk measurement.
  */
 public class IRVComparisonAuditTests extends AssertionTests {
 
@@ -110,6 +112,18 @@ public class IRVComparisonAuditTests extends AssertionTests {
   private ContestResult mixedContest;
 
   /**
+   * Mock of a ContestResult for the contest 'Mixed Contest 2'.
+   */
+  @Mock
+  private ContestResult mixedContest2;
+
+  /**
+   * Mock of a ContestResult for the contest 'Simple Contest 3'.
+   */
+  @Mock
+  private ContestResult simpleContest3;
+
+  /**
    * Mock of a CVRAuditInfo object, matched to a CVR with id 1.
    */
   @Mock
@@ -141,6 +155,12 @@ public class IRVComparisonAuditTests extends AssertionTests {
     when(testEstimationMixedAssertions.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.01));
     when(mixedContest.getContestName()).thenReturn("Mixed Contest");
     when(mixedContest.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.01));
+
+    when(mixedContest2.getContestName()).thenReturn("Mixed Contest 2");
+    when(mixedContest2.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.05));
+
+    when(simpleContest3.getContestName()).thenReturn("Simple Contest 3");
+    when(simpleContest3.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.02));
 
     when(auditInfo.id()).thenReturn(1L);
     when(auditInfo.cvr()).thenReturn(cvr);
@@ -572,6 +592,54 @@ public class IRVComparisonAuditTests extends AssertionTests {
   }
 
   /**
+   * Discrepancy computation and recording for 'Mixed Contest 2' with CVR "B","A","C","D" and
+   * audited ballot "A","B","C","D". The maximum discrepancy is -1.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD_mixed2(RecordType auditedType){
+    log(LOGGER, String.format("testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD_mixed2[%s]", auditedType));
+    resetMocks(BACD, ABCD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest 2");
+    IRVComparisonAudit ca = createIRVComparisonAuditMixed2();
+
+    final OptionalInt d = ca.computeDiscrepancy(cvr, auditedCvr);
+    assert(d.isPresent());
+    assertEquals(-1, d.getAsInt());
+
+    // Note that computeDiscrepancy() does not update internal discrepancy counts, only
+    // recordDiscrepancy() and removeDiscrepancy() do.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+
+    ca.addContestCVRIds(List.of(1L));
+    ca.recordDiscrepancy(auditInfo, -1);
+
+    checkDiscrepancies(ca, 0, 0, 1, 0, 0);
+  }
+
+  /**
+   * Discrepancy computation and recording for 'Simple Contest 3' with CVR "B","A","C","D" and
+   * audited ballot "A","B","C","D". The maximum discrepancy is -2.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD_simple3(RecordType auditedType){
+    log(LOGGER, String.format("testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD_simple3[%s]", auditedType));
+    resetMocks(BACD, ABCD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Simple Contest 3");
+    IRVComparisonAudit ca = createIRVComparisonAuditSimple3();
+
+    final OptionalInt d = ca.computeDiscrepancy(cvr, auditedCvr);
+    assert(d.isPresent());
+    assertEquals(-2, d.getAsInt());
+
+    // Note that computeDiscrepancy() does not update internal discrepancy counts, only
+    // recordDiscrepancy() and removeDiscrepancy() do.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+
+    ca.addContestCVRIds(List.of(1L));
+    ca.recordDiscrepancy(auditInfo, -2);
+
+    checkDiscrepancies(ca, 0, 0, 0, 1, 0);
+  }
+
+  /**
    * Discrepancy computation for 'Mixed Contest' with CVR "A" and audited ballot "B". The maximum
    * discrepancy is 2.
    */
@@ -671,10 +739,6 @@ public class IRVComparisonAuditTests extends AssertionTests {
     checkDiscrepancies(ca, 0, 0, 0, 0, 0);
   }
 
-  // TODO: configure test for compute/record where max is -1 and -2.
-  // TODO: tests for removing discrepancies -2, -1, 0, 1, 2
-  // TODO: tests for risk measurement.
-
   /**
    * Check that the discrepancy counts in the given IRVComparisonAudit are as specified by the
    * given parameters.
@@ -689,7 +753,7 @@ public class IRVComparisonAuditTests extends AssertionTests {
     assertEquals(o1, ca.discrepancyCount(1));
     assertEquals(o2, ca.discrepancyCount(2));
     assertEquals(u1, ca.discrepancyCount(-1));
-    assertEquals(u2, ca.discrepancyCount(-1));
+    assertEquals(u2, ca.discrepancyCount(-2));
     assertEquals(o, ca.discrepancyCount(0));
   }
 
@@ -726,6 +790,40 @@ public class IRVComparisonAuditTests extends AssertionTests {
 
     final List<Assertion> assertions = ca.getAssertions();
     assertEquals(5, assertions.size());
+
+    return ca;
+  }
+
+  /**
+   * Create and return an IRVComparisonAudit for the contest 'Mixed Contest 2'.
+   * @return IRVComparisonAudit for the contest 'Mixed Contest 2'.
+   */
+  private IRVComparisonAudit createIRVComparisonAuditMixed2(){
+    IRVComparisonAudit ca = new IRVComparisonAudit(mixedContest2,
+        AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS);
+
+    checkIRVComparisonAudit(ca, AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS,
+        AuditStatus.NOT_STARTED, 0.05);
+
+    final List<Assertion> assertions = ca.getAssertions();
+    assertEquals(2, assertions.size());
+
+    return ca;
+  }
+
+  /**
+   * Create and return an IRVComparisonAudit for the contest 'Simple Contest 3'.
+   * @return IRVComparisonAudit for the contest 'Simple Contest 3'.
+   */
+  private IRVComparisonAudit createIRVComparisonAuditSimple3(){
+    IRVComparisonAudit ca = new IRVComparisonAudit(simpleContest3,
+        AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS);
+
+    checkIRVComparisonAudit(ca, AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS,
+        AuditStatus.NOT_STARTED, 0.02);
+
+    final List<Assertion> assertions = ca.getAssertions();
+    assertEquals(1, assertions.size());
 
     return ca;
   }

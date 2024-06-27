@@ -35,8 +35,6 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.CVRAuditInfo;
@@ -54,6 +52,7 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
  * -- Scoring of NEB assertions.
  * -- Computation of discrepancies for NEB assertions.
  * -- The logic involved in the re-auditing of ballots.
+ * -- TODO: Test Assertion::riskMeasurement()
  * Refer to the Guide to RAIRE for details on how NEB assertions are scored, and how
  * discrepancies are computed (Part 2, Appendix A).
  */

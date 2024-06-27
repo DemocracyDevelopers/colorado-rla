@@ -21,7 +21,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.assertion;
 
-import java.util.List;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import org.apache.log4j.LogManager;

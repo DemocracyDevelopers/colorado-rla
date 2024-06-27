@@ -444,7 +444,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
   @Override
   public void removeDiscrepancy(final CVRAuditInfo theRecord, final int theType) {
     final String contestName = getContestName();
-    final String prefix = String.format("[riskMeasurement] IRVComparisonAudit ID %d for " +
+    final String prefix = String.format("[removeDiscrepancy] IRVComparisonAudit ID %d for " +
         "contest %s:", id(), contestName);
 
     // Check that the IRVComparisonAudit's assertions have been initialised. This will throw
@@ -471,7 +471,10 @@ public class IRVComparisonAudit extends ComparisonAudit {
         super.removeDiscrepancy(theRecord, theType);
       }
       else{
-        LOGGER.debug(String.format("%s no discrepancies removed.", prefix));
+        // There is an argument that this should actually be a case where an exception should be
+        // thrown -- where the audit logic is telling the audit to remove discrepancies that have
+        // not been prior computed and recorded.
+        LOGGER.warn(String.format("%s no discrepancies removed.", prefix));
       }
 
       LOGGER.debug(String.format("%s total number of overstatements (%f), optimistic sample " +
@@ -519,6 +522,10 @@ public class IRVComparisonAudit extends ComparisonAudit {
     LOGGER.debug(String.format("%s recording discrepancies for CVR ID %d, max type %d.", prefix,
         theRecord.id(), theType));
 
+    // Check that 'theType' is indeed the maximum discrepancy associated with an assertion in
+    // this audit and the CVR referred to in 'theRecord'. If it is not, or if there are no
+    // discrepancies associated with the record and an assertion, then an IllegalArgumentException
+    // will be thrown.
     List<Integer> types = new ArrayList<>();
     for(Assertion a : assertions){
       OptionalInt d = a.getDiscrepancy(theRecord.id());
@@ -535,7 +542,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
 
     // The next check is whether the base classes isCovering(theRecord.id()) method holds. If it
     // doesn't, throw an exception. This valid discrepancy is not going to be counted in the
-    // base class counts.
+    // base class counts (as isCovering()) does not hold, yet there is a discrepancy.
     if(!isCovering(theRecord.id())){
       final String msg = String.format("%s We have computed a discrepancy for contest %s, CVR %d, " +
           "but that CVR is not meant to cover the contest.", prefix, contestName, theRecord.id());
