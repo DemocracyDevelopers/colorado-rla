@@ -52,6 +52,8 @@ import us.freeandfair.corla.model.ContestResult;
  * This class contains tests for the functionality present in IRVComparisonAudit.
  * TODO: tests for removing discrepancies -2, -1, 0, 1, 2
  * TODO: tests for risk measurement.
+ * TODO: tests of the reaudit ballot workflow.
+ * TODO: tests for remaining error modes.
  */
 public class IRVComparisonAuditTests extends AssertionTests {
 
