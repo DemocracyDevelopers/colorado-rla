@@ -21,6 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.endpoint;
 
+import au.org.democracydevelopers.corla.communication.requestToRaire.GenerateAssertionsRequest;
 import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
 import au.org.democracydevelopers.corla.communication.responseToColoradoRla.GenerateAssertionsResponseWithErrors;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
@@ -71,6 +72,13 @@ public class GenerateAssertionsTests {
    */
   private final static GenerateAssertionsResponse tinyIRVResponse
       = new GenerateAssertionsResponse(tinyIRV, "Alice");
+
+  /**
+   * Request for Boulder Mayoral '23
+   */
+  private final static GenerateAssertionsRequest boulderRequest
+      = new GenerateAssertionsRequest(boulderMayoral, 100000, 5,
+          boulderMayoralCandidates.stream().map(Choice::name).toList());
 
   /**
    * Mock collected generate assertions response, with Boulder Mayoral '23 and tinyExample1.
@@ -128,6 +136,10 @@ public class GenerateAssertionsTests {
     baseUrl = wireMockRaireServer.baseUrl();
     configureFor("localhost", wireMockRaireServer.port());
     stubFor(post(urlEqualTo(raireGenerateAssertionsEndpoint))
+        // .withMultipartRequestBody(
+        //    aMultipart()
+                .withRequestBody(equalToJson(gson.toJson(boulderRequest)))
+        // )
         .willReturn(aResponse()
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
@@ -137,6 +149,21 @@ public class GenerateAssertionsTests {
   @AfterClass
   public void closeMocks() {
     wireMockRaireServer.stop();
+  }
+
+  /**
+   * Calls the single-contest version for the tinyIRVExample, checks for the right winner.
+   */
+  @Test
+  public void rightTinyIRVWinner() {
+    testUtils.log(LOGGER, "rightTinyIRVWinner");
+
+    GenerateAssertionsResponseWithErrors result = endpoint.generateAssertionsUpdateWinners(
+        mockedIRVContestResults, boulderRequest.contestName, boulderRequest.timeLimitSeconds,
+        baseUrl + raireGenerateAssertionsEndpoint);
+
+    assertEquals(result.contestName, tinyIRV);
+    assertEquals(result.winner, "Alice");
   }
 
   /**

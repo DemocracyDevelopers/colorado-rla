@@ -20,7 +20,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 */
 
 package au.org.democracydevelopers.corla.util;
-import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
 import au.org.democracydevelopers.corla.model.ContestType;
 import org.apache.log4j.Logger;
 import us.freeandfair.corla.model.Choice;

@@ -153,7 +153,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
    * @param raireUrl          the url where the raire-service is running.
    */
   protected List<GenerateAssertionsResponseWithErrors> generateAllAssertions(List<ContestResult> IRVContestResults,
-                                                                             int timeLimitSeconds, String raireUrl) {
+                                                                             double timeLimitSeconds, String raireUrl) {
     final String prefix = "[generateAllAssertions]";
 
     final List<GenerateAssertionsResponseWithErrors> responseData = new ArrayList<>();
@@ -168,7 +168,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
   }
 
   protected GenerateAssertionsResponseWithErrors generateAssertionsUpdateWinners(List<ContestResult> IRVContestResults,
-                                                                                 String contestName, int timeLimitSeconds, String raireUrl) {
+                                                                                 String contestName, double timeLimitSeconds, String raireUrl) {
     final String prefix = "[generateAssertions]";
 
     try {
