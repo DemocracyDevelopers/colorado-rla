@@ -21,10 +21,13 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.endpoint;
 
+import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
 import au.org.democracydevelopers.corla.communication.responseToColoradoRla.GenerateAssertionsResponseWithErrors;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 import au.org.democracydevelopers.corla.util.testUtils;
-import com.github.tomakehurst.wiremock.WireMockServer;
+
+import com.google.gson.Gson;
+import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.mockito.MockitoAnnotations;
@@ -36,6 +39,8 @@ import us.freeandfair.corla.model.*;
 import java.util.List;
 import java.util.Set;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -55,29 +60,50 @@ public class GenerateAssertionsTests {
    */
   private static final Logger LOGGER = LogManager.getLogger(GenerateAssertionsTests.class);
 
-
+  /**
+   * Mock response for Boulder Mayoral '23
+   */
+  private final static GenerateAssertionsResponse boulderResponse
+      = new GenerateAssertionsResponse(boulderMayoral, "Aaron Brockett");
 
   /**
-   * Endpoint to be tested.
+   * Mock response for tinyExample1 contest
    */
-  GenerateAssertions endpoint = new GenerateAssertions();
+  private final static GenerateAssertionsResponse tinyIRVResponse
+      = new GenerateAssertionsResponse(tinyIRV, "Alice");
 
   /**
-   * Endpoint for getting assertions.
+   * Mock collected generate assertions response, with Boulder Mayoral '23 and tinyExample1.
    */
-  final String raireGenerateAssertionsEndpoint = "/raire/generate-assertions";
+  private final static List<GenerateAssertionsResponse> response
+      = List.of(boulderResponse, tinyIRVResponse);
+
+  /**
+   * Corla endpoint to be tested.
+   */
+  private final GenerateAssertions endpoint = new GenerateAssertions();
+
+  /**
+   * Raire endpoint for getting assertions.
+   */
+  private final String raireGenerateAssertionsEndpoint = "/raire/generate-assertions";
 
   /**
    * Wiremock server for mocking the raire service.
    * (Note the default of 8080 clashes with the raire-service default, so this is different.)
    */
-  final WireMockServer wireMockRaireServer = new WireMockServer(8111);
+  private final WireMockServer wireMockRaireServer = new WireMockServer(8110);
 
   /**
    * Base url - this is set up to use the wiremock server, but could be set here to wherever you have the
    * raire-service running to test with that directly.
    */
-  static String baseUrl;
+  private static String baseUrl;
+
+  /**
+   * GSON for json interpretation.
+   */
+  private final static Gson gson = new Gson();
 
   /**
    * Initialise mocked objects prior to the first test.
@@ -96,20 +122,16 @@ public class GenerateAssertionsTests {
     tinyIRVContestResult.setWinners(Set.of("Alice"));
     tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
 
-    // Default raire server. TODO set back to mock.
-    baseUrl = "http://localhost:8080";
-    /*
+    // Default raire server.
+    // baseUrl = "http://localhost:8080";
     wireMockRaireServer.start();
     baseUrl = wireMockRaireServer.baseUrl();
     configureFor("localhost", wireMockRaireServer.port());
-    stubFor(post(urlEqualTo(generateAssertionsEndpoint))
+    stubFor(post(urlEqualTo(raireGenerateAssertionsEndpoint))
         .willReturn(aResponse()
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
-            .withBody(Main.GSON.toJson(response))));
-
-
-     */
+            .withBody(gson.toJson(response))));
   }
 
   @AfterClass

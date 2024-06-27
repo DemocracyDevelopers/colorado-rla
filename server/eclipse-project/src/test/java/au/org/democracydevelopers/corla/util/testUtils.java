@@ -61,12 +61,6 @@ public class testUtils {
       new Choice("Paul Tweedlie", "", false, false)
   );
 
-  public final static GenerateAssertionsResponse boulderResponse
-      = new GenerateAssertionsResponse(boulderMayoral, "Aaron Brockett");
-  public final static GenerateAssertionsResponse tinyIRVResponse
-      = new GenerateAssertionsResponse(tinyIRV, "Alice");
-  public final static List<GenerateAssertionsResponse> response = List.of(boulderResponse, tinyIRVResponse);
-
   public final static Contest tinyIRVExample = new Contest(tinyIRV, new County("Arapahoe", 3L), ContestType.IRV.toString(),
       List.of(alice, bob, chuan), 3, 1, 0);
   public final static ContestResult tinyIRVContestResult = new ContestResult(tinyIRV);
@@ -74,7 +68,6 @@ public class testUtils {
       boulderMayoralCandidates, 4, 1, 0);
   public final static ContestResult boulderIRVContestResult = new ContestResult(boulderMayoral);
   public final static List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult, tinyIRVContestResult);
-
 
   /**
    * Comparator for doubles within a specific tolerance.
