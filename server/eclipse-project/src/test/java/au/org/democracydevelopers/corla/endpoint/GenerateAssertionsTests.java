@@ -143,7 +143,7 @@ public class GenerateAssertionsTests {
         .willReturn(aResponse()
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
-            .withBody(gson.toJson(response))));
+            .withBody(gson.toJson(boulderResponse))));
   }
 
   @AfterClass
@@ -155,15 +155,15 @@ public class GenerateAssertionsTests {
    * Calls the single-contest version for the tinyIRVExample, checks for the right winner.
    */
   @Test
-  public void rightTinyIRVWinner() {
+  public void rightBoulderIRVWinner() {
     testUtils.log(LOGGER, "rightTinyIRVWinner");
 
     GenerateAssertionsResponseWithErrors result = endpoint.generateAssertionsUpdateWinners(
         mockedIRVContestResults, boulderRequest.contestName, boulderRequest.timeLimitSeconds,
         baseUrl + raireGenerateAssertionsEndpoint);
 
-    assertEquals(result.contestName, tinyIRV);
-    assertEquals(result.winner, "Alice");
+    assertEquals(result.contestName, boulderMayoral);
+    assertEquals(result.winner, "Aaron Brockett");
   }
 
   /**
