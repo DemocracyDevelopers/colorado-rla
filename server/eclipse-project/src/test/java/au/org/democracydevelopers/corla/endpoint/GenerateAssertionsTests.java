@@ -21,39 +21,21 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.endpoint;
 
-import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
 import au.org.democracydevelopers.corla.communication.responseToColoradoRla.GenerateAssertionsResponseWithErrors;
-import au.org.democracydevelopers.corla.model.ContestType;
+import static au.org.democracydevelopers.corla.util.testUtils.*;
 import au.org.democracydevelopers.corla.util.testUtils;
 import com.github.tomakehurst.wiremock.WireMockServer;
-import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import us.freeandfair.corla.Main;
 import us.freeandfair.corla.model.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.math.BigDecimal;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -73,41 +55,17 @@ public class GenerateAssertionsTests {
    */
   private static final Logger LOGGER = LogManager.getLogger(GenerateAssertionsTests.class);
 
+
+
   /**
-   * Two IRV contests for mocking the IRVContestCollector: Boulder Mayoral '23 and a tiny constructed example.
+   * Endpoint to be tested.
    */
-  private final static String boulderMayoral = "City of Boulder Mayoral Candidates";
-  private final static String tinyIRV = "TinyExample1";
-
-  private final Choice alice = new Choice("Alice", "", false, false);
-  private final Choice bob = new Choice("Bob", "", false, false);
-  private final Choice chuan = new Choice("Chuan", "", false, false);
-
-  private final List<Choice> boulderMayoralCandidates = List.of(
-      new Choice("Aaron Brockett", "", false, false),
-      new Choice("Nicole Speer", "", false, false),
-      new Choice("Bob Yates", "", false, false),
-      new Choice("Paul Tweedlie", "", false, false)
-  );
-
-  private final GenerateAssertionsResponse boulderResponse
-      = new GenerateAssertionsResponse(boulderMayoral, "Aaron Brockett");
-  private final GenerateAssertionsResponse tinyIRVResponse
-      = new GenerateAssertionsResponse(tinyIRV, "Alice");
-  private final List<GenerateAssertionsResponse> response = List.of(boulderResponse, tinyIRVResponse);
-
-  private final Contest tinyIRVExample = new Contest(tinyIRV, new County("Arapahoe", 3L), ContestType.IRV.toString(),
-      List.of(alice, bob, chuan), 3, 1, 0);
-  private final ContestResult tinyIRVContestResult = new ContestResult(tinyIRV);
-  private final Contest boulderMayoralContest = new Contest(boulderMayoral, new County("Boulder", 7L), ContestType.IRV.toString(),
-      boulderMayoralCandidates, 4, 1, 0);
-  private final ContestResult boulderIRVContestResult = new ContestResult(boulderMayoral);
-  private final List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult, tinyIRVContestResult);
+  GenerateAssertions endpoint = new GenerateAssertions();
 
   /**
    * Endpoint for getting assertions.
    */
-  final String generateAssertionsEndpoint = "/raire/generate-assertions";
+  final String raireGenerateAssertionsEndpoint = "/raire/generate-assertions";
 
   /**
    * Wiremock server for mocking the raire service.
@@ -162,64 +120,81 @@ public class GenerateAssertionsTests {
   /**
    * Calls the generateAssertions main endpoint function and checks that the right winners are
    * returned, for the two example contests (Boulder and TinyIRV).
-   *
-   * @throws Exception never.
    */
   @Test
-  public void rightWinners() throws Exception {
-    testUtils.log(LOGGER, "rightFileNamesInZip");
+  public void rightWinners() {
+    testUtils.log(LOGGER, "rightWinners");
 
-    GenerateAssertions endpoint = new GenerateAssertions();
     List<GenerateAssertionsResponseWithErrors> results = endpoint.generateAllAssertions(mockedIRVContestResults, 5,
-        baseUrl + generateAssertionsEndpoint);
+        baseUrl + raireGenerateAssertionsEndpoint);
 
     assertEquals(results.size(), 2);
     assertEquals(results.get(0).contestName, boulderMayoral);
     assertEquals(results.get(0).winner, "Aaron Brockett");
     assertEquals(results.get(1).contestName, tinyIRV);
     assertEquals(results.get(1).winner, "Alice");
-
-
   }
 
   /**
-   * Checks that, when given a bad endpoint, a runtime exception is thrown.
-   * @throws Exception always.
+   * A nonexistent contest causes an appropriate error message.
+   * (The requested contest does not appear in the mockedIRVContestResults.)
    */
-  @Test(expectedExceptions = RuntimeException.class)
-  public void badEndpointThrowsRuntimeException() throws Exception {
+  @Test(expectedExceptions = RuntimeException.class,
+      expectedExceptionsMessageRegExp = ".*Non-existent or non-IRV contest.*")
+    public void nonExistentContestThrowsRuntimeException() {
+    testUtils.log(LOGGER, "nonExistentContestThrowsRuntimeException");
+    
+    endpoint.generateAssertionsUpdateWinners(mockedIRVContestResults, nonExistentContest, 5,
+      baseUrl + raireGenerateAssertionsEndpoint);
+  }
+
+  /**
+   * When raire sends an uninterpretable response, an appropriate error message appears.
+   */
+  @Test(expectedExceptions = RuntimeException.class,
+      expectedExceptionsMessageRegExp = ".*Error interpreting Raire response for contest testContest.*")
+  public void uninterpretableRaireResponseThrowsRuntimeException() {
+
+    testUtils.log(LOGGER, "nonExistentContestThrowsRuntimeException");
+
+    endpoint.generateAssertionsUpdateWinners(mockedIRVContestResults, "testContest", 5,
+        baseUrl + raireGenerateAssertionsEndpoint);
+  }
+
+  /**
+   * When given a bad endpoint, a runtime exception is thrown with an appropriate error message.
+   */
+  @Test(expectedExceptions = RuntimeException.class,
+      expectedExceptionsMessageRegExp = ".*Connection failure.*Raire service url.*")
+  public void badEndpointThrowsRuntimeException() {
     testUtils.log(LOGGER, "badEndpointThrowsRuntimeException");
 
     String url = baseUrl + "/badUrl";
-    GenerateAssertions endpoint = new GenerateAssertions();
     endpoint.generateAllAssertions(mockedIRVContestResults, 5, url);
   }
 
   /**
-   * Checks that, when given a bad url, an appropriate url-parsing exception is thrown, for both csv and json.
-   * @throws Exception always.
+   * When given a bad url, an appropriate url-parsing error appears.
    */
-  @Test(expectedExceptions = {MalformedURLException.class, URISyntaxException.class})
-  public void badUrlThrowsUrlException() throws Exception {
+  @Test(expectedExceptions = RuntimeException.class,
+      expectedExceptionsMessageRegExp = ".*Bad configuration of Raire service url.*")
+  public void badUrlThrowsUrlException() {
     testUtils.log(LOGGER, "badUrlThrowsUrlException");
 
     String url = "completelyNotAUrl" + "/badUrl";
 
-    GenerateAssertions endpoint = new GenerateAssertions();
     endpoint.generateAllAssertions(mockedIRVContestResults, 5, url);
   }
 
   /**
-   * Checks that, when given a bad url, an appropriate url-parsing exception is thrown, for both csv and json.
-   * @throws Exception always.
+   * When given a bad url, an appropriate url-parsing error appears.
    */
-  @Test(expectedExceptions = {MalformedURLException.class, URISyntaxException.class})
-  public void nonExistentContestThrowsException() throws Exception {
+  @Test(expectedExceptions = RuntimeException.class,
+      expectedExceptionsMessageRegExp = ".*Bad configuration of Raire service url.*")
+  public void nonExistentContestThrowsException() {
     testUtils.log(LOGGER, "badUrlThrowsUrlException");
 
     String url = "completelyNotAUrl" + "/badUrl";
-
-    GenerateAssertions endpoint = new GenerateAssertions();
     endpoint.generateAllAssertions(mockedIRVContestResults, 5, url);
   }
 

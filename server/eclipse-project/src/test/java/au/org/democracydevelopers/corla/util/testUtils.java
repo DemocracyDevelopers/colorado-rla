@@ -20,12 +20,61 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 */
 
 package au.org.democracydevelopers.corla.util;
+import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
+import au.org.democracydevelopers.corla.model.ContestType;
 import org.apache.log4j.Logger;
+import us.freeandfair.corla.model.Choice;
+import us.freeandfair.corla.model.Contest;
+import us.freeandfair.corla.model.ContestResult;
+import us.freeandfair.corla.model.County;
+
+import java.util.List;
 
 /**
- * This class contains utilities for use in testing.
+ * This class contains utilities and default data for use in testing.
  */
 public class testUtils {
+
+  /**
+   * First of two IRV contests for mocking the IRVContestCollector: Boulder Mayoral '22
+   */
+  public final static String boulderMayoral = "City of Boulder Mayoral Candidates";
+
+  /**
+   * Tiny constructed example.
+   */
+  public final static String tinyIRV = "TinyExample1";
+
+  /**
+   * Non-existent contest
+   */
+  public final static String nonExistentContest = "Non existent contest";
+
+  public final static Choice alice = new Choice("Alice", "", false, false);
+  public final static Choice bob = new Choice("Bob", "", false, false);
+  public final static Choice chuan = new Choice("Chuan", "", false, false);
+
+  public final static List<Choice> boulderMayoralCandidates = List.of(
+      new Choice("Aaron Brockett", "", false, false),
+      new Choice("Nicole Speer", "", false, false),
+      new Choice("Bob Yates", "", false, false),
+      new Choice("Paul Tweedlie", "", false, false)
+  );
+
+  public final static GenerateAssertionsResponse boulderResponse
+      = new GenerateAssertionsResponse(boulderMayoral, "Aaron Brockett");
+  public final static GenerateAssertionsResponse tinyIRVResponse
+      = new GenerateAssertionsResponse(tinyIRV, "Alice");
+  public final static List<GenerateAssertionsResponse> response = List.of(boulderResponse, tinyIRVResponse);
+
+  public final static Contest tinyIRVExample = new Contest(tinyIRV, new County("Arapahoe", 3L), ContestType.IRV.toString(),
+      List.of(alice, bob, chuan), 3, 1, 0);
+  public final static ContestResult tinyIRVContestResult = new ContestResult(tinyIRV);
+  public final static Contest boulderMayoralContest = new Contest(boulderMayoral, new County("Boulder", 7L), ContestType.IRV.toString(),
+      boulderMayoralCandidates, 4, 1, 0);
+  public final static ContestResult boulderIRVContestResult = new ContestResult(boulderMayoral);
+  public final static List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult, tinyIRVContestResult);
+
 
   /**
    * Comparator for doubles within a specific tolerance.

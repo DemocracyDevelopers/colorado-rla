@@ -153,7 +153,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
    * @param raireUrl          the url where the raire-service is running.
    */
   protected List<GenerateAssertionsResponseWithErrors> generateAllAssertions(List<ContestResult> IRVContestResults,
-                                                                            int timeLimitSeconds, String raireUrl) throws IOException, URISyntaxException {
+                                                                             int timeLimitSeconds, String raireUrl) {
     final String prefix = "[generateAllAssertions]";
 
     final List<GenerateAssertionsResponseWithErrors> responseData = new ArrayList<>();
@@ -161,90 +161,90 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
     // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
     for (final ContestResult cr : IRVContestResults) {
       GenerateAssertionsResponseWithErrors response = generateAssertionsUpdateWinners(IRVContestResults, cr.getContestName(), timeLimitSeconds, raireUrl);
-          responseData.add(response);
-      }
-
-      return responseData;
+      responseData.add(response);
     }
 
+    return responseData;
+  }
+
   protected GenerateAssertionsResponseWithErrors generateAssertionsUpdateWinners(List<ContestResult> IRVContestResults,
-              String contestName, int timeLimitSeconds, String raireUrl) {
+                                                                                 String contestName, int timeLimitSeconds, String raireUrl) {
     final String prefix = "[generateAssertions]";
 
     try {
-    final ContestResult cr = IRVContestResults.stream()
-        .filter(r -> r.getContestName().equalsIgnoreCase(contestName)).findAny().orElseThrow();
-    final List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream()
-        .map(Choice::name).toList();
+      final ContestResult cr = IRVContestResults.stream()
+          .filter(r -> r.getContestName().equalsIgnoreCase(contestName)).findAny().orElseThrow();
+      final List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream()
+          .map(Choice::name).toList();
 
-    // Make the request.
-    final GenerateAssertionsRequest generateAssertionsRequest = new GenerateAssertionsRequest(
-        cr.getContestName(),
-        cr.getBallotCount().intValue(),
-        timeLimitSeconds,
-        candidates
-    );
+      // Make the request.
+      final GenerateAssertionsRequest generateAssertionsRequest = new GenerateAssertionsRequest(
+          cr.getContestName(),
+          cr.getBallotCount().intValue(),
+          timeLimitSeconds,
+          candidates
+      );
 
-    // Throws URISyntaxException or MalformedURLException if the raireUrl is invalid.
-    final HttpPost requestToRaire = new HttpPost(new URL(raireUrl).toURI());
-    requestToRaire.addHeader("content-type", "application/json");
-    requestToRaire.setEntity(new StringEntity(Main.GSON.toJson(generateAssertionsRequest)));
+      // Throws URISyntaxException or MalformedURLException if the raireUrl is invalid.
+      final HttpPost requestToRaire = new HttpPost(new URL(raireUrl).toURI());
+      requestToRaire.addHeader("content-type", "application/json");
+      requestToRaire.setEntity(new StringEntity(Main.GSON.toJson(generateAssertionsRequest)));
 
-    // Send it to the RAIRE service.
-    final HttpResponse raireResponse = httpClient.execute(requestToRaire);
-    LOGGER.debug(String.format("%s %s.", prefix, "Sent Assertion Request to Raire service for "
-        + contestName));
-
-    // Interpret the response.
-    final int statusCode = raireResponse.getStatusLine().getStatusCode();
-    GenerateAssertionsResponse responseFromRaire = Main.GSON.fromJson(EntityUtils.toString(raireResponse.getEntity()),
-        GenerateAssertionsResponse.class);
-
-    if (statusCode == HttpStatus.SC_OK) {
-      // OK response. Return the winner.
-
-      LOGGER.debug(String.format("%s %s.", prefix, "OK response received from RAIRE for "
+      // Send it to the RAIRE service.
+      final HttpResponse raireResponse = httpClient.execute(requestToRaire);
+      LOGGER.debug(String.format("%s %s.", prefix, "Sent Assertion Request to Raire service for "
           + contestName));
-      updateWinnersAndLosers(cr, candidates, responseFromRaire.winner);
-      return new GenerateAssertionsResponseWithErrors(contestName, responseFromRaire.winner, "");
 
-    } else if (raireResponse.containsHeader(RAIRE_ERROR_CODE)) {
-      // Error response about a specific contest, e.g. "NO_ASSERTIONS_PRESENT".
-      // Return the error.
+      // Interpret the response.
+      final int statusCode = raireResponse.getStatusLine().getStatusCode();
+      GenerateAssertionsResponse responseFromRaire = Main.GSON.fromJson(EntityUtils.toString(raireResponse.getEntity()),
+          GenerateAssertionsResponse.class);
 
-      final String code = raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getValue();
-      LOGGER.debug(String.format("%s %s %s.", prefix, "Error response " + code,
-          "received from RAIRE for " + contestName));
+      if (statusCode == HttpStatus.SC_OK) {
+        // OK response. Update the stored winner and return it.
 
-      updateWinnersAndLosers(cr, candidates, UNKNOWN_WINNER);
-      return new GenerateAssertionsResponseWithErrors(cr.getContestName(), UNKNOWN_WINNER, code);
+        LOGGER.debug(String.format("%s %s.", prefix, "OK response received from RAIRE for "
+            + contestName));
+        updateWinnersAndLosers(cr, candidates, responseFromRaire.winner);
+        return new GenerateAssertionsResponseWithErrors(contestName, responseFromRaire.winner, "");
 
-    } else {
-      // Something went wrong with the connection. Cannot continue.
+      } else if (raireResponse.containsHeader(RAIRE_ERROR_CODE)) {
+        // Error response about a specific contest, e.g. "NO_ASSERTIONS_PRESENT".
+        // Return the error, record it.
 
-      final String msg = "Connection failure with Raire service."
-          + statusCode + " " + raireResponse.getStatusLine().getReasonPhrase();
-      LOGGER.error(String.format("%s %s", prefix, msg));
-      throw new RuntimeException(msg);
-    }
-  } catch (URISyntaxException | MalformedURLException e) {
-final String msg = "Bad configuration of Raire service url: " + raireUrl + ". Fix the config file.";
+        final String code = raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getValue();
+        LOGGER.debug(String.format("%s %s %s.", prefix, "Error response " + code,
+            "received from RAIRE for " + contestName));
+
+        updateWinnersAndLosers(cr, candidates, UNKNOWN_WINNER);
+        return new GenerateAssertionsResponseWithErrors(cr.getContestName(), UNKNOWN_WINNER, code);
+
+      } else {
+        // Something went wrong with the connection. Cannot continue.
+
+        final String msg = "Connection failure with Raire service. Http code "
+            + statusCode + ". Check the configuration of Raire service url.";
+        LOGGER.error(String.format("%s %s", prefix, msg));
+        throw new RuntimeException(msg);
+      }
+    } catch (URISyntaxException | MalformedURLException e) {
+      final String msg = "Bad configuration of Raire service url: " + raireUrl + ". Check your config file.";
       LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
-    throw new RuntimeException(msg);
+      throw new RuntimeException(msg);
     } catch (NoSuchElementException | NullPointerException e) {
       final String msg = "Non-existent or non-IRV contest in Generate Assertions request:";
       LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
       throw new RuntimeException(msg + contestName);
     } catch (JsonSyntaxException e) {
-      final String msg = "Error interpreting raire response for contest ";
+      final String msg = "Error interpreting Raire response for contest ";
       LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
       throw new RuntimeException(e);
     } catch (UnsupportedEncodingException e) {
-      final String msg = "Error generating request to raire for contest ";
+      final String msg = "Error generating request to Raire for contest ";
       LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
       throw new RuntimeException(msg + contestName + e.getMessage());
     } catch (ClientProtocolException e) {
-      final String msg = "Error sending request to raire for contest ";
+      final String msg = "Error sending request to Raire for contest ";
       LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
       throw new RuntimeException(msg + contestName + e.getMessage());
     } catch (IOException e) {
@@ -254,20 +254,18 @@ final String msg = "Bad configuration of Raire service url: " + raireUrl + ". Fi
     }
   }
 
-
-    /**
-     * Update the contestresults in the database according to RAIRE's assessed winners. Set all
-     * non-winners to be losers, which means all candidates if the contest is un-auditable.
-     * @param cr         the contest result, i.e. aggregaged (possibly cross-county) IRV contest.
-     * @param candidates the list of candidate names.
-     * @param winner     the winner, as determined by raire.
-     *                   // TODO This is currently non-functional - see Issue #136 <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/136">...</a>
-     */
+  /**
+   * Update the contestresults in the database according to RAIRE's assessed winners. Set all
+   * non-winners to be losers, which means all candidates if the contest is un-auditable.
+   *
+   * @param cr         the contest result, i.e. aggregaged (possibly cross-county) IRV contest.
+   * @param candidates the list of candidate names.
+   * @param winner     the winner, as determined by raire.
+   * TODO This is currently non-functional - see Issue #136 <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/136">...</a>
+   */
   private void updateWinnersAndLosers(ContestResult cr, List<String> candidates, String winner) {
     cr.setWinners(Set.of(winner));
     cr.setLosers(candidates.stream().filter(c -> !c.equalsIgnoreCase(winner)).collect(Collectors.toSet()));
   }
-
-
 }
 
