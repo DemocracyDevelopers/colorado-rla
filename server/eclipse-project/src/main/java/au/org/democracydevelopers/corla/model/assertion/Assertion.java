@@ -267,6 +267,21 @@ public abstract class Assertion implements PersistentEntity {
   }
 
   /**
+   * Returns the value of the discrepancy, if any, that has been computed against the CVR with
+   * the given ID, as an OptionalInt. An empty OptionalInt will be returned if no discrepancy
+   * has been computed against the CVR for this assertion.
+   * @param cvrID CVR ID
+   * @return The value of the disrepancy, if one exists, computed against the given CVR for this
+   * assertion.
+   */
+  public OptionalInt getDiscrepancy(long cvrID){
+    if(cvrDiscrepancy.containsKey(cvrID)){
+      return OptionalInt.of(cvrDiscrepancy.get(cvrID));
+    }
+    return OptionalInt.empty();
+  }
+
+  /**
    * Return a string representation of a subset of this assertion's data. This is used for
    * testing purposes.
    */
@@ -577,7 +592,7 @@ public abstract class Assertion implements PersistentEntity {
 
     // Compute the score as per this assertion's score() function, and return the result.
     final int acvrScore = score(acvrInfo.get());
-    LOGGER.info(String.format("%s CVR ID %d, Assertion ID %d, contest %s, audited ballot score is %d.",
+    LOGGER.debug(String.format("%s CVR ID %d, Assertion ID %d, contest %s, audited ballot score is %d.",
         prefix, cvrID, id, contestName, acvrScore));
     return acvrScore;
   }

@@ -219,11 +219,12 @@ public class AssertionTests extends TestClassWithDatabase {
    * @param cvrRecType Record type for the CVR.
    * @param acvrConsensus Consensys value for the audited ballot.
    * @param acvrRecType Record type for the audited ballot.
+   * @param contestName Name of the contest whose votes we are encoding.
    */
   protected void resetMocks(CVRContestInfo cvrInfo, CVRContestInfo acvrInfo, RecordType cvrRecType,
-      ConsensusValue acvrConsensus, RecordType acvrRecType){
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(cvrInfo));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(acvrInfo));
+      ConsensusValue acvrConsensus, RecordType acvrRecType, final String contestName){
+    when(cvr.contestInfoForContestResult(contestName)).thenReturn(Optional.of(cvrInfo));
+    when(auditedCvr.contestInfoForContestResult(contestName)).thenReturn(Optional.of(acvrInfo));
 
     when(acvrInfo.consensus()).thenReturn(acvrConsensus);
     when(cvr.recordType()).thenReturn(cvrRecType);
@@ -251,6 +252,15 @@ public class AssertionTests extends TestClassWithDatabase {
         {0}, {1}, {2}, {10}, {50}, {100}, {500}, {1500}, {5000}
     };
   }
+
+  /**
+   * A parameter set consisting of all valid discrepancy types.
+   */
+  @DataProvider(name = "DiscrepancyTypes")
+  public static Object[][] discrepancyTypes(){
+    return new Object[][]{{-2}, {-1}, {0}, {1}, {2}};
+  }
+
   /**
    * Returns a set of varying parameters to supply when constructing assertions to test
    * sample size computations. To test sample size calculation, we consider the following dimensions:

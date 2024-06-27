@@ -455,8 +455,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
     recordTypeCheck(prefix, theRecord, theType);
 
     try {
-      LOGGER.debug(
-          String.format("%s removing discrepancy associated with CVR %d (maximum type %d).",
+      LOGGER.debug(String.format("%s removing discrepancy associated with CVR %d (maximum type %d).",
               prefix, theRecord.cvr().id(), theType));
       // Remove the discrepancy associated with the given CVRAuditInfo (CVR/ACVR pair), if one
       // exists, in each of the audit's assertions.
@@ -471,13 +470,18 @@ public class IRVComparisonAudit extends ComparisonAudit {
       if(removed) {
         super.removeDiscrepancy(theRecord, theType);
       }
+      else{
+        LOGGER.debug(String.format("%s no discrepancies removed.", prefix));
+      }
+
       LOGGER.debug(String.format("%s total number of overstatements (%f), optimistic sample " +
               "recalculate needed (%s), estimated sample recalculate needed (%s),", prefix,
           getOverstatements(), my_optimistic_recalculate_needed, my_estimated_recalculate_needed));
 
     } catch(Exception e){
       final String msg = String.format("%s an error arose in the removal of discrepancies " +
-          "associated with CVR %d (maximum type %d).", prefix, theRecord.cvr().id(), theType);
+          "associated with CVR %d (maximum type %d). %s", prefix, theRecord.cvr().id(), theType,
+          e.getMessage());
       LOGGER.error(msg);
       throw new RuntimeException(msg);
     }
@@ -494,8 +498,9 @@ public class IRVComparisonAudit extends ComparisonAudit {
    *
    * @param theRecord The CVRAuditInfo record that generated the discrepancy.
    * @param theType The type of discrepancy to remove.
-   * @exception IllegalArgumentException if an invalid discrepancy type is specified, or a null
-   * CVRAuditInfo record is provided.
+   * @exception IllegalArgumentException if an invalid discrepancy type is specified, a null
+   * CVRAuditInfo record is provided, or 'theType' is not the maximum discrepancy associated with
+   * the given record and this audit's assertions.
    */
   @Override
   public void recordDiscrepancy(final CVRAuditInfo theRecord, final int theType) {
@@ -511,31 +516,61 @@ public class IRVComparisonAudit extends ComparisonAudit {
     // IllegalArgumentException if they are not.
     recordTypeCheck(prefix, theRecord, theType);
 
+    LOGGER.debug(String.format("%s recording discrepancies for CVR ID %d, max type %d.", prefix,
+        theRecord.id(), theType));
+
+    List<Integer> types = new ArrayList<>();
+    for(Assertion a : assertions){
+      OptionalInt d = a.getDiscrepancy(theRecord.id());
+      if(d.isPresent()) {
+        types.add(d.getAsInt());
+      }
+    }
+    if(types.isEmpty() || max(types) != theType){
+      final String msg = String.format("%s %d is not the maximum discrepancy type for CVR %d " +
+          "across assertions.", prefix, theType, theRecord.id());
+      LOGGER.error(msg);
+      throw new IllegalArgumentException(msg);
+    }
+
+    // The next check is whether the base classes isCovering(theRecord.id()) method holds. If it
+    // doesn't, throw an exception. This valid discrepancy is not going to be counted in the
+    // base class counts.
+    if(!isCovering(theRecord.id())){
+      final String msg = String.format("%s We have computed a discrepancy for contest %s, CVR %d, " +
+          "but that CVR is not meant to cover the contest.", prefix, contestName, theRecord.id());
+      LOGGER.error(msg);
+      throw new RuntimeException(msg);
+    }
+
     try {
+      // Note if we get to this point, then discrepancies are present against the given CVR
+      // in at least one assertion, with 'theType' being the maximum type of these discrepancies.
+
       // Iterate over the assertions for this audit, check that the CVR in the CVRAuditInfo is
       // listed in their discrepancy map, and if so, record it as a discrepancy in its internal
       // totals. Note that the CVR may represent a different type of discrepancy from assertion to
       // assertion (not necessarily of type 'theType'). The parameter 'theType' will represent the
       // maximum discrepancy associated with CVR/ACVR pair and one of this audit's assertions. Note
       // that a given CVR/ACVR pair can only be associated with a single discrepancy per assertion.
-      boolean recorded = false;
+      // Before we call each qssertion's recordDiscrepancy(), we check that 'theType' is actually
+      // the maximum discrepancy that appears across the assertions for this CVR/ACVR.
       for (Assertion a : assertions) {
-        recorded = recorded || a.recordDiscrepancy(theRecord);
+        a.recordDiscrepancy(theRecord);
       }
 
       // Update the discrepancy tallies in the base ComparisonAudit class, for reporting purposes,
-      // and the flag for indicating that a sample size recalculation is needed, *if* we did
-      // record a discrepancy against at least one of this audit's assertions.
-      if(recorded) {
-        super.recordDiscrepancy(theRecord, theType);
-      }
+      // and the flag for indicating that a sample size recalculation is needed.
+      super.recordDiscrepancy(theRecord, theType);
+
       LOGGER.debug(String.format("%s total number of overstatements (%f), optimistic sample " +
               "recalculate needed (%s), estimated sample recalculate needed (%s),", prefix,
           getOverstatements(), my_optimistic_recalculate_needed, my_estimated_recalculate_needed));
 
     } catch(Exception e){
       final String msg = String.format("%s an error arose in the recording of discrepancies " +
-          "associated with CVR %d (maximum type %d).", prefix, theRecord.cvr().id(), theType);
+          "associated with CVR %d (maximum type %d). %s", prefix, theRecord.cvr().id(), theType,
+          e.getMessage());
       LOGGER.error(msg);
       throw new RuntimeException(msg);
     }
@@ -597,4 +632,5 @@ public class IRVComparisonAudit extends ComparisonAudit {
       throw new IllegalArgumentException(msg);
     }
   }
+
 }
