@@ -52,6 +52,8 @@ import static org.testng.Assert.assertEquals;
  * - Testing that the service throws appropriate exceptions if the raire service connection isn't set up properly.
  * - More thorough tests of assertion generation for known cases, e.g. examples from NSW and the
  *   Guide to Raire.
+ * - Testing of input validity, particularly non-negative time limits, which is done by the endpoint and hence
+ *   not included in these tests.
  * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/125">...</a>
  */
 public class GenerateAssertionsTests {
@@ -233,7 +235,7 @@ public class GenerateAssertionsTests {
    * A nonexistent contest causes an appropriate error message.
    * (The requested contest does not appear in the mockedIRVContestResults.)
    */
-  @Test(expectedExceptions = RuntimeException.class,
+  @Test(expectedExceptions = IllegalArgumentException.class,
       expectedExceptionsMessageRegExp = ".*Non-existent or non-IRV contest.*")
     public void nonExistentContestThrowsRuntimeException() {
     testUtils.log(LOGGER, "nonExistentContestThrowsRuntimeException");

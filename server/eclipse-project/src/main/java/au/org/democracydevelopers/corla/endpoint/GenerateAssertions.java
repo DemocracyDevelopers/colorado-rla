@@ -112,13 +112,15 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
   @Override
   public String endpointBody(final Request the_request, final Response the_response) {
     final String prefix = "[endpointBody]";
+    LOGGER.debug(String.format("%s %s.", prefix, "Received Generate Assertions request."));
 
     final List<GenerateAssertionsResponseWithErrors> responseData;
 
     final String raireUrl = Main.properties().getProperty(RAIRE_URL, "") + RAIRE_ENDPOINT;
 
     // If a time limit was specified, use that, otherwise use the default.
-    final int timeLimitSeconds = Integer.parseInt(the_request.queryParamOrDefault(TIME_LIMIT, DEFAULT_TIME_LIMIT));
+    final double timeLimitSeconds
+        = Double.parseDouble(the_request.queryParamOrDefault(TIME_LIMIT, DEFAULT_TIME_LIMIT));
 
     // If a contest was requested in the query parameter, generate assertions only for that contest.
     // Otherwise, generate them for all IRV contests.
@@ -127,21 +129,38 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
     // Get all the IRV contest results.
     final List<ContestResult> IRVContestResults = AbstractAllIrvEndpoint.getIRVContestResults();
 
-    if (contestName.isBlank()) {
-      // No contest was requested - generate for all.
+    try {
+      if(validateParameters(the_request)) {
+        if (contestName.isBlank()) {
+          // No contest was requested - generate for all.
 
-      responseData = generateAllAssertions(IRVContestResults, timeLimitSeconds, raireUrl);
-    } else {
-      // Generate for the specific contest requested.
+          responseData = generateAllAssertions(IRVContestResults, timeLimitSeconds, raireUrl);
+        } else {
+          // Generate for the specific contest requested.
 
-      responseData = List.of(generateAssertionsUpdateWinners(IRVContestResults, contestName, timeLimitSeconds, raireUrl));
+          responseData = List.of(generateAssertionsUpdateWinners(IRVContestResults, contestName,
+              timeLimitSeconds, raireUrl));
+        }
+
+        the_response.header("Content-Type", "application/json");
+
+        okJSON(the_response, Main.GSON.toJson(responseData));
+
+        LOGGER.debug(String.format("%s %s.", prefix, "Completed Generate Assertions request."));
+      } else {
+        final String msg = "Blank contest name or invalid time limit in Generate Assertions request.";
+        badDataContents(the_response, msg);
+        LOGGER.debug(String.format("%s %s %s.", prefix, msg, the_request.body()));
+      }
+    } catch (IllegalArgumentException e) {
+      badDataContents(the_response, e.getMessage());
+      LOGGER.debug(String.format("%s %s.", prefix, "Bad Generate Assertions request."));
+    } catch (RuntimeException e) {
+      serverError(the_response, e.getMessage());
+      LOGGER.debug(String.format("%s %s.", prefix, "Error processing Generate Assertions request."));
     }
 
-    the_response.header("Content-Type", "application/json");
-
-    okJSON(the_response, Main.GSON.toJson(responseData));
     return my_endpoint_result.get();
-
   }
 
   /**
@@ -248,7 +267,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
       // This happens if the contest name is not in the IRVContestResults.
       final String msg = "Non-existent or non-IRV contest in Generate Assertions request:";
       LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
-      throw new RuntimeException(msg + contestName);
+      throw new IllegalArgumentException(msg + contestName);
     } catch (JsonSyntaxException e) {
       // This happens if the raire service returns something that isn't interpretable as json,
       // so gson throws a syntax exception when trying to parse raireResponse.
@@ -293,6 +312,31 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
   private void updateWinnersAndLosers(ContestResult cr, List<String> candidates, String winner) {
     cr.setWinners(Set.of(winner));
     cr.setLosers(candidates.stream().filter(c -> !c.equalsIgnoreCase(winner)).collect(Collectors.toSet()));
+  }
+
+  /**
+   * Validates the parameters of a request. For this endpoint, the query parameters are optional,
+   * but if the contest is present it should be non-null, and if a time limit is present it should
+   * be positive.
+   * @param the_request the request sent to the endpoint.
+   * @return true if the request's query parameters are valid.
+   */
+  @Override
+  protected boolean validateParameters(final Request the_request) {
+
+    // An absent time limit is OK, but a present, negative or unparseable one is invalid.
+    try {
+      final String timeLimit = the_request.queryParams(TIME_LIMIT);
+      if (timeLimit != null && Double.parseDouble(timeLimit) <= 0) {
+        return false;
+      }
+    } catch (NumberFormatException e) {
+      return false;
+    }
+
+    // An absent contest name is fine, but a present null or blank one is invalid.
+    final String contestName = the_request.queryParams(CONTEST_NAME);
+    return contestName == null || !contestName.isEmpty();
   }
 }
 
