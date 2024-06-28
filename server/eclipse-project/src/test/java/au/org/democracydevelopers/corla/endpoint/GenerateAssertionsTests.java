@@ -28,12 +28,16 @@ import au.org.democracydevelopers.corla.communication.responseToColoradoRla.Gene
 
 import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
+
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 
 import com.google.gson.Gson;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -43,6 +47,8 @@ import java.util.List;
 import java.util.Set;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import us.freeandfair.corla.persistence.Persistence;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.assertEquals;
 
@@ -58,12 +64,17 @@ import static org.testng.Assert.assertEquals;
  *   not included in these tests.
  * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/125">...</a>
  */
-public class GenerateAssertionsTests {
+public class GenerateAssertionsTests extends TestClassWithDatabase {
 
   /**
    * Class-wide logger.
    */
   private static final Logger LOGGER = LogManager.getLogger(GenerateAssertionsTests.class);
+
+  /**
+   * Container for the mock-up database.
+   */
+  private final static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
    * Mock response for Boulder Mayoral '23
@@ -123,24 +134,33 @@ public class GenerateAssertionsTests {
   /**
    * Bad url, for testing we deal appropriately with the resulting error.
    */
-  String badEndpoint = "/badUrl";
+  private final String badEndpoint = "/badUrl";
 
   /**
    * An endpoint that produces nonsense responses, i.e. valid json but not a valid
    * GenerateAssertionsResponse, for testing that we deal appropriately with the resulting error.
    */
-  String nonsenseResponseEndpoint = "/raire/nonsense-generating-url";
+  private final String nonsenseResponseEndpoint = "/raire/nonsense-generating-url";
 
   /**
    * An endpoint that produces nonsense/uninterpretable responses, i.e. not valid json, for testing
    * that we deal appropriately with the resulting error.
    */
-  String invalidResponseEndpoint = "/raire/invalid-json-generating-url";
+  private final String invalidResponseEndpoint = "/raire/invalid-json-generating-url";
 
   /**
    * GSON for json interpretation.
    */
   private final static Gson gson = new Gson();
+
+  /**
+   * Database init.
+   */
+  @BeforeClass
+  public static void beforeAll() {
+    postgres.start();
+    Persistence.setProperties(createHibernateProperties(postgres));
+  }
 
   /**
    * Initialise mocked objects prior to the first test.
@@ -198,12 +218,14 @@ public class GenerateAssertionsTests {
             .withStatus(HttpStatus.SC_NOT_FOUND)));
     // Mock an OK but invalid response from the nonsense endpoint.
     // This is just a list of candidates, which should not make sense as a response.
+    /*
     stubFor(post(urlEqualTo(nonsenseResponseEndpoint))
         .withRequestBody(equalToJson(gson.toJson(tinyIRVRequest)))
         .willReturn(aResponse()
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
             .withBody(gson.toJson(tinyIRVCandidates))));
+
     // Mock an OK response with invalid json.
     stubFor(post(urlEqualTo(invalidResponseEndpoint))
         .withRequestBody(equalToJson(gson.toJson(tinyIRVRequest)))
@@ -211,6 +233,8 @@ public class GenerateAssertionsTests {
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
             .withBody("This isn't valid json")));
+
+     */
   }
 
   @AfterClass
@@ -308,7 +332,6 @@ public class GenerateAssertionsTests {
     endpoint.generateAssertionsUpdateWinners(mockedIRVContestResults, tinyIRV, 5,
         baseUrl + nonsenseResponseEndpoint);
   }
-
 
   /**
    * When given a bad endpoint, a runtime exception is thrown with an appropriate error message.

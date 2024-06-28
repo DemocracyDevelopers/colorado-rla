@@ -79,11 +79,6 @@ public class ComparisonAuditControllerTests extends TestClassWithDatabase {
   static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
-   * Blank properties for submitting to the DominionCVRExportParser instance.
-   */
-  private static final Properties blank = new Properties();
-
-  /**
    * IRV contest name.
    */
   private static final String tinyIRV = "TinyExample1";
