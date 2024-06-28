@@ -77,14 +77,15 @@ public class GenerateAssertionsTests {
    * Request for Boulder Mayoral '23
    */
   private final static GenerateAssertionsRequest boulderRequest
-      = new GenerateAssertionsRequest(boulderMayoral, 100000, 5,
+      = new GenerateAssertionsRequest(boulderMayoral, bouldMayoralCount, 5,
           boulderMayoralCandidates.stream().map(Choice::name).toList());
 
   /**
-   * Mock collected generate assertions response, with Boulder Mayoral '23 and tinyExample1.
+   * Request for tinyExample1 contest
    */
-  private final static List<GenerateAssertionsResponse> response
-      = List.of(boulderResponse, tinyIRVResponse);
+  private final static GenerateAssertionsRequest tinyIRVRequest
+      = new GenerateAssertionsRequest(tinyIRV, tinyIRVCount, 5,
+      tinyIRVCandidates.stream().map(Choice::name).toList());
 
   /**
    * Corla endpoint to be tested.
@@ -109,6 +110,23 @@ public class GenerateAssertionsTests {
   private static String baseUrl;
 
   /**
+   * Bad url, for testing we deal appropriately with the resulting error.
+   */
+  String badEndpoint = "/badUrl";
+
+  /**
+   * An endpoint that produces nonsense responses, i.e. valid json but not a valid
+   * GenerateAssertionsResponse, for testing that we deal appropriately with the resulting error.
+   */
+  String nonsenseResponseEndpoint = "/raire/nonsense-generating-url";
+
+  /**
+   * An endpoint that produces nonsense/uninterpretable responses, i.e. not valid json, for testing
+   * that we deal appropriately with the resulting error.
+   */
+  String invalidResponseEndpoint = "/raire/invalid-json-generating-url";
+
+  /**
    * GSON for json interpretation.
    */
   private final static Gson gson = new Gson();
@@ -121,29 +139,55 @@ public class GenerateAssertionsTests {
     MockitoAnnotations.openMocks(this);
 
     boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    boulderIRVContestResult.setBallotCount(100000L);
+    boulderIRVContestResult.setBallotCount((long) bouldMayoralCount);
     boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
     boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
 
     tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    tinyIRVContestResult.setBallotCount(10L);
+    tinyIRVContestResult.setBallotCount((long) tinyIRVCount);
     tinyIRVContestResult.setWinners(Set.of("Alice"));
     tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
 
-    // Default raire server.
-    // baseUrl = "http://localhost:8080";
+    // Default raire server. You can instead run the real raire service and set baseUrl accordingly,
+    // though the tests of invalid/uninterpretable data will fail.
     wireMockRaireServer.start();
     baseUrl = wireMockRaireServer.baseUrl();
+    String badUrl = baseUrl + badEndpoint;
     configureFor("localhost", wireMockRaireServer.port());
+    // Mock a proper response to the Boulder Mayoral '23 contest.
     stubFor(post(urlEqualTo(raireGenerateAssertionsEndpoint))
-        // .withMultipartRequestBody(
-        //    aMultipart()
-                .withRequestBody(equalToJson(gson.toJson(boulderRequest)))
-        // )
+        .withRequestBody(equalToJson(gson.toJson(boulderRequest)))
         .willReturn(aResponse()
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
             .withBody(gson.toJson(boulderResponse))));
+    // Mock a proper response to the IRV TinyExample1 contest.
+    stubFor(post(urlEqualTo(raireGenerateAssertionsEndpoint))
+                .withRequestBody(equalToJson(gson.toJson(tinyIRVRequest)))
+        .willReturn(aResponse()
+            .withStatus(HttpStatus.SC_OK)
+            .withHeader("Content-Type", "application/json")
+            .withBody(gson.toJson(tinyIRVResponse))));
+    // Mock a 404 for badUrl.
+    stubFor(post(urlEqualTo(badUrl))
+        .withRequestBody(equalToJson(gson.toJson(tinyIRVRequest)))
+        .willReturn(aResponse()
+            .withStatus(HttpStatus.SC_NOT_FOUND)));
+    // Mock an OK but invalid response from the nonsense endpoint.
+    // This is just a list of candidates, which should not make sense as a response.
+    stubFor(post(urlEqualTo(nonsenseResponseEndpoint))
+        .withRequestBody(equalToJson(gson.toJson(tinyIRVRequest)))
+        .willReturn(aResponse()
+            .withStatus(HttpStatus.SC_OK)
+            .withHeader("Content-Type", "application/json")
+            .withBody(gson.toJson(tinyIRVCandidates))));
+    // Mock an OK response with invalid json.
+    stubFor(post(urlEqualTo(invalidResponseEndpoint))
+        .withRequestBody(equalToJson(gson.toJson(tinyIRVRequest)))
+        .willReturn(aResponse()
+            .withStatus(HttpStatus.SC_OK)
+            .withHeader("Content-Type", "application/json")
+            .withBody("This isn't valid json")));
   }
 
   @AfterClass
@@ -152,11 +196,12 @@ public class GenerateAssertionsTests {
   }
 
   /**
-   * Calls the single-contest version for the tinyIRVExample, checks for the right winner.
+   * Calls the single-contest version of the endpoint for the boulder Mayor '23 example , checks
+   * for the right winner.
    */
   @Test
   public void rightBoulderIRVWinner() {
-    testUtils.log(LOGGER, "rightTinyIRVWinner");
+    testUtils.log(LOGGER, "rightBoulderIRVWinner");
 
     GenerateAssertionsResponseWithErrors result = endpoint.generateAssertionsUpdateWinners(
         mockedIRVContestResults, boulderRequest.contestName, boulderRequest.timeLimitSeconds,
@@ -199,16 +244,30 @@ public class GenerateAssertionsTests {
 
   /**
    * When raire sends an uninterpretable response, an appropriate error message appears.
+   * This tests a response that is not valid json.
    */
   @Test(expectedExceptions = RuntimeException.class,
-      expectedExceptionsMessageRegExp = ".*Error interpreting Raire response for contest testContest.*")
+      expectedExceptionsMessageRegExp = ".*Error interpreting Raire response for contest.*")
   public void uninterpretableRaireResponseThrowsRuntimeException() {
+    testUtils.log(LOGGER, "uninterpretableRaireResponseThrowsRuntimeException");
 
-    testUtils.log(LOGGER, "nonExistentContestThrowsRuntimeException");
-
-    endpoint.generateAssertionsUpdateWinners(mockedIRVContestResults, "testContest", 5,
-        baseUrl + raireGenerateAssertionsEndpoint);
+    endpoint.generateAssertionsUpdateWinners(mockedIRVContestResults, tinyIRV, 5,
+        baseUrl + invalidResponseEndpoint);
   }
+
+  /**
+   * When raire sends an unexpected response, an appropriate error message appears.
+   * This tests a response that is valid json, but not the json we were expecting.
+   */
+  @Test(expectedExceptions = RuntimeException.class,
+      expectedExceptionsMessageRegExp = ".*Error interpreting Raire response for contest.*")
+  public void unexpectedRaireResponseThrowsRuntimeException() {
+    testUtils.log(LOGGER, "unexpectedRaireResponseThrowsRuntimeException");
+
+    endpoint.generateAssertionsUpdateWinners(mockedIRVContestResults, tinyIRV, 5,
+        baseUrl + nonsenseResponseEndpoint);
+  }
+
 
   /**
    * When given a bad endpoint, a runtime exception is thrown with an appropriate error message.
@@ -218,8 +277,8 @@ public class GenerateAssertionsTests {
   public void badEndpointThrowsRuntimeException() {
     testUtils.log(LOGGER, "badEndpointThrowsRuntimeException");
 
-    String url = baseUrl + "/badUrl";
-    endpoint.generateAllAssertions(mockedIRVContestResults, 5, url);
+    String badUrl = baseUrl + badEndpoint;
+    endpoint.generateAllAssertions(mockedIRVContestResults, 5, badUrl);
   }
 
   /**

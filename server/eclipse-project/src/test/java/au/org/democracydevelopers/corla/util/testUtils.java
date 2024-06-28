@@ -40,9 +40,19 @@ public class testUtils {
   public final static String boulderMayoral = "City of Boulder Mayoral Candidates";
 
   /**
+   * Count of the universe size for Boulder Mayoral '23.
+   */
+  public final static int bouldMayoralCount = 118669;
+
+  /**
    * Tiny constructed example.
    */
   public final static String tinyIRV = "TinyExample1";
+
+  /**
+   * Count of the universe size for TinyExample1
+   */
+  public final static int tinyIRVCount = 10;
 
   /**
    * Non-existent contest
@@ -53,6 +63,11 @@ public class testUtils {
   public final static Choice bob = new Choice("Bob", "", false, false);
   public final static Choice chuan = new Choice("Chuan", "", false, false);
 
+  /**
+   * Candidates for tinyExample1
+   */
+  public final static List<Choice> tinyIRVCandidates = List.of(alice, bob, chuan);
+
   public final static List<Choice> boulderMayoralCandidates = List.of(
       new Choice("Aaron Brockett", "", false, false),
       new Choice("Nicole Speer", "", false, false),
@@ -61,7 +76,7 @@ public class testUtils {
   );
 
   public final static Contest tinyIRVExample = new Contest(tinyIRV, new County("Arapahoe", 3L), ContestType.IRV.toString(),
-      List.of(alice, bob, chuan), 3, 1, 0);
+      tinyIRVCandidates, 3, 1, 0);
   public final static ContestResult tinyIRVContestResult = new ContestResult(tinyIRV);
   public final static Contest boulderMayoralContest = new Contest(boulderMayoral, new County("Boulder", 7L), ContestType.IRV.toString(),
       boulderMayoralCandidates, 4, 1, 0);
@@ -73,7 +88,7 @@ public class testUtils {
    */
   public static final DoubleComparator doubleComparator = new DoubleComparator();
 
-  /*
+  /**
    * Location of the tiny examples intended to be human-tallyable.
    */
   public static final String TINY_CSV_PATH = "src/test/resources/CSVs/Tiny-IRV-Examples/";
