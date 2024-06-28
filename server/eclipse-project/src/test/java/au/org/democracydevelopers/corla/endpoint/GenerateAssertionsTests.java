@@ -108,10 +108,6 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
       = new GenerateAssertionsRequest(tiedIRV, tinyIRVCount, 5,
       tinyIRVCandidates.stream().map(Choice::name).toList());
 
-  /**
-   * Corla endpoint to be tested.
-   */
-  private final GenerateAssertions endpoint = new GenerateAssertions();
 
   /**
    * Raire endpoint for getting assertions.
@@ -247,6 +243,7 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   public void rightBoulderIRVWinner() {
     testUtils.log(LOGGER, "rightBoulderIRVWinner");
 
+    GenerateAssertions endpoint = new GenerateAssertions();
     GenerateAssertionsResponseWithErrors result = endpoint.generateAssertionsUpdateWinners(
         mockedIRVContestResults, boulderRequest.contestName, boulderRequest.timeLimitSeconds,
         baseUrl + raireGenerateAssertionsEndpoint);
@@ -263,6 +260,7 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   public void tiedWinnersCorrectlyRecorded() {
   testUtils.log(LOGGER, "tiedWinnersCorrectlyRecorded");
 
+  GenerateAssertions endpoint = new GenerateAssertions();
   GenerateAssertionsResponseWithErrors result = endpoint.generateAssertionsUpdateWinners(
       List.of(tiedIRVContestResult), tiedIRV, tiedIRVRequest.timeLimitSeconds,
       baseUrl + raireGenerateAssertionsEndpoint);
@@ -280,6 +278,7 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   public void rightWinners() {
     testUtils.log(LOGGER, "rightWinners");
 
+    GenerateAssertions endpoint = new GenerateAssertions();
     List<GenerateAssertionsResponseWithErrors> results
         = endpoint.generateAllAssertions(mockedIRVContestResults, boulderRequest.timeLimitSeconds,
         baseUrl + raireGenerateAssertionsEndpoint);
@@ -299,7 +298,8 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
       expectedExceptionsMessageRegExp = ".*Non-existent or non-IRV contest.*")
     public void nonExistentContestThrowsRuntimeException() {
     testUtils.log(LOGGER, "nonExistentContestThrowsRuntimeException");
-    
+
+    GenerateAssertions endpoint = new GenerateAssertions();
     endpoint.generateAssertionsUpdateWinners(mockedIRVContestResults, nonExistentContest, 5,
       baseUrl + raireGenerateAssertionsEndpoint);
   }
@@ -313,8 +313,8 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   public void uninterpretableRaireResponseThrowsRuntimeException() {
     testUtils.log(LOGGER, "uninterpretableRaireResponseThrowsRuntimeException");
 
-    GenerateAssertions newEndpoint = new GenerateAssertions();
-    newEndpoint.generateAssertionsUpdateWinners(mockedIRVContestResults, tinyIRV, 5,
+    GenerateAssertions endpoint = new GenerateAssertions();
+    endpoint.generateAssertionsUpdateWinners(mockedIRVContestResults, tinyIRV, 5,
         baseUrl + invalidResponseEndpoint);
   }
 
@@ -327,8 +327,8 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   public void unexpectedRaireResponseThrowsRuntimeException() {
     testUtils.log(LOGGER, "unexpectedRaireResponseThrowsRuntimeException");
 
-    GenerateAssertions newEndpoint = new GenerateAssertions();
-    newEndpoint.generateAssertionsUpdateWinners(mockedIRVContestResults, tinyIRV, 5,
+    GenerateAssertions endpoint = new GenerateAssertions();
+    endpoint.generateAssertionsUpdateWinners(mockedIRVContestResults, tinyIRV, 5,
         baseUrl + nonsenseResponseEndpoint);
   }
 
@@ -340,6 +340,7 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   public void badEndpointThrowsRuntimeException() {
     testUtils.log(LOGGER, "badEndpointThrowsRuntimeException");
 
+    GenerateAssertions endpoint = new GenerateAssertions();
     String badUrl = baseUrl + badEndpoint;
     endpoint.generateAllAssertions(mockedIRVContestResults, 5, badUrl);
   }
@@ -354,6 +355,7 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
 
     String url = "completelyNotAUrl" + "/badUrl";
 
+    GenerateAssertions endpoint = new GenerateAssertions();
     endpoint.generateAllAssertions(mockedIRVContestResults, 5, url);
   }
 
@@ -365,6 +367,7 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   public void nonExistentContestThrowsException() {
     testUtils.log(LOGGER, "badUrlThrowsUrlException");
 
+    GenerateAssertions endpoint = new GenerateAssertions();
     String url = "completelyNotAUrl" + "/badUrl";
     endpoint.generateAllAssertions(mockedIRVContestResults, 5, url);
   }
