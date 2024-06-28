@@ -37,7 +37,6 @@ import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -218,7 +217,6 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
             .withStatus(HttpStatus.SC_NOT_FOUND)));
     // Mock an OK but invalid response from the nonsense endpoint.
     // This is just a list of candidates, which should not make sense as a response.
-    /*
     stubFor(post(urlEqualTo(nonsenseResponseEndpoint))
         .withRequestBody(equalToJson(gson.toJson(tinyIRVRequest)))
         .willReturn(aResponse()
@@ -234,7 +232,6 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
             .withHeader("Content-Type", "application/json")
             .withBody("This isn't valid json")));
 
-     */
   }
 
   @AfterClass
@@ -251,7 +248,7 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
     testUtils.log(LOGGER, "rightBoulderIRVWinner");
 
     GenerateAssertionsResponseWithErrors result = endpoint.generateAssertionsUpdateWinners(
-        mockedIRVContestResults, boulderRequest.contestName, tiedIRVRequest.timeLimitSeconds,
+        mockedIRVContestResults, boulderRequest.contestName, boulderRequest.timeLimitSeconds,
         baseUrl + raireGenerateAssertionsEndpoint);
 
     assertEquals(result.contestName, boulderMayoral);
@@ -316,7 +313,8 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   public void uninterpretableRaireResponseThrowsRuntimeException() {
     testUtils.log(LOGGER, "uninterpretableRaireResponseThrowsRuntimeException");
 
-    endpoint.generateAssertionsUpdateWinners(mockedIRVContestResults, tinyIRV, 5,
+    GenerateAssertions newEndpoint = new GenerateAssertions();
+    newEndpoint.generateAssertionsUpdateWinners(mockedIRVContestResults, tinyIRV, 5,
         baseUrl + invalidResponseEndpoint);
   }
 
@@ -329,7 +327,8 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   public void unexpectedRaireResponseThrowsRuntimeException() {
     testUtils.log(LOGGER, "unexpectedRaireResponseThrowsRuntimeException");
 
-    endpoint.generateAssertionsUpdateWinners(mockedIRVContestResults, tinyIRV, 5,
+    GenerateAssertions newEndpoint = new GenerateAssertions();
+    newEndpoint.generateAssertionsUpdateWinners(mockedIRVContestResults, tinyIRV, 5,
         baseUrl + nonsenseResponseEndpoint);
   }
 
