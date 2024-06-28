@@ -56,11 +56,6 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
     protected static final String RAIRE_URL = "raire_url";
 
     /**
-     * RAIRE error code key.
-     */
-    protected static final String RAIRE_ERROR_CODE = "error_code";
-
-    /**
      * RAIRE service endpoint name.
      */
     protected static final String RAIRE_ENDPOINT = "/raire/get-assertions";

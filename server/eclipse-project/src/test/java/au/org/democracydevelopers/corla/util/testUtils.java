@@ -50,6 +50,11 @@ public class testUtils {
   public final static String tinyIRV = "TinyExample1";
 
   /**
+   * Tied contest for mocking.
+   */
+  public final static String tiedIRV = "TiedIRV";
+
+  /**
    * Count of the universe size for TinyExample1
    */
   public final static int tinyIRVCount = 10;
@@ -75,12 +80,27 @@ public class testUtils {
       new Choice("Paul Tweedlie", "", false, false)
   );
 
+  /**
+   * Contest and ContestResult for tiny IRV example.
+   */
   public final static Contest tinyIRVExample = new Contest(tinyIRV, new County("Arapahoe", 3L), ContestType.IRV.toString(),
       tinyIRVCandidates, 3, 1, 0);
   public final static ContestResult tinyIRVContestResult = new ContestResult(tinyIRV);
+
+  /**
+   * Contest and ContestResult for Boulder Mayoral '23 example.
+   */
   public final static Contest boulderMayoralContest = new Contest(boulderMayoral, new County("Boulder", 7L), ContestType.IRV.toString(),
       boulderMayoralCandidates, 4, 1, 0);
   public final static ContestResult boulderIRVContestResult = new ContestResult(boulderMayoral);
+
+  /**
+   * Contest and ContestResult for tied example.
+   */
+  public final static Contest tiedIRVContest = new Contest( tiedIRV, new County("Ouray", 46L), ContestType.IRV.toString(),
+      tinyIRVCandidates, 3, 1, 0);
+  public final static ContestResult tiedIRVContestResult = new ContestResult(tiedIRV);
+
   public final static List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult, tinyIRVContestResult);
 
   /**

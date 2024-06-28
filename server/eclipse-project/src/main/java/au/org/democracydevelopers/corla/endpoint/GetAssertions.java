@@ -32,6 +32,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import au.org.democracydevelopers.corla.communication.requestToRaire.GetAssertionsRequest;
+import au.org.democracydevelopers.corla.communication.responseFromRaire.RaireServiceErrors;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -200,11 +201,11 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
                         + getAssertionsRequest.contestName));
                 IOUtils.copy(raireResponse.getEntity().getContent(), zos);
 
-            } else if(raireResponse.containsHeader(RAIRE_ERROR_CODE)) {
+            } else if(raireResponse.containsHeader(RaireServiceErrors.ERROR_CODE_KEY)) {
                 // Error response about a specific contest, e.g. "NO_ASSERTIONS_PRESENT".
                 // Write the error into the zip file and continue.
 
-                final String code = raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getValue();
+                final String code = raireResponse.getFirstHeader(RaireServiceErrors.ERROR_CODE_KEY).getValue();
                 LOGGER.debug(String.format("%s %s %s.", prefix, "Error response " + code, "received from RAIRE for "
                         + getAssertionsRequest.contestName));
                 zos.write(code.getBytes(StandardCharsets.UTF_8));

@@ -23,7 +23,10 @@ package au.org.democracydevelopers.corla.endpoint;
 
 import au.org.democracydevelopers.corla.communication.requestToRaire.GenerateAssertionsRequest;
 import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
+import au.org.democracydevelopers.corla.communication.responseFromRaire.RaireServiceErrors;
 import au.org.democracydevelopers.corla.communication.responseToColoradoRla.GenerateAssertionsResponseWithErrors;
+
+import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 import au.org.democracydevelopers.corla.util.testUtils;
 
@@ -31,7 +34,6 @@ import com.google.gson.Gson;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -90,6 +92,13 @@ public class GenerateAssertionsTests {
       tinyIRVCandidates.stream().map(Choice::name).toList());
 
   /**
+   * Request for tiedIRV contest. This has the same candidates and ballot count as tinyIRV.
+   */
+  private final static GenerateAssertionsRequest tiedIRVRequest
+      = new GenerateAssertionsRequest(tiedIRV, tinyIRVCount, 5,
+      tinyIRVCandidates.stream().map(Choice::name).toList());
+
+  /**
    * Corla endpoint to be tested.
    */
   private final GenerateAssertions endpoint = new GenerateAssertions();
@@ -138,7 +147,6 @@ public class GenerateAssertionsTests {
    */
   @BeforeClass
   public void initMocks() {
-    MockitoAnnotations.openMocks(this);
 
     boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
     boulderIRVContestResult.setBallotCount((long) bouldMayoralCount);
@@ -149,6 +157,11 @@ public class GenerateAssertionsTests {
     tinyIRVContestResult.setBallotCount((long) tinyIRVCount);
     tinyIRVContestResult.setWinners(Set.of("Alice"));
     tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
+
+    tiedIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+    tiedIRVContestResult.setBallotCount((long) tinyIRVCount);
+    tiedIRVContestResult.setWinners(Set.of(UNKNOWN_WINNER));
+    tiedIRVContestResult.addContests(Set.of(tiedIRVContest));
 
     // Default raire server. You can instead run the real raire service and set baseUrl accordingly,
     // though the tests of invalid/uninterpretable data will fail.
@@ -170,6 +183,14 @@ public class GenerateAssertionsTests {
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
             .withBody(gson.toJson(tinyIRVResponse))));
+    // Mock a TIED_WINNERS response to the tiedIRV contest.
+    stubFor(post(urlEqualTo(raireGenerateAssertionsEndpoint))
+        .withRequestBody(equalToJson(gson.toJson(tiedIRVRequest)))
+        .willReturn(aResponse()
+            .withStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+            .withHeader("Content-Type", "application/json")
+            .withHeader(RaireServiceErrors.ERROR_CODE_KEY,
+                RaireServiceErrors.RaireErrorCodes.TIED_WINNERS.toString())));
     // Mock a 404 for badUrl.
     stubFor(post(urlEqualTo(badUrl))
         .withRequestBody(equalToJson(gson.toJson(tinyIRVRequest)))
@@ -198,7 +219,7 @@ public class GenerateAssertionsTests {
   }
 
   /**
-   * Calls the single-contest version of the endpoint for the boulder Mayor '23 example , checks
+   * Calls the single-contest version of the endpoint for the boulder Mayor '23 example, checks
    * for the right winner.
    */
   @Test
@@ -206,11 +227,28 @@ public class GenerateAssertionsTests {
     testUtils.log(LOGGER, "rightBoulderIRVWinner");
 
     GenerateAssertionsResponseWithErrors result = endpoint.generateAssertionsUpdateWinners(
-        mockedIRVContestResults, boulderRequest.contestName, boulderRequest.timeLimitSeconds,
+        mockedIRVContestResults, boulderRequest.contestName, tiedIRVRequest.timeLimitSeconds,
         baseUrl + raireGenerateAssertionsEndpoint);
 
     assertEquals(result.contestName, boulderMayoral);
     assertEquals(result.winner, "Aaron Brockett");
+  }
+
+  /**
+   * Calls the single-contest version of the endpoint for the tied contests, checks that the
+   * winner is unknown and the TIED_WINNERS error is returned.
+   */
+  @Test
+  public void tiedWinnersCorrectlyRecorded() {
+  testUtils.log(LOGGER, "tiedWinnersCorrectlyRecorded");
+
+  GenerateAssertionsResponseWithErrors result = endpoint.generateAssertionsUpdateWinners(
+      List.of(tiedIRVContestResult), tiedIRV, tiedIRVRequest.timeLimitSeconds,
+      baseUrl + raireGenerateAssertionsEndpoint);
+
+  assertEquals(result.contestName, tiedIRV);
+  assertEquals(result.winner, UNKNOWN_WINNER);
+  assertEquals(result.raireError ,RaireServiceErrors.RaireErrorCodes.TIED_WINNERS.toString());
   }
 
   /**
@@ -221,7 +259,8 @@ public class GenerateAssertionsTests {
   public void rightWinners() {
     testUtils.log(LOGGER, "rightWinners");
 
-    List<GenerateAssertionsResponseWithErrors> results = endpoint.generateAllAssertions(mockedIRVContestResults, 5,
+    List<GenerateAssertionsResponseWithErrors> results
+        = endpoint.generateAllAssertions(mockedIRVContestResults, boulderRequest.timeLimitSeconds,
         baseUrl + raireGenerateAssertionsEndpoint);
 
     assertEquals(results.size(), 2);
