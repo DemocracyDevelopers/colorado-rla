@@ -21,11 +21,8 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.assertion;
 
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.TC;
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.checkComputeDiscrepancy;
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.checkCountsDiscrepancyMap;
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.countsEqual;
 import static au.org.democracydevelopers.corla.util.testUtils.log;
+import static java.lang.Math.ceil;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -38,15 +35,11 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.CVRAuditInfo;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
-import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 
 /**
@@ -58,72 +51,13 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
  * -- Scoring of NEN assertions.
  * -- Computation of discrepancies.
  * -- The logic involved in the re-auditing of ballots.
+ * -- TODO: Test Assertion::riskMeasurement()
  * Refer to the Guide to RAIRE for details on how NEN assertions are scored, and how
  * discrepancies are computed (Part 2, Appendix A.)
  */
-public class NENAssertionTests {
+public class NENAssertionTests extends AssertionTests {
 
   private static final Logger LOGGER = LogManager.getLogger(NENAssertionTests.class);
-
-  /**
-   * Establish a mocked CVRContestInfo for use in testing Assertion scoring.
-   */
-  @Mock
-  private CVRContestInfo cvrInfo;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "A", "B", "C", "D".
-   */
-  @Mock
-  private CVRContestInfo ABCD;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "B", "A", "C", "D".
-   */
-  @Mock
-  private CVRContestInfo BACD;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "D", "A", "B", "C".
-   */
-  @Mock
-  private CVRContestInfo DABC;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "B", "A".
-   */
-  @Mock
-  private CVRContestInfo BA;
-
-  /**
-   * Mocked CVRContestInfo representing a blank vote.
-   */
-  @Mock
-  private CVRContestInfo blank;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "A".
-   */
-  @Mock
-  private CVRContestInfo A;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "B".
-   */
-  @Mock
-  private CVRContestInfo B;
-
-  /**
-   * Mocked CastVoteRecord to represent a CVR.
-   */
-  @Mock
-  private CastVoteRecord cvr;
-
-  /**
-   * Mocked CastVoteRecord to represent an audited CVR.
-   */
-  @Mock
-  private CastVoteRecord auditedCvr;
 
 
   /**
@@ -140,23 +74,6 @@ public class NENAssertionTests {
       "Test Contest", List.of("Alice", "Chuan", "Bob"), 50, 0.1,
       8, Map.of(), 0, 0, 0, 0, 0);
 
-  /**
-   * Initialise mocked objects prior to the first test.
-   */
-  @BeforeClass
-  public void initMocks() {
-    MockitoAnnotations.openMocks(this);
-
-    when(ABCD.choices()).thenReturn(List.of("A", "B", "C", "D"));
-    when(BACD.choices()).thenReturn(List.of("B", "A", "C", "D"));
-    when(DABC.choices()).thenReturn(List.of("D", "A", "B", "C"));
-    when(BA.choices()).thenReturn(List.of("B", "A"));
-    when(blank.choices()).thenReturn(List.of());
-    when(A.choices()).thenReturn(List.of("A"));
-    when(B.choices()).thenReturn(List.of("B"));
-
-    when(cvr.id()).thenReturn(1L);
-  }
 
   /**
    * This suite of tests verifies the optimistic sample size computation for NEN assertions.
@@ -868,7 +785,7 @@ public class NENAssertionTests {
    */
   public void testNENComputeDiscrepancyNone(CVRContestInfo info, RecordType auditedType){
     log(LOGGER, String.format("testNENComputeDiscrepancyNone[%s;%s]", info.choices(), auditedType));
-    resetMocks(info, info, RecordType.UPLOADED, ConsensusValue.YES, auditedType);
+    resetMocks(info, info, RecordType.UPLOADED, ConsensusValue.YES, auditedType, TC);
 
     // Create a series of NEN assertions and check that this cvr/audited ballot are never
     // identified as having a discrepancy.
@@ -910,7 +827,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENomputeDiscrepancyOneOver1(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneOver1[%s]", recordType));
-    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("A", "C",  TC, List.of("A", "B", "C"),
         50, 0.1, 8, Map.of(), 0, 0,
@@ -928,7 +845,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyOneOver2(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneOver2[%s]", recordType));
-    resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("A", "C", TC, List.of("A", "B"), 50,
         0.1, 8, Map.of(2L, -1, 4L, 2), 0,
@@ -946,7 +863,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyOneOver3(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneOver3[%s]", recordType));
-    resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("A", "B", TC, List.of("A", "B", "C"),50,
         0.1, 8, Map.of(2L, -1), 0, 1,
@@ -964,7 +881,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyOneOver4(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneOver4[%s]", recordType));
-    resetMocks(ABCD, DABC, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(ABCD, DABC, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("B", "C",  TC, List.of("B", "C", "D"),
         50, 0.1, 8, Map.of(), 0, 0,
@@ -982,7 +899,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyTwoOver1(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyTwoOver1[%s]", recordType));
-    resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("A", "B", TC,  List.of("A", "B"), 50,
         0.1, 8, Map.of(), 0, 0, 0,
@@ -1003,7 +920,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyTwoOver2(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyTwoOver2[%s]", recordType));
-    resetMocks(ABCD, DABC, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(ABCD, DABC, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("C", "D", TC,  List.of("C", "D"),
         50, 0.1, 8, Map.of(3L, 2), 0,
@@ -1022,7 +939,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyTwoOver3(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyTwoOver2[%s]", recordType));
-    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("A", "B", TC,  List.of("A", "B", "C", "D"),
         50, 0.1, 8, Map.of(3L, 2), 0,
@@ -1043,7 +960,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyOneUnder1(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneUnder1[%s]", recordType));
-    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("B", "C", TC, List.of("A", "B", "C", "D"),
         50, 0.1, 8, Map.of(), 0, 0,
@@ -1061,7 +978,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyOneUnder2(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneUnder2[%s]", recordType));
-    resetMocks(blank, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(blank, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("A", "C", TC, List.of("A", "C"), 50,
         0.1, 8, Map.of(2L, 0), 0, 0,
@@ -1079,7 +996,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyOneUnder3(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneUnder3[%s]", recordType));
-    resetMocks(B, A, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(B, A, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("A", "C", TC, List.of("A", "B", "C"),
         50, 0.1, 8, Map.of(2L, 1), 1,
@@ -1097,7 +1014,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyOneUnder4(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneUnder4[%s]", recordType));
-    resetMocks(B, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(B, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("A", "C", TC, List.of("A", "C"),
         50, 0.1, 8, Map.of(2L, 1), 1,
@@ -1115,7 +1032,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyTwoUnder1(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyTwoUnder1[%s]", recordType));
-    resetMocks(B, A, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(B, A, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("A", "B", TC, List.of("A", "B"), 50,
         0.1, 8, Map.of(), 0, 0, 0,
@@ -1134,7 +1051,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyTwoUnder2(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyTwoUnder2[%s]", recordType));
-    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("B", "A", TC, List.of("A", "B", "C", "D"),
         50, 0.1, 8, Map.of(2L, -1), 0,
@@ -1156,7 +1073,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyOther1(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOther1[%s]", recordType));
-    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("D", "C", TC, List.of("B", "C", "D"),
         50, 0.1,  8, Map.of(2L, -1), 0,
@@ -1177,7 +1094,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyOther2(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOther2[%s]", recordType));
-    resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("C", "D", TC, List.of("C", "D"), 50,
         0.1, 8, Map.of(), 0, 0, 0,
@@ -1195,7 +1112,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyOther3(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOther3[%s]", recordType));
-    resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("C", "D", TC, List.of("A", "B", "C", "D"),
         50, 0.1, 8, Map.of(2L, 0), 0,
@@ -1213,7 +1130,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyOther4(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOther4[%s]", recordType));
-    resetMocks(A, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(A, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("A", "C", TC, List.of("A", "C", "D"), 50,
         0.1, 8, Map.of(2L, 2), 0, 0, 1,
@@ -1232,7 +1149,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyOther5(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOther5[%s]", recordType));
-    resetMocks(blank, BA, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(blank, BA, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("C", "D", TC, List.of("C", "D"),
         50, 0.1, 8, Map.of(), 0, 0,
@@ -1253,7 +1170,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyPhantomRecordOneOver1(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyPhantomRecordOneOver1[%s]", recordType));
-    resetMocks(blank, blank, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType);
+    resetMocks(blank, blank, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("A", "B", TC, List.of("A", "B"), 50,
         0.1, 8, Map.of(), 0, 0, 0,
@@ -1275,7 +1192,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyPhantomRecordOneOver2(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyPhantomRecordOneOver2[%s]", recordType));
-    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType);
+    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("F", "G", TC, List.of("B", "D", "F", "G"),
         50, 0.1, 8, Map.of(), 0, 0,
@@ -1298,7 +1215,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyPhantomRecordOther1(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyPhantomRecordOther1[%s]", recordType));
-    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType);
+    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("A", "B", TC, List.of("A", "B", "C"),
         50, 0.1, 8, Map.of(), 0, 0,
@@ -1322,7 +1239,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyPhantomRecordTwoOver1(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyPhantomRecordTwoOver1[%s]", recordType));
-    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType);
+    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNENAssertion("B", "A", TC, List.of("A", "B", "D"),
         50, 0.1, 8, Map.of(), 0, 0,
@@ -1342,7 +1259,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyPhantomRecordNoConsensus1(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyPhantomRecordNoConsensus1[%s]", recordType));
-    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.NO, recordType);
+    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.NO, recordType, TC);
 
     List<Assertion> assertions = getSetAnyNEN();
     checkComputeDiscrepancy(cvr, auditedCvr, assertions, 2, Map.of(1L, 2),
@@ -1356,7 +1273,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyPhantomRecordNoConsensus2(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyPhantomRecordNoConsensus2[%s]", recordType));
-    resetMocks(blank, blank, RecordType.PHANTOM_RECORD, ConsensusValue.NO, recordType);
+    resetMocks(blank, blank, RecordType.PHANTOM_RECORD, ConsensusValue.NO, recordType, TC);
 
     List<Assertion> assertions = getSetAnyNEN();
     checkComputeDiscrepancy(cvr, auditedCvr, assertions, 2, Map.of(1L, 2),
@@ -1370,7 +1287,7 @@ public class NENAssertionTests {
   @Test
   public void testNENComputeDiscrepancyPhantomRecordPhantomBallot(){
     log(LOGGER, "testNENComputeDiscrepancyPhantomRecordPhantomBallot");
-    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, RecordType.PHANTOM_BALLOT);
+    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, RecordType.PHANTOM_BALLOT, TC);
 
     List<Assertion> assertions = getSetAnyNEN();
     checkComputeDiscrepancy(cvr, auditedCvr, assertions, 2, Map.of(1L, 2),
@@ -1386,7 +1303,7 @@ public class NENAssertionTests {
   @Test
   public void testNENComputeDiscrepancyPhantomBallotNormalCVR1(){
     log(LOGGER, "testNENComputeDiscrepancyPhantomRecordNormalCVR1");
-    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT);
+    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT, TC);
 
     Assertion a1 = createNENAssertion("A", "F", TC, List.of("A", "C", "F"),
         50, 0.1, 8, Map.of(), 0, 0,
@@ -1411,7 +1328,7 @@ public class NENAssertionTests {
   @Test
   public void testNENComputeDiscrepancyPhantomBallotNormalCVR2(){
     log(LOGGER, "testNENComputeDiscrepancyPhantomRecordNormalCVR2");
-    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT);
+    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT, TC);
 
     Assertion a1 = createNENAssertion("F", "A", TC, List.of("A", "B", "C", "D"),
         50, 0.1,8, Map.of(), 0, 0,
@@ -1435,7 +1352,7 @@ public class NENAssertionTests {
   @Test
   public void testNENComputeDiscrepancyPhantomBallotNormalCVR3(){
     log(LOGGER, "testNENComputeDiscrepancyPhantomRecordNormalCVR3");
-    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT);
+    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT, TC);
 
     Assertion a1 = createNENAssertion("B", "C", TC, List.of("A", "B", "C"),
         50, 0.1,8, Map.of(), 0, 0,
@@ -1455,7 +1372,7 @@ public class NENAssertionTests {
   @Test
   public void testNENComputeDiscrepancyPhantomBallotNormalCVR4(){
     log(LOGGER, "testNENComputeDiscrepancyPhantomRecordNormalCVR4");
-    resetMocks(blank, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT);
+    resetMocks(blank, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT, TC);
 
     List<Assertion> assertions = getSetAnyNEN();
     checkComputeDiscrepancy(cvr, auditedCvr, assertions, 1, Map.of(1L, 1),
@@ -1472,7 +1389,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyNoConsensusNormalCVR1(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyNoConsensusNormalCVR1[%s]", recordType));
-    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.NO, recordType);
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.NO, recordType, TC);
 
     Assertion a1 = createNENAssertion("A", "F", TC, List.of("A", "C", "F"),
         50, 0.1, 8, Map.of(), 0, 0,
@@ -1495,7 +1412,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyNoConsensusNormalCVR2(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyNoConsensusNormalCVR2[%s]", recordType));
-    resetMocks(ABCD, A, RecordType.UPLOADED, ConsensusValue.NO, recordType);
+    resetMocks(ABCD, A, RecordType.UPLOADED, ConsensusValue.NO, recordType, TC);
 
     Assertion a1 = createNENAssertion("F", "A", TC, List.of("A", "F"),
         50, 0.1, 8, Map.of(), 0, 0,
@@ -1513,7 +1430,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyNoConsensusNormalCVR3(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyNoConsensusNormalCVR3[%s]", recordType));
-    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.NO, recordType);
+    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.NO, recordType, TC);
 
     Assertion a1 = createNENAssertion("B", "C", TC, List.of("A", "B", "C"),
         50, 0.1, 8, Map.of(), 0, 0,
@@ -1533,7 +1450,7 @@ public class NENAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNENComputeDiscrepancyNoConsensusNormalCVR4(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyNoConsensusNormalCVR4[%s]", recordType));
-    resetMocks(blank, ABCD, RecordType.UPLOADED, ConsensusValue.NO, recordType);
+    resetMocks(blank, ABCD, RecordType.UPLOADED, ConsensusValue.NO, recordType, TC);
 
     List<Assertion> assertions = getSetAnyNEN();
     checkComputeDiscrepancy(cvr, auditedCvr, assertions, 1, Map.of(1L, 1),
@@ -1828,7 +1745,7 @@ public class NENAssertionTests {
   @Test()
   public void testNENReauditBallot1(){
     log(LOGGER, String.format("testNENReauditBallot1[%s]", RecordType.REAUDITED));
-    resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.REAUDITED);
+    resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.REAUDITED, TC);
 
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
@@ -1855,7 +1772,7 @@ public class NENAssertionTests {
   @Test()
   public void testNENReauditBallot2(){
     log(LOGGER, String.format("testNENReauditBallot2[%s]", RecordType.REAUDITED));
-    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, RecordType.REAUDITED);
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, RecordType.REAUDITED, TC);
 
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
@@ -1884,7 +1801,7 @@ public class NENAssertionTests {
   @Test()
   public void testNENReauditBallot3(){
     log(LOGGER, String.format("testNENReauditBallot3[%s]", RecordType.REAUDITED));
-    resetMocks(ABCD, ABCD, RecordType.UPLOADED, ConsensusValue.YES, RecordType.REAUDITED);
+    resetMocks(ABCD, ABCD, RecordType.UPLOADED, ConsensusValue.YES, RecordType.REAUDITED, TC);
 
     final int N = 5;
     CVRAuditInfo info = new CVRAuditInfo();
@@ -2026,6 +1943,190 @@ public class NENAssertionTests {
   }
 
   /**
+   * Test the Assertion::computeInitialOptimisticSamplesToAudit() method for NEN assertions
+   * with varying diluted margins.
+   */
+  @Test
+  public void testNENInitialOptimisticSampleSize(){
+    log(LOGGER, "testNENInitialOptimisticSampleSize");
+    Assertion a1 = createNENAssertion("A", "B", TC, List.of("A", "B"),100, 0.01,
+        100, Map.of(), 0, 0, 0, 0, 0);
+
+    assertEquals(a1.computeInitialOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 729);
+
+    Assertion a2 = createNENAssertion("B", "C", TC, List.of("B", "C"),159, 0.0159,
+        159, Map.of(), 0, 0, 0, 0, 0);
+
+    assertEquals(a2.computeInitialOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 392);
+
+    Assertion a3 = createNENAssertion("D", "E", TC, List.of("D", "E"),1, 0.00001,
+        1000, Map.of(1L, -1, 2L, 0, 3L, 1), 1,
+        1, 0, 0, 1);
+
+    assertEquals(a3.computeInitialOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 728698);
+
+    Assertion a4 = createNENAssertion("F", "G", TC, List.of("F", "G"),1235, 0.12345,
+        50, Map.of(1L, -2), 0, 0, 0,
+        1, 0);
+
+    assertEquals(a4.computeInitialOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 51);
+
+    Assertion a5 = createNENAssertion("G", "H", TC, List.of("G", "H"),3325, 0.33247528,
+        17, Map.of(1L, 1, 2L, 2), 1, 0,
+        1, 0, 0);
+
+    assertEquals(a5.computeInitialOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 22);
+  }
+
+  /**
+   * Test the Assertion::computeOptimisticSamplesToAudit() method for NEN assertions with varying
+   * diluted margins and discrepancies.
+   */
+  @Test
+  public void computeOptimisticSamplesToAudit(){
+    log(LOGGER, "computeOptimisticSamplesToAudit");
+    Assertion a1 = createNENAssertion("A", "B", TC, List.of("A", "B"),100, 0.01,
+        100, Map.of(), 0, 0, 0, 0, 0);
+
+    assertEquals(a1.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 729);
+    assertEquals(a1.optimisticSamplesToAudit.intValue(), 729);
+
+    Assertion a2 = createNENAssertion("B", "C", TC, List.of("B", "C"),159,
+        0.0159, 159, Map.of(), 1, 1, 1,
+        1, 1);
+
+    assertEquals(a2.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 767);
+    assertEquals(a2.optimisticSamplesToAudit.intValue(), 767);
+
+    Assertion a3 = createNENAssertion("D", "E", TC, List.of("D", "E"),1,
+        0.00001, 1000, Map.of(1L, -1, 2L, 0, 3L, 1),
+        1, 1, 0, 0, 1);
+
+    assertEquals(a3.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 783434);
+    assertEquals(a3.optimisticSamplesToAudit.intValue(), 783434);
+
+    Assertion a4 = createNENAssertion("F", "G", TC, List.of("F", "G"),1235,
+        0.12345, 50, Map.of(1L, -2), 0, 0,
+        0, 1, 0);
+
+    assertEquals(a4.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 40);
+    assertEquals(a4.optimisticSamplesToAudit.intValue(), 40);
+
+    Assertion a5 = createNENAssertion("G", "H", TC, List.of("G", "H"),3325,
+        0.33247528, 17, Map.of(1L, 1, 2L, 2), 1,
+        0, 1, 0, 0);
+
+    assertEquals(a5.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 47);
+    assertEquals(a5.optimisticSamplesToAudit.intValue(), 47);
+
+    Assertion a6 = createNENAssertion("B", "C", TC, List.of("B", "C"),159,
+        0.0159, 159, Map.of(1L, -1, 2L, -2, 3L, 0),
+        0, 1, 0, 1, 1);
+
+    assertEquals(a6.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 253);
+    assertEquals(a6.optimisticSamplesToAudit.intValue(), 253);
+
+    Assertion a7 = createNENAssertion("B", "C", TC, List.of("B", "C"),159,
+        0.0159, 159, Map.of(1L, -1, 2L, -2), 0, 1,
+        0, 1, 0);
+
+    assertEquals(a7.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 253);
+    assertEquals(a7.optimisticSamplesToAudit.intValue(), 253);
+  }
+
+  /**
+   * Test the Assertion::computeEstimatedSamplesToAudit() method for NEN assertions
+   * with varying diluted margins, discrepancies, and current audited sample count.
+   */
+  @Test(dataProvider = "AuditSampleNumbers", dataProviderClass = AssertionTests.class)
+  public void computeEstimatedSamplesToAudit(int auditedSampleCount){
+    log(LOGGER, String.format("computeEstimatedSamplesToAudit[%d]",auditedSampleCount));
+    Assertion a1 = createNENAssertion("A", "B", TC, List.of("A","B"),100,
+        0.01, 100, Map.of(), 0, 0, 0,
+        0, 0);
+
+    a1.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3);
+    assertEquals(a1.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), 729);
+    assertEquals(a1.optimisticSamplesToAudit.intValue(), 729);
+    assertEquals(a1.estimatedSamplesToAudit.intValue(), 729);
+
+    Assertion a2 = createNENAssertion("B", "C", TC, List.of("B","C"),159,
+        0.0159, 159, Map.of(), 1, 1, 1,
+        1, 1);
+
+    a2.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5);
+    double scalingFactor = auditedSampleCount == 0 ? 1 : 1 + (2.0/(double)auditedSampleCount);
+    int sample = (int)ceil(767*scalingFactor);
+    assertEquals(a2.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
+    assertEquals(a2.optimisticSamplesToAudit.intValue(), 767);
+    assertEquals(a2.estimatedSamplesToAudit.intValue(), sample);
+
+    Assertion a3 = createNENAssertion("D", "E", TC, List.of("D","E"),1,
+        0.00001, 1000, Map.of(1L, -1, 2L, 0, 3L, 1),
+        1, 1, 0, 0, 1);
+
+    a3.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3);
+    scalingFactor = auditedSampleCount == 0 ? 1 : 1 + (1.0/(double)auditedSampleCount);
+    sample = (int)ceil(783434*scalingFactor);
+    assertEquals(a3.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
+    assertEquals(a3.optimisticSamplesToAudit.intValue(), 783434);
+    assertEquals(a3.estimatedSamplesToAudit.intValue(), sample);
+
+    Assertion a4 = createNENAssertion("F", "G", TC, List.of("F","G"),1235,
+        0.12345, 50, Map.of(1L, -2, 2L, 1), 1,
+        0, 0, 1, 0);
+
+    a4.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5);
+    scalingFactor = auditedSampleCount == 0 ? 1 : 1 + (1.0/(double)auditedSampleCount);
+    sample = (int)ceil(51*scalingFactor);
+    assertEquals(a4.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
+    assertEquals(a4.optimisticSamplesToAudit.intValue(), 51);
+    assertEquals(a4.estimatedSamplesToAudit.intValue(), sample);
+
+    Assertion a5 = createNENAssertion("H", "I", TC, List.of("H","I"),3325,
+        0.33247528, 17, Map.of(1L, 1, 2L, 2), 1,
+        0, 1, 0, 0);
+
+    a5.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3);
+    scalingFactor = auditedSampleCount == 0 ? 1 : 1 + (2.0/(double)auditedSampleCount);
+    sample = (int)ceil(47*scalingFactor);
+    assertEquals(a5.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
+    assertEquals(a5.optimisticSamplesToAudit.intValue(), 47);
+    assertEquals(a5.estimatedSamplesToAudit.intValue(), sample);
+
+    Assertion a6 = createNENAssertion("B", "C", TC, List.of("B","C"),159,
+        0.0159, 159, Map.of(1L, -1, 2L, -2, 3L, 0),
+        0, 1, 0, 1, 1);
+
+    a6.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5);
+    assertEquals(a6.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), 253);
+    assertEquals(a6.optimisticSamplesToAudit.intValue(), 253);
+    assertEquals(a6.estimatedSamplesToAudit.intValue(), 253);
+
+    Assertion a7 = createNENAssertion("B", "C", TC, List.of("B","C"),159,
+        0.0159, 159, Map.of(1L, -1, 2L, -2), 0,
+        1, 0, 1, 0);
+
+    a7.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5);
+    assertEquals(a7.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), 253);
+    assertEquals(a7.optimisticSamplesToAudit.intValue(), 253);
+    assertEquals(a7.estimatedSamplesToAudit.intValue(), 253);
+
+    Assertion a8 = createNENAssertion("B", "C", TC, List.of("B","C"),159,
+        0.0159, 159, Map.of(1L, -1, 2L, -2, 3L, 1,
+            4L, 1, 5L, 2, 6L, 2, 7L, 1), 3, 1,
+        2, 1, 0);
+
+    scalingFactor = auditedSampleCount == 0 ? 1 : 1 + (5.0/(double)auditedSampleCount);
+    sample = (int)ceil(1434*scalingFactor);
+
+    a8.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3);
+    assertEquals(a8.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
+    assertEquals(a8.optimisticSamplesToAudit.intValue(), 1434);
+    assertEquals(a8.estimatedSamplesToAudit.intValue(), sample);
+  }
+
+  /**
    * Create an NEN assertion with the given parameters.
    * @param winner Winner of the assertion.
    * @param loser Loser of the assertion.
@@ -2055,23 +2156,6 @@ public class NENAssertionTests {
     return a;
   }
 
-  /**
-   * Reset the CVR and audited CVR mock objects with the given parameters.
-   * @param cvrInfo CVRContestInfo for the CVR.
-   * @param acvrInfo CVRContestInfo for the audited ballot.
-   * @param cvrRecType Record type for the CVR.
-   * @param acvrConsensus Consensys value for the audited ballot.
-   * @param acvrRecType Record type for the audited ballot.
-   */
-  private void resetMocks(CVRContestInfo cvrInfo, CVRContestInfo acvrInfo, RecordType cvrRecType,
-      ConsensusValue acvrConsensus, RecordType acvrRecType){
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(cvrInfo));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(acvrInfo));
-
-    when(acvrInfo.consensus()).thenReturn(acvrConsensus);
-    when(cvr.recordType()).thenReturn(cvrRecType);
-    when(auditedCvr.recordType()).thenReturn(acvrRecType);
-  }
 
   /**
    * Return a set of NEN assertions for use when testing discrepancy computation on arbitrary

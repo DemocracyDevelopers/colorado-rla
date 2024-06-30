@@ -21,6 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model;
 
+import static au.org.democracydevelopers.corla.util.testUtils.log;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -28,41 +29,38 @@ import au.org.democracydevelopers.corla.model.assertion.Assertion;
 import au.org.democracydevelopers.corla.model.assertion.AssertionTests;
 import au.org.democracydevelopers.corla.model.assertion.NEBAssertion;
 import au.org.democracydevelopers.corla.model.assertion.NENAssertion;
-import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.ext.ScriptUtils;
-import org.testcontainers.jdbc.JdbcDatabaseDelegate;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.model.AuditReason;
 import us.freeandfair.corla.model.AuditStatus;
+import us.freeandfair.corla.model.CVRAuditInfo;
+import us.freeandfair.corla.model.CVRContestInfo;
+import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
+import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.model.ContestResult;
-import us.freeandfair.corla.persistence.Persistence;
 
 import javax.transaction.Transactional;
 
 /**
  * This class contains tests for the functionality present in IRVComparisonAudit.
+ * TODO: tests for removing discrepancies -2, -1, 0, 1, 2
+ * TODO: tests for risk measurement.
+ * TODO: tests of the reaudit ballot workflow.
+ * TODO: tests for remaining error modes.
  */
 @Transactional
-public class IRVComparisonAuditTests extends TestClassWithDatabase {
+public class IRVComparisonAuditTests extends AssertionTests {
 
   private static final Logger LOGGER = LogManager.getLogger(IRVComparisonAuditTests.class);
-
-  /**
-   * Container for the mock-up database.
-   */
-  static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
    * Mock of a ContestResult for the contest 'One NEB Assertion Contest'.
@@ -95,26 +93,55 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
   private ContestResult doesNotExistContestResult;
 
   /**
-   * Start the test container and establish persistence properties before the first test.
+   * Mock of a ContestResult for the contest 'Test Estimation NEB Only'.
    */
-  @BeforeClass
-  public static void beforeAll() {
-    postgres.start();
-    Persistence.setProperties(createHibernateProperties(postgres));
+  @Mock
+  private ContestResult testEstimationNEBOnly;
 
-    var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
-    ScriptUtils.runInitScript(containerDelegate, "SQL/simple-assertions.sql");
-  }
+  /**
+   * Mock of a ContestResult for the contest 'Test Estimation NEN Only'.
+   */
+  @Mock
+  private ContestResult testEstimationNENOnly;
+
+  /**
+   * Mock of a ContestResult for the contest 'Test Estimation Mixed Assertions'.
+   */
+  @Mock
+  private ContestResult testEstimationMixedAssertions;
+
+  /**
+   * Mock of a ContestResult for the contest 'Mixed Contest'.
+   */
+  @Mock
+  private ContestResult mixedContest;
+
+  /**
+   * Mock of a ContestResult for the contest 'Mixed Contest 2'.
+   */
+  @Mock
+  private ContestResult mixedContest2;
+
+  /**
+   * Mock of a ContestResult for the contest 'Simple Contest 3'.
+   */
+  @Mock
+  private ContestResult simpleContest3;
+
+  /**
+   * Mock of a CVRAuditInfo object, matched to a CVR with id 1.
+   */
+  @Mock
+  private CVRAuditInfo auditInfo;
 
   /**
    * Initialise mocked objects prior to the first test. Note that the diluted margin
    * returned by ContestResult's for IRV will not have a sensible value, and it will
    * not be used for IRV computations. For testing purposes, we should set it with
-   * varied values and ensure that the audit itself is contructed properly.
+   * varied values and ensure that the audit itself is constructed properly.
    */
   @BeforeClass
-  public void initMocks() {
-    MockitoAnnotations.openMocks(this);
+  public void initContestResultMocks() {
     when(oneNENContestResult.getContestName()).thenReturn("One NEN Assertion Contest");
     when(oneNENContestResult.getDilutedMargin()).thenReturn(BigDecimal.ZERO);
     when(oneNEBContestResult.getContestName()).thenReturn("One NEB Assertion Contest");
@@ -125,14 +152,24 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
     when(multiCountyContestResult.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.001));
     when(doesNotExistContestResult.getContestName()).thenReturn("Does Not Exist");
     when(doesNotExistContestResult.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.98));
-  }
+    when(testEstimationNEBOnly.getContestName()).thenReturn("Test Estimation NEB Only");
+    when(testEstimationNEBOnly.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.01));
+    when(testEstimationNENOnly.getContestName()).thenReturn("Test Estimation NEN Only");
+    when(testEstimationNENOnly.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.01));
+    when(testEstimationMixedAssertions.getContestName()).thenReturn("Test Estimation Mixed Assertions");
+    when(testEstimationMixedAssertions.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.01));
+    when(mixedContest.getContestName()).thenReturn("Mixed Contest");
+    when(mixedContest.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.01));
 
-  /**
-   * After all test have run, stop the test container.
-   */
-  @AfterClass
-  public static void afterAll() {
-    postgres.stop();
+    when(mixedContest2.getContestName()).thenReturn("Mixed Contest 2");
+    when(mixedContest2.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.05));
+
+    when(simpleContest3.getContestName()).thenReturn("Simple Contest 3");
+    when(simpleContest3.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.02));
+
+    when(auditInfo.id()).thenReturn(1L);
+    when(auditInfo.cvr()).thenReturn(cvr);
+    when(auditInfo.acvr()).thenReturn(auditedCvr);
   }
 
   /**
@@ -251,6 +288,551 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
   }
 
   /**
+   * Test the IRVComparisonAudit::initialSamplesToAudit() method for a fresh IRVComparisonAudit
+   * containing only NEB assertions.
+   */
+  @Test
+  public void testInitialOptimisticSampleSizeNEBOnly(){
+    log(LOGGER, "testInitialOptimisticSampleSizeNEBOnly");
+    IRVComparisonAudit ca = new IRVComparisonAudit(testEstimationNEBOnly,
+        AssertionTests.riskLimit3, AuditReason.CLOSE_CONTEST);
+
+    checkIRVComparisonAudit(ca, AssertionTests.riskLimit3, AuditReason.CLOSE_CONTEST,
+        AuditStatus.NOT_STARTED, 0.01);
+
+    final List<Assertion> assertions = ca.getAssertions();
+    assertEquals(4, assertions.size());
+
+    checkNEBAssertion(assertions.get(0), "A", "B",
+        0, 0, 0, 0, 0, 729, 729,
+        1, Map.of(), 0.01);
+
+    checkNEBAssertion(assertions.get(1), "B", "C",
+        0, 0, 0, 0, 0, 459, 459,
+        1, Map.of(), 0.0159);
+
+    checkNEBAssertion(assertions.get(2), "F", "G",
+        0, 0, 0, 1, 0, 48, 48,
+        1, Map.of(1L, -2), 0.12345);
+
+    checkNEBAssertion(assertions.get(3), "H", "I",
+        1, 1, 0, 0, 0, 47, 47,
+        1, Map.of(1L, 1, 2L, 2), 0.33247528);
+
+    assertEquals(729, ca.initialSamplesToAudit());
+  }
+
+  /**
+   * Test the IRVComparisonAudit::initialSamplesToAudit() method for a fresh IRVComparisonAudit
+   * containing only NEN assertions.
+   */
+  @Test
+  public void testInitialOptimisticSampleSizeNENOnly(){
+    log(LOGGER, "testInitialOptimisticSampleSizeNENOnly");
+    IRVComparisonAudit ca = new IRVComparisonAudit(testEstimationNENOnly,
+        AssertionTests.riskLimit3, AuditReason.CLOSE_CONTEST);
+
+    checkIRVComparisonAudit(ca, AssertionTests.riskLimit3, AuditReason.CLOSE_CONTEST,
+        AuditStatus.NOT_STARTED, 0.01);
+
+    final List<Assertion> assertions = ca.getAssertions();
+    assertEquals(4, assertions.size());
+
+    checkNENAssertion(assertions.get(0), "A", "B", List.of("A","B"),
+        0, 0, 0, 0, 0, 729, 729,
+        1, Map.of(), 0.01);
+
+    checkNENAssertion(assertions.get(1), "B", "C", List.of("B","C"),
+        0, 0, 0, 0, 0, 459, 459,
+        1, Map.of(), 0.0159);
+
+    checkNENAssertion(assertions.get(2), "F", "G", List.of("F","G"),
+        0, 0, 0, 1, 0, 48, 48,
+        1, Map.of(1L, -2), 0.12345);
+
+    checkNENAssertion(assertions.get(3), "H", "I", List.of("H","I"),
+        1, 1, 0, 0, 0, 47, 47,
+        1, Map.of(1L, 1, 2L, 2), 0.33247528);
+
+    assertEquals(729, ca.initialSamplesToAudit());
+  }
+
+  /**
+   * Test the IRVComparisonAudit::initialSamplesToAudit() method for a fresh IRVComparisonAudit
+   * containing only NEN assertions.
+   */
+  @Test
+  public void testInitialOptimisticSampleSizeMixedAssertions(){
+    log(LOGGER, "testInitialOptimisticSampleSizeMixedAssertions");
+    IRVComparisonAudit ca = new IRVComparisonAudit(testEstimationMixedAssertions,
+        AssertionTests.riskLimit3, AuditReason.CLOSE_CONTEST);
+
+    checkIRVComparisonAudit(ca, AssertionTests.riskLimit3, AuditReason.CLOSE_CONTEST,
+        AuditStatus.NOT_STARTED, 0.01);
+
+    final List<Assertion> assertions = ca.getAssertions();
+    assertEquals(8, assertions.size());
+
+    checkNEBAssertion(assertions.get(0), "A", "B",
+        0, 0, 0, 0, 0, 729, 729,
+        1, Map.of(), 0.01);
+
+    checkNEBAssertion(assertions.get(1), "B", "C",
+        0, 0, 0, 0, 0, 459, 459,
+        1, Map.of(), 0.0159);
+
+    checkNEBAssertion(assertions.get(2), "F", "G",
+        0, 0, 0, 1, 0, 48, 48,
+        1, Map.of(1L, -2), 0.12345);
+
+    checkNEBAssertion(assertions.get(3), "H", "I",
+        1, 1, 0, 0, 0, 47, 47,
+        1, Map.of(1L, 1, 2L, 2), 0.33247528);
+
+    checkNENAssertion(assertions.get(4), "A", "B", List.of("A","B"),
+        0, 0, 0, 0, 0, 729, 729,
+        1, Map.of(), 0.01);
+
+    checkNENAssertion(assertions.get(5), "B", "C", List.of("B","C"),
+        0, 0, 0, 0, 0, 459, 459,
+        1, Map.of(), 0.0159);
+
+    checkNENAssertion(assertions.get(6), "F", "G", List.of("F","G"),
+        0, 0, 0, 1, 0, 48, 48,
+        1, Map.of(1L, -2), 0.12345);
+
+    checkNENAssertion(assertions.get(7), "H", "I", List.of("H","I"),
+        1, 1, 0, 0, 0, 47, 47,
+        1, Map.of(1L, 1, 2L, 2), 0.33247528);
+
+    assertEquals(729, ca.initialSamplesToAudit());
+  }
+
+
+  /**
+   * Two CastVoteRecord's with a blank vote will not trigger a discrepancy.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNone1(RecordType auditedType){
+    testComputeDiscrepancyNone(blank, auditedType, "Mixed Contest");
+  }
+
+  /**
+   * Two CastVoteRecord's with a single vote for "A" will not trigger a discrepancy.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNone2(RecordType auditedType){
+    testComputeDiscrepancyNone(A, auditedType, "Mixed Contest");
+  }
+
+  /**
+   * Two CastVoteRecord's with a single vote for "B" will not trigger a discrepancy.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyNone3(RecordType auditedType){
+    testComputeDiscrepancyNone(B, auditedType, "Mixed Contest");
+  }
+
+  /**
+   * Two CastVoteRecord's with a vote for "A", "B", "C", "D" will not trigger a discrepancy.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testNENComputeDiscrepancyNone4(RecordType auditedType){
+    testComputeDiscrepancyNone(ABCD, auditedType, "Mixed Contest");
+  }
+
+  /**
+   * Two CastVoteRecord's with a vote for "B", "A", "C", "D" will not trigger a discrepancy.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testNENComputeDiscrepancyNone5(RecordType auditedType){
+    testComputeDiscrepancyNone(BACD, auditedType, "Mixed Contest");
+  }
+
+  /**
+   * If we call recordDiscrepancy() for a CVR for which no computed discrepancies exist, with any
+   * discrepancy type, an exception will be thrown.
+   */
+  @Test(dataProvider = "DiscrepancyTypes", dataProviderClass = AssertionTests.class,
+    expectedExceptions = IllegalArgumentException.class)
+  public void testNENRecordNoDiscrepancy(int theType){
+    IRVComparisonAudit ca = testComputeDiscrepancyNone(BACD, RecordType.AUDITOR_ENTERED,
+        "Mixed Contest");
+
+    ca.recordDiscrepancy(auditInfo, theType);
+  }
+
+  /**
+   * Discrepancy computation for 'Mixed Contest' with CVR "A" and audited ballot "A", "B", "C" ,"D".
+   * The maximum discrepancy is 0.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyCVR_A_ACVR_ABCD(RecordType auditedType){
+    log(LOGGER, String.format("testComputeDiscrepancyCVR_A_ACVR_ABCD[%s]", auditedType));
+    resetMocks(A, ABCD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest");
+    IRVComparisonAudit ca = createIRVComparisonAuditMixed();
+
+    final OptionalInt d = ca.computeDiscrepancy(cvr, auditedCvr);
+    assert(d.isPresent());
+    assertEquals(0, d.getAsInt());
+
+    // Note that computeDiscrepancy() does not update internal discrepancy counts, only
+    // recordDiscrepancy() and removeDiscrepancy() do.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Test that if we follow up discrepancy computation with an invalid call to recordDiscrepancy().
+   * (Invalid in the sense that the provided discrepancy type is not the maximum across the
+   * audit's assertions for the given CVR).
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testRecordWrongDiscrepancy(){
+    log(LOGGER, "testRecordWrongDiscrepancy");
+    resetMocks(A, ABCD, RecordType.UPLOADED, ConsensusValue.YES, RecordType.AUDITOR_ENTERED,
+        "Mixed Contest");
+    IRVComparisonAudit ca = createIRVComparisonAuditMixed();
+
+    final OptionalInt d = ca.computeDiscrepancy(cvr, auditedCvr);
+    assert(d.isPresent());
+    assertEquals(0, d.getAsInt());
+
+    // Note that computeDiscrepancy() does not update internal discrepancy counts, only
+    // recordDiscrepancy() and removeDiscrepancy() do.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+
+    ca.recordDiscrepancy(auditInfo,2); // Should throw an exception
+  }
+
+  /**
+   * Discrepancy computation for 'Mixed Contest' with CVR "A","B","C","D" and audited ballot
+   * "B","A","C","D" and recording of the resulting maximum discrepancy of type 2.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeRecordDiscrepancyCVR_ABCD_ACVR_BACD(RecordType auditedType){
+    log(LOGGER, String.format("testComputeRecordDiscrepancyCVR_ABCD_ACVR_BACD[%s]", auditedType));
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest");
+    IRVComparisonAudit ca = createIRVComparisonAuditMixed();
+
+    final OptionalInt d = ca.computeDiscrepancy(cvr, auditedCvr);
+    assert(d.isPresent());
+    assertEquals(2, d.getAsInt());
+
+    // Note that computeDiscrepancy() does not update internal discrepancy counts, only
+    // recordDiscrepancy() and removeDiscrepancy() do.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+
+    ca.addContestCVRIds(List.of(1L));
+    ca.recordDiscrepancy(auditInfo, 2);
+
+    checkDiscrepancies(ca, 0, 1, 0, 0, 0);
+  }
+
+  /**
+   * Discrepancy computation for 'Mixed Contest' with CVR "A","B","C","D" and audited ballot
+   * "B","A","C","D" and recording of the resulting maximum discrepancy of type 2 in the context
+   * where the base ComparisonAudit does not "cover" the CVR. An exception should be thrown.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class,
+      expectedExceptions = RuntimeException.class)
+  public void testComputeRecordDiscrepancyNoCover(RecordType auditedType){
+    log(LOGGER, String.format("testComputeRecordDiscrepancyNoCover[%s]", auditedType));
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest");
+    IRVComparisonAudit ca = createIRVComparisonAuditMixed();
+
+    final OptionalInt d = ca.computeDiscrepancy(cvr, auditedCvr);
+    assert(d.isPresent());
+    assertEquals(2, d.getAsInt());
+
+    // Note that computeDiscrepancy() does not update internal discrepancy counts, only
+    // recordDiscrepancy() and removeDiscrepancy() do.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+
+    // This call should throw an exception as the CVR ID (1L) is not 'covered' by the audit.
+    ca.recordDiscrepancy(auditInfo, 2);
+  }
+
+  /**
+   * Discrepancy computation for 'Mixed Contest' with CVR "B","A","C","D" and audited ballot
+   * "A","B","C","D". The maximum discrepancy is 1.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyCVR_BACD_ACVR_ABCD(RecordType auditedType){
+    log(LOGGER, String.format("testComputeDiscrepancyCVR_BACD_ACVR_ABCD[%s]", auditedType));
+    resetMocks(BACD, ABCD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest");
+    IRVComparisonAudit ca = createIRVComparisonAuditMixed();
+
+    final OptionalInt d = ca.computeDiscrepancy(cvr, auditedCvr);
+    assert(d.isPresent());
+    assertEquals(1, d.getAsInt());
+
+    // Note that computeDiscrepancy() does not update internal discrepancy counts, only
+    // recordDiscrepancy() and removeDiscrepancy() do.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Discrepancy computation and recording for 'Mixed Contest' with CVR "B","A","C","D" and
+   * audited ballot "A","B","C","D". The maximum discrepancy is 1.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD(RecordType auditedType){
+    log(LOGGER, String.format("testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD[%s]", auditedType));
+    resetMocks(BACD, ABCD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest");
+    IRVComparisonAudit ca = createIRVComparisonAuditMixed();
+
+    final OptionalInt d = ca.computeDiscrepancy(cvr, auditedCvr);
+    assert(d.isPresent());
+    assertEquals(1, d.getAsInt());
+
+    // Note that computeDiscrepancy() does not update internal discrepancy counts, only
+    // recordDiscrepancy() and removeDiscrepancy() do.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+
+    ca.addContestCVRIds(List.of(1L));
+    ca.recordDiscrepancy(auditInfo, 1);
+
+    checkDiscrepancies(ca, 1, 0, 0, 0, 0);
+  }
+
+  /**
+   * Discrepancy computation and recording for 'Mixed Contest 2' with CVR "B","A","C","D" and
+   * audited ballot "A","B","C","D". The maximum discrepancy is -1.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD_mixed2(RecordType auditedType){
+    log(LOGGER, String.format("testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD_mixed2[%s]", auditedType));
+    resetMocks(BACD, ABCD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest 2");
+    IRVComparisonAudit ca = createIRVComparisonAuditMixed2();
+
+    final OptionalInt d = ca.computeDiscrepancy(cvr, auditedCvr);
+    assert(d.isPresent());
+    assertEquals(-1, d.getAsInt());
+
+    // Note that computeDiscrepancy() does not update internal discrepancy counts, only
+    // recordDiscrepancy() and removeDiscrepancy() do.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+
+    ca.addContestCVRIds(List.of(1L));
+    ca.recordDiscrepancy(auditInfo, -1);
+
+    checkDiscrepancies(ca, 0, 0, 1, 0, 0);
+  }
+
+  /**
+   * Discrepancy computation and recording for 'Simple Contest 3' with CVR "B","A","C","D" and
+   * audited ballot "A","B","C","D". The maximum discrepancy is -2.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD_simple3(RecordType auditedType){
+    log(LOGGER, String.format("testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD_simple3[%s]", auditedType));
+    resetMocks(BACD, ABCD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Simple Contest 3");
+    IRVComparisonAudit ca = createIRVComparisonAuditSimple3();
+
+    final OptionalInt d = ca.computeDiscrepancy(cvr, auditedCvr);
+    assert(d.isPresent());
+    assertEquals(-2, d.getAsInt());
+
+    // Note that computeDiscrepancy() does not update internal discrepancy counts, only
+    // recordDiscrepancy() and removeDiscrepancy() do.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+
+    ca.addContestCVRIds(List.of(1L));
+    ca.recordDiscrepancy(auditInfo, -2);
+
+    checkDiscrepancies(ca, 0, 0, 0, 1, 0);
+  }
+
+  /**
+   * Discrepancy computation for 'Mixed Contest' with CVR "A" and audited ballot "B". The maximum
+   * discrepancy is 2.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyCVR_A_ACVR_B(RecordType auditedType){
+    log(LOGGER, String.format("testComputeDiscrepancyCVR_A_ACVR_B[%s]", auditedType));
+    resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest");
+    IRVComparisonAudit ca = createIRVComparisonAuditMixed();
+
+    final OptionalInt d = ca.computeDiscrepancy(cvr, auditedCvr);
+    assert(d.isPresent());
+    assertEquals(2, d.getAsInt());
+
+    // Note that computeDiscrepancy() does not update internal discrepancy counts, only
+    // recordDiscrepancy() and removeDiscrepancy() do.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Discrepancy computation for 'Mixed Contest' with CVR "B" and audited ballot "A". The maximum
+   * discrepancy is 1.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyCVR_B_ACVR_A(RecordType auditedType){
+    log(LOGGER, String.format("testComputeDiscrepancyCVR_B_ACVR_A[%s]", auditedType));
+    resetMocks(B, A, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest");
+    IRVComparisonAudit ca = createIRVComparisonAuditMixed();
+
+    final OptionalInt d = ca.computeDiscrepancy(cvr, auditedCvr);
+    assert(d.isPresent());
+    assertEquals(1, d.getAsInt());
+
+    // Note that computeDiscrepancy() does not update internal discrepancy counts, only
+    // recordDiscrepancy() and removeDiscrepancy() do.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Discrepancy computation for 'Mixed Contest' with CVR blank and audited ballot "A","B","C","D".
+   * The maximum discrepancy is 0.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyCVR_blank_ACVR_ABCD(RecordType auditedType){
+    log(LOGGER, String.format("testComputeDiscrepancyCVR_blank_ACVR_ABCD[%s]", auditedType));
+    resetMocks(blank, ABCD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest");
+    IRVComparisonAudit ca = createIRVComparisonAuditMixed();
+
+    final OptionalInt d = ca.computeDiscrepancy(cvr, auditedCvr);
+    assert(d.isPresent());
+    assertEquals(0, d.getAsInt());
+
+    // Note that computeDiscrepancy() does not update internal discrepancy counts, only
+    // recordDiscrepancy() and removeDiscrepancy() do.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Discrepancy computation and recording for 'Mixed Contest' with CVR blank and audited ballot
+   * "A","B","C","D". The maximum discrepancy is 0.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeRecordDiscrepancyCVR_blank_ACVR_ABCD(RecordType auditedType){
+    log(LOGGER, String.format("testComputeRecordDiscrepancyCVR_blank_ACVR_ABCD[%s]", auditedType));
+    resetMocks(blank, ABCD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest");
+    IRVComparisonAudit ca = createIRVComparisonAuditMixed();
+
+    final OptionalInt d = ca.computeDiscrepancy(cvr, auditedCvr);
+    assert(d.isPresent());
+    assertEquals(0, d.getAsInt());
+
+    // Note that computeDiscrepancy() does not update internal discrepancy counts, only
+    // recordDiscrepancy() and removeDiscrepancy() do.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+
+    ca.addContestCVRIds(List.of(1L));
+    ca.recordDiscrepancy(auditInfo, 0);
+
+    checkDiscrepancies(ca, 0, 0, 0, 0, 1);
+  }
+
+  /**
+   * Discrepancy computation for 'Mixed Contest' with CVR "A","B","C","D" and audited ballot blank.
+   * The maximum discrepancy is 0.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeDiscrepancyCVR_ABCD_ACVR_blank(RecordType auditedType){
+    log(LOGGER, String.format("testComputeDiscrepancyCVR_ABCD_ACVR_blank[%s]", auditedType));
+    resetMocks(blank, ABCD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest");
+    IRVComparisonAudit ca = createIRVComparisonAuditMixed();
+
+    final OptionalInt d = ca.computeDiscrepancy(cvr, auditedCvr);
+    assert(d.isPresent());
+    assertEquals(0, d.getAsInt());
+
+    // Note that computeDiscrepancy() does not update internal discrepancy counts, only
+    // recordDiscrepancy() and removeDiscrepancy() do.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Check that the discrepancy counts in the given IRVComparisonAudit are as specified by the
+   * given parameters.
+   * @param ca IRVComparisonAudit whose discrepancy counts we want to check.
+   * @param o1 Number of expected one vote overstatements.
+   * @param o2 Number of expected two vote overstatements.
+   * @param u1 Number of expected one vote understatements.
+   * @param u2 Number of expected two vote understatements.
+   * @param o Number of expected "other" discrepancies.
+   */
+  private void checkDiscrepancies(final IRVComparisonAudit ca, int o1, int o2, int u1, int u2, int o){
+    assertEquals(o1, ca.discrepancyCount(1));
+    assertEquals(o2, ca.discrepancyCount(2));
+    assertEquals(u1, ca.discrepancyCount(-1));
+    assertEquals(u2, ca.discrepancyCount(-2));
+    assertEquals(o, ca.discrepancyCount(0));
+  }
+
+  /**
+   * Check that an IRVComparisonAudit will recognise when there is no discrepancy between a CVR and
+   * audited ballot. The given vote configuration is used as the CVRContestInfo field in the CVR and
+   * audited ballot CastVoteRecords.
+   * @param info A vote configuration.
+   * @param contestName Name of the vote's contest.
+   * @return The IRVComparisonAudit constructed during the check.
+   */
+  private IRVComparisonAudit testComputeDiscrepancyNone(CVRContestInfo info, RecordType auditedType,
+      final String contestName) {
+    log(LOGGER, String.format("testComputeDiscrepancyNone[%s;%s]", info.choices(), auditedType));
+    resetMocks(info, info, RecordType.UPLOADED, ConsensusValue.YES, auditedType, contestName);
+    IRVComparisonAudit ca = createIRVComparisonAuditMixed();
+
+    assert(ca.computeDiscrepancy(cvr, auditedCvr).isEmpty());
+
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+    return ca;
+  }
+
+  /**
+   * Create and return an IRVComparisonAudit for the contest 'Mixed Contest'.
+   * @return IRVComparisonAudit for the contest 'Mixed Contest'.
+   */
+  private IRVComparisonAudit createIRVComparisonAuditMixed(){
+    IRVComparisonAudit ca = new IRVComparisonAudit(mixedContest,
+        AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS);
+
+    checkIRVComparisonAudit(ca, AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS,
+        AuditStatus.NOT_STARTED, 0.01);
+
+    final List<Assertion> assertions = ca.getAssertions();
+    assertEquals(5, assertions.size());
+
+    return ca;
+  }
+
+  /**
+   * Create and return an IRVComparisonAudit for the contest 'Mixed Contest 2'.
+   * @return IRVComparisonAudit for the contest 'Mixed Contest 2'.
+   */
+  private IRVComparisonAudit createIRVComparisonAuditMixed2(){
+    IRVComparisonAudit ca = new IRVComparisonAudit(mixedContest2,
+        AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS);
+
+    checkIRVComparisonAudit(ca, AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS,
+        AuditStatus.NOT_STARTED, 0.05);
+
+    final List<Assertion> assertions = ca.getAssertions();
+    assertEquals(2, assertions.size());
+
+    return ca;
+  }
+
+  /**
+   * Create and return an IRVComparisonAudit for the contest 'Simple Contest 3'.
+   * @return IRVComparisonAudit for the contest 'Simple Contest 3'.
+   */
+  private IRVComparisonAudit createIRVComparisonAuditSimple3(){
+    IRVComparisonAudit ca = new IRVComparisonAudit(simpleContest3,
+        AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS);
+
+    checkIRVComparisonAudit(ca, AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS,
+        AuditStatus.NOT_STARTED, 0.02);
+
+    final List<Assertion> assertions = ca.getAssertions();
+    assertEquals(1, assertions.size());
+
+    return ca;
+  }
+
+  /**
    * A method to check that the given IRVComparisonAudit has been initialised properly.
    * @param ca IRVComparisonAudit to check.
    * @param risk Risk limit of the audit.
@@ -267,11 +849,8 @@ public class IRVComparisonAuditTests extends TestClassWithDatabase {
 
     assertEquals(0, ca.disagreementCount());
     assertEquals(0, ca.getOverstatements().intValue());
-    assertEquals(0, ca.discrepancyCount(0));
-    assertEquals(0, ca.discrepancyCount(1));
-    assertEquals(0, ca.discrepancyCount(2));
-    assertEquals(0, ca.discrepancyCount(-1));
-    assertEquals(0, ca.discrepancyCount(-2));
+
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
 
     assertEquals(0, testUtils.doubleComparator.compare(
         risk.doubleValue(), ca.getRiskLimit().doubleValue()));

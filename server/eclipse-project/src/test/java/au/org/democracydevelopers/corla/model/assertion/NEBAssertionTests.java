@@ -21,11 +21,8 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model.assertion;
 
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.TC;
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.checkComputeDiscrepancy;
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.checkCountsDiscrepancyMap;
-import static au.org.democracydevelopers.corla.model.assertion.AssertionTests.countsEqual;
 import static au.org.democracydevelopers.corla.util.testUtils.log;
+import static java.lang.Math.ceil;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -38,15 +35,11 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.CVRAuditInfo;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
-import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 
 
@@ -59,60 +52,13 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
  * -- Scoring of NEB assertions.
  * -- Computation of discrepancies for NEB assertions.
  * -- The logic involved in the re-auditing of ballots.
+ * -- TODO: Test Assertion::riskMeasurement()
  * Refer to the Guide to RAIRE for details on how NEB assertions are scored, and how
  * discrepancies are computed (Part 2, Appendix A).
  */
-public class NEBAssertionTests {
+public class NEBAssertionTests extends AssertionTests {
 
   private static final Logger LOGGER = LogManager.getLogger(NEBAssertionTests.class);
-
-  /**
-   * Establish a mocked CVRContestInfo for use in testing Assertion scoring.
-   */
-  @Mock
-  private CVRContestInfo cvrInfo;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "A", "B", "C", "D".
-   */
-  @Mock
-  private CVRContestInfo ABCD;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "B", "A", "C", "D".
-   */
-  @Mock
-  private CVRContestInfo BACD;
-
-  /**
-   * Mocked CVRContestInfo representing a blank vote.
-   */
-  @Mock
-  private CVRContestInfo blank;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "A".
-   */
-  @Mock
-  private CVRContestInfo A;
-
-  /**
-   * Mocked CVRContestInfo representing the vote "B".
-   */
-  @Mock
-  private CVRContestInfo B;
-
-  /**
-   * Mocked CastVoteRecord to represent a CVR.
-   */
-  @Mock
-  private CastVoteRecord cvr;
-
-  /**
-   * Mocked CastVoteRecord to represent an audited CVR.
-   */
-  @Mock
-  private CastVoteRecord auditedCvr;
 
   /**
    * Test NEB assertion: Alice NEB Chuan
@@ -120,22 +66,6 @@ public class NEBAssertionTests {
   private final Assertion aliceNEBChaun = createNEBAssertion("Alice", "Chuan",
       TC, 50, 0.1, 8, Map.of(),
       0, 0, 0, 0, 0);
-
-  /**
-   * Initialise mocked objects prior to the first test.
-   */
-  @BeforeClass
-  public void initMocks() {
-    MockitoAnnotations.openMocks(this);
-
-    when(ABCD.choices()).thenReturn(List.of("A", "B", "C", "D"));
-    when(BACD.choices()).thenReturn(List.of("B", "A", "C", "D"));
-    when(blank.choices()).thenReturn(List.of());
-    when(A.choices()).thenReturn(List.of("A"));
-    when(B.choices()).thenReturn(List.of("B"));
-
-    when(cvr.id()).thenReturn(1L);
-  }
 
   /**
    * This suite of tests verifies the optimistic sample size computation for NEB assertions.
@@ -802,7 +732,7 @@ public class NEBAssertionTests {
    */
   public void testNEBComputeDiscrepancyNone(CVRContestInfo info, RecordType auditedType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyNone[%s;%s]", info.choices(), auditedType));
-    resetMocks(info, info, RecordType.UPLOADED, ConsensusValue.YES, auditedType);
+    resetMocks(info, info, RecordType.UPLOADED, ConsensusValue.YES, auditedType, TC);
 
     // Create a series of NEB assertions and check that this cvr/audited ballot are never
     // identified as having a discrepancy.
@@ -847,7 +777,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyOneOver1(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOneOver1[%s]", recordType));
-    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("A", "C", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -863,7 +793,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyOneOver2(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOneOver2[%s]", recordType));
-    resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("A", "C", TC, 50, 0.1,
         8, Map.of(2L, -1, 4L, 2), 0, 1,
@@ -880,7 +810,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyOneOver3(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOneOver3[%s]", recordType));
-    resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
         8, Map.of(2L, -1), 0, 1, 0,
@@ -897,7 +827,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyTwoOver1(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyTwoOver1[%s]", recordType));
-    resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -914,7 +844,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyTwoOver2(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyTwoOver2[%s]", recordType));
-    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
         8, Map.of(3L, 2), 0, 0, 1,
@@ -931,7 +861,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyOneUnder1(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOneUnder1[%s]", recordType));
-    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("B", "C", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -948,7 +878,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyOneUnder2(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOneUnder2[%s]", recordType));
-    resetMocks(blank, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(blank, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("B", "C", TC, 50, 0.1,
         8, Map.of(2L, 0), 0, 0, 0,
@@ -965,7 +895,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyOneUnder3(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOneUnder3[%s]", recordType));
-    resetMocks(B, A, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(B, A, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("A", "C", TC, 50, 0.1,
         8, Map.of(2L, 1), 1, 0, 0,
@@ -982,7 +912,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyTwoUnder1(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyTwoUnder1[%s]", recordType));
-    resetMocks(B, A, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(B, A, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -999,7 +929,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyTwoUnder2(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyTwoUnder2[%s]", recordType));
-    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
         8, Map.of(2L, -1), 0, 1, 0,
@@ -1017,7 +947,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyOther1(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOther1[%s]", recordType));
-    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("D", "C", TC, 50, 0.1,
         8, Map.of(2L, -1), 0, 1, 0,
@@ -1034,7 +964,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyOther2(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOther2[%s]", recordType));
-    resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("C", "D", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1050,7 +980,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyOther3(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOther3[%s]", recordType));
-    resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, recordType);
+    resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("C", "D", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1066,7 +996,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyPhantomRecordOneOver1(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordOneOver1[%s]", recordType));
-    resetMocks(blank, blank, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType);
+    resetMocks(blank, blank, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1082,7 +1012,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyPhantomRecordOneOver2(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordOneOver2[%s]", recordType));
-    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType);
+    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("F", "G", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1098,7 +1028,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyPhantomRecordOther1(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordOther1[%s]", recordType));
-    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType);
+    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("A", "B", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1114,7 +1044,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyPhantomRecordTwoOver1(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordTwoOver1[%s]", recordType));
-    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType);
+    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType, TC);
 
     Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1130,7 +1060,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyPhantomRecordNoConsensus1(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordNoConsensus1[%s]", recordType));
-    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.NO, recordType);
+    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.NO, recordType, TC);
 
     Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1150,7 +1080,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyPhantomRecordNoConsensus2(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordNoConsensus2[%s]", recordType));
-    resetMocks(blank, blank, RecordType.PHANTOM_RECORD, ConsensusValue.NO, recordType);
+    resetMocks(blank, blank, RecordType.PHANTOM_RECORD, ConsensusValue.NO, recordType, TC);
 
     Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1170,7 +1100,7 @@ public class NEBAssertionTests {
   @Test
   public void testNEBComputeDiscrepancyPhantomRecordPhantomBallot(){
     log(LOGGER, "testNEBComputeDiscrepancyPhantomRecordPhantomBallot");
-    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, RecordType.PHANTOM_BALLOT);
+    resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, RecordType.PHANTOM_BALLOT, TC);
 
     Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1190,7 +1120,7 @@ public class NEBAssertionTests {
   @Test
   public void testNEBComputeDiscrepancyPhantomBallotNormalCVR1(){
     log(LOGGER, "testNEBComputeDiscrepancyPhantomRecordNormalCVR1");
-    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT);
+    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT, TC);
 
     Assertion a1 = createNEBAssertion("A", "F", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1208,7 +1138,7 @@ public class NEBAssertionTests {
   @Test
   public void testNEBComputeDiscrepancyPhantomBallotNormalCVR2(){
     log(LOGGER, "testNEBComputeDiscrepancyPhantomRecordNormalCVR2");
-    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT);
+    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT, TC);
 
     Assertion a1 = createNEBAssertion("F", "A", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1226,7 +1156,7 @@ public class NEBAssertionTests {
   @Test
   public void testNEBComputeDiscrepancyPhantomBallotNormalCVR3(){
     log(LOGGER, "testNEBComputeDiscrepancyPhantomRecordNormalCVR3");
-    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT);
+    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT, TC);
 
     Assertion a1 = createNEBAssertion("B", "C", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1244,7 +1174,7 @@ public class NEBAssertionTests {
   @Test
   public void testNEBComputeDiscrepancyPhantomBallotNormalCVR4(){
     log(LOGGER, "testNEBComputeDiscrepancyPhantomRecordNormalCVR4");
-    resetMocks(blank, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT);
+    resetMocks(blank, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.PHANTOM_BALLOT, TC);
 
     Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1264,7 +1194,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyNoConsensusNormalCVR1(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyNoConsensusNormalCVR1[%s]", recordType));
-    resetMocks(ABCD, ABCD, RecordType.UPLOADED, ConsensusValue.NO, recordType);
+    resetMocks(ABCD, ABCD, RecordType.UPLOADED, ConsensusValue.NO, recordType, TC);
 
     Assertion a1 = createNEBAssertion("A", "F", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1282,7 +1212,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyNoConsensusNormalCVR2(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyNoConsensusNormalCVR2[%s]", recordType));
-    resetMocks(ABCD, ABCD, RecordType.UPLOADED, ConsensusValue.NO, recordType);
+    resetMocks(ABCD, ABCD, RecordType.UPLOADED, ConsensusValue.NO, recordType, TC);
 
     Assertion a1 = createNEBAssertion("F", "A", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1300,7 +1230,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyNoConsensusNormalCVR3(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyNoConsensusNormalCVR3[%s]", recordType));
-    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.NO, recordType);
+    resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.NO, recordType, TC);
 
     Assertion a1 = createNEBAssertion("B", "C", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1318,7 +1248,7 @@ public class NEBAssertionTests {
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testNEBComputeDiscrepancyNoConsensusNormalCVR4(RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyNoConsensusNormalCVR4[%s]", recordType));
-    resetMocks(blank, ABCD, RecordType.UPLOADED, ConsensusValue.NO, recordType);
+    resetMocks(blank, ABCD, RecordType.UPLOADED, ConsensusValue.NO, recordType, TC);
 
     Assertion a1 = createNEBAssertion("B", "A", TC, 50, 0.1,
         8, Map.of(), 0, 0, 0, 0, 0);
@@ -1605,7 +1535,7 @@ public class NEBAssertionTests {
   @Test()
   public void testNEBReauditBallot1(){
     log(LOGGER, String.format("testNEBReauditBallot1[%s]", RecordType.REAUDITED));
-    resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.REAUDITED);
+    resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, RecordType.REAUDITED, TC);
 
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
@@ -1632,7 +1562,7 @@ public class NEBAssertionTests {
   @Test()
   public void testNEBReauditBallot2(){
     log(LOGGER, String.format("testNEBReauditBallot2[%s]", RecordType.REAUDITED));
-    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, RecordType.REAUDITED);
+    resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, RecordType.REAUDITED, TC);
 
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
@@ -1661,7 +1591,7 @@ public class NEBAssertionTests {
   @Test()
   public void testNEBReauditBallot3(){
     log(LOGGER, String.format("testNEBReauditBallot3[%s]", RecordType.REAUDITED));
-    resetMocks(ABCD, ABCD, RecordType.UPLOADED, ConsensusValue.YES, RecordType.REAUDITED);
+    resetMocks(ABCD, ABCD, RecordType.UPLOADED, ConsensusValue.YES, RecordType.REAUDITED, TC);
 
     final int N = 5;
     CVRAuditInfo info = new CVRAuditInfo();
@@ -1803,21 +1733,181 @@ public class NEBAssertionTests {
   }
 
   /**
-   * Reset the CVR and audited CVR mock objects with the given parameters.
-   * @param cvrInfo CVRContestInfo for the CVR.
-   * @param acvrInfo CVRContestInfo for the audited ballot.
-   * @param cvrRecType Record type for the CVR.
-   * @param acvrConsensus Consensys value for the audited ballot.
-   * @param acvrRecType Record type for the audited ballot.
+   * Test the Assertion::computeInitialOptimisticSamplesToAudit() method for NEB assertions
+   * with varying diluted margins.
    */
-  private void resetMocks(CVRContestInfo cvrInfo, CVRContestInfo acvrInfo, RecordType cvrRecType,
-      ConsensusValue acvrConsensus, RecordType acvrRecType){
-    when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(cvrInfo));
-    when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(acvrInfo));
+  @Test
+  public void testNEBInitialOptimisticSampleSize(){
+    Assertion a1 = createNEBAssertion("A", "B", TC, 100, 0.01,
+        100, Map.of(), 0, 0, 0, 0, 0);
 
-    when(acvrInfo.consensus()).thenReturn(acvrConsensus);
-    when(cvr.recordType()).thenReturn(cvrRecType);
-    when(auditedCvr.recordType()).thenReturn(acvrRecType);
+    assertEquals(a1.computeInitialOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 729);
+
+    Assertion a2 = createNEBAssertion("B", "C", TC, 159, 0.0159,
+        159, Map.of(), 0, 0, 0, 0, 0);
+
+    assertEquals(a2.computeInitialOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 392);
+
+    Assertion a3 = createNEBAssertion("D", "E", TC, 1, 0.00001,
+        1000, Map.of(1L, -1, 2L, 0, 3L, 1), 1,
+        1, 0, 0, 1);
+
+    assertEquals(a3.computeInitialOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 728698);
+
+    Assertion a4 = createNEBAssertion("F", "G", TC, 1235, 0.12345,
+        50, Map.of(1L, -2), 0, 0, 0,
+        1, 0);
+
+    assertEquals(a4.computeInitialOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 51);
+
+    Assertion a5 = createNEBAssertion("H", "I", TC, 3325, 0.33247528,
+        17, Map.of(1L, 1, 2L, 2), 1, 0,
+        1, 0, 0);
+
+    assertEquals(a5.computeInitialOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 22);
+  }
+
+  /**
+   * Test the Assertion::computeOptimisticSamplesToAudit() method for NEB assertions
+   * with varying diluted margins and discrepancies.
+   */
+  @Test
+  public void computeOptimisticSamplesToAudit(){
+    Assertion a1 = createNEBAssertion("A", "B", TC, 100, 0.01,
+        100, Map.of(), 0, 0, 0, 0, 0);
+
+    assertEquals(a1.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 729);
+    assertEquals(a1.optimisticSamplesToAudit.intValue(), 729);
+
+    Assertion a2 = createNEBAssertion("B", "C", TC, 159, 0.0159,
+        159, Map.of(), 1, 1, 1, 1, 1);
+
+    assertEquals(a2.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 767);
+    assertEquals(a2.optimisticSamplesToAudit.intValue(), 767);
+
+    Assertion a3 = createNEBAssertion("D", "E", TC, 1, 0.00001,
+        1000, Map.of(1L, -1, 2L, 0, 3L, 1), 1,
+        1, 0, 0, 1);
+
+    assertEquals(a3.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 783434);
+    assertEquals(a3.optimisticSamplesToAudit.intValue(), 783434);
+
+    Assertion a4 = createNEBAssertion("F", "G", TC, 1235, 0.12345,
+        50, Map.of(1L, -2), 0, 0, 0,
+        1, 0);
+
+    assertEquals(a4.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 40);
+    assertEquals(a4.optimisticSamplesToAudit.intValue(), 40);
+
+    Assertion a5 = createNEBAssertion("H", "I", TC, 3325, 0.33247528,
+        17, Map.of(1L, 1, 2L, 2), 1, 0,
+        1, 0, 0);
+
+    assertEquals(a5.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3).intValue(), 47);
+    assertEquals(a5.optimisticSamplesToAudit.intValue(), 47);
+
+    Assertion a6 = createNEBAssertion("B", "C", TC, 159, 0.0159,
+        159, Map.of(1L, -1, 2L, -2, 3L, 0), 0, 1,
+        0, 1, 1);
+
+    assertEquals(a6.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 253);
+    assertEquals(a6.optimisticSamplesToAudit.intValue(), 253);
+
+    Assertion a7 = createNEBAssertion("B", "C", TC, 159, 0.0159,
+        159, Map.of(1L, -1, 2L, -2), 0, 1,
+        0, 1, 0);
+
+    assertEquals(a7.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5).intValue(), 253);
+    assertEquals(a7.optimisticSamplesToAudit.intValue(), 253);
+  }
+
+  /**
+   * Test the Assertion::computeEstimatedSamplesToAudit() method for NEB assertions
+   * with varying diluted margins, discrepancies, and current audited sample count.
+   */
+  @Test(dataProvider = "AuditSampleNumbers", dataProviderClass = AssertionTests.class)
+  public void computeEstimatedSamplesToAudit(int auditedSampleCount){
+    Assertion a1 = createNEBAssertion("A", "B", TC, 100, 0.01,
+        100, Map.of(), 0, 0, 0, 0, 0);
+
+    a1.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3);
+    assertEquals(a1.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), 729);
+    assertEquals(a1.optimisticSamplesToAudit.intValue(), 729);
+    assertEquals(a1.estimatedSamplesToAudit.intValue(), 729);
+
+    Assertion a2 = createNEBAssertion("B", "C", TC, 159, 0.0159,
+        159, Map.of(), 1, 1, 1, 1, 1);
+
+    a2.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5);
+    double scalingFactor = auditedSampleCount == 0 ? 1 : 1 + (2.0/(double)auditedSampleCount);
+    int sample = (int)ceil(767*scalingFactor);
+    assertEquals(a2.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
+    assertEquals(a2.optimisticSamplesToAudit.intValue(), 767);
+    assertEquals(a2.estimatedSamplesToAudit.intValue(), sample);
+
+    Assertion a3 = createNEBAssertion("D", "E", TC, 1, 0.00001,
+        1000, Map.of(1L, -1, 2L, 0, 3L, 1), 1,
+        1, 0, 0, 1);
+
+    a3.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3);
+    scalingFactor = auditedSampleCount == 0 ? 1 : 1 + (1.0/(double)auditedSampleCount);
+    sample = (int)ceil(783434*scalingFactor);
+    assertEquals(a3.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
+    assertEquals(a3.optimisticSamplesToAudit.intValue(), 783434);
+    assertEquals(a3.estimatedSamplesToAudit.intValue(), sample);
+
+    Assertion a4 = createNEBAssertion("F", "G", TC, 1235, 0.12345,
+        50, Map.of(1L, -2, 2L, 1), 1, 0, 0,
+        1, 0);
+
+    a4.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5);
+    scalingFactor = auditedSampleCount == 0 ? 1 : 1 + (1.0/(double)auditedSampleCount);
+    sample = (int)ceil(51*scalingFactor);
+    assertEquals(a4.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
+    assertEquals(a4.optimisticSamplesToAudit.intValue(), 51);
+    assertEquals(a4.estimatedSamplesToAudit.intValue(), sample);
+
+    Assertion a5 = createNEBAssertion("H", "I", TC, 3325, 0.33247528,
+        17, Map.of(1L, 1, 2L, 2), 1, 0,
+        1, 0, 0);
+
+    a5.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3);
+    scalingFactor = auditedSampleCount == 0 ? 1 : 1 + (2.0/(double)auditedSampleCount);
+    sample = (int)ceil(47*scalingFactor);
+    assertEquals(a5.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
+    assertEquals(a5.optimisticSamplesToAudit.intValue(), 47);
+    assertEquals(a5.estimatedSamplesToAudit.intValue(), sample);
+
+    Assertion a6 = createNEBAssertion("B", "C", TC, 159, 0.0159,
+        159, Map.of(1L, -1, 2L, -2, 3L, 0), 0, 1,
+        0, 1, 1);
+
+    a6.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5);
+    assertEquals(a6.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), 253);
+    assertEquals(a6.optimisticSamplesToAudit.intValue(), 253);
+    assertEquals(a6.estimatedSamplesToAudit.intValue(), 253);
+
+    Assertion a7 = createNEBAssertion("B", "C", TC, 159, 0.0159,
+        159, Map.of(1L, -1, 2L, -2), 0, 1,
+        0, 1, 0);
+
+    a7.computeOptimisticSamplesToAudit(AssertionTests.riskLimit5);
+    assertEquals(a7.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), 253);
+    assertEquals(a7.optimisticSamplesToAudit.intValue(), 253);
+    assertEquals(a7.estimatedSamplesToAudit.intValue(), 253);
+
+    Assertion a8 = createNEBAssertion("B", "C", TC, 159, 0.0159,
+            159, Map.of(1L, -1, 2L, -2, 3L, 1, 4L, 1, 5L,
+            2, 6L, 2, 7L, 1), 3, 1, 2,
+            1, 0);
+
+    scalingFactor = auditedSampleCount == 0 ? 1 : 1 + (5.0/(double)auditedSampleCount);
+    sample = (int)ceil(1434*scalingFactor);
+
+    a8.computeOptimisticSamplesToAudit(AssertionTests.riskLimit3);
+    assertEquals(a8.computeEstimatedSamplesToAudit(auditedSampleCount).intValue(), sample);
+    assertEquals(a8.optimisticSamplesToAudit.intValue(), 1434);
+    assertEquals(a8.estimatedSamplesToAudit.intValue(), sample);
   }
 
   /**
