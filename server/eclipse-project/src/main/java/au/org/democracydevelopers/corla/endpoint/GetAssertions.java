@@ -126,7 +126,7 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
             final ZipOutputStream os = new ZipOutputStream(SparkHelper.getRaw(the_response).getOutputStream());
             getAssertions(os, riskLimit, raireUrl, suffix);
 
-            the_response.header("Content-Type", "application/zip, application/octet-stream");
+            the_response.header("Content-Type", "application/zip");
             the_response.header("Content-Disposition", "attachment; filename*=UTF-8''assertions.zip");
 
             ok(the_response);
