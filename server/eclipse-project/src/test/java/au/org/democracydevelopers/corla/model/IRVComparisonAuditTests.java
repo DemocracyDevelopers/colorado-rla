@@ -48,6 +48,8 @@ import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.model.ContestResult;
 
+import javax.transaction.Transactional;
+
 /**
  * This class contains tests for the functionality present in IRVComparisonAudit.
  * TODO: tests for removing discrepancies -2, -1, 0, 1, 2
@@ -55,6 +57,7 @@ import us.freeandfair.corla.model.ContestResult;
  * TODO: tests of the reaudit ballot workflow.
  * TODO: tests for remaining error modes.
  */
+@Transactional
 public class IRVComparisonAuditTests extends AssertionTests {
 
   private static final Logger LOGGER = LogManager.getLogger(IRVComparisonAuditTests.class);
@@ -168,7 +171,6 @@ public class IRVComparisonAuditTests extends AssertionTests {
     when(auditInfo.cvr()).thenReturn(cvr);
     when(auditInfo.acvr()).thenReturn(auditedCvr);
   }
-
 
   /**
    * Create an IRVComparisonAudit for a contest with no assertions in the database.

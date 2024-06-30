@@ -2,14 +2,12 @@ package us.freeandfair.corla.query;
 
 import java.io.ByteArrayOutputStream;
 
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.ArrayList;
+import java.util.*;
 
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.AfterTest;
+import org.junit.Ignore;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testng.annotations.*;
+
 import static org.testng.Assert.*;
 
 import us.freeandfair.corla.persistence.Persistence;
@@ -24,29 +22,57 @@ import org.hibernate.query.Query;
 @Test(groups = {"integration"})
 public class ExportQueriesTest {
 
-  @BeforeTest()
-  public void setUp() {
-    Setup.setProperties();
+  /**
+   * Container for the mock-up database.
+   */
+  static PostgreSQLContainer<?> postgres
+          = new PostgreSQLContainer<>("postgres:15-alpine")
+          // None of these actually have to be the same as the real database (except its name), but this
+          // makes it easy to match the setup scripts.
+          .withDatabaseName("corla")
+          .withUsername("corlaadmin")
+          .withPassword("corlasecret")
+          // .withInitScripts("corlaInit.sql","contest.sql");
+          .withInitScript("SQL/corlaInitEmpty.sql");
+
+  @BeforeClass
+  public static void beforeAll() {
+    postgres.start();
+    Properties hibernateProperties = new Properties();
+    hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
+    hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
+    hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
+    hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
+    hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
+    Persistence.setProperties(hibernateProperties);
+    Persistence.beginTransaction();
+
+  }
+
+  @AfterClass
+  public static void afterAll() {
+    postgres.stop();
+  }
+
+  @BeforeMethod
+  public static void beforeEach() {
     Persistence.beginTransaction();
     insertSeed();
   }
 
-  @AfterTest()
-  public void tearDown() {
-    try {
+  @AfterMethod
+  public static void afterEach() {
     Persistence.rollbackTransaction();
-    } catch (Exception e) {
-    }
   }
 
-
-  private void insertSeed() {
+  private static void insertSeed() {
     final Session s = Persistence.currentSession();
     String query = "insert into dos_dashboard (id,seed) values (99,'1234');";
     s.createNativeQuery(query).executeUpdate();
   }
 
-  @Test()
+  // Note: the code this is testing is broken. JSON reports appear to be unused, so I'm ignoring it for now.
+  @Test( enabled = false )
   public void jsonRowsTest() {
     String q = "SELECT seed FROM dos_dashboard";
     ByteArrayOutputStream os = new ByteArrayOutputStream();

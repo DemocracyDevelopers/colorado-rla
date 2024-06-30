@@ -1,15 +1,20 @@
 package us.freeandfair.corla.query;
 
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.ArrayList;
 
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.AfterTest;
+import org.hibernate.LockMode;
+import org.hibernate.Session;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testng.annotations.*;
+
 import static org.testng.Assert.*;
 
 import java.time.Instant;
+import java.util.Properties;
 
+import us.freeandfair.corla.asm.PersistentASMState;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.Contest;
 import us.freeandfair.corla.model.Choice;
@@ -22,19 +27,39 @@ import us.freeandfair.corla.query.Setup;
 @Test(groups = {"integration"})
 public class CastVoteRecordQueriesTest {
 
+  /**
+   * Container for the mock-up database.
+   */
+  private static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine")
+          .withDatabaseName("corla")
+          .withUsername("corlaadmin")
+            .withPassword("corlasecret")
+            .withInitScript("SQL/corlaInitEmpty.sql");
 
-  @BeforeTest()
-  public void setUp() {
-    Setup.setProperties();
+  @BeforeClass
+  public static void beforeAll() {
+    postgres.start();
+    Properties hibernateProperties = new Properties();
+    hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
+    hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
+    hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
+    hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
+    hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
+    Persistence.setProperties(hibernateProperties);
+  }
+  @BeforeMethod
+  public static void beforeEach() {
     Persistence.beginTransaction();
   }
 
-  @AfterTest()
-  public void tearDown() {
-    try {
+  @AfterMethod
+  public static void afterEach() {
     Persistence.rollbackTransaction();
-    } catch (Exception e) {
-    }
+  }
+
+  @AfterClass
+  public static void afterall() {
+    postgres.stop();
   }
 
   public List<CVRContestInfo> noisyContestSetup(){
@@ -127,19 +152,25 @@ public class CastVoteRecordQueriesTest {
 
   @Test()
   public void canonicalChoicesTest() {
-    CastVoteRecord cvr = noisyCVRSetup(3);
-
-    Integer result = CastVoteRecordQueries.updateCVRContestInfos(1L,1L,"why?","because.");
-    assertEquals((int) result, (int) 1,
+    CastVoteRecord cvr = noisyCVRSetup(1);
+    // commit the transaction to populate the DB for debugging
+    // Persistence.commitTransaction();
+    // Persistence.beginTransaction();
+    // Note: the weird access to get the contest ID is because somehow it gets changed from 1 to 4 when run with other tests.
+    // TODO: THIS SHOULD NOT HAPPEN! WHY IS IT CHANGING FROM 1 TO 4 WHEN RUN WITH OTHER TESTS?!
+    int result = CastVoteRecordQueries.updateCVRContestInfos(cvr.countyID(),cvr.contestInfo().get(0).contest().id(), "why?","because.");
+    assertEquals(result, 1,
                  "a result of 1 means one choice was changed");
-    Persistence.currentSession().refresh(cvr);
-    assertEquals(cvr.contestInfo().toString().contains("choices=[because.]"), true);
+
+    Persistence.currentSession().refresh(cvr, LockMode.PESSIMISTIC_WRITE);
+    assertTrue(cvr.contestInfo().toString().contains("choices=[because.]"));
+
   }
 
 
   @Test()
   public void activityReportTest() {
-    CastVoteRecord cvr = noisyCVRSetup(4);
+    CastVoteRecord cvr = noisyCVRSetup(1);
     CastVoteRecord acvr = new CastVoteRecord(CastVoteRecord.RecordType.AUDITOR_ENTERED, Instant.now(),
                                              cvr.countyID(), cvr.cvrNumber(), null, cvr.scannerID(),
                                              cvr.batchID(), cvr.recordID(), cvr.imprintedID(),

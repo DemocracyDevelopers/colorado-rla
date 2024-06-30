@@ -22,11 +22,14 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.csv;
 
 import au.org.democracydevelopers.corla.model.ContestType;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.ext.ScriptUtils;
+import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import us.freeandfair.corla.csv.DominionCVRExportParser;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
@@ -43,6 +46,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.testng.annotations.*;
+
+import javax.transaction.Transactional;
 
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static org.testng.Assert.*;
@@ -62,7 +67,7 @@ import static us.freeandfair.corla.query.CountyQueries.fromString;
  *   plus a bad plurality "Vote For= " with a non-integer.
  * - an examples to test the broader class of Write In strings.
  */
-public class DominionCVRExportParserTests {
+public class DominionCVRExportParserTests extends TestClassWithDatabase {
 
   /**
    * Class-wide logger
@@ -72,14 +77,7 @@ public class DominionCVRExportParserTests {
   /**
    * Container for the mock-up database.
    */
-  static PostgreSQLContainer<?> postgres
-      = new PostgreSQLContainer<>("postgres:15-alpine")
-      // None of these actually have to be the same as the real database (except its name), but this
-      // makes it easy to match the setup scripts.
-      .withDatabaseName("corla")
-      .withUsername("corlaadmin")
-      .withPassword("corlasecret")
-      .withInitScript("SQL/corlaInit.sql");
+  static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
    * Error message to match.
@@ -94,15 +92,10 @@ public class DominionCVRExportParserTests {
   @BeforeClass
   public static void beforeAll() {
     postgres.start();
-    Properties hibernateProperties = new Properties();
-    hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
-    hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
-    hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
-    hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
-    hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
-    Persistence.setProperties(hibernateProperties);
-    Persistence.beginTransaction();
+    Persistence.setProperties(createHibernateProperties(postgres));
 
+    var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
   }
 
   @AfterClass
@@ -116,22 +109,22 @@ public class DominionCVRExportParserTests {
    * @throws IOException never.
    */
   @Test
+  @Transactional
   public void parseThreeCandidatesTenVotesSucceeds() throws IOException {
     testUtils.log(LOGGER, "parseThreeCandidatesTenVotesSucceeds");
     Path path = Paths.get(TINY_CSV_PATH + "ThreeCandidatesTenVotes.csv");
     Reader reader = Files.newBufferedReader(path);
-    County saguache = fromString("Saguache");
 
     final List<String> ABC = List.of("Alice","Bob","Chuan");
     final List<String> ACB = List.of("Alice","Chuan","Bob");
     final List<String> BAC = List.of("Bob","Alice","Chuan");
     final List<String> CAB = List.of("Chuan","Alice","Bob");
 
-    DominionCVRExportParser parser = new DominionCVRExportParser(reader, saguache, blank, true);
+    DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Saguache"), blank, true);
     assertTrue(parser.parse().success);
 
     // There should be one contest, the one we just read in.
-    List<Contest> contests = forCounties(Set.of(saguache));
+    List<Contest> contests = forCounties(Set.of(fromString("Saguache")));
     assertEquals(1, contests.size());
     Contest contest = contests.get(0);
 
@@ -155,8 +148,8 @@ public class DominionCVRExportParserTests {
         BAC,
         CAB, CAB, CAB);
 
-    List<CVRContestInfo> cvrs = getMatching(saguache.id(),  CastVoteRecord.RecordType.UPLOADED)
-        .map(cvr -> cvr.contestInfoForContest(contest)).collect(Collectors.toList());
+    List<CVRContestInfo> cvrs = getMatching(fromString("Saguache").id(),  CastVoteRecord.RecordType.UPLOADED)
+        .map(cvr -> cvr.contestInfoForContest(contest)).toList();
     assertEquals(10, cvrs.size());
     for(int i=0 ; i < expectedChoices.size() ; i++) {
       assertEquals(cvrs.get(i).choices(), expectedChoices.get(i));
@@ -169,17 +162,18 @@ public class DominionCVRExportParserTests {
    * @throws IOException never.
    */
   @Test
+  @Transactional
   public void parseGuideToRaireExample3() throws IOException {
     testUtils.log(LOGGER, "parseGuideToRaireExample3");
     Path path = Paths.get(TINY_CSV_PATH + "GuideToRAIREExample3.csv");
     Reader reader = Files.newBufferedReader(path);
-    County montezuma = fromString("Montezuma");
 
-    DominionCVRExportParser parser = new DominionCVRExportParser(reader, montezuma, blank, true);
+    DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Montezuma"),
+            blank, true);
     assertTrue(parser.parse().success);
 
     // There should be one contest, the one we just read in.
-    List<Contest> contests = forCounties(Set.of(montezuma));
+    List<Contest> contests = forCounties(Set.of(fromString("Montezuma")));
     assertEquals(1, contests.size());
     Contest contest = contests.get(0);
 
@@ -194,8 +188,8 @@ public class DominionCVRExportParserTests {
     assertEquals(contest.winnersAllowed().intValue(), 1);
 
     // There are 225 votes. Spot-check some of them.
-    List<CVRContestInfo> cvrs = getMatching(montezuma.id(), CastVoteRecord.RecordType.UPLOADED)
-        .map(cvr -> cvr.contestInfoForContest(contest)).collect(Collectors.toList());
+    List<CVRContestInfo> cvrs = getMatching(fromString("Montezuma").id(), CastVoteRecord.RecordType.UPLOADED)
+        .map(cvr -> cvr.contestInfoForContest(contest)).toList();
     assertEquals(225, cvrs.size());
     assertEquals(List.of("C", "D"), cvrs.get(0).choices());
     assertEquals(List.of("C", "D"), cvrs.get(44).choices());
@@ -219,17 +213,17 @@ public class DominionCVRExportParserTests {
    * @throws IOException if there are file I/O issues.
    */
   @Test
+  @Transactional
   public void parseThreeCandidatesTenInvalidVotesSucceeds() throws IOException {
     testUtils.log(LOGGER, "parseThreeCandidatesTenInvalidVotesSucceeds");
     Path path = Paths.get(TINY_CSV_PATH + "ThreeCandidatesTenInvalidVotes.csv");
     Reader reader = Files.newBufferedReader(path);
-    County gilpin = fromString("Gilpin");
 
-    DominionCVRExportParser parser = new DominionCVRExportParser(reader, gilpin, blank, true);
+    DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Gilpin"), blank, true);
     assertTrue(parser.parse().success);
 
     // There should be one contest, the one we just read in.
-    List<Contest> contests = forCounties(Set.of(gilpin));
+    List<Contest> contests = forCounties(Set.of(fromString("Gilpin")));
     assertEquals(1, contests.size());
     Contest contest = contests.get(0);
 
@@ -244,8 +238,8 @@ public class DominionCVRExportParserTests {
     assertEquals(contest.winnersAllowed().intValue(), 1);
 
     // There are 10 votes, with respective valid interpretations as below:
-    List<CVRContestInfo> cvrs = getMatching(gilpin.id(), CastVoteRecord.RecordType.UPLOADED)
-        .map(cvr -> cvr.contestInfoForContest(contest)).collect(Collectors.toList());
+    List<CVRContestInfo> cvrs = getMatching(fromString("Gilpin").id(), CastVoteRecord.RecordType.UPLOADED)
+        .map(cvr -> cvr.contestInfoForContest(contest)).toList();
     assertEquals(10, cvrs.size());
 
     // Raw: "Alice(1),Alice(2),Bob(2),Chuan(3)
@@ -276,17 +270,18 @@ public class DominionCVRExportParserTests {
    * Check correct parsing of the first vote.
    */
   @Test
+  @Transactional
   public void parseBoulder23Succeeds() throws IOException {
     testUtils.log(LOGGER, "parseBoulder23Succeeds");
     Path path = Paths.get(BOULDER_CSV_PATH + "Boulder-2023-Coordinated-CVR-Redactions-removed.csv");
     Reader reader = Files.newBufferedReader(path);
-    County boulder = fromString("Boulder");
 
-    DominionCVRExportParser parser = new DominionCVRExportParser(reader, boulder, blank, true);
+    DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Boulder"),
+            blank, true);
     assertTrue(parser.parse().success);
 
     // There should be 38 contests. Check their metadata.
-    List<Contest> contests = forCounties(Set.of(boulder));
+    List<Contest> contests = forCounties(Set.of(fromString("Boulder")));
     assertEquals(38, contests.size());
 
     Contest boulderMayoral = contests.get(0);
@@ -496,8 +491,8 @@ public class DominionCVRExportParserTests {
 
     // Check that the number of cvrs is correct. We have redacted CVRs, so the total is slightly
     // less than the actual official count of 119757.
-    List<CastVoteRecord> cvrs = getMatching(boulder.id(),
-        CastVoteRecord.RecordType.UPLOADED).collect(Collectors.toList());
+    List<CastVoteRecord> cvrs = getMatching(fromString("Boulder").id(),
+        CastVoteRecord.RecordType.UPLOADED).toList();
     assertEquals(cvrs.size(), 118669);
     CastVoteRecord cvr1 = cvrs.get(0);
 
@@ -539,13 +534,14 @@ public class DominionCVRExportParserTests {
    */
   @Test(expectedExceptions = RuntimeException.class,
       expectedExceptionsMessageRegExp = badNumsRegexp)
+  @Transactional
   public void parseBadVoteForPluralityError() throws IOException {
     testUtils.log(LOGGER, "parseBadVoteForPluralityError");
     Path path = Paths.get(BAD_CSV_PATH + "badVoteForPlurality.csv");
     Reader reader = Files.newBufferedReader(path);
-    County sedgwick = fromString("Sedgwick");
+    // County sedgwick = fromString("Sedgwick");
 
-    DominionCVRExportParser parser = new DominionCVRExportParser(reader, sedgwick, blank, true);
+    DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Sedgwick"), blank, true);
     assertTrue(parser.parse().success);
   }
 
@@ -556,18 +552,18 @@ public class DominionCVRExportParserTests {
    * by -, _, space or no space, followed by any capitalization of "in", followed by any whitespace.
    */
   @Test
+  @Transactional
   public void parseWriteIns() throws IOException {
     testUtils.log(LOGGER, "parseWriteIns");
     Path path = Paths.get(WRITEIN_CSV_PATH + "WriteIns.csv");
     Reader reader = Files.newBufferedReader(path);
-    County lasAnimas = fromString("Las Animas");
 
-    DominionCVRExportParser parser = new DominionCVRExportParser(reader, lasAnimas, blank, true);
+    DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Las Animas"), blank, true);
     assertTrue(parser.parse().success);
 
     // There should be seven contests, one for each example way of writing write-in:
     // "Write-in", "Write-In", "Write in", "Write_in", "writeIn", "WRITEIN", "WRITE_IN"
-    List<Contest> contests = forCounties(Set.of(lasAnimas));
+    List<Contest> contests = forCounties(Set.of(fromString("Las Animas")));
     assertEquals(7, contests.size());
 
     for(int i=0 ; i < contests.size() ; i++) {
