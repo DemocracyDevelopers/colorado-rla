@@ -130,17 +130,18 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
             the_response.header("Content-Disposition", "attachment; filename*=UTF-8''assertions.zip");
 
             ok(the_response);
-            return my_endpoint_result.get();
 
         } catch (URISyntaxException | MalformedURLException e) {
             final String msg = "Bad configuration of raire-service url: " + raireUrl + ". Fix the config file.";
             LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
-            throw new RuntimeException(msg);
+            serverError(the_response, msg);
         } catch (IOException e) {
             final String msg = "Error creating zip file.";
             LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
-            throw new RuntimeException(e);
+            serverError(the_response, msg);
         }
+
+        return my_endpoint_result.get();
     }
 
     /**
