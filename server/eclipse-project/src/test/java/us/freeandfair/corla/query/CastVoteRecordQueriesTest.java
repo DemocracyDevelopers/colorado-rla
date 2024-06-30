@@ -1,66 +1,32 @@
 package us.freeandfair.corla.query;
 
 import java.lang.reflect.Method;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
 
+import org.antlr.v4.runtime.misc.Array2DHashSet;
 import org.hibernate.LockMode;
 import org.hibernate.Session;
+import org.hibernate.query.Query;
+import org.jetbrains.annotations.NotNull;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
 import org.testng.annotations.*;
 
 import static org.testng.Assert.*;
 
 import java.time.Instant;
-import java.util.Properties;
+import java.util.Optional;
+import java.util.function.*;
+import java.util.stream.*;
 
 import us.freeandfair.corla.asm.PersistentASMState;
-import us.freeandfair.corla.model.CastVoteRecord;
-import us.freeandfair.corla.model.Contest;
-import us.freeandfair.corla.model.Choice;
-import us.freeandfair.corla.model.County;
-import us.freeandfair.corla.model.CVRContestInfo;
-import us.freeandfair.corla.model.CVRAuditInfo;
+import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.Setup;
+import us.freeandfair.corla.util.TestClassWithDatabase;
 
 @Test(groups = {"integration"})
-public class CastVoteRecordQueriesTest {
-
-  /**
-   * Container for the mock-up database.
-   */
-  private static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine")
-          .withDatabaseName("corla")
-          .withUsername("corlaadmin")
-            .withPassword("corlasecret")
-            .withInitScript("SQL/corlaInitEmpty.sql");
-
-  @BeforeClass
-  public static void beforeAll() {
-    postgres.start();
-    Properties hibernateProperties = new Properties();
-    hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
-    hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
-    hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
-    hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
-    hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
-    Persistence.setProperties(hibernateProperties);
-  }
-  @BeforeMethod
-  public static void beforeEach() {
-    Persistence.beginTransaction();
-  }
-
-  @AfterMethod
-  public static void afterEach() {
-    Persistence.rollbackTransaction();
-  }
-
-  @AfterClass
-  public static void afterall() {
-    postgres.stop();
-  }
+public class CastVoteRecordQueriesTest extends TestClassWithDatabase {
 
   public List<CVRContestInfo> noisyContestSetup(){
     return noisyContestSetup(1L);
@@ -190,4 +156,439 @@ public class CastVoteRecordQueriesTest {
     assertEquals(acvrs, result);
   }
 
+  @Test(groups =  {"localonly"})
+  public void activityReportTestBig() {
+    List<CVRContestInfo> contest_info = noisyContestSetup();
+    Tribute tribute;
+    CastVoteRecord cvr;
+
+    List<CastVoteRecord> expected = new ArrayList<>();
+
+    List<CastVoteRecord> acvrs = new ArrayList();
+    List<Long> contestCVRIds = new ArrayList();
+    // Now we need to test chunking, so add a whole lotta tributes
+    // These are not the greatest CVRs in the world, they are just a tribute
+    for (int i = 0; i < 2000; i++) {
+      cvr = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
+              null,
+              1L,
+              i,
+              1,
+              1,
+              "1",
+              i,
+              "1",
+              "a",
+              contest_info);
+
+      Persistence.save(cvr);
+      CastVoteRecord acvr = new CastVoteRecord(CastVoteRecord.RecordType.AUDITOR_ENTERED, Instant.now(),
+              cvr.countyID(), cvr.cvrNumber(), null, cvr.scannerID(),
+              cvr.batchID(), cvr.recordID(), cvr.imprintedID(),
+              cvr.ballotType(), cvr.contestInfo());
+
+      acvr.setComment("testing");
+      acvr.setAuditBoardIndex(14);
+      acvr.setCvrId(cvr.id());
+
+      CVRAuditInfo cai = new CVRAuditInfo(cvr);
+      cai.setACVR(acvr);
+
+      Persistence.save(acvr);
+      Persistence.save(cai);
+
+      acvrs.add(acvr);
+      contestCVRIds.add(cvr.id());
+    }
+    List<CastVoteRecord> result = CastVoteRecordQueries.activityReport(contestCVRIds);
+    assertEquals(acvrs, result);
+  }
+
+  @Test
+  public void testGetMatching() {
+    Set<CastVoteRecord> expected = new HashSet<>();
+
+    assertEquals(expected, CastVoteRecordQueries.getMatching(CastVoteRecord.RecordType.UPLOADED).collect(Collectors.toSet()));
+    assertEquals(expected, CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.UPLOADED).collect(Collectors.toSet()));
+
+    CastVoteRecord cvr = noisyCVRSetup();
+    expected.add(cvr);
+
+    assertEquals(expected, CastVoteRecordQueries.getMatching(CastVoteRecord.RecordType.UPLOADED).collect(Collectors.toSet()));
+    assertEquals(expected, CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.UPLOADED).collect(Collectors.toSet()));
+  }
+
+  @Test(expectedExceptions = IllegalStateException.class)
+  public void testGetMatchingDBError() {
+    Persistence.commitTransaction();
+    CastVoteRecordQueries.getMatching(CastVoteRecord.RecordType.UPLOADED);
+  }
+
+  @Test
+  public void testGetMatchingNoCVRTable (){
+    // Drop the CVR table, which should cause a different error in getMatching
+    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record CASCADE");
+    q.executeUpdate();
+    assertNull(CastVoteRecordQueries.getMatching(CastVoteRecord.RecordType.UPLOADED));
+    assertNull(CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.UPLOADED));
+  }
+
+  @Test
+  public void testCountMatching() {
+    assertEquals(OptionalLong.of(0), CastVoteRecordQueries.countMatching(CastVoteRecord.RecordType.UPLOADED));
+    assertEquals(OptionalLong.of(0), CastVoteRecordQueries.countMatching(1L, CastVoteRecord.RecordType.UPLOADED));
+    CastVoteRecord cvr = noisyCVRSetup();
+    assertEquals(OptionalLong.of(1), CastVoteRecordQueries.countMatching(CastVoteRecord.RecordType.UPLOADED));
+    assertEquals(OptionalLong.of(1), CastVoteRecordQueries.countMatching(1L, CastVoteRecord.RecordType.UPLOADED));
+  }
+
+  @Test(expectedExceptions = IllegalStateException.class)
+  public void testCountMatchingDBError() {
+    Persistence.commitTransaction();
+    CastVoteRecordQueries.countMatching(CastVoteRecord.RecordType.UPLOADED);
+  }
+
+  @Test
+  public void testCountMatchingNoCVRTable (){
+    // Drop the CVR table, which should cause a different error in getMatching
+    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record CASCADE");
+    q.executeUpdate();
+    assertEquals(OptionalLong.empty(), CastVoteRecordQueries.countMatching(CastVoteRecord.RecordType.UPLOADED));
+    assertEquals(OptionalLong.empty(), CastVoteRecordQueries.countMatching(1L, CastVoteRecord.RecordType.UPLOADED));
+  }
+
+  @Test
+  public void testGetSingle() {
+    // We don't have any records yet
+    assertNull(CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, 1));
+
+    CastVoteRecord expected = noisyCVRSetup();
+    assertEquals(expected, CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, 1));
+
+    // Now we have two CVRs with the same county, recordType, and sequenceNumber
+    noisyCVRSetup(2);
+    assertNull(CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, 1));
+  }
+
+  @Test
+  public void testGetSingleDBError() {
+    // Drop the CVR table, which should cause a different error in getMatching
+    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record CASCADE");
+    q.executeUpdate();
+    assertNull(CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, 1));
+
+  }
+
+  @Test
+  public void testGetMulti() {
+    List<Integer> sequence_numbers = new ArrayList<>();
+    Map<Integer, CastVoteRecord> expected = new HashMap<>();
+    // We don't have any records yet
+    assertEquals(expected, CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, sequence_numbers));
+
+    List<CVRContestInfo> contest_info = noisyContestSetup();
+
+    CastVoteRecord cvr = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
+            null,
+            1L,
+            1,
+            1,
+            1,
+            "1",
+            1,
+            "1",
+            "a",
+            contest_info);
+    Persistence.save(cvr);
+    expected.put(1, cvr);
+    sequence_numbers.add(1);
+    assertEquals(expected, CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, sequence_numbers));
+
+    // Now we have two CVRs with the same county, recordType, and sequenceNumber
+    CastVoteRecord second = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
+            null,
+            1L,
+            1,
+            2,
+            1,
+            "1",
+            1,
+            "1",
+            "a",
+            contest_info);
+    Persistence.saveOrUpdate(second);
+
+    sequence_numbers.add(2);
+    expected.put(2, second);
+    assertEquals(expected, CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, sequence_numbers));
+  }
+
+  @Test
+  public void testGetMultiDBError() {
+    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record CASCADE");
+    q.executeUpdate();
+    assertNull(CastVoteRecordQueries.get(1L, CastVoteRecord.RecordType.UPLOADED, new ArrayList<>()));
+  }
+
+  @Test
+  public void testGetIDs() {
+    List<Long> ids = new ArrayList<>();
+    List<CastVoteRecord> expected = new ArrayList<>();
+    // We don't have any records yet
+    assertEquals(expected, CastVoteRecordQueries.get(ids));
+
+    // Make sure that a bad lookup also returns nothing
+    ids.add(4L);
+    assertEquals(expected, CastVoteRecordQueries.get(ids));
+    ids.clear();
+
+    List<CVRContestInfo> contest_info = noisyContestSetup();
+
+    CastVoteRecord cvr = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
+            null,
+            1L,
+            1,
+            1,
+            1,
+            "1",
+            1,
+            "1",
+            "a",
+            contest_info);
+    Persistence.save(cvr);
+    expected.add(cvr);
+    ids.add(cvr.id());
+    assertEquals(expected, CastVoteRecordQueries.get(ids));
+
+    // Now we have two CVRs with the same county, recordType, and sequenceNumber
+    CastVoteRecord second = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
+            null,
+            1L,
+            1,
+            2,
+            1,
+            "1",
+            1,
+            "1",
+            "a",
+            contest_info);
+    Persistence.saveOrUpdate(second);
+
+    ids.add(second.id());
+    expected.add(second);
+    assertEquals(expected, CastVoteRecordQueries.get(ids));
+
+  }
+  @Test
+  public void testGetIDsDBError() {
+    Persistence.commitTransaction();
+    List<Long> list = new ArrayList<>();
+    list.add(1L);
+    assertEquals(new ArrayList<>(), CastVoteRecordQueries.get(list));
+  }
+
+  @Test
+  public void testAtPositionTribute() {
+    Tribute tribute = new Tribute();
+    tribute.countyId = 1L;
+    tribute.scannerId = 1;
+    tribute.batchId = "1";
+    tribute.ballotPosition = 1;
+
+    CastVoteRecord expected = noisyCVRSetup();
+
+    assertEquals(expected, CastVoteRecordQueries.atPosition(tribute));
+  }
+
+
+  @Test
+  public void testAtPositionTributes() {
+    List<CVRContestInfo> contest_info = noisyContestSetup();
+    Tribute tribute = new Tribute();
+    tribute.countyId = 1L;
+    tribute.scannerId = 1;
+    tribute.batchId = "1";
+    tribute.ballotPosition = 1;
+
+    tribute.setUri();
+
+    List<Tribute> tributes = new ArrayList<>();
+
+    List<CastVoteRecord> expected = new ArrayList<>();
+    assertEquals(expected, CastVoteRecordQueries.atPosition(tributes));
+
+    tributes.add(tribute);
+    CastVoteRecord cvr = noisyCVRSetup(1, contest_info);
+    expected.add(cvr);
+
+    assertEquals(expected, CastVoteRecordQueries.atPosition(tributes));
+
+    // Create a fake tribute to cause a branch at line 504 in CastVoteRecordQueries.java
+    // This causes a phantom to get created
+    tribute = new Tribute();
+    tribute.countyId = 1L;
+    tribute.scannerId = 1;
+    tribute.batchId = "1";
+    tribute.ballotPosition = 5;
+
+    tribute.setUri();
+    tributes.add(tribute);
+
+    CastVoteRecord phantom = CastVoteRecordQueries.phantomRecord(tribute);
+    expected.add(phantom);
+    assertEquals(CastVoteRecordQueries.atPosition(tributes), expected);
+  }
+
+  @Test
+  public void testPositionAtLots() {
+    List<CVRContestInfo> contest_info = noisyContestSetup();
+    Tribute tribute;
+    CastVoteRecord cvr;
+
+    List<Tribute> tributes = new ArrayList<>();
+    List<CastVoteRecord> expected = new ArrayList<>();
+
+    // Now we need to test chunking, so add a whole lotta tributes
+    // These are not the greatest CVRs in the world, they are just a tribute
+    for (int i = 0; i < 2000; i++) {
+      tribute = new Tribute();
+      tribute.countyId = 1L;
+      tribute.scannerId = 1;
+      tribute.batchId = "1";
+      tribute.ballotPosition = i;
+      tribute.setUri();
+
+      tributes.add(tribute);
+
+      cvr = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
+              null,
+              1L,
+              i,
+              1,
+              1,
+              "1",
+              i,
+              "1",
+              "a",
+              contest_info);
+      Persistence.save(cvr);
+      expected.add(cvr);
+    }
+
+    assertEquals(CastVoteRecordQueries.atPosition(tributes), expected);
+  }
+
+  @Test
+  public void testAtPositionRawData() {
+    CastVoteRecord expected = noisyCVRSetup();
+    assertEquals(expected, CastVoteRecordQueries.atPosition(1L, 1, "1", 1));
+
+    // Make sure it creates a phantom if I ask for an invalid record:
+    CastVoteRecord actual = CastVoteRecordQueries.atPosition(2L, 3, "blah", 9);
+    expected = CastVoteRecordQueries.phantomRecord(2L, 3, "blah", 9);
+    assertEquals(expected, actual);
+
+  }
+
+
+  @Test
+  public void testPhantomRecordTribute() {
+    Tribute tribute = new Tribute();
+    tribute.countyId = 1L;
+    tribute.scannerId = 1;
+    tribute.batchId = "1";
+    tribute.ballotPosition = 5;
+    tribute.setUri();
+
+    CastVoteRecord expected = new CastVoteRecord(CastVoteRecord.RecordType.PHANTOM_RECORD,
+            null,
+            1L,
+            0,
+            0,
+            1,
+            "1",
+            5,
+            "1-1-5",
+            "PHANTOM RECORD",
+            null);
+
+    CastVoteRecord phantom = CastVoteRecordQueries.phantomRecord(tribute);
+    assertEquals(phantom, expected);
+
+  }
+
+  @Test
+  public void testPhantomRecordRawData() {
+    CastVoteRecord expected = new CastVoteRecord(CastVoteRecord.RecordType.PHANTOM_RECORD,
+            null,
+            1L,
+            0,
+            0,
+            1,
+            "1",
+            5,
+            "1-1-5",
+            "PHANTOM RECORD",
+            null);
+
+    CastVoteRecord phantom = CastVoteRecordQueries.phantomRecord(1L, 1, "1", 5);
+    assertEquals(phantom, expected);
+  }
+
+  @Test
+  public void testMaxRevisionDBError() {
+    CastVoteRecord cvr = noisyCVRSetup();
+    Query q = Persistence.currentSession().createNativeQuery("DROP TABLE cast_vote_record CASCADE");
+    q.executeUpdate();
+    assertEquals((Long)0L, CastVoteRecordQueries.maxRevision(cvr));
+  }
+
+  @Test
+  public void testResultsReportBig() {
+    List<CVRContestInfo> contest_info = noisyContestSetup();
+    Tribute tribute;
+    CastVoteRecord cvr;
+
+    List<CastVoteRecord> expected = new ArrayList<>();
+
+    List<CastVoteRecord> acvrs = new ArrayList();
+    List<Long> contestCVRIds = new ArrayList();
+    // Now we need to test chunking, so add a whole lotta tributes
+    // These are not the greatest CVRs in the world, they are just a tribute
+    for (int i = 0; i < 2000; i++) {
+      cvr = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
+              null,
+              1L,
+              i,
+              1,
+              1,
+              "1",
+              i,
+              "1",
+              "a",
+              contest_info);
+
+      Persistence.save(cvr);
+      CastVoteRecord acvr = new CastVoteRecord(CastVoteRecord.RecordType.AUDITOR_ENTERED, Instant.now(),
+              cvr.countyID(), cvr.cvrNumber(), null, cvr.scannerID(),
+              cvr.batchID(), cvr.recordID(), cvr.imprintedID(),
+              cvr.ballotType(), cvr.contestInfo());
+
+      acvr.setComment("testing");
+      acvr.setAuditBoardIndex(14);
+      acvr.setCvrId(cvr.id());
+
+      CVRAuditInfo cai = new CVRAuditInfo(cvr);
+      cai.setACVR(acvr);
+
+      Persistence.save(acvr);
+      Persistence.save(cai);
+
+      acvrs.add(acvr);
+      contestCVRIds.add(cvr.id());
+    }
+    List<CastVoteRecord> result = CastVoteRecordQueries.resultsReport(contestCVRIds);
+    assertEquals(acvrs, result);
+  }
 }
+
