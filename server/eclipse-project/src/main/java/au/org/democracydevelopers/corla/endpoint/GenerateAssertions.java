@@ -150,15 +150,15 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
         LOGGER.debug(String.format("%s %s.", prefix, "Completed Generate Assertions request."));
       } else {
         final String msg = "Blank contest name or invalid time limit in Generate Assertions request.";
-        badDataContents(the_response, msg);
         LOGGER.debug(String.format("%s %s %s.", prefix, msg, the_request.body()));
+        badDataContents(the_response, msg);
       }
     } catch (IllegalArgumentException e) {
-      badDataContents(the_response, e.getMessage());
       LOGGER.debug(String.format("%s %s.", prefix, "Bad Generate Assertions request."));
+      badDataContents(the_response, e.getMessage());
     } catch (RuntimeException e) {
-      serverError(the_response, e.getMessage());
       LOGGER.debug(String.format("%s %s.", prefix, "Error processing Generate Assertions request."));
+      serverError(the_response, e.getMessage());
     }
 
     return my_endpoint_result.get();
