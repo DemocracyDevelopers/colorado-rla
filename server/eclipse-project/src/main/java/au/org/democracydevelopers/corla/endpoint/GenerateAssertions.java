@@ -72,6 +72,11 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
   private static final Logger LOGGER = LogManager.getLogger(GenerateAssertions.class);
 
   /**
+   * RAIRE service generate assertions endpoint.
+   */
+  protected static final String RAIRE_ENDPOINT = "/raire/generate-assertions";
+
+  /**
    * Query specifier for time limit.
    */
   private static final String TIME_LIMIT = "timeLimitSeconds";

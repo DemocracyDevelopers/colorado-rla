@@ -56,11 +56,6 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
     protected static final String RAIRE_URL = "raire_url";
 
     /**
-     * RAIRE service endpoint name.
-     */
-    protected static final String RAIRE_ENDPOINT = "/raire/get-assertions";
-
-    /**
      * The httpClient used for making requests to the raire-service.
      */
     protected final CloseableHttpClient httpClient = HttpClients.createDefault();

@@ -68,6 +68,11 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
     private static final Logger LOGGER = LogManager.getLogger(GetAssertions.class);
 
     /**
+     * RAIRE service get assertions endpoint.
+     */
+    protected static final String RAIRE_ENDPOINT = "/raire/get-assertions";
+
+    /**
      * RAIRE service suffix for csv.
      */
     private static final String CSV_SUFFIX = "csv";
