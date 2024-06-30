@@ -20,19 +20,95 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 */
 
 package au.org.democracydevelopers.corla.util;
+import au.org.democracydevelopers.corla.model.ContestType;
 import org.apache.log4j.Logger;
+import us.freeandfair.corla.model.Choice;
+import us.freeandfair.corla.model.Contest;
+import us.freeandfair.corla.model.ContestResult;
+import us.freeandfair.corla.model.County;
+
+import java.util.List;
 
 /**
- * This class contains utilities for use in testing.
+ * This class contains utilities and default data for use in testing.
  */
 public class testUtils {
+
+  /**
+   * First of two IRV contests for mocking the IRVContestCollector: Boulder Mayoral '22
+   */
+  public final static String boulderMayoral = "City of Boulder Mayoral Candidates";
+
+  /**
+   * Count of the universe size for Boulder Mayoral '23.
+   */
+  public final static int bouldMayoralCount = 118669;
+
+  /**
+   * Tiny constructed example.
+   */
+  public final static String tinyIRV = "TinyExample1";
+
+  /**
+   * Tied contest for mocking.
+   */
+  public final static String tiedIRV = "TiedIRV";
+
+  /**
+   * Count of the universe size for TinyExample1
+   */
+  public final static int tinyIRVCount = 10;
+
+  /**
+   * Non-existent contest
+   */
+  public final static String nonExistentContest = "Non existent contest";
+
+  public final static Choice alice = new Choice("Alice", "", false, false);
+  public final static Choice bob = new Choice("Bob", "", false, false);
+  public final static Choice chuan = new Choice("Chuan", "", false, false);
+
+  /**
+   * Candidates for tinyExample1
+   */
+  public final static List<Choice> tinyIRVCandidates = List.of(alice, bob, chuan);
+
+  public final static List<Choice> boulderMayoralCandidates = List.of(
+      new Choice("Aaron Brockett", "", false, false),
+      new Choice("Nicole Speer", "", false, false),
+      new Choice("Bob Yates", "", false, false),
+      new Choice("Paul Tweedlie", "", false, false)
+  );
+
+  /**
+   * Contest and ContestResult for tiny IRV example.
+   */
+  public final static Contest tinyIRVExample = new Contest(tinyIRV, new County("Arapahoe", 3L), ContestType.IRV.toString(),
+      tinyIRVCandidates, 3, 1, 0);
+  public final static ContestResult tinyIRVContestResult = new ContestResult(tinyIRV);
+
+  /**
+   * Contest and ContestResult for Boulder Mayoral '23 example.
+   */
+  public final static Contest boulderMayoralContest = new Contest(boulderMayoral, new County("Boulder", 7L), ContestType.IRV.toString(),
+      boulderMayoralCandidates, 4, 1, 0);
+  public final static ContestResult boulderIRVContestResult = new ContestResult(boulderMayoral);
+
+  /**
+   * Contest and ContestResult for tied example.
+   */
+  public final static Contest tiedIRVContest = new Contest( tiedIRV, new County("Ouray", 46L), ContestType.IRV.toString(),
+      tinyIRVCandidates, 3, 1, 0);
+  public final static ContestResult tiedIRVContestResult = new ContestResult(tiedIRV);
+
+  public final static List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult, tinyIRVContestResult);
 
   /**
    * Comparator for doubles within a specific tolerance.
    */
   public static final DoubleComparator doubleComparator = new DoubleComparator();
 
-  /*
+  /**
    * Location of the tiny examples intended to be human-tallyable.
    */
   public static final String TINY_CSV_PATH = "src/test/resources/CSVs/Tiny-IRV-Examples/";

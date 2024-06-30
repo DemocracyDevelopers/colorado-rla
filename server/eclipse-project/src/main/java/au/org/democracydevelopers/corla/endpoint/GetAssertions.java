@@ -31,23 +31,19 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import au.org.democracydevelopers.corla.raire.requestToRaire.GetAssertionsRequest;
-import com.google.gson.Gson;
+import au.org.democracydevelopers.corla.communication.requestToRaire.GetAssertionsRequest;
+import au.org.democracydevelopers.corla.communication.responseFromRaire.RaireServiceErrors;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import spark.Request;
 import spark.Response;
 import us.freeandfair.corla.Main;
-import us.freeandfair.corla.asm.ASMEvent;
-import us.freeandfair.corla.endpoint.AbstractDoSDashboardEndpoint;
 import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.persistence.Persistence;
@@ -64,7 +60,7 @@ import us.freeandfair.corla.util.SparkHelper;
  * for that contest containing the error string, which is then included in the zip.
  * If the raire service endpoint returns a 4xx error, this throws a RuntimeException.
  */
-public class GetAssertions extends AbstractDoSDashboardEndpoint {
+public class GetAssertions extends AbstractAllIrvEndpoint {
 
     /**
      * Class-wide logger
@@ -72,24 +68,9 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
     private static final Logger LOGGER = LogManager.getLogger(GetAssertions.class);
 
     /**
-     * GSON, for serialising requests.
+     * RAIRE service get assertions endpoint.
      */
-    Gson gson = new Gson();
-
-    /**
-     * Identify RAIRE service URL from config.
-     */
-    private static final String RAIRE_URL = "raire_url";
-
-    /**
-     * RAIRE error code key.
-     */
-    private static final String RAIRE_ERROR_CODE = "error_code";
-
-    /**
-     * RAIRE service endpoint name.
-     */
-    private static final String RAIRE_ENDPOINT = "/raire/get-assertions";
+    protected static final String RAIRE_ENDPOINT = "/raire/get-assertions";
 
     /**
      * RAIRE service suffix for csv.
@@ -107,17 +88,6 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
     private static final String FORMAT_PARAM = "format";
 
     /**
-     * The httpClient used for making requests to the raire-service.
-     */
-    CloseableHttpClient httpClient = HttpClients.createDefault();
-
-
-    /**
-     * The event to return for this endpoint.
-     */
-    private final ThreadLocal<ASMEvent> my_event = new ThreadLocal<>();
-
-    /**
      * {@inheritDoc}
      */
     @Override
@@ -132,28 +102,6 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
     public String endpointName() {
         return "/get-assertions";
     }
-
-    /**
-     * @return No authorization is necessary for this endpoint.
-     */
-    public AuthorizationType requiredAuthorization() { return AuthorizationType.STATE; }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected ASMEvent endpointEvent() {
-        return my_event.get();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void reset() {
-        my_event.set(null);
-    }
-
 
     /**
      * {@inheritDoc}
@@ -216,7 +164,7 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
 
         // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
         // collating the responses.
-        final List<ContestResult> IRVContestResults = IRVContestCollector.getIRVContestResults();
+        final List<ContestResult> IRVContestResults = AbstractAllIrvEndpoint.getIRVContestResults();
         for (final ContestResult cr : IRVContestResults) {
 
             // Find the winner (there should only be one), candidates and contest name.
@@ -258,11 +206,11 @@ public class GetAssertions extends AbstractDoSDashboardEndpoint {
                         + getAssertionsRequest.contestName));
                 IOUtils.copy(raireResponse.getEntity().getContent(), zos);
 
-            } else if(raireResponse.containsHeader(RAIRE_ERROR_CODE)) {
+            } else if(raireResponse.containsHeader(RaireServiceErrors.ERROR_CODE_KEY)) {
                 // Error response about a specific contest, e.g. "NO_ASSERTIONS_PRESENT".
                 // Write the error into the zip file and continue.
 
-                final String code = raireResponse.getFirstHeader(RAIRE_ERROR_CODE).getValue();
+                final String code = raireResponse.getFirstHeader(RaireServiceErrors.ERROR_CODE_KEY).getValue();
                 LOGGER.debug(String.format("%s %s %s.", prefix, "Error response " + code, "received from RAIRE for "
                         + getAssertionsRequest.contestName));
                 zos.write(code.getBytes(StandardCharsets.UTF_8));
