@@ -214,7 +214,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
    */
   protected GenerateAssertionsResponseWithErrors generateAssertionsUpdateWinners(List<ContestResult> IRVContestResults,
                                                                                  String contestName, double timeLimitSeconds, String raireUrl) {
-    final String prefix = "[generateAssertions]";
+    final String prefix = "[generateAssertionsUpdateWinners]";
     LOGGER.debug(String.format("%s %s %s.", prefix, "Generating assertions for contest ", contestName));
 
     try {
