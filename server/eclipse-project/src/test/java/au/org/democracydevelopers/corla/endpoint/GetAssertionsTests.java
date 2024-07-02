@@ -21,9 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.endpoint;
 
-import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.util.testUtils;
-import com.github.tomakehurst.wiremock.WireMockServer;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -40,12 +38,14 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipInputStream;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+
+import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -64,31 +64,6 @@ import static org.testng.Assert.assertEquals;
 public class GetAssertionsTests {
 
     private static final Logger LOGGER = LogManager.getLogger(GetAssertionsTests.class);
-
-    /**
-     * Two IRV contests for mocking the IRVContestCollector: Boulder Mayoral '23 and a tiny constructed example.
-     */
-    private final static String boulderMayoral = "City of Boulder Mayoral Candidates";
-    private final static String tinyIRV = "TinyExample1";
-
-    private final Choice alice = new Choice("Alice", "", false, false);
-    private final Choice bob = new Choice("Bob", "", false, false);
-    private final Choice chuan = new Choice("Chuan", "", false, false);
-
-    private final List<Choice> boulderMayoralCandidates = List.of(
-            new Choice("Aaron Brockett", "", false, false),
-            new Choice("Nicole Speer", "", false, false),
-            new Choice("Bob Yates", "", false, false),
-            new Choice("Paul Tweedlie", "", false, false)
-    );
-
-    private final Contest tinyIRVExample = new Contest(tinyIRV, new County("Arapahoe", 3L), ContestType.IRV.toString(),
-            List.of(alice, bob, chuan), 3, 1, 0);
-    private final ContestResult tinyIRVContestResult = new ContestResult(tinyIRV);
-    private final Contest boulderMayoralContest = new Contest(boulderMayoral, new County("Boulder", 7L), ContestType.IRV.toString(),
-            boulderMayoralCandidates, 4, 1, 0);
-    private final ContestResult boulderIRVContestResult = new ContestResult(boulderMayoral);
-    private final List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult, tinyIRVContestResult);
 
     /**
      * Endpoint for getting assertions.
@@ -176,8 +151,8 @@ public class GetAssertionsTests {
     @Test(dataProvider = "TwoIRVContests")
     public void rightFileNamesInZip(String contestName1, String contestName2, String suffix) throws Exception {
         testUtils.log(LOGGER, "rightFileNamesInZip");
-        try (MockedStatic<IRVContestCollector> mockIRVContestResults = Mockito.mockStatic(IRVContestCollector.class)) {
-            mockIRVContestResults.when(IRVContestCollector::getIRVContestResults).thenReturn(mockedIRVContestResults);
+        try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults = Mockito.mockStatic(AbstractAllIrvEndpoint.class)) {
+            mockIRVContestResults.when(AbstractAllIrvEndpoint::getIRVContestResults).thenReturn(mockedIRVContestResults);
 
             GetAssertions endpoint = new GetAssertions();
             ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
@@ -216,9 +191,9 @@ public class GetAssertionsTests {
     @Test(dataProvider ="SampleBadEndpoints", expectedExceptions = RuntimeException.class)
     public void badEndpointThrowsRuntimeException(String url, String suffix) throws Exception {
         testUtils.log(LOGGER, "badEndpointThrowsRuntimeException");
-        try (MockedStatic<IRVContestCollector> mockIRVContestResults
-                     = Mockito.mockStatic(IRVContestCollector.class)) {
-            mockIRVContestResults.when(IRVContestCollector::getIRVContestResults)
+        try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults
+                     = Mockito.mockStatic(AbstractAllIrvEndpoint.class)) {
+            mockIRVContestResults.when(AbstractAllIrvEndpoint::getIRVContestResults)
                     .thenReturn(mockedIRVContestResults);
 
             GetAssertions endpoint = new GetAssertions();
@@ -246,9 +221,9 @@ public class GetAssertionsTests {
     @Test(dataProvider ="SampleBadUrls", expectedExceptions = {MalformedURLException.class, URISyntaxException.class})
     public void badUrlThrowsUrlException(String url, String suffix) throws Exception {
         testUtils.log(LOGGER, "badUrlThrowsUrlException");
-        try (MockedStatic<IRVContestCollector> mockIRVContestResults
-                     = Mockito.mockStatic(IRVContestCollector.class)) {
-            mockIRVContestResults.when(IRVContestCollector::getIRVContestResults)
+        try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults
+                     = Mockito.mockStatic(AbstractAllIrvEndpoint.class)) {
+            mockIRVContestResults.when(AbstractAllIrvEndpoint::getIRVContestResults)
                     .thenReturn(mockedIRVContestResults);
 
             GetAssertions endpoint = new GetAssertions();
