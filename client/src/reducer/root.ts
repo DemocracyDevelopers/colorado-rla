@@ -152,10 +152,27 @@ export default function root(state: AppState, action: Action.App) {
         const nextState = { ...state } as DOS.AppState;
 
         nextState.standardizingContests = true;
-        
+
         return nextState;
     }
-   
+
+    case 'GENERATE_ASSERTIONS': {
+        const nextState = { ...state } as DOS.AppState;
+
+        nextState.generatingAssertions = true;
+        nextState.assertionsGenerated = false;
+
+        return nextState;
+    }
+    case 'GENERATE_ASSERTIONS_OK': {
+        const nextState = { ...state } as DOS.AppState;
+
+        nextState.generatingAssertions = false;
+        nextState.assertionsGenerated = true;
+
+        return nextState;
+    }
+
     case 'STANDARDIZE_CONTESTS_FOR_AUDIT_NETWORK_FAIL':
     case 'STANDARDIZE_CONTESTS_FOR_AUDIT_OK': {
         const nextState = { ...state } as DOS.AppState;
