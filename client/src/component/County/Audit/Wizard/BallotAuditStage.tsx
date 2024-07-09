@@ -234,14 +234,12 @@ const BallotContestMarkForm = (props: MarkFormProps) => {
                         <span className='choice-name no-choice'>No audit board consensus</span></Checkbox>
                 </div>
 
-                {description === 'PLURALITY' ? (
-                    <div className='contest-choice-selection'>
-                        <Checkbox
-                            checked={!!contestMarks.noMark}
-                            onChange={updateNoMark}>
-                            <span className='choice-name no-choice'>Blank vote - no mark</span></Checkbox>
-                    </div>
-                ) : null}
+                <div className='contest-choice-selection'>
+                    <Checkbox
+                        checked={!!contestMarks.noMark}
+                        onChange={updateNoMark}>
+                        <span className='choice-name no-choice'>Blank vote - no mark</span></Checkbox>
+                </div>
             </div>
 
             <ContestComments comments={contestMarks.comments} onChange={updateComments} />
