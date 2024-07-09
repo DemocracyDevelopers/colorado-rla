@@ -1,8 +1,8 @@
-import * as React from 'react';
+import * as React from "react";
 
 import * as _ from 'lodash';
 
-import { Button, Checkbox, Dialog, EditableText, Intent } from '@blueprintjs/core';
+import { Button, Checkbox, EditableText, Intent, Dialog } from '@blueprintjs/core';
 
 import BackButton from './BackButton';
 import WaitingForNextBallot from './WaitingForNextBallot';
@@ -10,6 +10,7 @@ import WaitingForNextBallot from './WaitingForNextBallot';
 import CommentIcon from '../../../CommentIcon';
 
 import ballotNotFound from 'corla/action/county/ballotNotFound';
+import IrvChoiceForm from "corla/component/County/Audit/Wizard/IrvChoiceForm";
 
 interface NotFoundProps {
     notFound: OnClick;
@@ -106,19 +107,13 @@ const ContestInfo = ({ contest }: ContestInfoProps) => {
     );
 };
 
-interface ChoicesProps {
-    choices: ContestChoice[];
-    marks: County.ACVRContest;
-    noConsensus: boolean;
-    updateBallotMarks: OnClick;
-}
-
 const ContestChoices = (props: ChoicesProps) => {
     const {
         choices,
         marks,
         noConsensus,
         updateBallotMarks,
+        description,
     } = props;
 
     function updateChoiceByName(name: string) {
@@ -131,7 +126,7 @@ const ContestChoices = (props: ChoicesProps) => {
         return updateChoice;
     }
 
-    const choiceForms = _.map(choices, choice => {
+    const pluralityChoiceForms = _.map(choices, choice => {
         const checked = marks.choices[choice.name];
 
         return (
@@ -147,9 +142,13 @@ const ContestChoices = (props: ChoicesProps) => {
         );
     });
 
+    function isPlurality() {
+        return description === 'PLURALITY';
+    }
+
     return (
-        <div className='contest-choice-grid'>
-            {choiceForms}
+        <div className={isPlurality() ? 'plurality-contest-choice-grid' : ''}>
+            {isPlurality() ? pluralityChoiceForms : IrvChoiceForm(props)}
         </div>
     );
 };
@@ -191,7 +190,7 @@ const BallotContestMarkForm = (props: MarkFormProps) => {
     const contestMarks = acvr[contest.id];
 
     const updateChoices = (candidates: ContestChoice[], desc: string): ContestChoice[] => {
-        if (desc === 'PLURALITY') {
+        if (desc === 'PLURALITY' || desc === 'IRV') {
             return candidates;
         }
         // Replace each candidate 'c' in 'cands' with 'c(1)', 'c(2)', etc.
@@ -244,10 +243,11 @@ const BallotContestMarkForm = (props: MarkFormProps) => {
             <ContestInfo contest={contest} />
             <ContestChoices
                 key={contest.id}
-                choices={updateChoices(choices, description)}
+                choices={choices}
                 marks={contestMarks}
                 noConsensus={!!contestMarks.noConsensus}
                 updateBallotMarks={updateBallotMarks}
+                description={description}
             />
 
             <div className='contest-choice-grid'>
@@ -258,12 +258,14 @@ const BallotContestMarkForm = (props: MarkFormProps) => {
                         <span className='choice-name no-choice'>No audit board consensus</span></Checkbox>
                 </div>
 
-                <div className='contest-choice-selection'>
-                    <Checkbox
-                        checked={!!contestMarks.noMark}
-                        onChange={updateNoMark}>
-                        <span className='choice-name no-choice'>Blank vote - no mark</span></Checkbox>
-                </div>
+                {description === 'PLURALITY' ? (
+                    <div className='contest-choice-selection'>
+                        <Checkbox
+                            checked={!!contestMarks.noMark}
+                            onChange={updateNoMark}>
+                            <span className='choice-name no-choice'>Blank vote - no mark</span></Checkbox>
+                    </div>
+                ) : null}
             </div>
 
             <ContestComments comments={contestMarks.comments} onChange={updateComments} />
