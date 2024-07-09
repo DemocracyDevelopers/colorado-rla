@@ -188,29 +188,6 @@ const BallotContestMarkForm = (props: MarkFormProps) => {
     const acvr = countyState.acvrs![currentBallot.id];
     const contestMarks = acvr[contest.id];
 
-    const updateChoices = (candidates: ContestChoice[], desc: string): ContestChoice[] => {
-        if (desc === 'PLURALITY' || desc === 'IRV') {
-            return candidates;
-        }
-        // Replace each candidate 'c' in 'cands' with 'c(1)', 'c(2)', etc.
-        // For now, let's assume the number of votes on the ballot can be as high as
-        // the number of candidates. (This is not correct, but will be good enough
-        // for prototyping purposes).
-        const ranks = candidates.length;
-
-        const newChoices: ContestChoice[] = [];
-        candidates.forEach(c => {
-            for (let i = 1; i <= ranks; i++) {
-                const newChoice: ContestChoice = {
-                    description: c.description,
-                    name: c.name + '(' + i + ')',
-                };
-                newChoices.push(newChoice);
-            }
-        });
-        return newChoices;
-    };
-
     const updateComments = (comments: string) => {
         updateBallotMarks({ comments });
     };
