@@ -20,26 +20,36 @@ const IrvChoiceForm = (props: ChoicesProps) => {
     } = props;
 
     const numberOfRankChoices = choices.length;
-    const noRankSuffix: string = '(none)';
-    const noRankRanking: number = -1;
 
     function getNoRankButton(candidateName: string) {
-        const noRankValue = `${candidateName}${noRankSuffix}`;
-        const noRank: IrvChoiceFormRanking = {label: 'No Rank', name: candidateName, rank: noRankRanking,
-            value: noRankValue};
+        function candidateHasRanking() {
+            for (let i = 0; i < numberOfRankChoices; i++) {
+                if (marks.choices[candidateName + `(${i + 1})`]) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
-        const checked = marks.choices[noRankValue];
+        function uncheckCandidateRankings(e: React.ChangeEvent<HTMLInputElement>) {
+            const checkbox = e.target;
+
+            if (checkbox.checked) {
+                // Uncheck any other rankings in that candidate's row
+                for (let i = 0; i < numberOfRankChoices; i++) {
+                    updateBallotMarks({ choices: { [candidateName + `(${i + 1})`]: false } });
+                }
+            }
+        }
 
         return (
             <div className='contest-choice-selection'>
                 <Checkbox
                     className='rla-contest-choice'
-                    key={noRank.value}
-                    value={noRank.value}
                     disabled={noConsensus}
-                    checked={checked || false}
-                    onChange={updateChoiceByRanking(noRank)}>
-                    <span className='choice-name'>{noRank.label}</span>
+                    checked={!candidateHasRanking()}
+                    onChange={uncheckCandidateRankings}>
+                    <span className='choice-name'>No Rank</span>
                 </Checkbox>
             </div>
         );
@@ -49,11 +59,6 @@ const IrvChoiceForm = (props: ChoicesProps) => {
         function updateChoice(e: React.ChangeEvent<HTMLInputElement>) {
             const checkbox = e.target;
 
-            // Special conditions exist for 'No Rank'
-            if (checkbox.checked) {
-                handleNoRankButton(irvChoice);
-            }
-
             updateBallotMarks({ choices: { [irvChoice.value]: checkbox.checked } });
         }
 
@@ -61,20 +66,6 @@ const IrvChoiceForm = (props: ChoicesProps) => {
         console.log(marks);
 
         return updateChoice;
-    }
-
-    function handleNoRankButton(irvChoice: IrvChoiceFormRanking) {
-        // 'No Rank' Checked
-        if (irvChoice.rank === noRankRanking) {
-            // Uncheck any other rankings in that candidate's row
-            for (let i = 0; i < numberOfRankChoices; i++) {
-                marks.choices[irvChoice.name + `(${i + 1})`] = false;
-            }
-        // Another ranking checked
-        } else if (marks.choices[irvChoice.name + noRankSuffix]) {
-            // Uncheck 'No Rank' for that row if it was previously checked
-            marks.choices[irvChoice.name + noRankSuffix] = false;
-        }
     }
 
     function getRankings(candidateName: string, candidateDescription: string) {
@@ -123,7 +114,7 @@ const IrvChoiceForm = (props: ChoicesProps) => {
             <div style={{gridColumn: `2 / ${numberOfRankChoices + 3}`}}>
                 Ranked Vote Choice
             </div>
-            {_.map(choices, (choice, index) => {
+            {_.map(choices, choice => {
                 return (
                     getRankings(choice.name, choice.description)
                 );
