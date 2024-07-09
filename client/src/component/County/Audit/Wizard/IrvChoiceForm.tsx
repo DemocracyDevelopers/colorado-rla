@@ -62,9 +62,6 @@ const IrvChoiceForm = (props: ChoicesProps) => {
             updateBallotMarks({ choices: { [irvChoice.value]: checkbox.checked } });
         }
 
-        // tslint:disable-next-line:no-console
-        console.log(marks);
-
         return updateChoice;
     }
 
