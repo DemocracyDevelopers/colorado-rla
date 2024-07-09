@@ -1,8 +1,8 @@
-import * as React from "react";
+import * as React from 'react';
 
 import * as _ from 'lodash';
 
-import { Button, Checkbox, EditableText, Intent, Dialog } from '@blueprintjs/core';
+import { Button, Checkbox, Dialog, EditableText, Intent } from '@blueprintjs/core';
 
 import BackButton from './BackButton';
 import WaitingForNextBallot from './WaitingForNextBallot';
@@ -10,7 +10,7 @@ import WaitingForNextBallot from './WaitingForNextBallot';
 import CommentIcon from '../../../CommentIcon';
 
 import ballotNotFound from 'corla/action/county/ballotNotFound';
-import IrvChoiceForm from "corla/component/County/Audit/Wizard/IrvChoiceForm";
+import IrvChoiceForm from 'corla/component/County/Audit/Wizard/IrvChoiceForm';
 
 interface NotFoundProps {
     notFound: OnClick;
@@ -31,7 +31,6 @@ const BallotNotFoundForm = (props: NotFoundProps) => {
     return (
 
         <div>
-
 
             <div className='not-found-header'>Are you looking at the right ballot?</div>
             <div className='not-found-copy'>
@@ -321,7 +320,6 @@ interface BallotAuditStageState {
     showDialog: boolean;
 }
 
-
 class BallotAuditStage extends React.Component<StageProps, BallotAuditStageState> {
 
     constructor(props: StageProps) {
@@ -332,8 +330,6 @@ class BallotAuditStage extends React.Component<StageProps, BallotAuditStageState
     private closeDialog = () => {
         this.setState({ showDialog: !this.state.showDialog });
      }
-
-
 
        public render() {
 
@@ -396,7 +392,6 @@ class BallotAuditStage extends React.Component<StageProps, BallotAuditStageState
         if (currentBallot.submitted) {
             return <WaitingForNextBallot />;
         }
-
 
         return (
             <div className='rla-page'>
