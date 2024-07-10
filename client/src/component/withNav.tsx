@@ -110,7 +110,7 @@ interface ResetButtonProps {
 }
 
 const ResetDatabaseButton = ({ reset }: ResetButtonProps) => (
-    <Button icon='warning-sign'>
+    <Button icon='warning-sign' onClick={reset}>
         DANGER: Reset Database
     </Button>
 );
