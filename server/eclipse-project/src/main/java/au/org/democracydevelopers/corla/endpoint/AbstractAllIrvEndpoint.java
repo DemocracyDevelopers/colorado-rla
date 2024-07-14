@@ -134,13 +134,19 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
         final List<ContestResult> results = getIRVContestResults();
 
         for(ContestResult cr : results) {
-            Optional<GenerateAssertionsSummary> optSummary
-                = GenerateAssertionsSummaryQueries.matching(cr.getContestName());
-          optSummary.ifPresent(generateAssertionsSummary
-              -> cr.setWinners(Set.of(generateAssertionsSummary.winner)));
+          updateIRVContestWinner(cr);
         }
 
         Persistence.flush();
         return results;
+    }
+
+    // FIXME check for IRV, deal with absent winners (set to UNKNOWN?)
+    public static ContestResult updateIRVContestWinner(ContestResult cr) {
+
+        Optional<GenerateAssertionsSummary> optSummary
+            = GenerateAssertionsSummaryQueries.matching(cr.getContestName());
+        optSummary.ifPresent(generateAssertionsSummary
+            -> cr.setWinners(Set.of(generateAssertionsSummary.winner)));
     }
 }

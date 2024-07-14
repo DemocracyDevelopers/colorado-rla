@@ -94,7 +94,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
   /**
    * Default winner to be used in the case where winner is unknown.
    */
-  protected static final String UNKNOWN_WINNER = "Unknown";
+  public static final String UNKNOWN_WINNER = "Unknown";
 
   /**
    * {@inheritDoc}
