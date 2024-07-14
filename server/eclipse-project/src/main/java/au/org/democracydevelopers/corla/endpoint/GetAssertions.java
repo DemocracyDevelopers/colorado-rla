@@ -50,6 +50,8 @@ import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.model.DoSDashboard;
 import us.freeandfair.corla.util.SparkHelper;
 
+import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
+
 /**
  * The Get Assertions endpoint. Takes a GetAssertionsRequest, and an optional format parameter specifying CSV or JSON,
  * defaulting to json. Returns a zip of all assertions for all IRV contests, in the requested format.
@@ -165,14 +167,11 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
 
         // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
         // collating the responses.
-        final List<ContestResult> IRVContestResults = AbstractAllIrvEndpoint.getIRVContestResults();
-        for (final ContestResult cr : IRVContestResults) {
+        final List<ContestResult> updatedIRVContestResults = AbstractAllIrvEndpoint.getAndUpdateIRVContestResults();
+        for (final ContestResult cr : updatedIRVContestResults) {
 
             // Find the winner (there should only be one), candidates and contest name.
-            // TODO At the moment, the winner isn't yet set properly - will be set in the GenerateAssertions Endpoint.
-            // See https://github.com/DemocracyDevelopers/colorado-rla/issues/73
-            // For now, tolerate > 1; later, check.
-            final String winner = cr.getWinners().stream().findAny().orElse("UNKNOWN");
+            final String winner = cr.getWinners().stream().findAny().orElse(UNKNOWN_WINNER);
             final List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream()
                     .map(Choice::name).toList();
 

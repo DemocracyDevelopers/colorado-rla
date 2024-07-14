@@ -22,6 +22,8 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.endpoint;
 
 import au.org.democracydevelopers.corla.model.ContestType;
+import au.org.democracydevelopers.corla.model.GenerateAssertionsSummary;
+import au.org.democracydevelopers.corla.query.GenerateAssertionsSummaryQueries;
 import com.google.gson.Gson;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -31,7 +33,11 @@ import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.controller.ContestCounter;
 import us.freeandfair.corla.endpoint.AbstractDoSDashboardEndpoint;
 import us.freeandfair.corla.model.*;
+import us.freeandfair.corla.persistence.Persistence;
+
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * An abstract endpoint for communicating with raire. Includes all the information for collecting IRV contests
@@ -101,16 +107,40 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
                 .filter(cr -> cr.getContests().stream().map(Contest::description)
                         .anyMatch(d -> d.equalsIgnoreCase(ContestType.IRV.toString()))).toList();
 
-        // The above should be sufficient, but just in case, check that each contest we found _all_ matches IRV, and
-        // throw a RuntimeException if not.
+        // The above should be sufficient, but just in case, check that each contest we found _all_
+        // matches IRV, and throw a RuntimeException if not.
         for (final ContestResult cr : results) {
             if (cr.getContests().stream().map(Contest::description)
-                    .anyMatch(d -> !d.equalsIgnoreCase(ContestType.IRV.toString()))) {
+                .anyMatch(d -> !d.equalsIgnoreCase(ContestType.IRV.toString()))) {
                 LOGGER.error(String.format("%s %s %s", prefix, msg, cr.getContestName()));
                 throw new RuntimeException(msg + cr.getContestName());
             }
         }
 
+        return results;
+    }
+
+    /**
+     * Use the summaries from the GenerateAssertionsResponseSummary table to update IRV contest
+     * results. This should be run before anything that needs to know an IRV winner.
+     * It updates most of the same data as ContestCounter.CountAllContests(), but assumes that
+     * the contests, counties and contest name are already properly set, along with ballotCount,
+     * auditReason and winnersAllowed.
+     * Losers, vote totals and (min, max and diluted) margins remain wrong, and are never used.
+     * @return the IRV contest results, with winners updated from the database.
+     */
+    public static List<ContestResult> getAndUpdateIRVContestResults() {
+
+        final List<ContestResult> results = getIRVContestResults();
+
+        for(ContestResult cr : results) {
+            Optional<GenerateAssertionsSummary> optSummary
+                = GenerateAssertionsSummaryQueries.matching(cr.getContestName());
+          optSummary.ifPresent(generateAssertionsSummary
+              -> cr.setWinners(Set.of(generateAssertionsSummary.winner)));
+        }
+
+        Persistence.flush();
         return results;
     }
 }
