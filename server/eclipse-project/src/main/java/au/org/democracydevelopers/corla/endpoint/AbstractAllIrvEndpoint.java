@@ -119,34 +119,4 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
 
         return results;
     }
-
-    /**
-     * Use the summaries from the GenerateAssertionsResponseSummary table to update IRV contest
-     * results. This should be run before anything that needs to know an IRV winner.
-     * It updates most of the same data as ContestCounter.CountAllContests(), but assumes that
-     * the contests, counties and contest name are already properly set, along with ballotCount,
-     * auditReason and winnersAllowed.
-     * Losers, vote totals and (min, max and diluted) margins remain wrong, and are never used.
-     * @return the IRV contest results, with winners updated from the database.
-     */
-    public static List<ContestResult> getAndUpdateIRVContestResults() {
-
-        final List<ContestResult> results = getIRVContestResults();
-
-        for(ContestResult cr : results) {
-          updateIRVContestWinner(cr);
-        }
-
-        Persistence.flush();
-        return results;
-    }
-
-    // FIXME check for IRV, deal with absent winners (set to UNKNOWN?)
-    public static ContestResult updateIRVContestWinner(ContestResult cr) {
-
-        Optional<GenerateAssertionsSummary> optSummary
-            = GenerateAssertionsSummaryQueries.matching(cr.getContestName());
-        optSummary.ifPresent(generateAssertionsSummary
-            -> cr.setWinners(Set.of(generateAssertionsSummary.winner)));
-    }
 }
