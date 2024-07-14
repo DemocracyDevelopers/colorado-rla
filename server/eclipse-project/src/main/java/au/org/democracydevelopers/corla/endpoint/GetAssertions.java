@@ -33,6 +33,7 @@ import java.util.zip.ZipOutputStream;
 
 import au.org.democracydevelopers.corla.communication.requestToRaire.GetAssertionsRequest;
 import au.org.democracydevelopers.corla.communication.responseFromRaire.RaireServiceErrors;
+import au.org.democracydevelopers.corla.query.GenerateAssertionsSummaryQueries;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -168,11 +169,10 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
         // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
         // collating the responses.
         final List<ContestResult> IRVContestResults = AbstractAllIrvEndpoint.getIRVContestResults();
-        final List<ContestResult> correctWinnersIRVContestResults = IRVContestResults.stream().map(AbstractAllIrvEndpoint::updateIRVContestWinner).toList();
-        for (final ContestResult cr : correctWinnersIRVContestResults) {
+        for (final ContestResult cr : IRVContestResults) {
 
-            // Find the winner (there should only be one), candidates and contest name.
-            final String winner = cr.getWinners().stream().findAny().orElse(UNKNOWN_WINNER);
+            // Find the winner, candidates and contest name.
+            final String winner = GenerateAssertionsSummaryQueries.matchingWinner(cr.getContestName());
             final List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream()
                     .map(Choice::name).toList();
 
