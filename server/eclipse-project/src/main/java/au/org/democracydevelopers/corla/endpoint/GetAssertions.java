@@ -171,8 +171,7 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
         final List<ContestResult> IRVContestResults = AbstractAllIrvEndpoint.getIRVContestResults();
         for (final ContestResult cr : IRVContestResults) {
 
-            // Find the winner, candidates and contest name.
-            final String winner = GenerateAssertionsSummaryQueries.matchingWinner(cr.getContestName());
+            // Find the candidates and contest name.
             final List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream()
                     .map(Choice::name).toList();
 
@@ -185,7 +184,6 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
                     cr.getContestName(),
                     cr.getBallotCount().intValue(),
                     candidates,
-                    winner,
                     riskLimit
             );
 

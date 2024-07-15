@@ -55,7 +55,7 @@ public class GetAssertionsRequestTests {
   public void testSerialization() {
     testUtils.log(LOGGER, "testSerialization");
     GetAssertionsRequest request = new GetAssertionsRequest("Test Contest", 50000,
-        List.of("Alice", "Bob", "Chuan", "Diego"), "Diego", BigDecimal.valueOf(0.05));
+        List.of("Alice", "Bob", "Chuan", "Diego"), BigDecimal.valueOf(0.05));
 
     String json = gson.toJson(request);
 
