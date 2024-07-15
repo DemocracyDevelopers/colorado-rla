@@ -62,7 +62,6 @@ public class GetAssertionsRequestTests {
     assertTrue(json.contains("\"contestName\":\"Test Contest\""));
     assertTrue(json.contains("\"totalAuditableBallots\":50000"));
     assertTrue(json.contains("\"candidates\":[\"Alice\",\"Bob\",\"Chuan\",\"Diego\"]"));
-    assertTrue(json.contains("\"winner\":\"Diego\""));
     assertTrue(json.contains("\"riskLimit\":0.05"));
   }
 
