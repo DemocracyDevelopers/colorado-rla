@@ -131,6 +131,10 @@ public final class Persistence {
     if (env.containsKey("HIBERNATE_URL")) {
       system_properties.setProperty("hibernate.url", env.get("HIBERNATE_URL"));
     }
+
+    // Properties have changed, we need to reinitialize our DB connectors
+    session_info.remove();
+    session_factory = null;
   }
 
   /**

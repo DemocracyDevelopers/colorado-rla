@@ -560,7 +560,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
       // assertion (not necessarily of type 'theType'). The parameter 'theType' will represent the
       // maximum discrepancy associated with CVR/ACVR pair and one of this audit's assertions. Note
       // that a given CVR/ACVR pair can only be associated with a single discrepancy per assertion.
-      // Before we call each qssertion's recordDiscrepancy(), we check that 'theType' is actually
+      // Before we call each assertion's recordDiscrepancy(), we check that 'theType' is actually
       // the maximum discrepancy that appears across the assertions for this CVR/ACVR.
       for (Assertion a : assertions) {
         a.recordDiscrepancy(theRecord);

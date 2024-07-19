@@ -48,10 +48,13 @@ import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.model.ContestResult;
 
+import javax.transaction.Transactional;
+
 /**
  * This class contains tests for the functionality present in IRVComparisonAudit.
  * TODO: tests for risk measurement.
  */
+@Transactional
 public class IRVComparisonAuditTests extends AssertionTests {
 
   private static final Logger LOGGER = LogManager.getLogger(IRVComparisonAuditTests.class);
@@ -175,7 +178,6 @@ public class IRVComparisonAuditTests extends AssertionTests {
     when(auditInfoNullCVR.cvr()).thenReturn(null);
     when(auditInfoNullCVR.acvr()).thenReturn(auditedCvr);
   }
-
 
   /**
    * Create an IRVComparisonAudit for a contest with no assertions in the database.

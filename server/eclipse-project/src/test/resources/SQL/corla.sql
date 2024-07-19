@@ -729,3 +729,8 @@ alter table round
 create index idx_uploaded_file_county
     on uploaded_file (county_id);
 
+--
+-- Name: hibernate_sequence; Type: SEQUENCE SET; Schema: public; Owner: corlaadmin
+--
+
+SELECT pg_catalog.setval('public.hibernate_sequence', 44767, true);
