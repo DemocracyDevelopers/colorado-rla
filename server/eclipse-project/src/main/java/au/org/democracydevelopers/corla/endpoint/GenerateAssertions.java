@@ -39,6 +39,7 @@ import spark.Response;
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.model.ContestResult;
+import us.freeandfair.corla.persistence.Persistence;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -166,6 +167,9 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
       serverError(the_response, e.getMessage());
     }
 
+    // The only change is updating the winners in the IRV ContestResults.
+    Persistence.flush();
+
     return my_endpoint_result.get();
   }
 
@@ -255,6 +259,9 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
         GenerateAssertionsResponse responseFromRaire = Main.GSON.fromJson(EntityUtils.toString(raireResponse.getEntity()),
             GenerateAssertionsResponse.class);
 
+        // Update the contestRequest with a winner from raire.
+        updateWinnerAndLosers(cr, candidates, responseFromRaire.winner);
+
         LOGGER.debug(String.format("%s %s %s.", prefix,
             "Completed assertion generation for contest", contestName));
         return new GenerateAssertionsResponseWithErrors(contestName, responseFromRaire.winner, "");
@@ -266,6 +273,9 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
         final String code = raireResponse.getFirstHeader(RaireServiceErrors.ERROR_CODE_KEY).getValue();
         LOGGER.debug(String.format("%s %s %s.", prefix, "Error response " + code,
             "received from RAIRE for " + contestName));
+
+        // Update the contestRequest with a blank winner.
+        updateNoWinnerAndAllLosers(cr, candidates);
 
         LOGGER.debug(String.format("%s %s %s.", prefix,
             "Error response for assertion generation for contest ", contestName));
@@ -319,6 +329,29 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
       LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
       throw new RuntimeException(msg + contestName + e.getMessage());
     }
+  }
+
+  /**
+   * Update the contestResults in the database for failed assertion generation: no winners.
+   * Set all candidates as losers.
+   * @param cr         the contestResult to be updated.
+   * @param candidates the candidates.
+   */
+  private void updateNoWinnerAndAllLosers(ContestResult cr, List<String> candidates) {
+    cr.setWinners(Set.of());
+    cr.setLosers(new HashSet<>(candidates));
+  }
+
+  /**
+   * Update the contestResults in the database according to RAIRE's assessed winners. Set all
+   * non-winners to be losers.
+   * @param cr         the contest result, i.e. aggregated (possibly cross-county) IRV contest.
+   * @param candidates the list of candidate names.
+   * @param winner     the winner, as determined by raire.
+   */
+  private void updateWinnerAndLosers(ContestResult cr, List<String> candidates, String winner) {
+    cr.setWinners(Set.of(winner));
+    cr.setLosers(candidates.stream().filter(c -> !c.equalsIgnoreCase(winner)).collect(Collectors.toSet()));
   }
 
   /**

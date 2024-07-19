@@ -106,7 +106,8 @@ public class IRVComparisonAudit extends ComparisonAudit {
    * thrown if an unexpected error arises when retrieving assertions from the database, or in the
    * computation of optimistic and estimated sample sizes.
    *
-   * @param contestResult The contest result (identifies the contest under audit).
+   * @param contestResult The contest result (identifies the contest under audit). This is updated
+   *                      with the winner returned
    * @param riskLimit The risk limit.
    * @param auditReason The audit reason.
    */
