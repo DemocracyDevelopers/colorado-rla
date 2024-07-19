@@ -59,6 +59,8 @@ import javax.transaction.Transactional;
  * TODO: tests for when there are no assertions, but there are some assertion generation summaries.
  * TODO: tests for when there are neither assertions nor assertion generation summaries (at this
  *       stage, just throw an exception).
+ *       (These may both be irrelevant depending on how we resolve the construction of IRVComparisonAudits -
+ *       see issue <a href="https://github.com/orgs/DemocracyDevelopers/projects/1?pane=issue&itemId=60493439">...</a>)
  */
 @Transactional
 public class IRVComparisonAuditTests extends AssertionTests {

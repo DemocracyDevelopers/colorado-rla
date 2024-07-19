@@ -255,8 +255,6 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
         GenerateAssertionsResponse responseFromRaire = Main.GSON.fromJson(EntityUtils.toString(raireResponse.getEntity()),
             GenerateAssertionsResponse.class);
 
-        updateWinnersAndLosers(cr, candidates, responseFromRaire.winner);
-
         LOGGER.debug(String.format("%s %s %s.", prefix,
             "Completed assertion generation for contest", contestName));
         return new GenerateAssertionsResponseWithErrors(contestName, responseFromRaire.winner, "");
@@ -268,8 +266,6 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
         final String code = raireResponse.getFirstHeader(RaireServiceErrors.ERROR_CODE_KEY).getValue();
         LOGGER.debug(String.format("%s %s %s.", prefix, "Error response " + code,
             "received from RAIRE for " + contestName));
-
-        updateWinnersAndLosers(cr, candidates, UNKNOWN_WINNER);
 
         LOGGER.debug(String.format("%s %s %s.", prefix,
             "Error response for assertion generation for contest ", contestName));
@@ -323,20 +319,6 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
       LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
       throw new RuntimeException(msg + contestName + e.getMessage());
     }
-  }
-
-  /**
-   * Update the contestresults in the database according to RAIRE's assessed winners. Set all
-   * non-winners to be losers, which means all candidates if the contest is un-auditable.
-   *
-   * @param cr         the contest result, i.e. aggregaged (possibly cross-county) IRV contest.
-   * @param candidates the list of candidate names.
-   * @param winner     the winner, as determined by raire.
-   * TODO This is currently non-functional - see Issue #136 <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/136">...</a>
-   */
-  private void updateWinnersAndLosers(ContestResult cr, List<String> candidates, String winner) {
-    cr.setWinners(Set.of(winner));
-    cr.setLosers(candidates.stream().filter(c -> !c.equalsIgnoreCase(winner)).collect(Collectors.toSet()));
   }
 
   /**
