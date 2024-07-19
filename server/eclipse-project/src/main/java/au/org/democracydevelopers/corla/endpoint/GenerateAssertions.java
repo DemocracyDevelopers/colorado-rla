@@ -133,7 +133,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
     final String contestName = the_request.queryParamOrDefault(CONTEST_NAME, "");
 
     // Get all the IRV contest results.
-    final List<ContestResult> IRVContestResults = AbstractAllIrvEndpoint.getIRVContestResults();
+    final List<ContestResult> IRVContestResults = getIRVContestResults();
 
     try {
       if(validateParameters(the_request)) {

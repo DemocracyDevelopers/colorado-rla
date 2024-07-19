@@ -98,7 +98,7 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
      * @return A list of all ContestResults for IRV contests.
      * @throws RuntimeException if it encounters contests with a mix of IRV and any other contest type.
      */
-    public static List<ContestResult> getIRVContestResults() {
+    protected static List<ContestResult> getIRVContestResults() {
         final String prefix = "[getIRVContestResults]";
         final String msg = "Inconsistent contest types:";
 

@@ -56,6 +56,9 @@ import javax.transaction.Transactional;
  * TODO: tests for risk measurement.
  * TODO: tests of the reaudit ballot workflow.
  * TODO: tests for remaining error modes.
+ * TODO: tests for when there are no assertions, but there are some assertion generation summaries.
+ * TODO: tests for when there are neither assertions nor assertion generation summaries (at this
+ *       stage, just throw an exception).
  */
 @Transactional
 public class IRVComparisonAuditTests extends AssertionTests {

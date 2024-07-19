@@ -57,6 +57,8 @@ import static org.testng.Assert.assertEquals;
 /**
  * Test the GetAssertions endpoint, both CSV and JSON versions. The response is supposed to be a zip file containing
  * the assertions.
+ * Includes tests that AbstractAllIrvEndpoint::getIRVContestResults returns the correct values and
+ * throws the correct exceptions.
  * TODO This really isn't a completely comprehensive set of tests yet. We also need:
  * - API testing
  * - Testing for retrieving the data from the zip.

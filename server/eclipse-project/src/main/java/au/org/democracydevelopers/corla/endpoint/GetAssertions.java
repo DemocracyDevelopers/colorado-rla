@@ -168,7 +168,7 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
 
         // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
         // collating the responses.
-        final List<ContestResult> IRVContestResults = AbstractAllIrvEndpoint.getIRVContestResults();
+        final List<ContestResult> IRVContestResults = getIRVContestResults();
         for (final ContestResult cr : IRVContestResults) {
 
             // Find the candidates and contest name.
