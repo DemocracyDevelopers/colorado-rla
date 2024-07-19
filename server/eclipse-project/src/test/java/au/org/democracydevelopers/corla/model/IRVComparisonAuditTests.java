@@ -23,7 +23,7 @@ package au.org.democracydevelopers.corla.model;
 
 import static au.org.democracydevelopers.corla.util.testUtils.log;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.Assert.assertEquals;
 
 import au.org.democracydevelopers.corla.model.assertion.Assertion;
 import au.org.democracydevelopers.corla.model.assertion.AssertionTests;

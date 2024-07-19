@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 import java.math.BigDecimal;
 import java.util.List;
 
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.Assert.assertTrue;
 
 /**
  * A very basic test class that constructs a GetAssertionsRequest and checks that it serializes
