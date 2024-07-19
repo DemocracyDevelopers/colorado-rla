@@ -22,14 +22,12 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.query;
 
 import au.org.democracydevelopers.corla.model.GenerateAssertionsSummary;
-import au.org.democracydevelopers.corla.model.assertion.Assertion;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.hibernate.Session;
 import us.freeandfair.corla.persistence.Persistence;
 
 import javax.persistence.TypedQuery;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,7 +39,6 @@ import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNO
  * belonging to a specific contest, identified by name.
  * Also includes a shortcut function to get the winner, which inserts UNKNOWN_WINNER if either the
  * record is absent, or the winner is blank.
- * TODO Currently these queries have no uses outside testing - if they are not needed for the UI,
  * (e.g. giving feedback about assertion generation) they can be safely deleted.
  */
 public class GenerateAssertionsSummaryQueries {

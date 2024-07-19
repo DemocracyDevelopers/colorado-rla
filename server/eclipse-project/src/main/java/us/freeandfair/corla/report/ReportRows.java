@@ -378,12 +378,17 @@ public class ReportRows {
       row.put("Contest", ca.contestResult().getContestName());
       row.put("targeted", yesNo(ca.isTargeted()));
 
-      if (ca.contestResult().getWinners() == null || ca.contestResult().getWinners().isEmpty()) {
-        LOGGER.info("no winner!!! " + ca);
-        row.put("Winner", UNKNOWN_WINNER);
+      if(ca instanceof IRVComparisonAudit) {
+        // If IRV, get the winner's name from the GenerateAssertionsSummary.
+        row.put("Winner", GenerateAssertionsSummaryQueries.matchingWinner(ca.getContestName()));
       } else {
+        // Must be a plurality audit. ContestResult.winner is correct.
+        if (ca.contestResult().getWinners() == null || ca.contestResult().getWinners().isEmpty()) {
+          LOGGER.info("no winner!!! " + ca);
+        }
         row.put("Winner", toString(ca.contestResult().getWinners().iterator().next()));
       }
+      // All this data makes sense for both IRV and plurality.
       row.put("Risk Limit met?", yesNo(riskLimitMet(ca.getRiskLimit(), riskMsmnt)));
       row.put("Risk measurement %", sigFig(percentage(riskMsmnt), 1).toString());
       row.put("Audit Risk Limit %", sigFig(percentage(ca.getRiskLimit()),1).toString());

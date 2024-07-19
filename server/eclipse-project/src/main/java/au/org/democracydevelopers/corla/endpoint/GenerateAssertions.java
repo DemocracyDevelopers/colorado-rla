@@ -47,7 +47,6 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * The Generate Assertions endpoint. Takes a GenerateAssertionsRequest, and optional parameters
@@ -252,30 +251,23 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
       final boolean gotRaireError = raireResponse.containsHeader(RaireServiceErrors.ERROR_CODE_KEY);
 
       if (statusCode == HttpStatus.SC_OK && !gotRaireError) {
-        // OK response. Update the stored winner and return it.
+        // OK response. Return the winner.
 
         LOGGER.debug(String.format("%s %s %s.", prefix, "OK response received from RAIRE for",
             contestName));
         GenerateAssertionsResponse responseFromRaire = Main.GSON.fromJson(EntityUtils.toString(raireResponse.getEntity()),
             GenerateAssertionsResponse.class);
 
-        // Update the contestRequest with a winner from raire.
-        updateWinnerAndLosers(cr, candidates, responseFromRaire.winner);
-
         LOGGER.debug(String.format("%s %s %s.", prefix,
             "Completed assertion generation for contest", contestName));
         return new GenerateAssertionsResponseWithErrors(contestName, responseFromRaire.winner, "");
 
       } else if (statusCode == HttpStatus.SC_INTERNAL_SERVER_ERROR && gotRaireError) {
-        // Error response about a specific contest, e.g. "TIED_WINNERS".
-        // Return the error, record it.
+        // Error response about a specific contest, e.g. "TIED_WINNERS". Return the error.
 
         final String code = raireResponse.getFirstHeader(RaireServiceErrors.ERROR_CODE_KEY).getValue();
         LOGGER.debug(String.format("%s %s %s.", prefix, "Error response " + code,
             "received from RAIRE for " + contestName));
-
-        // Update the contestRequest with a blank winner.
-        updateNoWinnerAndAllLosers(cr, candidates);
 
         LOGGER.debug(String.format("%s %s %s.", prefix,
             "Error response for assertion generation for contest ", contestName));
@@ -288,7 +280,6 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
         LOGGER.error(String.format("%s %s", prefix, msg));
         throw new RuntimeException(msg);
       }
-
     } catch (URISyntaxException | MalformedURLException e) {
       // The raire service url is malformed, probably a config error.
       final String msg = "Bad configuration of Raire service url: " + raireUrl + ". Check your config file.";
@@ -329,29 +320,6 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
       LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
       throw new RuntimeException(msg + contestName + e.getMessage());
     }
-  }
-
-  /**
-   * Update the contestResults in the database for failed assertion generation: no winners.
-   * Set all candidates as losers.
-   * @param cr         the contestResult to be updated.
-   * @param candidates the candidates.
-   */
-  private void updateNoWinnerAndAllLosers(ContestResult cr, List<String> candidates) {
-    cr.setWinners(Set.of());
-    cr.setLosers(new HashSet<>(candidates));
-  }
-
-  /**
-   * Update the contestResults in the database according to RAIRE's assessed winners. Set all
-   * non-winners to be losers.
-   * @param cr         the contest result, i.e. aggregated (possibly cross-county) IRV contest.
-   * @param candidates the list of candidate names.
-   * @param winner     the winner, as determined by raire.
-   */
-  private void updateWinnerAndLosers(ContestResult cr, List<String> candidates, String winner) {
-    cr.setWinners(Set.of(winner));
-    cr.setLosers(candidates.stream().filter(c -> !c.equalsIgnoreCase(winner)).collect(Collectors.toSet()));
   }
 
   /**
