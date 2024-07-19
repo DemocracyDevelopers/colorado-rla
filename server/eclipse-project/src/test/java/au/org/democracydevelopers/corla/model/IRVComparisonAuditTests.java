@@ -50,10 +50,7 @@ import us.freeandfair.corla.model.ContestResult;
 
 /**
  * This class contains tests for the functionality present in IRVComparisonAudit.
- * TODO: tests for removing discrepancies -2, -1, 0, 1, 2
  * TODO: tests for risk measurement.
- * TODO: tests of the reaudit ballot workflow.
- * TODO: tests for remaining error modes.
  */
 public class IRVComparisonAuditTests extends AssertionTests {
 
@@ -132,6 +129,12 @@ public class IRVComparisonAuditTests extends AssertionTests {
   private CVRAuditInfo auditInfo;
 
   /**
+   * Mock of a CVRAuditInfo object, matched to a null CVR
+   */
+  @Mock
+  private CVRAuditInfo auditInfoNullCVR;
+
+  /**
    * Initialise mocked objects prior to the first test. Note that the diluted margin
    * returned by ContestResult's for IRV will not have a sensible value, and it will
    * not be used for IRV computations. For testing purposes, we should set it with
@@ -167,6 +170,10 @@ public class IRVComparisonAuditTests extends AssertionTests {
     when(auditInfo.id()).thenReturn(1L);
     when(auditInfo.cvr()).thenReturn(cvr);
     when(auditInfo.acvr()).thenReturn(auditedCvr);
+
+    when(auditInfoNullCVR.id()).thenReturn(1L);
+    when(auditInfoNullCVR.cvr()).thenReturn(null);
+    when(auditInfoNullCVR.acvr()).thenReturn(auditedCvr);
   }
 
 
@@ -461,6 +468,72 @@ public class IRVComparisonAuditTests extends AssertionTests {
   }
 
   /**
+   * If we call removeDiscrepancy() with an invalid discrepancy type (3), an IllegalArgumentException
+   * should be thrown.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testRemoveInvalidDiscrepancy1(){
+    log(LOGGER, "testRemoveInvalidDiscrepancy1");
+    IRVComparisonAudit ca = new IRVComparisonAudit(testEstimationNEBOnly,
+        AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS);
+
+    ca.removeDiscrepancy(auditInfo, 3);
+  }
+
+  /**
+   * If we call removeDiscrepancy() with an invalid discrepancy type (-3), an IllegalArgumentException
+   * should be thrown.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testRemoveInvalidDiscrepancy2(){
+    log(LOGGER, "testRemoveInvalidDiscrepancy2");
+    IRVComparisonAudit ca = new IRVComparisonAudit(testEstimationNEBOnly,
+        AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS);
+
+    ca.removeDiscrepancy(auditInfo, -3);
+  }
+
+  /**
+   * If we call removeDiscrepancy() on an audit that does not contain any discrepancies, no
+   * discrepancies will be removed.
+   */
+  @Test
+  public void testRemoveInvalidDiscrepancy3(){
+    log(LOGGER, "testRemoveInvalidDiscrepancy3");
+    IRVComparisonAudit ca = new IRVComparisonAudit(mixedContest2,
+        AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS);
+
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+    ca.removeDiscrepancy(auditInfo, 1);
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+  }
+
+  /**
+   * If we call removeDiscrepancy() with a null audit info, an IllegalArgumentException will be
+   * thrown.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testRemoveNullAuditInfo(){
+    log(LOGGER, "testRemoveNullAuditInfo");
+    IRVComparisonAudit ca = new IRVComparisonAudit(testEstimationNEBOnly,
+        AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS);
+
+    ca.removeDiscrepancy(null, -1);
+  }
+
+  /**
+   * If we call removeDiscrepancy() with a null cvr in the provided audit info, an
+   * IllegalArgumentException will be thrown.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testRemoveNullAuditInfoCVR(){
+    log(LOGGER, "testRemoveNullAuditInfoCVR");
+    IRVComparisonAudit ca = createIRVComparisonAuditMixed();
+
+    ca.removeDiscrepancy(auditInfoNullCVR, -1);
+  }
+
+  /**
    * Discrepancy computation for 'Mixed Contest' with CVR "A" and audited ballot "A", "B", "C" ,"D".
    * The maximum discrepancy is 0.
    */
@@ -507,8 +580,8 @@ public class IRVComparisonAuditTests extends AssertionTests {
    * "B","A","C","D" and recording of the resulting maximum discrepancy of type 2.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeRecordDiscrepancyCVR_ABCD_ACVR_BACD(RecordType auditedType){
-    log(LOGGER, String.format("testComputeRecordDiscrepancyCVR_ABCD_ACVR_BACD[%s]", auditedType));
+  public void testComputeRecordRemoveDiscrepancyCVR_ABCD_ACVR_BACD(RecordType auditedType){
+    log(LOGGER, String.format("testComputeRecordRemoveDiscrepancyCVR_ABCD_ACVR_BACD[%s]", auditedType));
     resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest");
     IRVComparisonAudit ca = createIRVComparisonAuditMixed();
 
@@ -524,6 +597,9 @@ public class IRVComparisonAuditTests extends AssertionTests {
     ca.recordDiscrepancy(auditInfo, 2);
 
     checkDiscrepancies(ca, 0, 1, 0, 0, 0);
+
+    ca.removeDiscrepancy(auditInfo, 2);
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
   }
 
   /**
@@ -574,8 +650,8 @@ public class IRVComparisonAuditTests extends AssertionTests {
    * audited ballot "A","B","C","D". The maximum discrepancy is 1.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD(RecordType auditedType){
-    log(LOGGER, String.format("testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD[%s]", auditedType));
+  public void testComputeRecordRemoveDiscrepancyCVR_BACD_ACVR_ABCD(RecordType auditedType){
+    log(LOGGER, String.format("testComputeRecordRemoveDiscrepancyCVR_BACD_ACVR_ABCD[%s]", auditedType));
     resetMocks(BACD, ABCD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest");
     IRVComparisonAudit ca = createIRVComparisonAuditMixed();
 
@@ -591,6 +667,9 @@ public class IRVComparisonAuditTests extends AssertionTests {
     ca.recordDiscrepancy(auditInfo, 1);
 
     checkDiscrepancies(ca, 1, 0, 0, 0, 0);
+
+    ca.removeDiscrepancy(auditInfo, 1);
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
   }
 
   /**
@@ -598,8 +677,8 @@ public class IRVComparisonAuditTests extends AssertionTests {
    * audited ballot "A","B","C","D". The maximum discrepancy is -1.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD_mixed2(RecordType auditedType){
-    log(LOGGER, String.format("testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD_mixed2[%s]", auditedType));
+  public void testComputeRecordRemoveDiscrepancyCVR_BACD_ACVR_ABCD_mixed2(RecordType auditedType){
+    log(LOGGER, String.format("testComputeRecordRemoveDiscrepancyCVR_BACD_ACVR_ABCD_mixed2[%s]", auditedType));
     resetMocks(BACD, ABCD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest 2");
     IRVComparisonAudit ca = createIRVComparisonAuditMixed2();
 
@@ -615,6 +694,9 @@ public class IRVComparisonAuditTests extends AssertionTests {
     ca.recordDiscrepancy(auditInfo, -1);
 
     checkDiscrepancies(ca, 0, 0, 1, 0, 0);
+
+    ca.removeDiscrepancy(auditInfo, -1);
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
   }
 
   /**
@@ -622,7 +704,7 @@ public class IRVComparisonAuditTests extends AssertionTests {
    * audited ballot "A","B","C","D". The maximum discrepancy is -2.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD_simple3(RecordType auditedType){
+  public void testComputeRecordRemoveDiscrepancyCVR_BACD_ACVR_ABCD_simple3(RecordType auditedType){
     log(LOGGER, String.format("testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD_simple3[%s]", auditedType));
     resetMocks(BACD, ABCD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Simple Contest 3");
     IRVComparisonAudit ca = createIRVComparisonAuditSimple3();
@@ -639,6 +721,9 @@ public class IRVComparisonAuditTests extends AssertionTests {
     ca.recordDiscrepancy(auditInfo, -2);
 
     checkDiscrepancies(ca, 0, 0, 0, 1, 0);
+
+    ca.removeDiscrepancy(auditInfo, -2);
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
   }
 
   /**
@@ -703,8 +788,8 @@ public class IRVComparisonAuditTests extends AssertionTests {
    * "A","B","C","D". The maximum discrepancy is 0.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testComputeRecordDiscrepancyCVR_blank_ACVR_ABCD(RecordType auditedType){
-    log(LOGGER, String.format("testComputeRecordDiscrepancyCVR_blank_ACVR_ABCD[%s]", auditedType));
+  public void testComputeRecordRemoveDiscrepancyCVR_blank_ACVR_ABCD(RecordType auditedType){
+    log(LOGGER, String.format("testComputeRecordRemoveDiscrepancyCVR_blank_ACVR_ABCD[%s]", auditedType));
     resetMocks(blank, ABCD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest");
     IRVComparisonAudit ca = createIRVComparisonAuditMixed();
 
@@ -720,6 +805,9 @@ public class IRVComparisonAuditTests extends AssertionTests {
     ca.recordDiscrepancy(auditInfo, 0);
 
     checkDiscrepancies(ca, 0, 0, 0, 0, 1);
+
+    ca.removeDiscrepancy(auditInfo, 0);
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
   }
 
   /**
