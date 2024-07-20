@@ -3,15 +3,17 @@
 
 SELECT
     -- cou.name,
-    -- con.name,
+    con.name,
     irv.record_type,
     irv.cvr_id,
     irv.imprinted_id,
     irv.raw_choices,
     irv.valid_choices
 FROM
-   irv_ballot_interpretation AS irv;
+   irv_ballot_interpretation AS irv
+LEFT JOIN
+   contest AS con
+   ON irv.contest_id = con.id;
 -- LEFT JOIN
---    contest AS con
---    ON irv.contest_id = con.id
--- LEFT JOIN county as cou ON con.county_d = cou.id;
+ --    county as cou
+  --   ON con.county_d = cou.id;
