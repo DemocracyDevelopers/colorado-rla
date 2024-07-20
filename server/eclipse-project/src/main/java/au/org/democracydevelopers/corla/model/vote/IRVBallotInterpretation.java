@@ -37,37 +37,51 @@ public class IRVBallotInterpretation implements PersistentEntity, Serializable {
   @Version
   private Long version;
 
-  /**
-   * The CVR, which is a different object for the uploaded and audited versions of the same vote.
-   * There may be multiple IRVBallotInterpretations for the same CVR, because one CVR may have
-   * many different IRV contests.
-   */
-  @ManyToOne(optional = false, fetch = FetchType.LAZY)
-  private CastVoteRecord cvr;
 
   /**
    * The contest to which the interpreted vote belongs.
-   * TODO This could be a string because we really never need to use the Contest object.
    */
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
   private Contest contest;
 
   /**
+   * The record type, either UPLOADED or AUDITOR_ENTERED.
+   */
+  @Column(name = "record_type", nullable = false)
+  @Enumerated(EnumType.STRING)
+  private CastVoteRecord.RecordType recordType;
+
+  /**
+   * ID of the CVR being audited, and whose paper ballot is being interpreted.
+   * There may be multiple records with the same CVR ID, if one ballot contains multiple IRV contests.
+   */
+  @Column(name = "cvr_id", nullable = false)
+  private int cvrID;
+
+  /**
+   * The imprinted ID, generally tabulator_id-batch_id-record_id.
+   */
+  @Column(name = "imprinted_id", nullable = false)
+  @Convert(converter = StringListConverter.class)
+  private String imprintedID;
+
+  /**
    * List of candidate names with ranks in parentheses representing a raw vote in an IRV contest.
    * Order is not important.
    */
-  @Column(name = "raw_choices", columnDefinition = "character varying (1024)")
+  @Column(name = "raw_choices", columnDefinition = "character varying (1024)", nullable = false)
   @Convert(converter = StringListConverter.class)
   private List<String> rawChoices = new ArrayList<>();
 
   /**
    * List of candidates names, in order of rank, representing a valid vote in an IRV contest.
    */
-  @Column(name = "valid_choices", columnDefinition = "character varying (1024)")
+  @Column(name = "valid_choices", columnDefinition = "character varying (1024)", nullable = false)
   @Convert(converter = StringListConverter.class)
   private List<String> validChoices = new ArrayList<>();
 
 
+  // TODO Actually these headers are all in DominionCVRExportParser. Try to put them in the same place.
   public static String invalidIRVTitle = "Invalid IRV choices.";
   private static String countyHeader = "County";
   private static String contestHeader = "Contest";
@@ -85,20 +99,22 @@ public class IRVBallotInterpretation implements PersistentEntity, Serializable {
   }
 
   /**
-   * Create a record of an IRV vote interpretation for a given contest and a given ballot (identified by the
-   * CVR ID).
-   *
-   * @param theCVR          Ballot identifier
-   * @param theContest      Name of the contest whose vote is being interpreted.
-   * @param theRawChoices   Raw choices on the ballot for the contest, as identified by an auditor.
-   * @param theValidChoices Valid interpretation of the vote on the ballot.
+   * Create a record of an IRV vote interpretation for a given contest and a given ballot
+   * (identified by the CVR ID).
+   * @param contest        the Contest
+   * @param recordType     the type, expected to be either UPLOADED, AUDITOR_ENTERED, or REAUDITED.
+   * @param cvrId          the cvrId.
+   * @param imprintedId    the imprinted ID, i.e. tabulator_id-batch_id-record_id.
+   * @param rawChoices     the (invalid) raw IRV choices, e.g. [Bob(1),Alice(3),Chuan(4)].
+   * @param orderedChoices the way colorado-rla interpreted the raw choices, as an order list of names.
    */
-  public IRVBallotInterpretation(final CastVoteRecord theCVR, final Contest theContest, final List<String> theRawChoices,
-                                 final List<String> theValidChoices) {
-    cvr = theCVR;
-    contest = theContest;
-    rawChoices = theRawChoices;
-    validChoices = theValidChoices;
+  public IRVBallotInterpretation(Contest contest, CastVoteRecord.RecordType recordType, int cvrId, String imprintedId, List<String> rawChoices, List<String> orderedChoices) {
+    this.contest = contest;
+    this.recordType = recordType;
+    this.cvrID = cvrId;
+    this.imprintedID = imprintedId;
+    this.rawChoices = rawChoices;
+    this.validChoices = orderedChoices;
   }
 
   /**
@@ -109,10 +125,10 @@ public class IRVBallotInterpretation implements PersistentEntity, Serializable {
     return String.join(",", (Stream.of(
         contest.county().name(),
         contest.name(),
-        cvr.getCvrId().toString(),
-        cvr.imprintedID(),
+        String.valueOf(cvrID),
+        imprintedID,
         String.join(",", rawChoices),
-        String.join(",", validChoices)
+        "[" + String.join(",", validChoices) + "]"
     ).map(StringEscapeUtils::escapeCsv).toList()));
   }
 
@@ -124,12 +140,13 @@ public class IRVBallotInterpretation implements PersistentEntity, Serializable {
     return String.join(",", (List.of(
         countyHeader + " " + contest.county().name(),
         contestHeader + " " + contest.name(),
-        cvrIDHeader + " " + cvr.getCvrId().toString(),
-        imprintedIDHeader + " " + cvr.imprintedID(),
+        cvrIDHeader + " " + cvrID,
+        imprintedIDHeader + " " + imprintedID,
         rawChoicesHeader + " " + String.join(",", rawChoices),
-        validChoicesHeader + " " + String.join(",", validChoices)
+        validChoicesHeader + " [" + String.join(",", validChoices) + "]"
     ))) + ".";
   }
+
   /**
    * {@inheritDoc}
    */
