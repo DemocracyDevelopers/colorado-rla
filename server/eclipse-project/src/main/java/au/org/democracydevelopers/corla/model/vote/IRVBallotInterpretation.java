@@ -55,8 +55,8 @@ public class IRVBallotInterpretation implements PersistentEntity, Serializable {
    * ID of the CVR being audited, and whose paper ballot is being interpreted.
    * There may be multiple records with the same CVR ID, if one ballot contains multiple IRV contests.
    */
-  @Column(name = "cvr_id", nullable = false)
-  private int cvrID;
+  @Column(name = "cvr_number", nullable = false)
+  private int cvrNumber;
 
   /**
    * The imprinted ID, generally tabulator_id-batch_id-record_id.
@@ -75,21 +75,9 @@ public class IRVBallotInterpretation implements PersistentEntity, Serializable {
   /**
    * List of candidates names, in order of rank, representing a valid vote in an IRV contest.
    */
-  @Column(name = "valid_choices", columnDefinition = "character varying (1024)", nullable = false)
+  @Column(name = "interpretation", columnDefinition = "character varying (1024)", nullable = false)
   @Convert(converter = StringListConverter.class)
-  private List<String> validChoices = new ArrayList<>();
-
-
-  // TODO Actually these headers are all in DominionCVRExportParser. Try to put them in the same place.
-  public static String invalidIRVTitle = "Invalid IRV choices.";
-  private static String countyHeader = "County";
-  private static String contestHeader = "Contest";
-  private static String cvrIDHeader = "CVR ID";
-  private static String imprintedIDHeader = "Imprinted ID";
-  private static String rawChoicesHeader = "Raw choices";
-  private static String validChoicesHeader = "Interpreted as";
-  public static final List<String> csvHeaders = List.of(countyHeader, contestHeader,
-      cvrIDHeader, rawChoicesHeader, validChoicesHeader);
+  private List<String> interpretation = new ArrayList<>();
 
   /**
    * Construct an empty IRVBallotInterpretation (for persistence).
@@ -102,47 +90,33 @@ public class IRVBallotInterpretation implements PersistentEntity, Serializable {
    * (identified by the CVR ID).
    * @param contest        the Contest
    * @param recordType     the type, expected to be either UPLOADED, AUDITOR_ENTERED, or REAUDITED.
-   * @param cvrId          the cvrId.
+   * @param cvrNumber      the cvr Number, which appears in the csv file (not to be confused with the cvr_id, which the
+   *                       database makes).
    * @param imprintedId    the imprinted ID, i.e. tabulator_id-batch_id-record_id.
    * @param rawChoices     the (invalid) raw IRV choices, e.g. [Bob(1),Alice(3),Chuan(4)].
    * @param orderedChoices the way colorado-rla interpreted the raw choices, as an order list of names.
    */
-  public IRVBallotInterpretation(Contest contest, CastVoteRecord.RecordType recordType, int cvrId, String imprintedId, List<String> rawChoices, List<String> orderedChoices) {
+  public IRVBallotInterpretation(Contest contest, CastVoteRecord.RecordType recordType, int cvrNumber, String imprintedId, List<String> rawChoices, List<String> orderedChoices) {
     this.contest = contest;
     this.recordType = recordType;
-    this.cvrID = cvrId;
+    this.cvrNumber = cvrNumber;
     this.imprintedID = imprintedId;
     this.rawChoices = rawChoices;
-    this.validChoices = orderedChoices;
-  }
-
-  /**
-   * Output contents as a CSV row, CSV-escaped and comma-delimited, in the same order as csvHeaders.
-   * @return the data as a CSV row.
-   */
-  public String getCSVRow() {
-    return String.join(",", (Stream.of(
-        contest.county().name(),
-        contest.name(),
-        String.valueOf(cvrID),
-        imprintedID,
-        String.join(",", rawChoices),
-        "[" + String.join(",", validChoices) + "]"
-    ).map(StringEscapeUtils::escapeCsv).toList()));
+    this.interpretation = orderedChoices;
   }
 
   /**
    * Output contents as a String appropriate for a log message.
    * @return the data with headers incorporated.
    */
-  public String logMessage() {
+  public String logMessage(String cvrNumberHeader, String imprintedIDHeader) {
     return String.join(", ", (List.of(
-        countyHeader + " " + contest.county().name(),
-        contestHeader + " " + contest.name(),
-        cvrIDHeader + " " + cvrID,
+        "County " + contest.county().name(),
+        "Contest " + contest.name(),
+        cvrNumberHeader + " " + cvrNumber,
         imprintedIDHeader + " " + imprintedID,
-        rawChoicesHeader + " " + String.join(",", rawChoices),
-        validChoicesHeader + " [" + String.join(",", validChoices) + "]"
+        "Choices " + String.join(",", rawChoices),
+        "Interpretation [" + String.join(",", interpretation) + "]"
     )));
   }
 
