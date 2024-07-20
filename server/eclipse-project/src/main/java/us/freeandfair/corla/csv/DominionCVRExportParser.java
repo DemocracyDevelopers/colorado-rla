@@ -677,7 +677,7 @@ public class DominionCVRExportParser {
               IRVBallotInterpretation irvInterpretation = new IRVBallotInterpretation(co,
                   RecordType.UPLOADED, cvr_id, imprinted_id, votes, orderedChoices);
               Persistence.save(irvInterpretation);
-              String msg = "Interpretation of invalid IRV choices. ";
+              String msg = "Interpretation of invalid IRV choices.";
               LOGGER.warn(String.format("%s %s %s.", prefix, msg, irvInterpretation.logMessage()));
             }
             contest_info.add(new CVRContestInfo(co, null, null, orderedChoices));

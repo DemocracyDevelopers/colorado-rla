@@ -62,7 +62,6 @@ public class IRVBallotInterpretation implements PersistentEntity, Serializable {
    * The imprinted ID, generally tabulator_id-batch_id-record_id.
    */
   @Column(name = "imprinted_id", nullable = false)
-  @Convert(converter = StringListConverter.class)
   private String imprintedID;
 
   /**
@@ -137,14 +136,14 @@ public class IRVBallotInterpretation implements PersistentEntity, Serializable {
    * @return the data with headers incorporated.
    */
   public String logMessage() {
-    return String.join(",", (List.of(
+    return String.join(", ", (List.of(
         countyHeader + " " + contest.county().name(),
         contestHeader + " " + contest.name(),
         cvrIDHeader + " " + cvrID,
         imprintedIDHeader + " " + imprintedID,
         rawChoicesHeader + " " + String.join(",", rawChoices),
         validChoicesHeader + " [" + String.join(",", validChoices) + "]"
-    ))) + ".";
+    )));
   }
 
   /**
