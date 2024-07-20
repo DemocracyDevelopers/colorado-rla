@@ -465,6 +465,20 @@ create table dos_dashboard
 alter table dos_dashboard
     owner to corlaadmin;
 
+create table generate_assertions_summary
+(
+    id           bigserial
+        primary key,
+    contest_name varchar(255) not null
+        constraint uk_g5q4xm0ga61nbiccn44irhivx
+            unique,
+    error        varchar(255) not null,
+    message      varchar(255) not null,
+    version      bigint       not null,
+    warning      varchar(255) not null,
+    winner       varchar(255) not null
+);
+
 create table contest_to_audit
 (
     dashboard_id bigint not null

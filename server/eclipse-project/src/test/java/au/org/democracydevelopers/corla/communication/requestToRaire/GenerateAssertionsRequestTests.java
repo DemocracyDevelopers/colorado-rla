@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.Assert.assertTrue;
 
 /**
  * A very basic test class that constructs a ContestRequest and checks that it serializes correctly.

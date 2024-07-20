@@ -12,7 +12,7 @@ import javax.swing.text.html.Option;
 import java.util.*;
 import java.util.Optional;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.Assert.assertEquals;
 
 @Test
 public class BallotManifestInfoQueriesTest extends TestClassWithDatabase {

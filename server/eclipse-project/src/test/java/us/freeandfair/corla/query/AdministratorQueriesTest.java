@@ -1,16 +1,13 @@
 package us.freeandfair.corla.query;
 
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.*;
 import us.freeandfair.corla.model.Administrator;
 import us.freeandfair.corla.model.County;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.util.TestClassWithDatabase;
 
-import java.util.Properties;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 @Test
 public class AdministratorQueriesTest extends TestClassWithDatabase {
