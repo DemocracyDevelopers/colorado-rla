@@ -30,22 +30,22 @@ import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.jdbc.JdbcDatabaseDelegate;
+import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 import us.freeandfair.corla.csv.DominionCVRExportParser;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.testng.annotations.*;
+import us.freeandfair.corla.query.ExportQueries;
 
 import javax.transaction.Transactional;
 
@@ -65,6 +65,10 @@ import static us.freeandfair.corla.query.CountyQueries.fromString;
  * - some examples with invalid headers, to ensure they are rejected (though most of these are
  *   tested in IRVHeadersParserTests.java and are not repeated here),
  *   plus a bad plurality "Vote For= " with a non-integer.
+ *   This example includes a test that IRV ballot interpretation report contains the right valid
+ *   interpretation, for a small selection of known invalid votes. (This really belongs logically
+ *   in RankedBallotInterpretationReportTests, but is included here so the Boulder data only has to
+ *   be loaded once.)
  * - an examples to test the broader class of Write In strings.
  */
 public class DominionCVRExportParserTests extends TestClassWithDatabase {
@@ -265,6 +269,7 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
    * Test of successful parsing of data from Boulder '23, which contains a mix of IRV and plurality
    * contests. Check all their metadata.
    * Check correct parsing of the first vote.
+   * Check proper reporting of valid interpretation of some invalid IRV votes.
    */
   @Test
   @Transactional
@@ -522,6 +527,25 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
         List.of("Yes/For"));
     assertEquals(Objects.requireNonNull(cvr1.contestInfoForContest(boulder302)).choices(),
         List.of("No/Against"));
+
+    // Make the ranked_ballot_interpretation report.
+    final Map<String, String> files = ExportQueries.sqlFiles();
+    final ByteArrayOutputStream os = new ByteArrayOutputStream();
+    String q = files.get("ranked_ballot_interpretation");
+    ExportQueries.csvOut(q, os);
+
+    // Test for the proper reporting of some known invalid votes.
+    String boulderMayoralName = "City of Boulder Mayoral Candidates";
+    String cvr = os.toString();
+    assertTrue(StringUtils.contains(cvr, "county,contest,record_type,cvr_number,imprinted_id,raw_vote,valid_interpretation\n"));
+    assertTrue(StringUtils.contains(cvr,
+        "Boulder,"+boulderMayoralName+",UPLOADED,140,108-1-32,\"\"\"Bob Yates(1)\"\",\"\"Bob Yates(2)\"\",\"\"Bob Yates(3)\"\",\"\"Bob Yates(4)\"\"\",\"\"\"Bob Yates\"\""));
+    assertTrue(StringUtils.contains(cvr,
+        "Boulder,"+boulderMayoralName+",UPLOADED,112680,108-100-48,\"\"\"Bob Yates(1)\"\",\"\"Nicole Speer(2)\"\",\"\"Aaron Brockett(3)\"\",\"\"Bob Yates(3)\"\",\"\"Paul Tweedlie(4)\"\"\",\"\"\"Bob Yates\"\",\"\"Nicole Speer\"\",\"\"Aaron Brockett\"\",\"\"Paul Tweedlie\"\""));
+    assertTrue(StringUtils.contains(cvr,
+        "Boulder,"+boulderMayoralName+",UPLOADED,107599,101-178-114,\"\"\"Bob Yates(1)\"\",\"\"Paul Tweedlie(1)\"\",\"\"Aaron Brockett(2)\"\",\"\"Paul Tweedlie(2)\"\",\"\"Paul Tweedlie(3)\"\",\"\"Paul Tweedlie(4)\"\"\","));
+    assertTrue(StringUtils.contains(cvr,
+        "Boulder,"+boulderMayoralName+",UPLOADED,118738,101-190-124,\"\"\"Aaron Brockett(1)\"\",\"\"Bob Yates(1)\"\"\","));
   }
 
   /**

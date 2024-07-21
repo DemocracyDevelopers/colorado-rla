@@ -7,8 +7,9 @@ SELECT
     irv.record_type,
     irv.cvr_number,
     irv.imprinted_id,
-    irv.raw_choices,
-    irv.interpretation
+    -- prettier printing by removing the enclosing [].
+    SUBSTRING(irv.raw_choices, 2, LENGTH(irv.raw_choices) - 2) AS raw_vote,
+    SUBSTRING(irv.interpretation, 2, LENGTH(irv.interpretation) - 2) AS valid_interpretation
 FROM
    irv_ballot_interpretation AS irv
 LEFT JOIN
