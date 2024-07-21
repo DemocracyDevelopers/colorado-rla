@@ -479,6 +479,24 @@ create table generate_assertions_summary
     winner       varchar(255) not null
 );
 
+create table irv_ballot_interpretation
+(
+    id             bigint        not null
+        primary key,
+    cvr_number     integer       not null,
+    imprinted_id   varchar(255)  not null,
+    interpretation varchar(1024) not null,
+    raw_choices    varchar(1024) not null,
+    record_type    varchar(255)  not null,
+    version        bigint,
+    contest_id     bigint        not null
+        constraint fkinw3u6cigskdttcwqosnsl98e
+            references contest
+);
+
+alter table irv_ballot_interpretation
+    owner to corlaadmin;
+
 create table contest_to_audit
 (
     dashboard_id bigint not null

@@ -3,8 +3,8 @@ Democracy Developers IRV extensions to colorado-rla.
 
 @copyright 2024 Colorado Department of State
 
-These IRV extensions are designed to connect to a running instance of the raire 
-service (https://github.com/DemocracyDevelopers/raire-service), in order to 
+These IRV extensions are designed to connect to a running instance of the raire
+service (https://github.com/DemocracyDevelopers/raire-service), in order to
 generate assertions that can be audited using colorado-rla.
 
 The colorado-rla IRV extensions are free software: you can redistribute it and/or modify it under the terms
@@ -19,7 +19,7 @@ You should have received a copy of the GNU Affero General Public License along w
 raire-service. If not, see <https://www.gnu.org/licenses/>.
 */
 
-package au.org.democracydevelopers.corla.csv;
+package au.org.democracydevelopers.corla.report;
 
 import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
@@ -30,22 +30,22 @@ import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.jdbc.JdbcDatabaseDelegate;
+import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
+import us.freeandfair.corla.controller.AuditReport;
 import us.freeandfair.corla.csv.DominionCVRExportParser;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.testng.annotations.*;
+import us.freeandfair.corla.query.ExportQueries;
 
 import javax.transaction.Transactional;
 
@@ -57,7 +57,8 @@ import static us.freeandfair.corla.query.ContestQueries.forCounties;
 import static us.freeandfair.corla.query.CountyQueries.fromString;
 
 /**
- * Test a variety of IRV-related parsing issues for CVRs, including:
+ * Test that a correct ranked vote interpretation report is produced, for a variety of IRV-related
+ * parsing examples, including:
  * - some basic small test cases that can be verified by eye,
  * - a constructed test with invalid IRV ballots to check they are accepted and properly
  *   interpreted.
@@ -66,13 +67,15 @@ import static us.freeandfair.corla.query.CountyQueries.fromString;
  *   tested in IRVHeadersParserTests.java and are not repeated here),
  *   plus a bad plurality "Vote For= " with a non-integer.
  * - an examples to test the broader class of Write In strings.
+ * Test csvs are the same as in DominionCVRExportParserTests.
  */
-public class DominionCVRExportParserTests extends TestClassWithDatabase {
+public class RankedBallotInterpretationReportTests extends TestClassWithDatabase {
 
   /**
    * Class-wide logger
    */
-  private static final Logger LOGGER = LogManager.getLogger(DominionCVRExportParserTests.class);
+  private static final Logger LOGGER = LogManager.getLogger(
+      au.org.democracydevelopers.corla.report.RankedBallotInterpretationReportTests.class);
 
   /**
    * Container for the mock-up database.
@@ -112,101 +115,27 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
   @Transactional
   public void parseThreeCandidatesTenVotesSucceeds() throws IOException {
     testUtils.log(LOGGER, "parseThreeCandidatesTenVotesSucceeds");
+
+    // Parse the file.
     Path path = Paths.get(TINY_CSV_PATH + "ThreeCandidatesTenVotes.csv");
     Reader reader = Files.newBufferedReader(path);
-
-    final List<String> ABC = List.of("Alice","Bob","Chuan");
-    final List<String> ACB = List.of("Alice","Chuan","Bob");
-    final List<String> BAC = List.of("Bob","Alice","Chuan");
-    final List<String> CAB = List.of("Chuan","Alice","Bob");
-
     DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Saguache"), blank, true);
     assertTrue(parser.parse().success);
 
-    // There should be one contest, the one we just read in.
-    List<Contest> contests = forCounties(Set.of(fromString("Saguache")));
-    assertEquals(1, contests.size());
-    Contest contest = contests.get(0);
+    // Make the ranked_ballot_interpretation report.
+    final Map<String, String> files = ExportQueries.sqlFiles();
+    final ByteArrayOutputStream os = new ByteArrayOutputStream();
+    String q = files.get("ranked_ballot_interpretation");
+    ExportQueries.csvOut(q, os);
 
-    // Check basic data
-    assertEquals(contest.name(), "TinyExample1");
-    assertEquals(contest.description(), ContestType.IRV.toString());
-    assertEquals(contest.choices().stream().map(Choice::name).collect(Collectors.toList()), ABC);
-
-    // Votes allowed should be 3 (because there are 3 ranks), whereas winners=1 always for IRV.
-    assertEquals(contest.votesAllowed().intValue(), 3);
-    assertEquals(contest.winnersAllowed().intValue(), 1);
-
-    // There are 10 votes:
-    // 3 Alice, Bob, Chuan
-    // 3 Alice, Chuan, Bob
-    // 1 Bob, Alice, Chuan
-    // 3 Chuan, Alice, Bob
-    final List<List<String>> expectedChoices = List.of(
-        ABC,ABC,ABC,
-        ACB,ACB,ACB,
-        BAC,
-        CAB, CAB, CAB);
-
-    List<CVRContestInfo> cvrs = getMatching(fromString("Saguache").id(),  CastVoteRecord.RecordType.UPLOADED)
-        .map(cvr -> cvr.contestInfoForContest(contest)).toList();
-    assertEquals(10, cvrs.size());
-    for(int i=0 ; i < expectedChoices.size() ; i++) {
-      assertEquals(cvrs.get(i).choices(), expectedChoices.get(i));
-    }
+    // There should be no data, only headers, because all the IRV votes are valid.
+    assertEquals(os.toString(), "county,contest,record_type,cvr_number,imprinted_id,raw_choices,interpretation\n");
   }
-
-  /**
-   * Second simple test of successful parsing of a tiny IRV test example, GuideToRAIREExample3.csv.
-   * Test that all the metadata are correct, then spot-check some of the votes.
-   * @throws IOException never.
-   */
-  @Test
-  @Transactional
-  public void parseGuideToRaireExample3() throws IOException {
-    testUtils.log(LOGGER, "parseGuideToRaireExample3");
-    Path path = Paths.get(TINY_CSV_PATH + "GuideToRAIREExample3.csv");
-    Reader reader = Files.newBufferedReader(path);
-
-    DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Montezuma"),
-            blank, true);
-    assertTrue(parser.parse().success);
-
-    // There should be one contest, the one we just read in.
-    List<Contest> contests = forCounties(Set.of(fromString("Montezuma")));
-    assertEquals(1, contests.size());
-    Contest contest = contests.get(0);
-
-    // Check basic data
-    assertEquals(contest.name(), "Example3");
-    assertEquals(contest.description(), ContestType.IRV.toString());
-    assertEquals(contest.choices().stream().map(Choice::name).collect(Collectors.toList()),
-        List.of("A", "B", "C", "D"));
-
-    // Votes allowed should be 3 (because there are 3 ranks), whereas winners=1 always for IRV.
-    assertEquals(contest.votesAllowed().intValue(), 4);
-    assertEquals(contest.winnersAllowed().intValue(), 1);
-
-    // There are 225 votes. Spot-check some of them.
-    List<CVRContestInfo> cvrs = getMatching(fromString("Montezuma").id(), CastVoteRecord.RecordType.UPLOADED)
-        .map(cvr -> cvr.contestInfoForContest(contest)).toList();
-    assertEquals(225, cvrs.size());
-    assertEquals(List.of("C", "D"), cvrs.get(0).choices());
-    assertEquals(List.of("C", "D"), cvrs.get(44).choices());
-    assertEquals(List.of("C", "B", "D"), cvrs.get(45).choices());
-    assertEquals(List.of("C", "B", "D"), cvrs.get(84).choices());
-    assertEquals(List.of("A", "B", "C", "D"), cvrs.get(85).choices());
-    assertEquals(List.of("A", "B", "C", "D"), cvrs.get(184).choices());
-    assertEquals(List.of("B", "D", "C"), cvrs.get(185).choices());
-    assertEquals(List.of("B", "D", "C"), cvrs.get(185).choices());
-    assertEquals(List.of("B", "D", "C"), cvrs.get(224).choices());
-  }
-
 
   /**
    * Test of successful parsing of a file with valid headers but invalid IRV votes - it includes
    * duplicate candidates and skipped or repeated ranks.
-   * This checks for correct metadata and correct valid interpretation of all votes.
+   * This checks for correct storage of valid interpretation of all votes.
    * @throws IOException if there are file I/O issues.
    */
   @Test
@@ -219,25 +148,18 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
     DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Gilpin"), blank, true);
     assertTrue(parser.parse().success);
 
-    // There should be one contest, the one we just read in.
-    List<Contest> contests = forCounties(Set.of(fromString("Gilpin")));
-    assertEquals(1, contests.size());
-    Contest contest = contests.get(0);
 
-    // Check basic data
-    assertEquals(contest.name(), "TinyInvalidExample1");
-    assertEquals(contest.description(), ContestType.IRV.toString());
-    assertEquals(contest.choices().stream().map(Choice::name).collect(Collectors.toList()),
-        List.of("Alice", "Bob", "Chuan"));
+    // Make the ranked_ballot_interpretation report.
+    final Map<String, String> files = ExportQueries.sqlFiles();
+    final ByteArrayOutputStream os = new ByteArrayOutputStream();
+    String q = files.get("ranked_ballot_interpretation");
+    ExportQueries.csvOut(q, os);
 
-    // Votes allowed should be 3 (because there are 3 ranks), whereas winners=1 always for IRV.
-    assertEquals(contest.votesAllowed().intValue(), 3);
-    assertEquals(contest.winnersAllowed().intValue(), 1);
+    // There should be headers and 10 records matching the valid interpretations of all those invalid votes.
+    String cvr = os.toString();
+    assertTrue(StringUtils.contains(cvr, "county,contest,record_type,cvr_number,imprinted_id,raw_choices,interpretation\n"));
 
-    // There are 10 votes, with respective valid interpretations as below:
-    List<CVRContestInfo> cvrs = getMatching(fromString("Gilpin").id(), CastVoteRecord.RecordType.UPLOADED)
-        .map(cvr -> cvr.contestInfoForContest(contest)).toList();
-    assertEquals(10, cvrs.size());
+    /* TODO: check for the presence of all these as rows.
 
     // Raw: "Alice(1),Alice(2),Bob(2),Chuan(3)
     assertEquals(List.of("Alice", "Bob", "Chuan"), cvrs.get(0).choices());
@@ -259,6 +181,8 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
     assertTrue(cvrs.get(8).choices().isEmpty());
     // Raw: "Bob(1),Chuan(1),Alice(2),Bob(3)
     assertTrue(cvrs.get(9).choices().isEmpty());
+
+     */
   }
 
   /**
@@ -274,7 +198,7 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
     Reader reader = Files.newBufferedReader(path);
 
     DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Boulder"),
-            blank, true);
+        blank, true);
     assertTrue(parser.parse().success);
 
     // There should be 38 contests. Check their metadata.
@@ -578,3 +502,4 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
     }
   }
 }
+
