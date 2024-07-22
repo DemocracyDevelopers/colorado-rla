@@ -26,10 +26,9 @@ public final class ContestCounter {
   /**
    * Class-wide logger
    */
-  public static final Logger LOGGER =
-    LogManager.getLogger(ContestCounter.class);
+  public static final Logger LOGGER = LogManager.getLogger(ContestCounter.class);
 
-  /** prevent construction **/
+  /** private to prevent construction **/
   private ContestCounter() {
   }
 

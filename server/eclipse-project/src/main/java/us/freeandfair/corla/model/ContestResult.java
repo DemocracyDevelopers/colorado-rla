@@ -57,8 +57,7 @@ public class ContestResult implements PersistentEntity, Serializable {
   /**
    * Class-wide logger
    */
-  public static final Logger LOGGER =
-    LogManager.getLogger(ContestResult.class);
+  public static final Logger LOGGER = LogManager.getLogger(ContestResult.class);
 
   /**
    * text
@@ -110,7 +109,7 @@ public class ContestResult implements PersistentEntity, Serializable {
 
   /**
    * The set of contest losers. Not correctly initialized for IRV unless externally
-   *    * set after assertion generation.
+   * set after assertion generation.
    */
   @Column(name = "losers", columnDefinition = TEXT)
   @Convert(converter = StringSetConverter.class)
