@@ -173,6 +173,7 @@ public final class ComparisonAuditController {
     if (contestResult.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.PLURALITY.toString()))) {
       return new ComparisonAudit(contestResult, riskLimit, contestResult.getDilutedMargin(), Audit.GAMMA, contestResult.getAuditReason());
     }
+
     // If it is all IRV, make an IRVComparisonAudit.
     if (contestResult.getContests().stream().map(Contest::description).allMatch(d -> d.equals(ContestType.IRV.toString()))) {
       return new IRVComparisonAudit(contestResult, riskLimit, contestResult.getAuditReason());
@@ -198,6 +199,7 @@ public final class ComparisonAuditController {
 
     Persistence.save(ca);
     LOGGER.debug(String.format("[createAudit: contestResult=%s, ComparisonAudit=%s]", contestResult, ca));
+
     return ca;
   }
 

@@ -33,6 +33,7 @@ import java.util.zip.ZipOutputStream;
 
 import au.org.democracydevelopers.corla.communication.requestToRaire.GetAssertionsRequest;
 import au.org.democracydevelopers.corla.communication.responseFromRaire.RaireServiceErrors;
+import au.org.democracydevelopers.corla.query.GenerateAssertionsSummaryQueries;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -49,6 +50,8 @@ import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.model.DoSDashboard;
 import us.freeandfair.corla.util.SparkHelper;
+
+import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 
 /**
  * The Get Assertions endpoint. Takes a GetAssertionsRequest, and an optional format parameter specifying CSV or JSON,
@@ -165,14 +168,10 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
 
         // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
         // collating the responses.
-        final List<ContestResult> IRVContestResults = AbstractAllIrvEndpoint.getIRVContestResults();
+        final List<ContestResult> IRVContestResults = getIRVContestResults();
         for (final ContestResult cr : IRVContestResults) {
 
-            // Find the winner (there should only be one), candidates and contest name.
-            // TODO At the moment, the winner isn't yet set properly - will be set in the GenerateAssertions Endpoint.
-            // See https://github.com/DemocracyDevelopers/colorado-rla/issues/73
-            // For now, tolerate > 1; later, check.
-            final String winner = cr.getWinners().stream().findAny().orElse("UNKNOWN");
+            // Find the candidates and contest name.
             final List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream()
                     .map(Choice::name).toList();
 
@@ -185,7 +184,6 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
                     cr.getContestName(),
                     cr.getBallotCount().intValue(),
                     candidates,
-                    winner,
                     riskLimit
             );
 

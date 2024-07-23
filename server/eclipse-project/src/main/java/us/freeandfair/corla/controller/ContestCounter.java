@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import au.org.democracydevelopers.corla.model.ContestType;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 

@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 import java.math.BigDecimal;
 import java.util.List;
 
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.Assert.assertTrue;
 
 /**
  * A very basic test class that constructs a GetAssertionsRequest and checks that it serializes
@@ -55,14 +55,13 @@ public class GetAssertionsRequestTests {
   public void testSerialization() {
     testUtils.log(LOGGER, "testSerialization");
     GetAssertionsRequest request = new GetAssertionsRequest("Test Contest", 50000,
-        List.of("Alice", "Bob", "Chuan", "Diego"), "Diego", BigDecimal.valueOf(0.05));
+        List.of("Alice", "Bob", "Chuan", "Diego"), BigDecimal.valueOf(0.05));
 
     String json = gson.toJson(request);
 
     assertTrue(json.contains("\"contestName\":\"Test Contest\""));
     assertTrue(json.contains("\"totalAuditableBallots\":50000"));
     assertTrue(json.contains("\"candidates\":[\"Alice\",\"Bob\",\"Chuan\",\"Diego\"]"));
-    assertTrue(json.contains("\"winner\":\"Diego\""));
     assertTrue(json.contains("\"riskLimit\":0.05"));
   }
 

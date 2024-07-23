@@ -22,23 +22,20 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.model;
 
 import au.org.democracydevelopers.corla.query.AssertionQueries;
+import au.org.democracydevelopers.corla.query.GenerateAssertionsSummaryQueries;
 import com.google.inject.internal.util.ImmutableList;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
+
+import java.util.*;
+import javax.persistence.*;
+
 import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.*;
 
 import java.math.BigDecimal;
-import java.util.OptionalInt;
 
 import au.org.democracydevelopers.corla.model.assertion.Assertion;
 
+import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 import static java.util.Collections.max;
 
 /**
@@ -109,7 +106,8 @@ public class IRVComparisonAudit extends ComparisonAudit {
    * thrown if an unexpected error arises when retrieving assertions from the database, or in the
    * computation of optimistic and estimated sample sizes.
    *
-   * @param contestResult The contest result (identifies the contest under audit).
+   * @param contestResult The contest result (identifies the contest under audit). This is updated
+   *                      with the winner returned
    * @param riskLimit The risk limit.
    * @param auditReason The audit reason.
    */
