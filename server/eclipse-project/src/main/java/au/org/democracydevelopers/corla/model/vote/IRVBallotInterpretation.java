@@ -21,7 +21,7 @@ import java.util.stream.Stream;
  */
 @Entity
 @Table(name = "irv_ballot_interpretation")
-public class IRVBallotInterpretation implements PersistentEntity, Serializable {
+public class IRVBallotInterpretation implements PersistentEntity {
 
   /**
    * ID for interpretation record (for persistence).
@@ -87,16 +87,19 @@ public class IRVBallotInterpretation implements PersistentEntity, Serializable {
 
   /**
    * Create a record of an IRV vote interpretation for a given contest and a given ballot
-   * (identified by the CVR ID).
+   * (identified by the CVR ID). This works for any IRV vote, but is expected to be used only
+   * for invalid IRV votes.
    * @param contest        the Contest
    * @param recordType     the type, expected to be either UPLOADED, AUDITOR_ENTERED, or REAUDITED.
-   * @param cvrNumber      the cvr Number, which appears in the csv file (not to be confused with the cvr_id, which the
-   *                       database makes).
+   * @param cvrNumber      the cvr Number, which appears in the csv file (not to be confused with
+   *                       the cvr_id, which the database makes).
    * @param imprintedId    the imprinted ID, i.e. tabulator_id-batch_id-record_id.
    * @param rawChoices     the (invalid) raw IRV choices, e.g. [Bob(1),Alice(3),Chuan(4)].
    * @param orderedChoices the way colorado-rla interpreted the raw choices, as an order list of names.
    */
-  public IRVBallotInterpretation(Contest contest, CastVoteRecord.RecordType recordType, int cvrNumber, String imprintedId, List<String> rawChoices, List<String> orderedChoices) {
+  public IRVBallotInterpretation(final Contest contest, final CastVoteRecord.RecordType recordType,
+          int cvrNumber, final String imprintedId, final List<String> rawChoices,
+                                                               final List<String> orderedChoices) {
     this.contest = contest;
     this.recordType = recordType;
     this.cvrNumber = cvrNumber;
@@ -106,10 +109,10 @@ public class IRVBallotInterpretation implements PersistentEntity, Serializable {
   }
 
   /**
-   * Output contents as a String appropriate for a log message.
+   * Output details of the stored IRV vote interpretation as a String appropriate for a log message.
    * @return the data with headers incorporated.
    */
-  public String logMessage(String cvrNumberHeader, String imprintedIDHeader) {
+  public String logMessage(final String cvrNumberHeader, final String imprintedIDHeader) {
     return String.join(", ", (List.of(
         "County " + contest.county().name(),
         "Contest " + contest.name(),
@@ -132,7 +135,7 @@ public class IRVBallotInterpretation implements PersistentEntity, Serializable {
    * {@inheritDoc}
    */
   @Override
-  public void setID(Long the_id) {
+  public void setID(final Long the_id) {
     id = the_id;
   }
 

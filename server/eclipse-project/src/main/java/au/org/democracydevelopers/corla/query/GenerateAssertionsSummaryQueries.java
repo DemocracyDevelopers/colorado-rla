@@ -35,7 +35,7 @@ import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNO
 
 /**
  * Database queries relating to the retrieval of Assertion Generation Summaries from the
- * database. It contains a method that executes a query to retrieval all GenerateAssertionsSummaries
+ * database. It contains a method that executes a query to retrieve all GenerateAssertionsSummaries
  * belonging to a specific contest, identified by name.
  * Also includes a shortcut function to get the winner, which inserts UNKNOWN_WINNER if either the
  * record is absent, or the winner is blank.
@@ -54,9 +54,9 @@ public class GenerateAssertionsSummaryQueries {
    * @param contestName the name of the contest.
    */
   public static String matchingWinner(final String contestName) {
-    Optional<GenerateAssertionsSummary> optSummary = matching(contestName);
-    if(optSummary.isPresent() && !optSummary.get().winner.isBlank()) {
-      return optSummary.get().winner;
+    final Optional<GenerateAssertionsSummary> optSummary = matching(contestName);
+    if(optSummary.isPresent() && !optSummary.get().getWinner().isBlank()) {
+      return optSummary.get().getWinner();
     } else {
       return UNKNOWN_WINNER;
     }
@@ -80,7 +80,7 @@ public class GenerateAssertionsSummaryQueries {
             + " where ca.contestName = :contestName", GenerateAssertionsSummary.class);
       q.setParameter("contestName", contestName);
 
-      List<GenerateAssertionsSummary> result = q.getResultList();
+      final List<GenerateAssertionsSummary> result = q.getResultList();
       LOGGER.debug(String.format("%s %d summary results retrieved for contest %s.", prefix,
           result.size(), contestName));
       if(result.isEmpty()) {
