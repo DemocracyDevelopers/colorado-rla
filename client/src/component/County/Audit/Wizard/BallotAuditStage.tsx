@@ -10,6 +10,7 @@ import WaitingForNextBallot from './WaitingForNextBallot';
 import CommentIcon from '../../../CommentIcon';
 
 import ballotNotFound from 'corla/action/county/ballotNotFound';
+import IrvChoiceForm from 'corla/component/County/Audit/Wizard/IrvChoiceForm';
 
 interface NotFoundProps {
     notFound: OnClick;
@@ -30,7 +31,6 @@ const BallotNotFoundForm = (props: NotFoundProps) => {
     return (
 
         <div>
-
 
             <div className='not-found-header'>Are you looking at the right ballot?</div>
             <div className='not-found-copy'>
@@ -106,19 +106,13 @@ const ContestInfo = ({ contest }: ContestInfoProps) => {
     );
 };
 
-interface ChoicesProps {
-    choices: ContestChoice[];
-    marks: County.ACVRContest;
-    noConsensus: boolean;
-    updateBallotMarks: OnClick;
-}
-
 const ContestChoices = (props: ChoicesProps) => {
     const {
         choices,
         marks,
         noConsensus,
         updateBallotMarks,
+        description,
     } = props;
 
     function updateChoiceByName(name: string) {
@@ -131,7 +125,7 @@ const ContestChoices = (props: ChoicesProps) => {
         return updateChoice;
     }
 
-    const choiceForms = _.map(choices, choice => {
+    const pluralityChoiceForms = _.map(choices, choice => {
         const checked = marks.choices[choice.name];
 
         return (
@@ -147,9 +141,13 @@ const ContestChoices = (props: ChoicesProps) => {
         );
     });
 
+    function isPlurality() {
+        return description === 'PLURALITY';
+    }
+
     return (
-        <div className='contest-choice-grid'>
-            {choiceForms}
+        <div className={isPlurality() ? 'plurality-contest-choice-grid' : ''}>
+            {isPlurality() ? pluralityChoiceForms : IrvChoiceForm(props)}
         </div>
     );
 };
@@ -190,29 +188,6 @@ const BallotContestMarkForm = (props: MarkFormProps) => {
     const acvr = countyState.acvrs![currentBallot.id];
     const contestMarks = acvr[contest.id];
 
-    const updateChoices = (candidates: ContestChoice[], desc: string): ContestChoice[] => {
-        if (desc === 'PLURALITY') {
-            return candidates;
-        }
-        // Replace each candidate 'c' in 'cands' with 'c(1)', 'c(2)', etc.
-        // For now, let's assume the number of votes on the ballot can be as high as
-        // the number of candidates. (This is not correct, but will be good enough
-        // for prototyping purposes).
-        const ranks = candidates.length;
-
-        const newChoices: ContestChoice[] = [];
-        candidates.forEach(c => {
-            for (let i = 1; i <= ranks; i++) {
-                const newChoice: ContestChoice = {
-                    description: c.description,
-                    name: c.name + '(' + i + ')',
-                };
-                newChoices.push(newChoice);
-            }
-        });
-        return newChoices;
-    };
-
     const updateComments = (comments: string) => {
         updateBallotMarks({ comments });
     };
@@ -244,10 +219,11 @@ const BallotContestMarkForm = (props: MarkFormProps) => {
             <ContestInfo contest={contest} />
             <ContestChoices
                 key={contest.id}
-                choices={updateChoices(choices, description)}
+                choices={choices}
                 marks={contestMarks}
                 noConsensus={!!contestMarks.noConsensus}
                 updateBallotMarks={updateBallotMarks}
+                description={description}
             />
 
             <div className='contest-choice-grid'>
@@ -319,7 +295,6 @@ interface BallotAuditStageState {
     showDialog: boolean;
 }
 
-
 class BallotAuditStage extends React.Component<StageProps, BallotAuditStageState> {
 
     constructor(props: StageProps) {
@@ -330,8 +305,6 @@ class BallotAuditStage extends React.Component<StageProps, BallotAuditStageState
     private closeDialog = () => {
         this.setState({ showDialog: !this.state.showDialog });
      }
-
-
 
        public render() {
 
@@ -394,7 +367,6 @@ class BallotAuditStage extends React.Component<StageProps, BallotAuditStageState
         if (currentBallot.submitted) {
             return <WaitingForNextBallot />;
         }
-
 
         return (
             <div className='rla-page'>
