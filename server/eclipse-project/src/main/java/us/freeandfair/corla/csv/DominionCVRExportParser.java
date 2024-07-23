@@ -21,6 +21,7 @@ import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.model.vote.IRVChoices;
 import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
 import au.org.democracydevelopers.corla.model.vote.IRVPreference;
+import au.org.democracydevelopers.corla.model.vote.IRVBallotInterpretation;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -667,21 +668,22 @@ public class DominionCVRExportParser {
       if (present) {
         if(isIRV) {
             // If it is IRV, convert it into an ordered list of names (without parentheses), then
-            // store. If it was not valid, make a warning log message and keep going.
+            // store.
             final IRVChoices irvVotes = new IRVChoices(votes);
             List<String> orderedChoices = irvVotes.getValidIntentAsOrderedList();
             if(!irvVotes.isValid()) {
-              String msg = "Interpretation of invalid IRV choices: ";
-              LOGGER.warn(String.format("%s %s", prefix, msg + irvVotes + " to " + orderedChoices));
+              // IRV preferences were invalid. Store a record of the raw votes for debugging/record-
+              // keeping purposes, but use the valid interpretation as the choices in the audit.
+              IRVBallotInterpretation irvInterpretation = new IRVBallotInterpretation(co,
+                  RecordType.UPLOADED, cvr_id, imprinted_id, votes, orderedChoices);
+              Persistence.save(irvInterpretation);
+              String msg = "Interpretation of invalid IRV choices.";
+              LOGGER.warn(String.format("%s %s %s.", prefix, msg,
+                  irvInterpretation.logMessage(CVR_NUMBER_HEADER, IMPRINTED_ID_HEADER)));
             }
             contest_info.add(new CVRContestInfo(co, null, null, orderedChoices));
-
-          // TODO think about whether we should also store the raw vote in the database if applicable.
-          // See Issue https://github.com/DemocracyDevelopers/colorado-rla/issues/100
-          // TODO refine this part when we know whether we should reject csvs with invalid IRV
-          //  votes.
-          // See Issue https://github.com/DemocracyDevelopers/colorado-rla/issues/106
         } else {
+          // Store plurality vote.
           contest_info.add(new CVRContestInfo(co, null, null, votes));
         }
       }
