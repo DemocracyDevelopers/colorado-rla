@@ -28,6 +28,7 @@ import org.apache.log4j.LogManager;
 import us.freeandfair.corla.asm.AbstractStateMachine;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
+import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.Contest;
 import us.freeandfair.corla.persistence.Persistence;
 
@@ -223,6 +224,11 @@ public final class CVRContestInfoJsonAdapter
         IRVChoices parsedChoices = new IRVChoices(choices);
         choicesForSanityChecking = parsedChoices.getCandidateNames();
         interpretedChoices = parsedChoices.getValidIntentAsOrderedList();
+        // FIXME VT
+        // alas we don't have the info required to make an IRVBallotInterpretation.
+        // Persistence.save(new IRVBallotInterpretation(currentContest, CastVoteRecord.RecordType.AUDITOR_ENTERED,
+        //    cvrNumber, imprintedID, choices, interpretedChoices));
+        //
         // For plurality, just do the sanity check directly on the choices.
       } else {
         choicesForSanityChecking = choices;

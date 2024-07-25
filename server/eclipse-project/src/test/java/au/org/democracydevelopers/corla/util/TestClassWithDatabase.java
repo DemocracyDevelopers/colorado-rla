@@ -22,6 +22,8 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.util;
 
 import java.util.Properties;
+
+import com.google.gson.Gson;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
