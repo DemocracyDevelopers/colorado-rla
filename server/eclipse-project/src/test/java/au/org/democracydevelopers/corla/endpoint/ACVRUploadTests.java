@@ -1,5 +1,9 @@
 package au.org.democracydevelopers.corla.endpoint;
 
+import au.org.democracydevelopers.corla.model.assertion.Assertion;
+import au.org.democracydevelopers.corla.model.assertion.NEBAssertion;
+import au.org.democracydevelopers.corla.model.vote.IRVBallotInterpretation;
+import au.org.democracydevelopers.corla.query.AssertionQueries;
 import au.org.democracydevelopers.corla.util.SparkRequestStub;
 import au.org.democracydevelopers.corla.util.SparkResponseStub;
 import au.org.democracydevelopers.corla.util.testUtils;
@@ -13,40 +17,34 @@ import us.freeandfair.corla.Main;
 import us.freeandfair.corla.auth.AuthenticationInterface;
 import us.freeandfair.corla.controller.ComparisonAuditController;
 import us.freeandfair.corla.endpoint.ACVRUpload;
-import us.freeandfair.corla.endpoint.AbstractEndpoint;
-import us.freeandfair.corla.endpoint.CORSFilter;
-import us.freeandfair.corla.json.SubmittedAuditCVR;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
-import us.freeandfair.corla.query.ContestQueries;
-import us.freeandfair.corla.query.CountyQueries;
+import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.util.TestClassWithDatabase;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import spark.Request;
 import spark.Response;
 
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.when;
-import static spark.Spark.before;
-import static us.freeandfair.corla.Main.GSON;
 import static us.freeandfair.corla.model.Administrator.AdministratorType.COUNTY;
-import static us.freeandfair.corla.model.Administrator.AdministratorType.STATE;
 
 /**
  * Test upload of IRV audit cvrs. Includes tests of both valid and invalid IRV CVRs, and tests that
  * the interpreted ballots are properly stored in the database.
+ * TODO test valid and invalid IRV ACVR Uploads
+ * test that plurality uploads are still good
+ * test reaudits, both IRV and plurality (can they be mixed in one CVR?)
  */
 public class ACVRUploadTests extends TestClassWithDatabase {
 
@@ -86,7 +84,6 @@ public class ACVRUploadTests extends TestClassWithDatabase {
     ScriptUtils.runInitScript(containerDelegate, "SQL/corla-three-candidates-ten-votes-inconsistent-types.sql");
     ScriptUtils.runInitScript(containerDelegate, "SQL/adams-partway-through-audit.sql");
 
-    // adams = CountyQueries.fromString("Adams");
   }
 
   /**
@@ -115,13 +112,16 @@ public class ACVRUploadTests extends TestClassWithDatabase {
 
   private final Response response = new SparkResponseStub();
 
+  /**
+   * Basic test of proper functioning for a valid audit CVR. Check that it is accepted and that the
+   * right records for CVRContestInfo and CVRAuditInfo are stored in the database.
+   * @throws Exception
+   */
   @Test
   void testIfTheTestWorks() throws Exception {
     // Mock the main class; mock its auth as the mocked Adams county auth.
     try (MockedStatic<Main> mockedMain = Mockito.mockStatic(Main.class)) {
       mockedMain.when(Main::authentication).thenReturn(auth);
-
-
 
       // The Audit cvr upload.
       // This has to be constructed as a json string, rather than by constructing and serializing the
@@ -146,8 +146,8 @@ public class ACVRUploadTests extends TestClassWithDatabase {
           "        \"comment\": \"A comment\",\n" +
           "        \"consensus\": \"YES\",\n" +
           "        \"choices\": [\n" +
-          "          \"Alice(1)\",\n" +
-          "          \"Bob(2)\"\n" +
+          "          \"Bob(1)\",\n" +
+          "          \"Chuan(2)\"\n" +
           "        ]\n" +
           "      }\n" +
           "    ]\n" +
@@ -157,27 +157,46 @@ public class ACVRUploadTests extends TestClassWithDatabase {
           "  \"auditBoardIndex\": -1\n" +
           "}";
 
-      Request acvr = new SparkRequestStub(acvrAsJson, new HashSet<>());
+      // Set up the endpoint with mocked auth and start the audit round.
+      Request request = new SparkRequestStub(acvrAsJson, new HashSet<>());
       final CountyDashboard cdb =
-          Persistence.getByID(Main.authentication().authenticatedCounty(acvr).id(),
+          Persistence.getByID(Main.authentication().authenticatedCounty(request).id(),
               CountyDashboard.class);
       ComparisonAuditController.startRound(cdb, null,
-      // cdb.startRound(5, 2, 1,
           List.of(240509L,240510L,240511L,240512L,240513L),
           List.of(240509L,240510L,240511L,240512L,240513L));
-      // also 240514 , ... to 18, ... to 18
+      uploadEndpoint.before(request, response);
 
       // This flush is necessary to ensure the audit round data is present in the db when the
       // endpoint runs.
       Persistence.flush();
-      /*
-      final CORSFilter cors_and_before =
-          new CORSFilter(new Properties(), (the_request, the_response) ->
-              uploadEndpoint.before(the_request, the_response));
-      before(uploadEndpoint.endpointName(), cors_and_before);
-       */
-      uploadEndpoint.before(acvr, response);
-      String see = uploadEndpoint.endpointBody(acvr, response);
+
+      // This is the actual test - upload the audit CVR to the endpoint; check that the right
+      // database records result.
+      uploadEndpoint.endpointBody(request, response);
+
+      Persistence.flush();
+
+      // There should now be two CVRs with cvr_id 240509: the original uploaded one, and the audit one.
+      // List<CastVoteRecord> cvrs = CastVoteRecordQueries.get(List.of(240509L));
+      List<CastVoteRecord> cvrs = CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.UPLOADED).toList();
+      List<CastVoteRecord> acvrs = CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.AUDITOR_ENTERED).toList();
+      assertEquals(cvrs.size(), 10);
+      assertEquals(acvrs.size(), 1);
+      Set<CastVoteRecord.RecordType> recordTypes
+          = cvrs.stream().map(CastVoteRecord::recordType).collect(Collectors.toSet());
+
+      // There don't seem to be any queries for CVRAuditInfo unfortunately.
+      // We therefore check that the right data has gone in via the rather indirect method of checking
+      // that appropriate discrepancies are recorded for each assertion.
+      // In this case, the CVR is (A,B,C) and the audit CVR is (B,C), so both assertions should have
+      // a two-vote overstatement (and no other discrepancies).
+      List<Assertion> assertions = AssertionQueries.matching("TinyExample1");
+      assertTrue(assertions.get(0).getDiscrepancy(240509).isPresent());
+      assertTrue(assertions.get(1).getDiscrepancy(240509).isPresent());
+      assertEquals(2, assertions.get(0).getDiscrepancy(240509).getAsInt());
+      assertEquals(2, assertions.get(1).getDiscrepancy(240509).getAsInt());
+
     }
   }
 }
