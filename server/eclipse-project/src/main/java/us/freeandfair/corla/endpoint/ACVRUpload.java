@@ -236,20 +236,19 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
                                               String imprintedID) throws IRVParsingException {
     for(CVRContestInfo contestInfo : cvr.contestInfo()) {
       if(contestInfo.contest().description().equals(ContestType.IRV.toString())) {
-        IRVChoices irvChoices = new IRVChoices(contestInfo.choices());
+        IRVChoices irvChoices = new IRVChoices(contestInfo.rawChoices());
         if(!irvChoices.isValid()) {
           IRVBallotInterpretation interpretationRecord = new IRVBallotInterpretation(
               contestInfo.contest(),
               recordType,
               cvrNumber,
               imprintedID,
-              contestInfo.choices(),
-              irvChoices.getValidIntentAsOrderedList()
+              contestInfo.rawChoices(),
+              contestInfo.choices()
           );
           Persistence.save(interpretationRecord);
         }
       }
     }
-
   }
 }

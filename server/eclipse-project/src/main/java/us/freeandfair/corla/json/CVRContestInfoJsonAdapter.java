@@ -248,7 +248,7 @@ public final class CVRContestInfoJsonAdapter
       // leaving it out for now pending a final decision on how we store IRV Ballot interpretations.
       // See https://github.com/orgs/DemocracyDevelopers/projects/1/views/7?pane=issue&itemId=64821658
       // It could also be stored directly here. See https://github.com/orgs/DemocracyDevelopers/projects/1/views/1?pane=issue&itemId=63351700
-      return new CVRContestInfo(contest, comment, consensus, interpretedChoices);
+      return new CVRContestInfo(contest, comment, consensus, interpretedChoices, choices);
 
     } catch (IRVParsingException e) {
       final String msg = "uploaded IRV vote could not be parsed.";
