@@ -1066,7 +1066,7 @@ public class NENAssertionTests extends AssertionTests {
 
   /**
    * Given a CVR with a vote "A", "B", "C", "D" and audited ballot with a vote of "B", "A", "C", "D",
-   * check that the right discrepancy is computed for the assertions D NEB C assuming "B", "C",
+   * check that the right discrepancy is computed for the assertions D NEN C assuming "B", "C",
    * and "D" are continuing, and D NEN E assuming "C", "D", and "E" are continuing.
    * (In this case, an "other" discrepancy).
    */
@@ -1383,7 +1383,7 @@ public class NENAssertionTests extends AssertionTests {
   /**
    * Given a CVR with vote "A", "B", "C", "D", and a ballot with no consensus, check that
    * the right discrepancy is computed for assertions A NEN F given that "A", "C", and "F" are
-   * continuing, B NEB C given "B", and "C" are continuing, and D NEN F given "D" and "F" are
+   * continuing, B NEN C given "B", and "C" are continuing, and D NEN F given "D" and "F" are
    * continuing. (A two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
@@ -1853,8 +1853,8 @@ public class NENAssertionTests extends AssertionTests {
    * in error. The n+1'th call the removeDiscrepancy should throw an exception.
    */
   @Test(expectedExceptions = RuntimeException.class)
-  public void testNEBExcessRemovalCausesErrorTwoVoteUnder(){
-    log(LOGGER, "testNEBExcessRemovalCausesErrorTwoVoteUnder");
+  public void testNENExcessRemovalCausesErrorTwoVoteUnder(){
+    log(LOGGER, "testNENExcessRemovalCausesErrorTwoVoteUnder");
 
     final int N = 2;
     CVRAuditInfo info = new CVRAuditInfo();
@@ -1877,8 +1877,8 @@ public class NENAssertionTests extends AssertionTests {
    * in error. The n+1'th call the removeDiscrepancy should throw an exception.
    */
   @Test(expectedExceptions = RuntimeException.class)
-  public void testNEBExcessRemovalCausesErrorOneVoteUnder(){
-    log(LOGGER, "testNEBExcessRemovalCausesErrorOneVoteUnder");
+  public void testNENExcessRemovalCausesErrorOneVoteUnder(){
+    log(LOGGER, "testNENExcessRemovalCausesErrorOneVoteUnder");
 
     final int N = 2;
     CVRAuditInfo info = new CVRAuditInfo();
@@ -1901,8 +1901,8 @@ public class NENAssertionTests extends AssertionTests {
    * in error. The n+1'th call the removeDiscrepancy should throw an exception.
    */
   @Test(expectedExceptions = RuntimeException.class)
-  public void testNEBExcessRemovalCausesErrorOneVoteOver(){
-    log(LOGGER, "testNEBExcessRemovalCausesErrorOneVoteOver");
+  public void testNENExcessRemovalCausesErrorOneVoteOver(){
+    log(LOGGER, "testNENExcessRemovalCausesErrorOneVoteOver");
 
     final int N = 2;
     CVRAuditInfo info = new CVRAuditInfo();
@@ -1925,8 +1925,8 @@ public class NENAssertionTests extends AssertionTests {
    * in error. The n+1'th call the removeDiscrepancy should throw an exception.
    */
   @Test(expectedExceptions = RuntimeException.class)
-  public void testNEBExcessRemovalCausesErrorOther(){
-    log(LOGGER, "testNEBExcessRemovalCausesErrorOther");
+  public void testNENExcessRemovalCausesErrorOther(){
+    log(LOGGER, "testNENExcessRemovalCausesErrorOther");
 
     final int N = 2;
     CVRAuditInfo info = new CVRAuditInfo();
@@ -2141,7 +2141,7 @@ public class NENAssertionTests extends AssertionTests {
    * @param twoVoteOver Number of two vote overstatements to associate with the assertion.
    * @param twoVoteUnder Number of two vote understatements to associate with the assertion.
    * @param other Number of other discrepancies to associate with the assertion.
-   * @return an NEB assertion with the given specification.
+   * @return an NEN assertion with the given specification.
    */
   private static Assertion createNENAssertion(String winner, String loser, String contestName,
       List<String> continuing, int rawMargin, double dilutedMargin, double difficulty,
