@@ -40,9 +40,7 @@ import static us.freeandfair.corla.model.Administrator.AdministratorType.COUNTY;
 /**
  * Test upload of IRV audit cvrs. Includes tests of both valid and invalid IRV CVRs, and tests that
  * the interpreted ballots are properly stored in the database.
- * TODO test valid and invalid IRV ACVR Uploads
- * test that plurality uploads are still good
- * test reaudits, both IRV and plurality (can they be mixed in one CVR?)
+ * TODO test reaudits, both IRV and plurality (can they be mixed in one CVR?)
  */
 public class ACVRUploadTests extends TestClassWithDatabase {
 
@@ -61,18 +59,18 @@ public class ACVRUploadTests extends TestClassWithDatabase {
   /**
    * The name of the county we will pretend to be logged in as administrator for.
    */
-  private static String countyName = "Adams";
+  private static final String countyName = "Adams";
 
   /**
    * The ID (according to co_counties.sql) of the county we will pretend to be logged in as
    * administrator for.
    */
-  private static long countyID = 1L;
+  private static final long countyID = 1L;
 
   /**
    * The county we will pretend to be logged in as administrator for.
    */
-  private static County county = new County(countyName, countyID);
+  private static final County county = new County(countyName, countyID);
 
   /**
    * Flag for checking whether the audit round has already been started.
@@ -315,40 +313,6 @@ public class ACVRUploadTests extends TestClassWithDatabase {
       "  \"auditBoardIndex\": -1" +
       "}";
 
-
-  /**
-   * 8. Reaudit of valid IRV vote, for CVR ID 240509; imprinted ID 1-1-1.
-   */
-  private static final String validIRVReauditAsJson = "{" +
-      "  \"cvr_id\": 240509," +
-      "  \"audit_cvr\": {" +
-      "    \"record_type\": \"AUDITOR_ENTERED\"," +
-      "    \"county_id\": 1," +
-      "    \"cvr_number\": 1," +
-      "    \"sequence_number\": 1," +
-      "    \"scanner_id\": 1," +
-      "    \"batch_id\": \"1\"," +
-      "    \"record_id\": 1," +
-      "    \"imprinted_id\": \"1-1-1\"," +
-      "    \"uri\": \"acvr:1:1-1-1\"," +
-      "    \"ballot_type\": \"Ballot 1 - Type 1\"," +
-      "    \"contest_info\": [" +
-      "      {" +
-      "        \"contest\": 240503," +
-      "        \"comment\": \"A comment\"," +
-      "        \"consensus\": \"YES\"," +
-      "        \"choices\": [" +
-      "          \"Alice(1)\"," +
-      "          \"Chuan(2)\"" +
-      "        ]" +
-      "      }" +
-      "    ]" +
-      "  }," +
-      "  \"reaudit\": false," +
-      "  \"comment\": \"\"," +
-      "  \"auditBoardIndex\": -1" +
-      "}";
-
   @Mock
   private AuthenticationInterface auth;
 
@@ -414,126 +378,108 @@ public class ACVRUploadTests extends TestClassWithDatabase {
   @Transactional
   void testACVRUploadAndStorage() {
     testUtils.log(LOGGER, "testACVRUploadAndStorage");
+
     // Mock the main class; mock its auth as the mocked Adams county auth.
     try (MockedStatic<Main> mockedMain = Mockito.mockStatic(Main.class)) {
       mockedMain.when(Main::authentication).thenReturn(auth);
 
-      startTheRound(countyID);
+      startTheRound();
 
-      Request request = new SparkRequestStub(validIRVAsJson, new HashSet<>());
+      // We seem to need a dummy request to run before.
+      final Request request = new SparkRequestStub("", new HashSet<>());
       uploadEndpoint.before(request, response);
 
       // Before the test, there should be 10 UPLOADED and zero AUDITOR_ENTERED cvrs.
-      List<CastVoteRecord> preCvrs = CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.UPLOADED).toList();
-      List<CastVoteRecord> preACvrs = CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.AUDITOR_ENTERED).toList();
+      final List<CastVoteRecord> preCvrs = CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.UPLOADED).toList();
+      final List<CastVoteRecord> preACvrs = CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.AUDITOR_ENTERED).toList();
       assertEquals(preCvrs.size(), 10);
       assertEquals(preACvrs.size(), 0);
 
-      // // 1. Upload the first audit CVR (1-1-1; id 240509) to the endpoint;
-      // // check that the right database records result.
-      uploadEndpoint.endpointBody(request, response);
+      // // 1. Upload the first audit CVR (1-1-1; id 240509) (votes ["Bob(1)", "Chuan(2)"]) to the endpoint;
+      // // check that the right database records result, with correct interpreted vote ["Bob", "Chuan"].
+      // final Request request1 = new SparkRequestStub(validIRVAsJson, new HashSet<>());
 
-      // There should now be two CVRs with cvr_id 240509: the original uploaded one, and the audit one.
-      List<CastVoteRecord> cvrs = CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.UPLOADED).toList();
-      List<CastVoteRecord> acvrs = CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.AUDITOR_ENTERED).toList();
-      assertEquals(cvrs.size(), 10);
-      assertEquals(acvrs.size(), 1);
-
-      // Get the audit one.
-      CastVoteRecord acvr = acvrs.stream().filter(a -> a.getCvrId() == 240509L).findFirst().orElseThrow();
-      assertEquals(acvr.recordType(), CastVoteRecord.RecordType.AUDITOR_ENTERED);
-      // Check that we have the right record.
-      assertEquals("1-1-1", acvr.imprintedID());
-      assertEquals(acvr.getCvrId().intValue(), 240509L);
-
-      // Check that it has the right vote choices.
-      assertTrue(acvr.contestInfoForContestResult(tinyIRV).isPresent());
-      List<String> choices = acvr.contestInfoForContestResult(tinyIRV).get().choices();
-      assertEquals(choices.size(), 2);
-      assertEquals(choices.get(0), "Bob");
-      assertEquals(choices.get(1), "Chuan");
+      testSuccessResponse(240509L, "1-1-1", validIRVAsJson, List.of("Bob", "Chuan"), 1);
 
       // // 2. Test that an invalid IRV vote [Chuan(1), Chuan(2), Bob(2), Alice(3)] is accepted and that its
       // // valid interpretation [Chuan, Bob, Alice] is properly stored.
+      testSuccessResponse(240510L, "1-1-2", invalidIRVAsJson, List.of("Chuan","Bob","Alice"), 2);
 
-      Request request2 = new SparkRequestStub(invalidIRVAsJson, new HashSet<>());
-
-      // Upload the audit CVR to the endpoint.
-      uploadEndpoint.endpointBody(request2, response);
-
-      // There should now be two CVRs with cvr_id 240509: the original uploaded one, and the audit one.
-      List<CastVoteRecord> cvrs2 = CastVoteRecordQueries.getMatching(1L,
-          CastVoteRecord.RecordType.UPLOADED).toList();
-      List<CastVoteRecord> acvrs2 = CastVoteRecordQueries.getMatching(1L,
-          CastVoteRecord.RecordType.AUDITOR_ENTERED).toList();
-      assertEquals(cvrs2.size(), 10);
-      assertEquals(acvrs2.size(), 2);
-
-      // Get the audit one.
-      CastVoteRecord acvr2 = acvrs2.stream().filter(a -> a.getCvrId() == 240510L).findFirst().orElseThrow();
-      assertEquals(acvr2.recordType(), CastVoteRecord.RecordType.AUDITOR_ENTERED);
-      // Check that we have the right record.
-      assertEquals("1-1-2", acvr2.imprintedID());
-      assertEquals(acvr2.getCvrId().intValue(), 240510L);
-
-      // Check that it has the right vote choices.
-      // The valid interpretation of [Chuan(1), Chuan(2), Bob(2), Alice(3)]
-      // should be [Chuan, Bob, Alice].
-      assertTrue(acvr.contestInfoForContestResult(tinyIRV).isPresent());
-      List<String> choices2 = acvr2.contestInfoForContestResult(tinyIRV).get().choices();
-      assertEquals(choices2.size(), 3);
-      assertEquals(choices2.get(0), "Chuan");
-      assertEquals(choices2.get(1), "Bob");
-      assertEquals(choices2.get(2), "Alice");
-
-      // // 3. Upload a blank vote.
-      Request request3 = new SparkRequestStub(blankIRVAsJson, new HashSet<>());
-      uploadEndpoint.endpointBody(request3, response);
-
-      // There should now be 3 audit cvrs.
-      List<CastVoteRecord> acvrs3 = CastVoteRecordQueries.getMatching(1L,
-          CastVoteRecord.RecordType.AUDITOR_ENTERED).toList();
-      assertEquals(acvrs3.size(), 3);
-
-      // There should now be two CVRs with cvr_id 240511: the original uploaded one, and the audit one.
-      // Get the audit one.
-      CastVoteRecord acvr3 = acvrs3.stream().filter(a -> a.getCvrId() == 240511L).findFirst().orElseThrow();
-      assertEquals(acvr3.recordType(), CastVoteRecord.RecordType.AUDITOR_ENTERED);
-      // Check that we have the right record.
-      assertEquals("1-1-3",acvr3.imprintedID());
-      assertEquals(acvr3.getCvrId().intValue(), 240511L);
-
-      // Check that it has the right vote choices, in this case empty.
-      assertTrue(acvr3.contestInfoForContestResult(tinyIRV).isPresent());
-      List<String> choices3 = acvr3.contestInfoForContestResult(tinyIRV).get().choices();
-      assertEquals(choices3.size(), 0);
+      // // 3. Upload a blank vote. Check the results.
+      testSuccessResponse(240511L, "1-1-3", blankIRVAsJson, List.of(), 3);
 
       // // 4. Upload a vote with plurality-style choices (no parenthesized ranks). This should cause an error.
-      Request request4 = new SparkRequestStub(pluralityIRVAsJson, new HashSet<>());
 
-      // uploadEndpoint.endpointBody(request4, response);
-      // assertTrue(response.body().contains("malformed audit CVR upload"));
+      //  Expected error messages for malformed upload cvrs.
+      String malformedACVRMsg = "malformed audit CVR upload";
 
-      String errorMsg = "";
-      String errorBody = "";
-      try {
-        uploadEndpoint.endpointBody(request4, response);
-      } catch (HaltException e) {
-        errorMsg = e.getMessage();
-        errorBody = e.body();
-      }
-      assertTrue(errorBody.contains("malformed audit CVR upload"));
-      // assertTrue(errorMsg.contains("malformed audit CVR upload"));
+      testErrorResponse(240512L, pluralityIRVAsJson, malformedACVRMsg);
 
+      // // 5. Upload a vote with IRV choices that are not among the valid candidates. This should cause an error.
+      testErrorResponse(240513L, wrongCandidateNamesIRVAsJson, malformedACVRMsg);
+
+      // // 6. Upload a vote with IDs that do not correspond properly to the expected CVR. This should cause an error.
+      testErrorResponse(240514L, IRVWithInconsistentIDsAsJson, malformedACVRMsg);
+
+      // // 7. Upload a vote that has typos preventing json deserialization. This should cause an error.
+      testErrorResponse(240515L, IRVJsonDeserializationFail, malformedACVRMsg);
     }
+  }
+
+  private void testSuccessResponse(final long CvrId, final String expectedImprintedId, final String CvrAsJson,
+                                   final List<String> expectedChoices, final int expectedACVRs) {
+    final Request request = new SparkRequestStub(CvrAsJson, new HashSet<>());
+    uploadEndpoint.endpointBody(request, response);
+
+    // There should now be expectedACVRs audit cvrs.
+    final List<CastVoteRecord> acvrs = CastVoteRecordQueries.getMatching(1L,
+        CastVoteRecord.RecordType.AUDITOR_ENTERED).toList();
+    assertEquals(acvrs.size(), expectedACVRs);
+
+    // There should now be an ACVR with matching cvrId.
+    final CastVoteRecord acvr = acvrs.stream().filter(a -> a.getCvrId() == CvrId).findFirst().orElseThrow();
+    assertEquals(acvr.recordType(), CastVoteRecord.RecordType.AUDITOR_ENTERED);
+    // Check that we have the right record: CvrId and Imprinted ID should match.
+    assertEquals(acvr.imprintedID(), expectedImprintedId);
+    assertEquals(acvr.getCvrId().intValue(), CvrId);
+
+    // Check that it has the expected vote choices.
+    assertTrue(acvr.contestInfoForContestResult(tinyIRV).isPresent());
+    final List<String> choices = acvr.contestInfoForContestResult(tinyIRV).get().choices();
+    assertEquals(choices.size(), expectedChoices.size());
+    for(int i = 0; i < expectedChoices.size(); i++) {
+      assertEquals(expectedChoices.get(i), choices.get(i));
+    }
+  }
+
+  /**
+   * Test that submitting the given ACVR to the endpoint produces the given error, and that there are no corresponding
+   * ACVRs stored in the database afterward.
+   */
+  private void testErrorResponse(final long CvrId, final String CvrAsJson, final String expectedError) {
+    final Request request = new SparkRequestStub(CvrAsJson, new HashSet<>());
+    String errorBody = "";
+
+    try {
+      uploadEndpoint.endpointBody(request, response);
+    } catch (HaltException e) {
+      errorBody = e.body();
+    }
+    assertTrue(errorBody.contains(expectedError));
+
+    // Get all the audit CVRs.
+    final List<CastVoteRecord> acvrs = CastVoteRecordQueries.getMatching(1L,
+        CastVoteRecord.RecordType.AUDITOR_ENTERED).toList();
+
+    // There should be no audit CVR with matching CvrId.
+    assertEquals(acvrs.stream().filter(a -> a.getCvrId() == CvrId).toList().size(),0);
   }
 
   /**
    * Start the audit round. This keeps a flag to check whether it has already been started, so it
    * only gets started once.
-   * @param countyID the ID of the county.
    */
-  private static void startTheRound(long countyID) {
+  private static void startTheRound() {
 
     if(!auditRoundAlreadyStarted) {
 
