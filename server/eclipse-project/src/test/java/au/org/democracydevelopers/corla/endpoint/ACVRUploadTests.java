@@ -372,8 +372,6 @@ public class ACVRUploadTests extends TestClassWithDatabase {
    * 5. a vote with invalid choices (names not in the list of choices for the contest)
    * 6. a vote that doesn't properly correspond to the IDs it should have
    * 7. an unparseable vote (typos in json data)
-   * 8. a reaudit.
-   * TODO check storage in IRVBallotInterpretation.
    * We check that it is accepted and that the right records for CVR and CVRContestInfo are
    * stored in the database.
    */
@@ -453,6 +451,14 @@ public class ACVRUploadTests extends TestClassWithDatabase {
         + String.join(",",validInterpretation) + "]");
   }
 
+  /**
+   * Test expected consequences of successful ACVR upload.
+   * @param CvrId                      The CVR number (last number of the imprinted ID).
+   * @param expectedImprintedId        The imprinted id, scanner-batch-record.
+   * @param CvrAsJson                  The upload cvr, as a json string.
+   * @param expectedInterpretedChoices The expected valid interpretation, which should be stored.
+   * @param expectedACVRs              The number of audit CVRs expected in total.
+   */
   private void testSuccessResponse(final long CvrId, final String expectedImprintedId, final String CvrAsJson,
                final List<String> expectedInterpretedChoices, final int expectedACVRs) {
     final Request request = new SparkRequestStub(CvrAsJson, new HashSet<>());
@@ -479,6 +485,9 @@ public class ACVRUploadTests extends TestClassWithDatabase {
   /**
    * Test that submitting the given ACVR to the endpoint produces the given error, and that there are no corresponding
    * ACVRs stored in the database afterward.
+   * @param CvrId         The CVR ID (of the original UPLOADED CVR).
+   * @param CvrAsJson     The upload cvr, as a json string.
+   * @param expectedError The expected error message.
    */
   private void testErrorResponse(final long CvrId, final String CvrAsJson, final String expectedError) {
     final Request request = new SparkRequestStub(CvrAsJson, new HashSet<>());
