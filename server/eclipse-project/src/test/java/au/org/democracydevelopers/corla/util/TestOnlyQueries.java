@@ -63,8 +63,8 @@ public class TestOnlyQueries {
 
       final Session s = Persistence.currentSession();
       final TypedQuery<IRVBallotInterpretation> q = s.createQuery("select bi from IRVBallotInterpretation bi "
-          + " where bi.contest.my_name = :contestName AND bi.imprintedID == :imprintedId " +
-          "AND bi.recordType == :recordType", IRVBallotInterpretation.class);
+          + " where bi.contest.my_name = :contestName AND bi.imprintedID = :imprintedId " +
+          "AND bi.recordType = :recordType", IRVBallotInterpretation.class);
       q.setParameter("contestName", contestName);
       q.setParameter("imprintedId", imprintedId);
       q.setParameter("recordType", recordType);

@@ -38,6 +38,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static us.freeandfair.corla.model.Administrator.AdministratorType.COUNTY;
+import static us.freeandfair.corla.model.CastVoteRecord.RecordType.AUDITOR_ENTERED;
 
 /**
  * Test upload of IRV audit cvrs. Includes tests of both valid and invalid IRV CVRs, and tests that
@@ -393,7 +394,7 @@ public class ACVRUploadTests extends TestClassWithDatabase {
 
       // Before the test, there should be 10 UPLOADED and zero AUDITOR_ENTERED cvrs.
       final List<CastVoteRecord> preCvrs = CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.UPLOADED).toList();
-      final List<CastVoteRecord> preACvrs = CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.AUDITOR_ENTERED).toList();
+      final List<CastVoteRecord> preACvrs = CastVoteRecordQueries.getMatching(1L, AUDITOR_ENTERED).toList();
       assertEquals(preCvrs.size(), 10);
       assertEquals(preACvrs.size(), 0);
 
@@ -405,7 +406,7 @@ public class ACVRUploadTests extends TestClassWithDatabase {
       // // 2. Test that an invalid IRV vote [Chuan(1), Chuan(2), Bob(2), Alice(3)] is accepted and that its
       // // valid interpretation [Chuan, Bob, Alice] is properly stored.
       testSuccessResponse(240510L, "1-1-2", invalidIRVAsJson, List.of("Chuan","Bob","Alice"), 2);
-      testIRVBallotInterpretations(240510L, "1-1-2", List.of("Chuan(1)","Chuan(2)","Bob(2)","Alice(3)"),
+      testIRVBallotInterpretations(2, "1-1-2", List.of("Chuan(1)","Chuan(2)","Bob(2)","Alice(3)"),
           List.of("Chuan","Bob","Alice"));
 
       // // 3. Upload a blank vote. Check the results.
@@ -429,16 +430,27 @@ public class ACVRUploadTests extends TestClassWithDatabase {
     }
   }
 
-  private void testIRVBallotInterpretations(long l, String s, List<String> strings, List<String> chuan) {
-    return;
+  /**
+   * Test that there is exactly one record matching the given CvrID, imprinted ID, and contest name. Check that it has
+   * the expected raw choices and valid interpretation.
+   * @param CvrNum              The cvr record number (same as the last number in the imprinted ID).
+   * @param imprintedId         The imprinted ID (scanner-batch-record).
+   * @param rawChoices          The raw choices (with parentheses, presumed invalid).
+   * @param validInterpretation The valid interpretation of the raw choices.
+   */
+  private void testIRVBallotInterpretations(long CvrNum, String imprintedId, List<String> rawChoices,
+                                            List<String> validInterpretation) {
+    final String CVRHeader = "CVR Number";
+    final String imprintedIDHeader = "Imprinted ID";
 
-    // Check that there is a record in the IRVBallotInterpretation database with the expected interpreted choices.
-    /*
     List<IRVBallotInterpretation> IrvBallotInterpretations
-        = TestOnlyQueries.matching(tinyIRV, expectedImprintedId, CastVoteRecord.RecordType.AUDITOR_ENTERED);
+        = TestOnlyQueries.matching(tinyIRV, imprintedId, AUDITOR_ENTERED);
     assertEquals(IrvBallotInterpretations.size(), 1);
-
-     */
+    String result = IrvBallotInterpretations.get(0).logMessage(CVRHeader, imprintedIDHeader);
+    assertEquals(result, "County Adams, Contest TinyExample1, CVR Number " + CvrNum + ", Imprinted ID " + imprintedId
+        + ", Record type " + AUDITOR_ENTERED
+        + ", Choices " + String.join(",",rawChoices) + ", Interpretation ["
+        + String.join(",",validInterpretation) + "]");
   }
 
   private void testSuccessResponse(final long CvrId, final String expectedImprintedId, final String CvrAsJson,
@@ -448,12 +460,12 @@ public class ACVRUploadTests extends TestClassWithDatabase {
 
     // There should now be expectedACVRs audit cvrs.
     final List<CastVoteRecord> acvrs = CastVoteRecordQueries.getMatching(1L,
-        CastVoteRecord.RecordType.AUDITOR_ENTERED).toList();
+        AUDITOR_ENTERED).toList();
     assertEquals(acvrs.size(), expectedACVRs);
 
     // There should now be an ACVR with matching cvrId.
     final CastVoteRecord acvr = acvrs.stream().filter(a -> a.getCvrId() == CvrId).findFirst().orElseThrow();
-    assertEquals(acvr.recordType(), CastVoteRecord.RecordType.AUDITOR_ENTERED);
+    assertEquals(acvr.recordType(), AUDITOR_ENTERED);
     // Check that we have the right record: CvrId and Imprinted ID should match.
     assertEquals(acvr.imprintedID(), expectedImprintedId);
     assertEquals(acvr.getCvrId().intValue(), CvrId);
@@ -481,7 +493,7 @@ public class ACVRUploadTests extends TestClassWithDatabase {
 
     // Get all the audit CVRs.
     final List<CastVoteRecord> acvrs = CastVoteRecordQueries.getMatching(1L,
-        CastVoteRecord.RecordType.AUDITOR_ENTERED).toList();
+        AUDITOR_ENTERED).toList();
 
     // There should be no audit CVR with matching CvrId.
     assertEquals(acvrs.stream().filter(a -> a.getCvrId() == CvrId).toList().size(),0);
