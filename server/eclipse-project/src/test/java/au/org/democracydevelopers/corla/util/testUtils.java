@@ -139,4 +139,20 @@ public class testUtils {
   public static void log(Logger logger, String test){
     logger.debug(String.format("RUNNING TEST: %s.",test));
   }
+
+  /**
+   * Test that two lists of strings are identical.
+   */
+  public static boolean equalStringLists(List<String> s1, List<String> s2) {
+    if (s1.size() != s2.size()) {
+      return false;
+    }
+
+    for(int i = 0; i < s1.size(); i++){
+      if(!s1.get(i).equals(s2.get(i))){
+        return false;
+      }
+    }
+    return true;
+  }
 }

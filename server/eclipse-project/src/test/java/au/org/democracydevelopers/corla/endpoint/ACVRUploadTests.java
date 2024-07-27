@@ -1,7 +1,9 @@
 package au.org.democracydevelopers.corla.endpoint;
 
+import au.org.democracydevelopers.corla.model.vote.IRVBallotInterpretation;
 import au.org.democracydevelopers.corla.util.SparkRequestStub;
 import au.org.democracydevelopers.corla.util.SparkResponseStub;
+import au.org.democracydevelopers.corla.util.TestOnlyQueries;
 import au.org.democracydevelopers.corla.util.testUtils;
 import org.mockito.*;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -398,12 +400,13 @@ public class ACVRUploadTests extends TestClassWithDatabase {
       // // 1. Upload the first audit CVR (1-1-1; id 240509) (votes ["Bob(1)", "Chuan(2)"]) to the endpoint;
       // // check that the right database records result, with correct interpreted vote ["Bob", "Chuan"].
       // final Request request1 = new SparkRequestStub(validIRVAsJson, new HashSet<>());
-
       testSuccessResponse(240509L, "1-1-1", validIRVAsJson, List.of("Bob", "Chuan"), 1);
 
       // // 2. Test that an invalid IRV vote [Chuan(1), Chuan(2), Bob(2), Alice(3)] is accepted and that its
       // // valid interpretation [Chuan, Bob, Alice] is properly stored.
       testSuccessResponse(240510L, "1-1-2", invalidIRVAsJson, List.of("Chuan","Bob","Alice"), 2);
+      testIRVBallotInterpretations(240510L, "1-1-2", List.of("Chuan(1)","Chuan(2)","Bob(2)","Alice(3)"),
+          List.of("Chuan","Bob","Alice"));
 
       // // 3. Upload a blank vote. Check the results.
       testSuccessResponse(240511L, "1-1-3", blankIRVAsJson, List.of(), 3);
@@ -426,8 +429,20 @@ public class ACVRUploadTests extends TestClassWithDatabase {
     }
   }
 
+  private void testIRVBallotInterpretations(long l, String s, List<String> strings, List<String> chuan) {
+    return;
+
+    // Check that there is a record in the IRVBallotInterpretation database with the expected interpreted choices.
+    /*
+    List<IRVBallotInterpretation> IrvBallotInterpretations
+        = TestOnlyQueries.matching(tinyIRV, expectedImprintedId, CastVoteRecord.RecordType.AUDITOR_ENTERED);
+    assertEquals(IrvBallotInterpretations.size(), 1);
+
+     */
+  }
+
   private void testSuccessResponse(final long CvrId, final String expectedImprintedId, final String CvrAsJson,
-                                   final List<String> expectedChoices, final int expectedACVRs) {
+               final List<String> expectedInterpretedChoices, final int expectedACVRs) {
     final Request request = new SparkRequestStub(CvrAsJson, new HashSet<>());
     uploadEndpoint.endpointBody(request, response);
 
@@ -446,10 +461,7 @@ public class ACVRUploadTests extends TestClassWithDatabase {
     // Check that it has the expected vote choices.
     assertTrue(acvr.contestInfoForContestResult(tinyIRV).isPresent());
     final List<String> choices = acvr.contestInfoForContestResult(tinyIRV).get().choices();
-    assertEquals(choices.size(), expectedChoices.size());
-    for(int i = 0; i < expectedChoices.size(); i++) {
-      assertEquals(expectedChoices.get(i), choices.get(i));
-    }
+    assertTrue(testUtils.equalStringLists(choices, expectedInterpretedChoices));
   }
 
   /**
