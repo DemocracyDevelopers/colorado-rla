@@ -30,4 +30,12 @@ public class SparkResponseStub extends Response {
         _name = name;
         _value = value;
     }
+
+    public int getStatus() {
+        return _statusCode;
+    }
+
+    public int status() {
+        return _statusCode;
+    }
 }

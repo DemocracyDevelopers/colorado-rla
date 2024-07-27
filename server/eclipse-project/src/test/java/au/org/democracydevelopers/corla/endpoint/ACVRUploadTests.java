@@ -1,9 +1,5 @@
 package au.org.democracydevelopers.corla.endpoint;
 
-import au.org.democracydevelopers.corla.model.assertion.Assertion;
-import au.org.democracydevelopers.corla.model.assertion.NEBAssertion;
-import au.org.democracydevelopers.corla.model.vote.IRVBallotInterpretation;
-import au.org.democracydevelopers.corla.query.AssertionQueries;
 import au.org.democracydevelopers.corla.util.SparkRequestStub;
 import au.org.democracydevelopers.corla.util.SparkResponseStub;
 import au.org.democracydevelopers.corla.util.testUtils;
@@ -13,6 +9,7 @@ import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import spark.HaltException;
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.auth.AuthenticationInterface;
 import us.freeandfair.corla.controller.ComparisonAuditController;
@@ -23,17 +20,18 @@ import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.util.TestClassWithDatabase;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+
+import static au.org.democracydevelopers.corla.util.testUtils.tinyIRV;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import spark.Request;
 import spark.Response;
 
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -61,9 +59,295 @@ public class ACVRUploadTests extends TestClassWithDatabase {
   private final ACVRUpload uploadEndpoint = new ACVRUpload();
 
   /**
-   *
+   * The name of the county we will pretend to be logged in as administrator for.
    */
-  private static County adams;
+  private static String countyName = "Adams";
+
+  /**
+   * The ID (according to co_counties.sql) of the county we will pretend to be logged in as
+   * administrator for.
+   */
+  private static long countyID = 1L;
+
+  /**
+   * The county we will pretend to be logged in as administrator for.
+   */
+  private static County county = new County(countyName, countyID);
+
+  /**
+   * Flag for checking whether the audit round has already been started.
+   */
+  private static boolean auditRoundAlreadyStarted = false;
+
+  /**
+   * 1. Valid IRV vote, for CVR ID 240509; imprinted ID 1-1-1.
+   * This has to be constructed as a json string, rather than by constructing and serializing the
+   * CVR object(s), because the constructors reject IRV choices with explicit parentheses.
+   * CVR IDs are in corla-three-candidates-ten-votes-inconsistent-types.sql.
+   */
+  private static final String validIRVAsJson = "{" +
+      "  \"cvr_id\": 240509," +
+      "  \"audit_cvr\": {" +
+      "    \"record_type\": \"AUDITOR_ENTERED\"," +
+      "    \"county_id\": 1," +
+      "    \"cvr_number\": 1," +
+      "    \"sequence_number\": 1," +
+      "    \"scanner_id\": 1," +
+      "    \"batch_id\": \"1\"," +
+      "    \"record_id\": 1," +
+      "    \"imprinted_id\": \"1-1-1\"," +
+      "    \"uri\": \"acvr:1:1-1-1\"," +
+      "    \"ballot_type\": \"Ballot 1 - Type 1\"," +
+      "    \"contest_info\": [" +
+      "      {" +
+      "        \"contest\": 240503," +
+      "        \"comment\": \"A comment\"," +
+      "        \"consensus\": \"YES\"," +
+      "        \"choices\": [" +
+      "          \"Bob(1)\"," +
+      "          \"Chuan(2)\"" +
+      "        ]" +
+      "      }" +
+      "    ]" +
+      "  }," +
+      "  \"reaudit\": false," +
+      "  \"comment\": \"\"," +
+      "  \"auditBoardIndex\": -1" +
+      "}";
+
+  /**
+   * 2. Invalid IRV vote, for CVR ID 240510; imprinted ID 1-1-2.
+   */
+  private static final String invalidIRVAsJson = "{" +
+      "  \"cvr_id\": 240510," +
+      "  \"audit_cvr\": {" +
+      "    \"record_type\": \"AUDITOR_ENTERED\"," +
+      "    \"county_id\": 1," +
+      "    \"cvr_number\": 2," +
+      "    \"sequence_number\": 1," +
+      "    \"scanner_id\": 1," +
+      "    \"batch_id\": \"1\"," +
+      "    \"record_id\": 2," +
+      "    \"imprinted_id\": \"1-1-2\"," +
+      "    \"uri\": \"acvr:1:1-1-2\"," +
+      "    \"ballot_type\": \"Ballot 1 - Type 1\"," +
+      "    \"contest_info\": [" +
+      "      {" +
+      "        \"contest\": 240503," +
+      "        \"comment\": \"A comment\"," +
+      "        \"consensus\": \"YES\"," +
+      "        \"choices\": [" +
+      "          \"Chuan(1)\"," +
+      "          \"Chuan(2)\"," +
+      "          \"Bob(2)\"," +
+      "          \"Alice(3)\"" +
+      "        ]" +
+      "      }" +
+      "    ]" +
+      "  }," +
+      "  \"reaudit\": false," +
+      "  \"comment\": \"\"," +
+      "  \"auditBoardIndex\": -1" +
+      "}";
+
+  /**
+   * 3. Blank IRV vote, for CVR ID 240511; imprinted ID 1-1-3.
+   */
+  private static final String blankIRVAsJson = "{" +
+      "  \"cvr_id\": 240511," +
+      "  \"audit_cvr\": {" +
+      "    \"record_type\": \"AUDITOR_ENTERED\"," +
+      "    \"county_id\": 1," +
+      "    \"cvr_number\": 3," +
+      "    \"sequence_number\": 1," +
+      "    \"scanner_id\": 1," +
+      "    \"batch_id\": \"1\"," +
+      "    \"record_id\": 3," +
+      "    \"imprinted_id\": \"1-1-3\"," +
+      "    \"uri\": \"acvr:1:1-1-3\"," +
+      "    \"ballot_type\": \"Ballot 1 - Type 1\"," +
+      "    \"contest_info\": [" +
+      "      {" +
+      "        \"contest\": 240503," +
+      "        \"comment\": \"A comment\"," +
+      "        \"consensus\": \"YES\"," +
+      "        \"choices\": [" +
+      "        ]" +
+      "      }" +
+      "    ]" +
+      "  }," +
+      "  \"reaudit\": false," +
+      "  \"comment\": \"\"," +
+      "  \"auditBoardIndex\": -1" +
+      "}";
+
+  /**
+   * 4. IRV vote with non-parenthesized names, for CVR ID 240512; imprinted ID 1-1-4. Should cause an error.
+   */
+  private static final String pluralityIRVAsJson = "{" +
+      "  \"cvr_id\": 240512," +
+      "  \"audit_cvr\": {" +
+      "    \"record_type\": \"AUDITOR_ENTERED\"," +
+      "    \"county_id\": 1," +
+      "    \"cvr_number\": 4," +
+      "    \"sequence_number\": 1," +
+      "    \"scanner_id\": 1," +
+      "    \"batch_id\": \"1\"," +
+      "    \"record_id\": 4," +
+      "    \"imprinted_id\": \"1-1-4\"," +
+      "    \"uri\": \"acvr:1:1-1-4\"," +
+      "    \"ballot_type\": \"Ballot 1 - Type 1\"," +
+      "    \"contest_info\": [" +
+      "      {" +
+      "        \"contest\": 240503," +
+      "        \"comment\": \"A comment\"," +
+      "        \"consensus\": \"YES\"," +
+      "        \"choices\": [" +
+      "          \"Chuan\"," +
+      "        ]" +
+      "      }" +
+      "    ]" +
+      "  }," +
+      "  \"reaudit\": false," +
+      "  \"comment\": \"\"," +
+      "  \"auditBoardIndex\": -1" +
+      "}";
+
+  /**
+   * 5. IRV vote with candidate names who are not on the list of valid choices, for CVR ID 240513; imprinted ID 1-1-5.
+   * Should cause an error.
+   */
+  private static final String wrongCandidateNamesIRVAsJson = "{" +
+      "  \"cvr_id\": 240513," +
+      "  \"audit_cvr\": {" +
+      "    \"record_type\": \"AUDITOR_ENTERED\"," +
+      "    \"county_id\": 1," +
+      "    \"cvr_number\": 5," +
+      "    \"sequence_number\": 1," +
+      "    \"scanner_id\": 1," +
+      "    \"batch_id\": \"1\"," +
+      "    \"record_id\": 5," +
+      "    \"imprinted_id\": \"1-1-5\"," +
+      "    \"uri\": \"acvr:1:1-1-5\"," +
+      "    \"ballot_type\": \"Ballot 1 - Type 1\"," +
+      "    \"contest_info\": [" +
+      "      {" +
+      "        \"contest\": 240503," +
+      "        \"comment\": \"A comment\"," +
+      "        \"consensus\": \"YES\"," +
+      "        \"choices\": [" +
+      "          \"Cherry(1)\"," +
+      "          \"Alicia(2)\"," +
+      "        ]" +
+      "      }" +
+      "    ]" +
+      "  }," +
+      "  \"reaudit\": false," +
+      "  \"comment\": \"\"," +
+      "  \"auditBoardIndex\": -1" +
+      "}";
+
+  /**
+   * 6. IRV vote with IDs that do not properly correspond to what they should, for CVR ID 240514; imprinted ID 1-1-6.
+   * Should cause an error.  Deliberately inconsistent between 5s and 6s.
+   */
+  private static final String IRVWithInconsistentIDsAsJson = "{" +
+      "  \"cvr_id\": 240514," +
+      "  \"audit_cvr\": {" +
+      "    \"record_type\": \"AUDITOR_ENTERED\"," +
+      "    \"county_id\": 1," +
+      "    \"cvr_number\": 5," +
+      "    \"sequence_number\": 1," +
+      "    \"scanner_id\": 1," +
+      "    \"batch_id\": \"1\"," +
+      "    \"record_id\": 5," +
+      "    \"imprinted_id\": \"1-1-6\"," +
+      "    \"uri\": \"acvr:1:1-1-6\"," +
+      "    \"ballot_type\": \"Ballot 1 - Type 1\"," +
+      "    \"contest_info\": [" +
+      "      {" +
+      "        \"contest\": 240503," +
+      "        \"comment\": \"A comment\"," +
+      "        \"consensus\": \"YES\"," +
+      "        \"choices\": [" +
+      "          \"Chuan(1)\"," +
+      "        ]" +
+      "      }" +
+      "    ]" +
+      "  }," +
+      "  \"reaudit\": false," +
+      "  \"comment\": \"\"," +
+      "  \"auditBoardIndex\": -1" +
+      "}";
+
+  /**
+   * 7. IRV vote with typos that produce a json deserialization failure, for CVR ID 240515; imprinted ID 1-1-7.
+   * Should cause an error. (The fail is that the choices list doesn't have the right commas.)
+   */
+  private static final String IRVJsonDeserializationFail = "{" +
+      "  \"cvr_id\": 240515," +
+      "  \"audit_cvr\": {" +
+      "    \"record_type\": \"AUDITOR_ENTERED\"," +
+      "    \"county_id\": 1," +
+      "    \"cvr_number\": 7," +
+      "    \"sequence_number\": 1," +
+      "    \"scanner_id\": 1," +
+      "    \"batch_id\": \"1\"," +
+      "    \"record_id\": 7," +
+      "    \"imprinted_id\": \"1-1-7\"," +
+      "    \"uri\": \"acvr:1:1-1-7\"," +
+      "    \"ballot_type\": \"Ballot 1 - Type 1\"," +
+      "    \"contest_info\": [" +
+      "      {" +
+      "        \"contest\": 240503," +
+      "        \"comment\": \"A comment\"," +
+      "        \"consensus\": \"YES\"," +
+      "        \"choices\": [" +
+      "          \"Bob(1)\"," +
+      "          \"Chuan(2)\"" +
+      "          \"Alice(3)\"" +
+      "        ]" +
+      "      }" +
+      "    ]" +
+      "  }," +
+      "  \"reaudit\": false," +
+      "  \"comment\": \"\"," +
+      "  \"auditBoardIndex\": -1" +
+      "}";
+
+
+  /**
+   * 8. Reaudit of valid IRV vote, for CVR ID 240509; imprinted ID 1-1-1.
+   */
+  private static final String validIRVReauditAsJson = "{" +
+      "  \"cvr_id\": 240509," +
+      "  \"audit_cvr\": {" +
+      "    \"record_type\": \"AUDITOR_ENTERED\"," +
+      "    \"county_id\": 1," +
+      "    \"cvr_number\": 1," +
+      "    \"sequence_number\": 1," +
+      "    \"scanner_id\": 1," +
+      "    \"batch_id\": \"1\"," +
+      "    \"record_id\": 1," +
+      "    \"imprinted_id\": \"1-1-1\"," +
+      "    \"uri\": \"acvr:1:1-1-1\"," +
+      "    \"ballot_type\": \"Ballot 1 - Type 1\"," +
+      "    \"contest_info\": [" +
+      "      {" +
+      "        \"contest\": 240503," +
+      "        \"comment\": \"A comment\"," +
+      "        \"consensus\": \"YES\"," +
+      "        \"choices\": [" +
+      "          \"Alice(1)\"," +
+      "          \"Chuan(2)\"" +
+      "        ]" +
+      "      }" +
+      "    ]" +
+      "  }," +
+      "  \"reaudit\": false," +
+      "  \"comment\": \"\"," +
+      "  \"auditBoardIndex\": -1" +
+      "}";
 
   @Mock
   private AuthenticationInterface auth;
@@ -83,7 +367,6 @@ public class ACVRUploadTests extends TestClassWithDatabase {
     ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
     ScriptUtils.runInitScript(containerDelegate, "SQL/corla-three-candidates-ten-votes-inconsistent-types.sql");
     ScriptUtils.runInitScript(containerDelegate, "SQL/adams-partway-through-audit.sql");
-
   }
 
   /**
@@ -92,16 +375,17 @@ public class ACVRUploadTests extends TestClassWithDatabase {
    */
   @BeforeClass
   public void initMocks() {
+    testUtils.log(LOGGER, "initMocks");
+
     MockitoAnnotations.openMocks(this);
 
-    // Mock successful auth as Adams county. No need to mock the CountyDashboard retrieval from
+    // Mock successful auth as a county. No need to mock the CountyDashboard retrieval from
     // the database, because that is loaded in via co-counties.sql.
     try {
-      adams = new County("Adams", 1L);
-      when(auth.authenticatedCounty(any())).thenReturn(adams);
+      when(auth.authenticatedCounty(any())).thenReturn(county);
       when(auth.secondFactorAuthenticated(any())).thenReturn(true);
-      when(auth.authenticatedAdministrator(any())).thenReturn(new Administrator("countyadmin1",
-          COUNTY, "Adams County", adams));
+      when(auth.authenticatedAdministrator(any())).thenReturn(new Administrator(
+          "countyadmin"+countyID, COUNTY, countyName+" County", county));
       when(auth.authenticatedAs(any(), any(), any())).thenReturn(true);
       when(mockedAsm.get()).thenReturn(new ArrayList<>());
     } catch (Exception e) {
@@ -113,90 +397,152 @@ public class ACVRUploadTests extends TestClassWithDatabase {
   private final Response response = new SparkResponseStub();
 
   /**
-   * Basic test of proper functioning for a valid audit CVR. Check that it is accepted and that the
-   * right records for CVRContestInfo and CVRAuditInfo are stored in the database.
-   * @throws Exception
+   * Basic test of proper functioning for uploaded audit CVRs, including:
+   * 1. a valid IRV vote
+   * 2. an invalid IRV vote, which should be stored as its valid interpretation,
+   * 3. a blank IRV vote,
+   * 4. a vote with non-IRV choices ("Alice" instead of "Alice(1)")
+   * 5. a vote with invalid choices (names not in the list of choices for the contest)
+   * 6. a vote that doesn't properly correspond to the IDs it should have
+   * 7. an unparseable vote (typos in json data)
+   * 8. a reaudit.
+   * TODO check storage in IRVBallotInterpretation.
+   * We check that it is accepted and that the right records for CVR and CVRContestInfo are
+   * stored in the database.
    */
   @Test
-  void testIfTheTestWorks() throws Exception {
+  @Transactional
+  void testACVRUploadAndStorage() {
+    testUtils.log(LOGGER, "testACVRUploadAndStorage");
     // Mock the main class; mock its auth as the mocked Adams county auth.
     try (MockedStatic<Main> mockedMain = Mockito.mockStatic(Main.class)) {
       mockedMain.when(Main::authentication).thenReturn(auth);
 
-      // The Audit cvr upload.
-      // This has to be constructed as a json string, rather than by constructing and serializing the
-      // CVR object(s), because the constructors reject IRV choices with explicit parentheses.
-      // CVR IDs are in corla-three-candidates-ten-votes-inconsistent-types.sql.
-      String acvrAsJson = "{\n" +
-          "  \"cvr_id\": 240509,\n" +
-          "  \"audit_cvr\": {\n" +
-          "    \"record_type\": \"AUDITOR_ENTERED\",\n" +
-          "    \"county_id\": 1,\n" +
-          "    \"cvr_number\": 1,\n" +
-          "    \"sequence_number\": 1,\n" +
-          "    \"scanner_id\": 1,\n" +
-          "    \"batch_id\": \"1\",\n" +
-          "    \"record_id\": 1,\n" +
-          "    \"imprinted_id\": \"1-1-1\",\n" +
-          "    \"uri\": \"acvr:1:1-1-1\",\n" +
-          "    \"ballot_type\": \"Ballot 1 - Type 1\",\n" +
-          "    \"contest_info\": [\n" +
-          "      {\n" +
-          "        \"contest\": 240503,\n" +
-          "        \"comment\": \"A comment\",\n" +
-          "        \"consensus\": \"YES\",\n" +
-          "        \"choices\": [\n" +
-          "          \"Bob(1)\",\n" +
-          "          \"Chuan(2)\"\n" +
-          "        ]\n" +
-          "      }\n" +
-          "    ]\n" +
-          "  },\n" +
-          "  \"reaudit\": false,\n" +
-          "  \"comment\": \"\",\n" +
-          "  \"auditBoardIndex\": -1\n" +
-          "}";
+      startTheRound(countyID);
 
-      // Set up the endpoint with mocked auth and start the audit round.
-      Request request = new SparkRequestStub(acvrAsJson, new HashSet<>());
-      final CountyDashboard cdb =
-          Persistence.getByID(Main.authentication().authenticatedCounty(request).id(),
-              CountyDashboard.class);
-      ComparisonAuditController.startRound(cdb, null,
-          List.of(240509L,240510L,240511L,240512L,240513L),
-          List.of(240509L,240510L,240511L,240512L,240513L));
+      Request request = new SparkRequestStub(validIRVAsJson, new HashSet<>());
       uploadEndpoint.before(request, response);
 
-      // This flush is necessary to ensure the audit round data is present in the db when the
-      // endpoint runs.
-      Persistence.flush();
+      // Before the test, there should be 10 UPLOADED and zero AUDITOR_ENTERED cvrs.
+      List<CastVoteRecord> preCvrs = CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.UPLOADED).toList();
+      List<CastVoteRecord> preACvrs = CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.AUDITOR_ENTERED).toList();
+      assertEquals(preCvrs.size(), 10);
+      assertEquals(preACvrs.size(), 0);
 
-      // This is the actual test - upload the audit CVR to the endpoint; check that the right
-      // database records result.
+      // // 1. Upload the first audit CVR (1-1-1; id 240509) to the endpoint;
+      // // check that the right database records result.
       uploadEndpoint.endpointBody(request, response);
 
-      Persistence.flush();
-
       // There should now be two CVRs with cvr_id 240509: the original uploaded one, and the audit one.
-      // List<CastVoteRecord> cvrs = CastVoteRecordQueries.get(List.of(240509L));
       List<CastVoteRecord> cvrs = CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.UPLOADED).toList();
       List<CastVoteRecord> acvrs = CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.AUDITOR_ENTERED).toList();
       assertEquals(cvrs.size(), 10);
       assertEquals(acvrs.size(), 1);
-      Set<CastVoteRecord.RecordType> recordTypes
-          = cvrs.stream().map(CastVoteRecord::recordType).collect(Collectors.toSet());
 
-      // There don't seem to be any queries for CVRAuditInfo unfortunately.
-      // We therefore check that the right data has gone in via the rather indirect method of checking
-      // that appropriate discrepancies are recorded for each assertion.
-      // In this case, the CVR is (A,B,C) and the audit CVR is (B,C), so both assertions should have
-      // a two-vote overstatement (and no other discrepancies).
-      List<Assertion> assertions = AssertionQueries.matching("TinyExample1");
-      assertTrue(assertions.get(0).getDiscrepancy(240509).isPresent());
-      assertTrue(assertions.get(1).getDiscrepancy(240509).isPresent());
-      assertEquals(2, assertions.get(0).getDiscrepancy(240509).getAsInt());
-      assertEquals(2, assertions.get(1).getDiscrepancy(240509).getAsInt());
+      // Get the audit one.
+      CastVoteRecord acvr = acvrs.stream().filter(a -> a.getCvrId() == 240509L).findFirst().orElseThrow();
+      assertEquals(acvr.recordType(), CastVoteRecord.RecordType.AUDITOR_ENTERED);
+      // Check that we have the right record.
+      assertEquals("1-1-1", acvr.imprintedID());
+      assertEquals(acvr.getCvrId().intValue(), 240509L);
 
+      // Check that it has the right vote choices.
+      assertTrue(acvr.contestInfoForContestResult(tinyIRV).isPresent());
+      List<String> choices = acvr.contestInfoForContestResult(tinyIRV).get().choices();
+      assertEquals(choices.size(), 2);
+      assertEquals(choices.get(0), "Bob");
+      assertEquals(choices.get(1), "Chuan");
+
+      // // 2. Test that an invalid IRV vote [Chuan(1), Chuan(2), Bob(2), Alice(3)] is accepted and that its
+      // // valid interpretation [Chuan, Bob, Alice] is properly stored.
+
+      Request request2 = new SparkRequestStub(invalidIRVAsJson, new HashSet<>());
+
+      // Upload the audit CVR to the endpoint.
+      uploadEndpoint.endpointBody(request2, response);
+
+      // There should now be two CVRs with cvr_id 240509: the original uploaded one, and the audit one.
+      List<CastVoteRecord> cvrs2 = CastVoteRecordQueries.getMatching(1L,
+          CastVoteRecord.RecordType.UPLOADED).toList();
+      List<CastVoteRecord> acvrs2 = CastVoteRecordQueries.getMatching(1L,
+          CastVoteRecord.RecordType.AUDITOR_ENTERED).toList();
+      assertEquals(cvrs2.size(), 10);
+      assertEquals(acvrs2.size(), 2);
+
+      // Get the audit one.
+      CastVoteRecord acvr2 = acvrs2.stream().filter(a -> a.getCvrId() == 240510L).findFirst().orElseThrow();
+      assertEquals(acvr2.recordType(), CastVoteRecord.RecordType.AUDITOR_ENTERED);
+      // Check that we have the right record.
+      assertEquals("1-1-2", acvr2.imprintedID());
+      assertEquals(acvr2.getCvrId().intValue(), 240510L);
+
+      // Check that it has the right vote choices.
+      // The valid interpretation of [Chuan(1), Chuan(2), Bob(2), Alice(3)]
+      // should be [Chuan, Bob, Alice].
+      assertTrue(acvr.contestInfoForContestResult(tinyIRV).isPresent());
+      List<String> choices2 = acvr2.contestInfoForContestResult(tinyIRV).get().choices();
+      assertEquals(choices2.size(), 3);
+      assertEquals(choices2.get(0), "Chuan");
+      assertEquals(choices2.get(1), "Bob");
+      assertEquals(choices2.get(2), "Alice");
+
+      // // 3. Upload a blank vote.
+      Request request3 = new SparkRequestStub(blankIRVAsJson, new HashSet<>());
+      uploadEndpoint.endpointBody(request3, response);
+
+      // There should now be 3 audit cvrs.
+      List<CastVoteRecord> acvrs3 = CastVoteRecordQueries.getMatching(1L,
+          CastVoteRecord.RecordType.AUDITOR_ENTERED).toList();
+      assertEquals(acvrs3.size(), 3);
+
+      // There should now be two CVRs with cvr_id 240511: the original uploaded one, and the audit one.
+      // Get the audit one.
+      CastVoteRecord acvr3 = acvrs3.stream().filter(a -> a.getCvrId() == 240511L).findFirst().orElseThrow();
+      assertEquals(acvr3.recordType(), CastVoteRecord.RecordType.AUDITOR_ENTERED);
+      // Check that we have the right record.
+      assertEquals("1-1-3",acvr3.imprintedID());
+      assertEquals(acvr3.getCvrId().intValue(), 240511L);
+
+      // Check that it has the right vote choices, in this case empty.
+      assertTrue(acvr3.contestInfoForContestResult(tinyIRV).isPresent());
+      List<String> choices3 = acvr3.contestInfoForContestResult(tinyIRV).get().choices();
+      assertEquals(choices3.size(), 0);
+
+      // // 4. Upload a vote with plurality-style choices (no parenthesized ranks). This should cause an error.
+      Request request4 = new SparkRequestStub(pluralityIRVAsJson, new HashSet<>());
+
+      // uploadEndpoint.endpointBody(request4, response);
+      // assertTrue(response.body().contains("malformed audit CVR upload"));
+
+      String errorMsg = "";
+      String errorBody = "";
+      try {
+        uploadEndpoint.endpointBody(request4, response);
+      } catch (HaltException e) {
+        errorMsg = e.getMessage();
+        errorBody = e.body();
+      }
+      assertTrue(errorBody.contains("malformed audit CVR upload"));
+      // assertTrue(errorMsg.contains("malformed audit CVR upload"));
+
+    }
+  }
+
+  /**
+   * Start the audit round. This keeps a flag to check whether it has already been started, so it
+   * only gets started once.
+   * @param countyID the ID of the county.
+   */
+  private static void startTheRound(long countyID) {
+
+    if(!auditRoundAlreadyStarted) {
+
+      // Get the dashboard and start the audit round.
+      final CountyDashboard cdb = Persistence.getByID(countyID, CountyDashboard.class);
+      ComparisonAuditController.startRound(cdb, null,
+          List.of(240509L, 240510L, 240511L, 240512L, 240513L, 240514L),
+          List.of(240509L, 240510L, 240511L, 240512L, 240513L, 240514L));
+      auditRoundAlreadyStarted = true;
     }
   }
 }
