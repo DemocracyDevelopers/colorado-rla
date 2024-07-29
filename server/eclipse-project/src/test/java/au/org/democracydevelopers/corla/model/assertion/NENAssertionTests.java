@@ -28,6 +28,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import au.org.democracydevelopers.corla.util.testUtils;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -195,8 +196,25 @@ public class NENAssertionTests extends AssertionTests {
   }
 
   /**
+   * Test riskMeasurement() for an NEN assertion with no discrepancies.
+   */
+  @Test
+  public void testNENRiskMeasurementNoDiscrepancies(){
+    log(LOGGER, "testNENRiskMeasurementNoDiscrepancies");
+
+    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 50,
+        0.1, 8,  Map.of(), 0, 0,
+        0, 0, 0);
+
+    checkRiskMeasurement(a, Map.of(5, 0.781, 10, 0.611, 100, 0.007));
+  }
+
+
+
+  /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote overstatement, in the context
-   * where the assertion has no recorded discrepancies.
+   * where the assertion has no recorded discrepancies. Also check risk measurement given one
+   * 1 vote overstatement and varying sample counts.
    */
   @Test
   public void testNENRecordOneVoteOverstatement1(){
@@ -210,11 +228,14 @@ public class NENAssertionTests extends AssertionTests {
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 0, 0, 0, Map.of(1L, 1));
+
+    checkRiskMeasurement(a, Map.of(5, 1.0, 10, 1.0, 20, 0.719, 100, 0.014));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote understatement, in the context
-   * where the assertion has no recorded discrepancies.
+   * where the assertion has no recorded discrepancies. Also check risk measurement in the context
+   * where the assertion has one 1 vote understatement and varying sample counts.
    */
   @Test
   public void testNENRecordOneVoteUnderstatement1(){
@@ -222,17 +243,20 @@ public class NENAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 50,
-        0.1, 8,  Map.of(1L, -1), 0, 0,
+    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 60,
+        0.15, 8,  Map.of(1L, -1), 0, 0,
         0, 0, 0);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 1, 0, 0, 0, Map.of(1L, -1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.464, 10, 0.319, 50, 0.016));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overstatement, in the context
-   * where the assertion has no recorded discrepancies.
+   * where the assertion has no recorded discrepancies. Also check risk measurement in the context
+   * where the assertion has one 2 vote overstatement and varying sample counts.
    */
   @Test
   public void testNENRecordTwoVoteOverstatement1(){
@@ -240,17 +264,20 @@ public class NENAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo, 50,
-        0.1, 8,  Map.of(1L, 2), 0, 0,
+    Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo, 102,
+        0.22, 8,  Map.of(1L, 2), 0, 0,
         0, 0, 0);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 1, 0, 0, Map.of(1L, 2));
+
+    checkRiskMeasurement(a, Map.of(5, 1.0, 20, 1.0, 30, 0.927, 50, 0.099));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
-   * where the assertion has no recorded discrepancies.
+   * where the assertion has no recorded discrepancies. Also check risk measurement in the context
+   * where the assertion has one 2 vote understatement and varying sample counts.
    */
   @Test
   public void testNENRecordTwoVoteUnderstatement1(){
@@ -258,17 +285,20 @@ public class NENAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 50,
-        0.1, 8, Map.of(1L, -2), 0, 0, 0,
+    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 80,
+        0.32, 8, Map.of(1L, -2), 0, 0, 0,
         0, 0);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 1, 0, Map.of(1L, -2));
+
+    checkRiskMeasurement(a, Map.of(5, 0.221, 10, 0.096, 20, 0.018));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
-   * where the assertion has no recorded discrepancies.
+   * where the assertion has no recorded discrepancies. Also check risk measurement in the context
+   * where the assertion has one other discrepancy and varying sample counts.
    */
   @Test
   public void testNENRecordOther1(){
@@ -276,17 +306,20 @@ public class NENAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 50,
-        0.1, 8,  Map.of(1L, 0), 0, 0, 0,
+    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 59,
+        0.19, 8,  Map.of(1L, 0), 0, 0, 0,
         0, 0);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 1, Map.of(1L, 0));
+
+    checkRiskMeasurement(a, Map.of(5, 0.619, 10, 0.383, 50, 0.008));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote overstatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also test risk measurement in this
+   * context with varying sample counts.
    */
   @Test
   public void testNENRecordOneVoteOverstatement2(){
@@ -294,18 +327,21 @@ public class NENAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo, 50,
-        0.1, 8,  Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 1),
+    Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo, 100,
+        0.14, 8,  Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 1),
         1, 0, 0, 1, 1);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 2, 0, 0, 1, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 1));
+
+    checkRiskMeasurement(a, Map.of(5, 1.0, 10, 0.943, 50, 0.058, 80, 0.007));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote understatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also test risk measurement in this
+   * context with varying sample counts.
    */
   @Test
   public void testNENRecordOneVoteUnderstatement2(){
@@ -313,18 +349,21 @@ public class NENAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 50,
-        0.1, 8,  Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -1),
+    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 42,
+        0.09, 8,  Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -1),
         1, 0, 0, 1, 1);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 1, 0, 1, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.531, 10, 0.426, 50, 0.072, 80, 0.019));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overstatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also test risk measurement in this
+   * context with varying sample counts.
    */
   @Test
   public void testNENRecordTwoVoteOverstatement2(){
@@ -332,18 +371,21 @@ public class NENAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 50,
-        0.1, 8,  Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 2),
+    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 88,
+        0.21, 8,  Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 2),
         1, 0, 0, 1, 1);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 1, 1, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 2));
+
+    checkRiskMeasurement(a, Map.of(5, 1.0, 10, 1.0, 50, 0.127, 80, 0.005));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also test risk measurement in this
+   * context with varying sample counts.
    */
   @Test
   public void testNENRecordTwoVoteUnderstatement2(){
@@ -358,11 +400,14 @@ public class NENAssertionTests extends AssertionTests {
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 0, 2, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -2));
+
+    checkRiskMeasurement(a, Map.of(5, 0.391, 10, 0.306, 50, 0.127, 80, 0.005));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also test risk measurement in this
+   * context with varying sample counts.
    */
   @Test
   public void testNENRecordOther2(){
@@ -370,13 +415,15 @@ public class NENAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo, 50,
-        0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0),
+    Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo, 35,
+        0.05, 8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0),
         1, 0, 0, 1, 1);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 0, 1, 2,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0));
+
+    checkRiskMeasurement(a, Map.of(5, 0.870, 10, 0.770, 50, 0.291, 80, 0.140));
   }
 
 
@@ -825,7 +872,7 @@ public class NENAssertionTests extends AssertionTests {
    * "C" are continuing candidates. (In this case, a one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENomputeDiscrepancyOneOver1(RecordType recordType){
+  public void testNENComputeDiscrepancyOneOver1(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneOver1[%s]", recordType));
     resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 

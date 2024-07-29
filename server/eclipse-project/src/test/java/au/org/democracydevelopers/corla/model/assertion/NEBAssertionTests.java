@@ -28,6 +28,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import au.org.democracydevelopers.corla.util.testUtils;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +53,6 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
  * -- Scoring of NEB assertions.
  * -- Computation of discrepancies for NEB assertions.
  * -- The logic involved in the re-auditing of ballots.
- * -- TODO: Test Assertion::riskMeasurement()
  * Refer to the Guide to RAIRE for details on how NEB assertions are scored, and how
  * discrepancies are computed (Part 2, Appendix A).
  */
@@ -140,6 +140,34 @@ public class NEBAssertionTests extends AssertionTests {
 
     assertEquals(result, expected);
     assertEquals(a.estimatedSamplesToAudit.intValue(), expected);
+  }
+
+  /**
+   * Test riskMeasurement() for an NEB assertion with no discrepancies.
+   */
+  @Test
+  public void testNEBRiskMeasurementNoDiscrepancies(){
+    log(LOGGER, "testNEBRiskMeasurementNoDiscrepancies");
+
+    Assertion a = createNEBAssertion("W", "L", TC,  80,
+        0.2, 8,  Map.of(), 0, 0,
+        0, 0, 0);
+
+    // Test risk measurement after 5 samples, no discrepancies
+    BigDecimal r = a.riskMeasurement(5);
+    assertEquals(testUtils.doubleComparator.compare(0.603, r.doubleValue()), 0);
+
+    // Test risk measurement after 10 samples, no discrepancies
+    r = a.riskMeasurement(10);
+    assertEquals(testUtils.doubleComparator.compare(0.364, r.doubleValue()), 0);
+
+    // Test risk measurement after 50 samples, no discrepancies
+    r = a.riskMeasurement(50);
+    assertEquals(testUtils.doubleComparator.compare(0.006, r.doubleValue()), 0);
+
+    // Test risk measurement after 100 samples, no discrepancies
+    r = a.riskMeasurement(100);
+    assertEquals(testUtils.doubleComparator.compare(0.0, r.doubleValue()), 0);
   }
 
   /**

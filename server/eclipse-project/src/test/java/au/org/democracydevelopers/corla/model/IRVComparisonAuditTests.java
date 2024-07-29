@@ -52,7 +52,6 @@ import javax.transaction.Transactional;
 
 /**
  * This class contains tests for the functionality present in IRVComparisonAudit.
- * TODO: tests for risk measurement.
  */
 @Transactional
 public class IRVComparisonAuditTests extends AssertionTests {
@@ -218,6 +217,19 @@ public class IRVComparisonAuditTests extends AssertionTests {
         0, 0, 23, 23, 1, Map.of(), 0.32);
   }
 
+  /**
+   * Create an IRVComparisonAudit for a contest with one NEB assertion stored in the database, and
+   * test that riskMeasurement() returns the maximum risk (no samples audited).
+   */
+  @Test
+  public void testCreateIRVAuditOneNEBAssertionRiskMeasurement(){
+    testUtils.log(LOGGER, "testCreateIRVAuditOneNEBAssertionRiskMeasurement");
+    IRVComparisonAudit ca = new IRVComparisonAudit(oneNEBContestResult, AssertionTests.riskLimit3,
+        AuditReason.COUNTY_WIDE_CONTEST);
+
+    assertEquals(0, testUtils.doubleComparator.compare(1.0, ca.riskMeasurement().doubleValue()));
+  }
+
 
 
   /**
@@ -242,6 +254,19 @@ public class IRVComparisonAuditTests extends AssertionTests {
   }
 
   /**
+   * Create an IRVComparisonAudit for a contest with one NEN assertion stored in the database, and
+   * test that riskMeasurement() returns the maximum risk (no samples audited).
+   */
+  @Test
+  public void testCreateIRVAuditOneNENAssertionRiskMeasurement(){
+    testUtils.log(LOGGER, "testCreateIRVAuditOneNENAssertionRiskMeasurement");
+    IRVComparisonAudit ca = new IRVComparisonAudit(oneNENContestResult, AssertionTests.riskLimit3,
+        AuditReason.GEOGRAPHICAL_SCOPE);
+
+    assertEquals(0, testUtils.doubleComparator.compare(1.0, ca.riskMeasurement().doubleValue()));
+  }
+
+  /**
    * Create an IRVComparisonAudit for a contest with one NEN and one NEB assertion stored in the
    * database. The smallest diluted margin across these assertions is 0.1.
    */
@@ -263,6 +288,19 @@ public class IRVComparisonAuditTests extends AssertionTests {
     checkNENAssertion(assertions.get(1), "Amanda", "Wendell", List.of("Liesl","Wendell",
             "Amanda"), 0, 0, 0, 0, 0, 15,
         15, 1, Map.of(), 0.5);
+  }
+
+  /**
+   * Create an IRVComparisonAudit for a contest with one NEN and one NEN assertion stored in the database, and
+   * test that riskMeasurement() returns the maximum risk (no samples audited).
+   */
+  @Test
+  public void testCreateIRVAuditOneNENNEBAssertionRiskMeasurement(){
+    testUtils.log(LOGGER, "testCreateIRVAuditOneNENNEBAssertionRiskMeasurement");
+    IRVComparisonAudit ca = new IRVComparisonAudit(oneNENNEBContestResult, AssertionTests.riskLimit3,
+        AuditReason.COUNTY_WIDE_CONTEST);
+
+    assertEquals(0, testUtils.doubleComparator.compare(1.0, ca.riskMeasurement().doubleValue()));
   }
 
   /**
