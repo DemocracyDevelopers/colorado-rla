@@ -232,11 +232,11 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
    *                             form name(r) for integer rank r. Note this is separate from whether
    *                             they are a valid list of IRV choices.
    */
-  private void recordIRVBallotInterpretations(CastVoteRecord cvr, RecordType recordType, int cvrNumber,
-                                              String imprintedID) throws IRVParsingException {
+  private void recordIRVBallotInterpretations(final CastVoteRecord cvr, final RecordType recordType,
+                               int cvrNumber, final String imprintedID) throws IRVParsingException {
     for(CVRContestInfo contestInfo : cvr.contestInfo()) {
       if(contestInfo.contest().description().equals(ContestType.IRV.toString())) {
-        IRVChoices irvChoices = new IRVChoices(contestInfo.rawChoices());
+        final IRVChoices irvChoices = new IRVChoices(contestInfo.rawChoices());
         if(!irvChoices.isValid()) {
           IRVBallotInterpretation interpretationRecord = new IRVBallotInterpretation(
               contestInfo.contest(),

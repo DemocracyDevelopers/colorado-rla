@@ -26,7 +26,7 @@ public class SparkResponseStub extends Response {
         _statusCode = statusCode;
     }
 
-    public void header(String name, String value) {
+    public void header(final String name, final String value) {
         _name = name;
         _value = value;
     }

@@ -48,7 +48,7 @@ import static us.freeandfair.corla.model.CastVoteRecord.RecordType.AUDITOR_ENTER
  */
 public class ACVRUploadTests extends TestClassWithDatabase {
 
-  private static final Logger LOGGER = LogManager.getLogger(ACVRUploadTests.class);
+  private final static Logger LOGGER = LogManager.getLogger(ACVRUploadTests.class);
 
   /**
    * Container for the mock-up database.
@@ -331,7 +331,7 @@ public class ACVRUploadTests extends TestClassWithDatabase {
     postgres.start();
     Persistence.setProperties(createHibernateProperties(postgres));
 
-    var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    final var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
     ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
     ScriptUtils.runInitScript(containerDelegate, "SQL/corla-three-candidates-ten-votes-inconsistent-types.sql");
     ScriptUtils.runInitScript(containerDelegate, "SQL/adams-partway-through-audit.sql");
@@ -392,8 +392,10 @@ public class ACVRUploadTests extends TestClassWithDatabase {
       uploadEndpoint.before(request, response);
 
       // Before the test, there should be 10 UPLOADED and zero AUDITOR_ENTERED cvrs.
-      final List<CastVoteRecord> preCvrs = CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.UPLOADED).toList();
-      final List<CastVoteRecord> preACvrs = CastVoteRecordQueries.getMatching(1L, AUDITOR_ENTERED).toList();
+      final List<CastVoteRecord> preCvrs
+          = CastVoteRecordQueries.getMatching(1L, CastVoteRecord.RecordType.UPLOADED).toList();
+      final List<CastVoteRecord> preACvrs
+          = CastVoteRecordQueries.getMatching(1L, AUDITOR_ENTERED).toList();
       assertEquals(preCvrs.size(), 10);
       assertEquals(preACvrs.size(), 0);
 
@@ -418,10 +420,12 @@ public class ACVRUploadTests extends TestClassWithDatabase {
 
       testErrorResponse(240512L, pluralityIRVAsJson, malformedACVRMsg);
 
-      // // 5. Upload a vote with IRV choices that are not among the valid candidates. This should cause an error.
+      // // 5. Upload a vote with IRV choices that are not among the valid candidates. This should
+      // cause an error.
       testErrorResponse(240513L, wrongCandidateNamesIRVAsJson, malformedACVRMsg);
 
-      // // 6. Upload a vote with IDs that do not correspond properly to the expected CVR. This should cause an error.
+      // // 6. Upload a vote with IDs that do not correspond properly to the expected CVR. This
+      // should cause an error.
       testErrorResponse(240514L, IRVWithInconsistentIDsAsJson, malformedACVRMsg);
 
       // // 7. Upload a vote that has typos preventing json deserialization. This should cause an error.
@@ -437,15 +441,15 @@ public class ACVRUploadTests extends TestClassWithDatabase {
    * @param rawChoices          The raw choices (with parentheses, presumed invalid).
    * @param validInterpretation The valid interpretation of the raw choices.
    */
-  private void testIRVBallotInterpretations(long CvrNum, String imprintedId, List<String> rawChoices,
-                                            List<String> validInterpretation) {
+  private void testIRVBallotInterpretations(long CvrNum, final String imprintedId,
+                           final List<String> rawChoices, final List<String> validInterpretation) {
     final String CVRHeader = "CVR Number";
     final String imprintedIDHeader = "Imprinted ID";
 
-    List<IRVBallotInterpretation> IrvBallotInterpretations
+    final List<IRVBallotInterpretation> IrvBallotInterpretations
         = TestOnlyQueries.matching(tinyIRV, imprintedId, AUDITOR_ENTERED);
     assertEquals(IrvBallotInterpretations.size(), 1);
-    String result = IrvBallotInterpretations.get(0).logMessage(CVRHeader, imprintedIDHeader);
+    final String result = IrvBallotInterpretations.get(0).logMessage(CVRHeader, imprintedIDHeader);
     assertEquals(result, "County Adams, Contest TinyExample1, CVR Number " + CvrNum + ", Imprinted ID " + imprintedId
         + ", Record type " + AUDITOR_ENTERED
         + ", Choices " + String.join(",",rawChoices) + ", Interpretation ["

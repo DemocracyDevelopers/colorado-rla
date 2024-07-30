@@ -94,7 +94,9 @@ public class IRVBallotInterpretation implements PersistentEntity, Serializable {
    * @param rawChoices     the (invalid) raw IRV choices, e.g. [Bob(1),Alice(3),Chuan(4)].
    * @param orderedChoices the way colorado-rla interpreted the raw choices, as an order list of names.
    */
-  public IRVBallotInterpretation(Contest contest, CastVoteRecord.RecordType recordType, int cvrNumber, String imprintedId, List<String> rawChoices, List<String> orderedChoices) {
+  public IRVBallotInterpretation(final Contest contest, final CastVoteRecord.RecordType recordType,
+                                 int cvrNumber, final String imprintedId,
+                                 final List<String> rawChoices, final List<String> orderedChoices) {
     this.contest = contest;
     this.recordType = recordType;
     this.cvrNumber = cvrNumber;
@@ -107,7 +109,7 @@ public class IRVBallotInterpretation implements PersistentEntity, Serializable {
    * Output contents as a String appropriate for a log message.
    * @return the data with headers incorporated.
    */
-  public String logMessage(String cvrNumberHeader, String imprintedIDHeader) {
+  public String logMessage(final String cvrNumberHeader, final String imprintedIDHeader) {
     return String.join(", ", (List.of(
         "County " + contest.county().name(),
         "Contest " + contest.name(),

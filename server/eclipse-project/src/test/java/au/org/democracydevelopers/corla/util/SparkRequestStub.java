@@ -15,7 +15,7 @@ public class SparkRequestStub extends Request {
     private final String _body;
     private final Set<String> _queryParams;
 
-    public SparkRequestStub(String body, Set<String> queryParams)
+    public SparkRequestStub(final String body, final Set<String> queryParams)
     {
       super();
 

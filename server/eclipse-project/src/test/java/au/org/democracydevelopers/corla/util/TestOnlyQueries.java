@@ -47,15 +47,15 @@ public class TestOnlyQueries {
    * Retrieve all IRVBallotInterpretations in the database belonging to the contest with the given
    * name, of the requested record type.
    *
-   * @param contestName         The contest name.
+   * @param contestName The contest name.
    * @param imprintedId The imprinted ID.
-   * @param recordType          The record type (UPLOADED or AUDITOR_ENTERED or REAUDIT).
+   * @param recordType The record type (UPLOADED or AUDITOR_ENTERED or REAUDIT).
    * @return the list of matching IRVBallotInterpretations. There may be none, or several.
    * @throws RuntimeException when an unexpected error arose in assertion retrieval (not including
    *                          a NoResultException, which is handled by returning an empty optional item).
    */
   public static List<IRVBallotInterpretation> matching(final String contestName,
-                String imprintedId, CastVoteRecord.RecordType recordType) throws RuntimeException {
+      final String imprintedId, final CastVoteRecord.RecordType recordType) throws RuntimeException {
     final String prefix = "[matching]";
     try {
       LOGGER.debug(String.format("%s Select query on IRV Ballot interpretations, retrieving " +
@@ -69,7 +69,7 @@ public class TestOnlyQueries {
       q.setParameter("imprintedId", imprintedId);
       q.setParameter("recordType", recordType);
 
-      List<IRVBallotInterpretation> result = q.getResultList();
+      final List<IRVBallotInterpretation> result = q.getResultList();
       LOGGER.debug(String.format("%s %d summary results retrieved for contest %s.", prefix,
           result.size(), contestName));
       if(result.isEmpty()) {

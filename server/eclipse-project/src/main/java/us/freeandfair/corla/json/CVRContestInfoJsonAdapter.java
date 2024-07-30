@@ -224,11 +224,7 @@ public final class CVRContestInfoJsonAdapter
         IRVChoices parsedChoices = new IRVChoices(choices);
         choicesForSanityChecking = parsedChoices.getCandidateNames();
         interpretedChoices = parsedChoices.getValidIntentAsOrderedList();
-        // FIXME VT
-        // alas we don't have the info required to make an IRVBallotInterpretation.
-        // Persistence.save(new IRVBallotInterpretation(currentContest, CastVoteRecord.RecordType.AUDITOR_ENTERED,
-        //    cvrNumber, imprintedID, choices, interpretedChoices));
-        //
+
         // For plurality, just do the sanity check directly on the choices.
       } else {
         choicesForSanityChecking = choices;
@@ -243,11 +239,6 @@ public final class CVRContestInfoJsonAdapter
         throw new JsonSyntaxException(msg);
       }
 
-      // TODO In the prototype, this function returns a CVRContestInfo with the raw choices
-      // included as a parameter, which is then transiently stored. We may do that again, but I am
-      // leaving it out for now pending a final decision on how we store IRV Ballot interpretations.
-      // See https://github.com/orgs/DemocracyDevelopers/projects/1/views/7?pane=issue&itemId=64821658
-      // It could also be stored directly here. See https://github.com/orgs/DemocracyDevelopers/projects/1/views/1?pane=issue&itemId=63351700
       return new CVRContestInfo(contest, comment, consensus, interpretedChoices, choices);
 
     } catch (IRVParsingException e) {

@@ -143,7 +143,7 @@ public class testUtils {
   /**
    * Test that two lists of strings are identical.
    */
-  public static boolean equalStringLists(List<String> s1, List<String> s2) {
+  public static boolean equalStringLists(final List<String> s1, final List<String> s2) {
     if (s1.size() != s2.size()) {
       return false;
     }
