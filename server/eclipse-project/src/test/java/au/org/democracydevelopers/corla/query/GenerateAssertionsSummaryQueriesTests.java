@@ -21,6 +21,15 @@ import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNO
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.assertEquals;
 
+/**
+ * Basic tests for proper functioning of GenerateAssertionsSummaryQueries.
+ * Test data is loaded from simple-assertions and (most usefully) summaries-generation-errors.sql.
+ * This tests successful retrieval of:
+ * - a summary of successful assertion generation,
+ * - the winner from a summary of successful assertion generation,
+ * - a warning (TIME_OUT_TRIMMING_ASSERTIONS) from a summary of successful assertion generation,
+ * - the correct errors from a collection of summaries of failed assertion generation.
+ */
 public class GenerateAssertionsSummaryQueriesTests extends TestClassWithDatabase {
 
   private static final Logger LOGGER = LogManager.getLogger(GenerateAssertionsSummaryQueriesTests.class);
@@ -74,7 +83,7 @@ public class GenerateAssertionsSummaryQueriesTests extends TestClassWithDatabase
   public void retrieveSuccessSummaryGetWinner() {
     testUtils.log(LOGGER, "retrieveSuccessSummaryGetWinner");
 
-    String winner = GenerateAssertionsSummaryQueries.matchingWinner("One NEB Assertion Contest");
+    final String winner = GenerateAssertionsSummaryQueries.matchingWinner("One NEB Assertion Contest");
     assertEquals(winner, "Alice");
   }
 
@@ -85,13 +94,14 @@ public class GenerateAssertionsSummaryQueriesTests extends TestClassWithDatabase
   public void retrieveSuccessSummaryWithWarning() {
     testUtils.log(LOGGER, "retrieveSuccessSummaryWithWarning");
 
-    Optional<GenerateAssertionsSummary> summary
+    final Optional<GenerateAssertionsSummary> summary
         = GenerateAssertionsSummaryQueries.matching("Timeout trimming assertions Contest");
 
     assertTrue(summary.isPresent());
     assertEquals(summary.get().getWinner(), "Bob");
     assertEquals(summary.get().getError(), "");
-    assertEquals(summary.get().getWarning(), RaireServiceErrors.RaireErrorCodes.TIMEOUT_TRIMMING_ASSERTIONS.toString());
+    assertEquals(summary.get().getWarning(),
+        RaireServiceErrors.RaireErrorCodes.TIMEOUT_TRIMMING_ASSERTIONS.toString());
     assertEquals(summary.get().getMessage(), "");
   }
 
@@ -103,7 +113,8 @@ public class GenerateAssertionsSummaryQueriesTests extends TestClassWithDatabase
   public void retrieveFailureSummary() {
     testUtils.log(LOGGER, "retrieveFailureSummary");
 
-    Optional<GenerateAssertionsSummary> summary = GenerateAssertionsSummaryQueries.matching("Tied winners Contest");
+    final Optional<GenerateAssertionsSummary> summary
+        = GenerateAssertionsSummaryQueries.matching("Tied winners Contest");
 
     assertTrue(summary.isPresent());
     assertEquals(summary.get().getWinner(), "");
@@ -120,7 +131,7 @@ public class GenerateAssertionsSummaryQueriesTests extends TestClassWithDatabase
   public void retrieveFailureSummaryGetUnknownWinner() {
     testUtils.log(LOGGER, "retrieveFailureSummaryGetUnknownWinner");
 
-    String winner = GenerateAssertionsSummaryQueries.matchingWinner("Tied winners Contest");
+    final String winner = GenerateAssertionsSummaryQueries.matchingWinner("Tied winners Contest");
     assertEquals(winner, UNKNOWN_WINNER);
   }
 
@@ -131,7 +142,8 @@ public class GenerateAssertionsSummaryQueriesTests extends TestClassWithDatabase
   public void nonExistentSummaryIsEmpty() {
     testUtils.log(LOGGER, "nonExistentSummaryIsEmpty");
 
-    Optional<GenerateAssertionsSummary> summary = GenerateAssertionsSummaryQueries.matching("No Such Contest");
+    final Optional<GenerateAssertionsSummary> summary
+        = GenerateAssertionsSummaryQueries.matching("No Such Contest");
 
     assertTrue(summary.isEmpty());
   }
@@ -143,7 +155,7 @@ public class GenerateAssertionsSummaryQueriesTests extends TestClassWithDatabase
   public void nonExistentSummaryIsUnknownWinner() {
     testUtils.log(LOGGER, "nonExistentSummaryIsUnknownWinner");
 
-    String winner = GenerateAssertionsSummaryQueries.matchingWinner("No Such Contest");
+    final String winner = GenerateAssertionsSummaryQueries.matchingWinner("No Such Contest");
 
     assertEquals(winner, UNKNOWN_WINNER);
   }
