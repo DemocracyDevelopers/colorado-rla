@@ -45,6 +45,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.testng.annotations.*;
+import us.freeandfair.corla.query.ContestQueries;
 import us.freeandfair.corla.query.ExportQueries;
 
 import javax.transaction.Transactional;
@@ -70,6 +71,7 @@ import static us.freeandfair.corla.query.CountyQueries.fromString;
  *   in RankedBallotInterpretationReportTests, but is included here so the Boulder data only has to
  *   be loaded once.)
  * - an examples to test the broader class of Write In strings.
+ * - some basic small test cases with STV votes, to ensure that STV contests are properly dropped.
  */
 public class DominionCVRExportParserTests extends TestClassWithDatabase {
 
@@ -92,6 +94,14 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
    * Blank properties for submitting to the DominionCVRExportParser instance.
    */
   private static final Properties blank = new Properties();
+
+  /**
+   * Some expected votes.
+   */
+  private final List<String> ABC = List.of("Alice","Bob","Chuan");
+  private final List<String> ACB = List.of("Alice","Chuan","Bob");
+  private final List<String> BAC = List.of("Bob","Alice","Chuan");
+  private final List<String> CAB = List.of("Chuan","Alice","Bob");
 
   @BeforeClass
   public static void beforeAll() {
@@ -118,11 +128,6 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
     testUtils.log(LOGGER, "parseThreeCandidatesTenVotesSucceeds");
     final Path path = Paths.get(TINY_CSV_PATH + "ThreeCandidatesTenVotes.csv");
     final Reader reader = Files.newBufferedReader(path);
-
-    final List<String> ABC = List.of("Alice","Bob","Chuan");
-    final List<String> ACB = List.of("Alice","Chuan","Bob");
-    final List<String> BAC = List.of("Bob","Alice","Chuan");
-    final List<String> CAB = List.of("Chuan","Alice","Bob");
 
     final DominionCVRExportParser parser = new DominionCVRExportParser(reader,
         fromString("Saguache"), blank, true);
@@ -610,5 +615,141 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
       assertTrue(choices.get(1).fictitious());
       assertTrue(contest.choices().get(2).qualifiedWriteIn());
     }
+  }
+
+  /**
+   * Simple test of successful parsing of a tiny IRV test example, with IRV, STV, and plurality,
+   * in that order.
+   * Tests that all the metadata and some of the votes are correct.
+   * In particular, the STV contest should be completely dropped.
+   * @throws IOException never.
+   */
+  @Test
+  @Transactional
+  public void parseThreeCandidatesTenVotesPlusSTVPlusPluralitySucceedsAndDropsSTV() throws IOException {
+    testUtils.log(LOGGER, "parseThreeCandidatesTenVotesPlusSTVPlusPluralitySucceedsAndDropsSTV");
+    final Path path = Paths.get(TINY_CSV_PATH + "ThreeCandidatesTenVotesPlusSTVPlusPlurality.csv");
+
+    doIRVAndSTVAndPluralityTest(path, "Cheyenne");
+  }
+
+  /**
+   * Second test for successful parsing of mixed IRV, plurality, STV contests. The STV contest is
+   * at the end.
+   * @throws IOException never.
+   */
+  @Test
+  @Transactional
+  public void parseThreeCandidatesTenVotesPlusPluralityPlusSTVSucceedsAndDropsSTV() throws IOException {
+    testUtils.log(LOGGER, "parseThreeCandidatesTenVotesPlusPluralityPlusSTVSucceedsAndDropsSTV");
+    final Path path = Paths.get(TINY_CSV_PATH + "ThreeCandidatesTenVotesPlusPluralityPlusSTV.csv");
+
+    doIRVAndSTVAndPluralityTest(path, "Yuma");
+  }
+
+  /**
+   * Third test for successful parsing of mixed IRV, plurality, STV contests. The STV contest is
+   * at the beginning.
+   * @throws IOException never.
+   */
+  @Test
+  @Transactional
+  public void parseSTVPlusThreeCandidatesTenVotesPlusPluralitySucceedsAndDropsSTV() throws IOException {
+    testUtils.log(LOGGER, "parseSTVPlusThreeCandidatesTenVotesPlusPluralitySucceedsAndDropsSTV");
+    final Path path = Paths.get(TINY_CSV_PATH + "STVPlusThreeCandidatesTenVotesPlusPlurality.csv");
+
+    doIRVAndSTVAndPluralityTest(path, "La Plata");
+  }
+
+  /**
+   * The actual work function for the three files with mixed IRV, STV and plurality. Although the
+   * position of the STV contest varies in these three files, the other data is the same, so the
+   * parsed result should be the same.
+   * @param path       The path to the CSV file.
+   * @param countyName The name of the county.
+   * @throws IOException
+   */
+  void doIRVAndSTVAndPluralityTest(Path path, String countyName) throws IOException {
+    final Reader reader = Files.newBufferedReader(path);
+
+    County cheyenne = fromString(countyName);
+    final DominionCVRExportParser parser = new DominionCVRExportParser(reader, cheyenne, blank, true);
+    assertTrue(parser.parse().success);
+
+    // There should be three contests, an IRV one and two plurality ones, because the STV one was
+    // dropped.
+    final List<Contest> contests = forCounties(Set.of(fromString(countyName)));
+    assertEquals(contests.size(), 3);
+    final Contest IRVContest = contests.get(0);
+    final Contest pluralityContest = contests.get(1);
+    final Contest pluralityContest2 = contests.get(2);
+
+    // Check basic data
+    assertEquals(IRVContest.name(), "TinyExample1");
+    assertEquals(IRVContest.description(), ContestType.IRV.toString());
+    assertEquals(IRVContest.choices().stream().map(Choice::name).collect(Collectors.toList()), ABC);
+
+    // Votes allowed should be 3 (because there are 3 ranks), whereas winners=1 always for IRV.
+    assertEquals(IRVContest.votesAllowed().intValue(), 3);
+    assertEquals(IRVContest.winnersAllowed().intValue(), 1);
+
+    // There are 10 votes:
+    // 3 Alice, Bob, Chuan
+    // 3 Alice, Chuan, Bob
+    // 1 Bob, Alice, Chuan
+    // 3 Chuan, Alice, Bob
+    final List<List<String>> expectedChoices = List.of(
+        ABC,ABC,ABC,
+        ACB,ACB,ACB,
+        BAC,
+        CAB, CAB, CAB);
+
+    final List<CVRContestInfo> cvrs = getMatching(fromString(countyName).id(),
+        CastVoteRecord.RecordType.UPLOADED).map(cvr -> cvr.contestInfoForContest(IRVContest)).toList();
+    assertEquals(10, cvrs.size());
+    for(int i=0 ; i < expectedChoices.size() ; i++) {
+      assertEquals(cvrs.get(i).choices(), expectedChoices.get(i));
+    }
+
+    // Check basic data for the plurality Example1 contest
+    assertEquals(pluralityContest.name(), "PluralityExample1");
+    assertEquals(pluralityContest.description(), ContestType.PLURALITY.toString());
+    assertEquals(pluralityContest.choices().stream().map(Choice::name)
+        .collect(Collectors.toList()), List.of("Diego", "Eli", "Farhad"));
+
+    // Votes allowed should be 1. For plurality, votes allowed = winners allowed.
+    assertEquals(pluralityContest.votesAllowed().intValue(), 1);
+    assertEquals(pluralityContest.winnersAllowed().intValue(), 1);
+
+    // There are 10 votes:
+    // 1 Diego,
+    // 3 Farhad, Farhad, Farhad,
+    // 3 Diego, Diego, Diego,
+    // 3 Eli, Eli, Eli
+    final List<List<String>> expectedPluralityChoices = List.of(
+        List.of("Diego"),
+        List.of("Farhad"), List.of("Farhad"), List.of("Farhad"),
+        List.of("Diego"), List.of("Diego"), List.of("Diego"),
+        List.of("Eli"), List.of("Eli"), List.of("Eli"));
+
+    final List<CVRContestInfo> pluralityCvrs = getMatching(fromString(countyName).id(),
+        CastVoteRecord.RecordType.UPLOADED).map(cvr -> cvr.contestInfoForContest(pluralityContest)).toList();
+    assertEquals(10, pluralityCvrs.size());
+    for(int i=0 ; i < expectedPluralityChoices.size() ; i++) {
+      assertEquals(cvrs.get(i).choices(), expectedChoices.get(i));
+    }
+
+    // Check basic data for the plurality Example2 contest
+    assertEquals(pluralityContest2.name(), "PluralityExample2");
+    assertEquals(pluralityContest2.description(), ContestType.PLURALITY.toString());
+    assertEquals(pluralityContest2.choices().stream().map(Choice::name).collect(Collectors.toList()),
+       List.of("Gertrude", "Ho", "Imogen"));
+
+    // Votes allowed should be 2
+    assertEquals(pluralityContest2.votesAllowed().intValue(), 2);
+    assertEquals(pluralityContest2.winnersAllowed().intValue(), 2);
+
+    // Just for good measure, check that there's no contest called "STVExample1" in the database.
+    assertTrue(ContestQueries.forCounty(cheyenne).stream().noneMatch(c -> c.name().equals("STVExample1")));
   }
 }
