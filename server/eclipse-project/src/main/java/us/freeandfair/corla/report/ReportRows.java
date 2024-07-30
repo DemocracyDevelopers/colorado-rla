@@ -359,7 +359,7 @@ public class ReportRows {
   }
 
   /**
-   * for each contest(per row), show all the variables that are interesting or
+   * For each contest (per row), show all the variables that are interesting or
    * needed to perform the risk limit calculation
    * This checks whether the contest is IRV and makes two modifications:
    * 1. it takes the winner from the GenerateAssertionsSummary table, rather than the ComparisonAudit,

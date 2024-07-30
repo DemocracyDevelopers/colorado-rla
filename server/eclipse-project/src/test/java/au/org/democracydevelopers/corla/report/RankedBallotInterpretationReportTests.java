@@ -52,7 +52,7 @@ import static us.freeandfair.corla.query.CountyQueries.fromString;
 /**
  * Test that a correct ranked vote interpretation report is produced, for a variety of IRV-related
  * parsing examples, including:
- * ThreeCandidatesTenVotes - a constructed test file will all-valid IRV votes.
+ * ThreeCandidatesTenVotes - a constructed test file with all-valid IRV votes.
  * ThreeCandidatesTenInvalidVotes - a constructed test with invalid IRV ballots to check they are accepted and properly
  *   interpreted.
  * An equivalent test using real data from Boulder '23 is in DominionCVRExportParserTests.
@@ -63,8 +63,8 @@ public class RankedBallotInterpretationReportTests extends TestClassWithDatabase
   /**
    * Class-wide logger
    */
-  private static final Logger LOGGER = LogManager.getLogger(
-      au.org.democracydevelopers.corla.report.RankedBallotInterpretationReportTests.class);
+  private static final Logger LOGGER
+      = LogManager.getLogger(RankedBallotInterpretationReportTests.class);
 
   /**
    * Container for the mock-up database.
@@ -81,7 +81,7 @@ public class RankedBallotInterpretationReportTests extends TestClassWithDatabase
     postgres.start();
     Persistence.setProperties(createHibernateProperties(postgres));
 
-    var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    final var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
     ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
   }
 
@@ -101,15 +101,15 @@ public class RankedBallotInterpretationReportTests extends TestClassWithDatabase
     testUtils.log(LOGGER, "parseGuideToRaireExample3Succeeds");
 
     // Parse the file.
-    Path path = Paths.get(TINY_CSV_PATH + "GuideToRAIREExample3.csv");
-    Reader reader = Files.newBufferedReader(path);
-    DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Saguache"), blank, true);
+    final Path path = Paths.get(TINY_CSV_PATH + "GuideToRAIREExample3.csv");
+    final Reader reader = Files.newBufferedReader(path);
+    final DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Saguache"), blank, true);
     assertTrue(parser.parse().success);
 
     // Make the ranked_ballot_interpretation report.
     final Map<String, String> files = ExportQueries.sqlFiles();
     final ByteArrayOutputStream os = new ByteArrayOutputStream();
-    String q = files.get("ranked_ballot_interpretation");
+    final String q = files.get("ranked_ballot_interpretation");
     ExportQueries.csvOut(q, os);
 
     // There should be no data, only headers, because all the IRV votes are valid.
@@ -126,20 +126,20 @@ public class RankedBallotInterpretationReportTests extends TestClassWithDatabase
   @Transactional
   public void parseThreeCandidatesTenInvalidVotesSucceeds() throws IOException {
     testUtils.log(LOGGER, "parseThreeCandidatesTenInvalidVotesSucceeds");
-    Path path = Paths.get(TINY_CSV_PATH + "ThreeCandidatesTenInvalidVotes.csv");
-    Reader reader = Files.newBufferedReader(path);
+    final Path path = Paths.get(TINY_CSV_PATH + "ThreeCandidatesTenInvalidVotes.csv");
+    final Reader reader = Files.newBufferedReader(path);
 
-    DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Gilpin"), blank, true);
+    final DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Gilpin"), blank, true);
     assertTrue(parser.parse().success);
 
     // Make the ranked_ballot_interpretation report.
     final Map<String, String> files = ExportQueries.sqlFiles();
     final ByteArrayOutputStream os = new ByteArrayOutputStream();
-    String q = files.get("ranked_ballot_interpretation");
+    final String q = files.get("ranked_ballot_interpretation");
     ExportQueries.csvOut(q, os);
 
     // There should be headers and 10 records matching the valid interpretations of all those invalid votes.
-    String cvr = os.toString();
+    final String cvr = os.toString();
     assertTrue(StringUtils.contains(cvr, "county,contest,record_type,cvr_number,imprinted_id,raw_vote,valid_interpretation\n"));
 
     assertTrue(StringUtils.contains(cvr,
