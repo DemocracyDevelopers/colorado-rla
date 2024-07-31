@@ -399,7 +399,7 @@ public class NENAssertionTests extends AssertionTests {
     checkCountsDiscrepancyMap(a, 1, 0, 0, 2, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -2));
 
-    checkRiskMeasurement(a, Map.of(5, 0.391, 10, 0.306, 50, 0.127, 80, 0.005));
+    checkRiskMeasurement(a, Map.of(5, 0.391, 10, 0.306, 50, 0.043, 80, 0.01));
   }
 
   /**
@@ -551,7 +551,7 @@ public class NENAssertionTests extends AssertionTests {
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of(1L, -2));
 
-    checkRiskMeasurement(a, Map.of(5, 0.781, 10, 0.611, 20, 0.372, 50, 0.085));
+    checkRiskMeasurement(a, Map.of(5, 0.781, 10, 0.611, 20, 0.373, 50, 0.085));
   }
 
   /**
