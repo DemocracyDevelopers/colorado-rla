@@ -1,0 +1,130 @@
+package au.org.democracydevelopers.corla.endpoint;
+
+import au.org.democracydevelopers.corla.model.vote.IRVBallotInterpretation;
+import au.org.democracydevelopers.corla.util.SparkRequestStub;
+import au.org.democracydevelopers.corla.util.TestClassWithAuth;
+import au.org.democracydevelopers.corla.util.TestOnlyQueries;
+import au.org.democracydevelopers.corla.util.testUtils;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.ext.ScriptUtils;
+import org.testcontainers.jdbc.JdbcDatabaseDelegate;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+import spark.HaltException;
+import spark.Request;
+import us.freeandfair.corla.Main;
+import us.freeandfair.corla.controller.ComparisonAuditController;
+import us.freeandfair.corla.controller.ContestCounter;
+import us.freeandfair.corla.endpoint.ACVRUpload;
+import us.freeandfair.corla.model.CastVoteRecord;
+import us.freeandfair.corla.model.ContestResult;
+import us.freeandfair.corla.model.CountyDashboard;
+import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.query.CastVoteRecordQueries;
+
+import javax.transaction.Transactional;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
+import static au.org.democracydevelopers.corla.util.testUtils.tinyIRV;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static us.freeandfair.corla.model.CastVoteRecord.RecordType.AUDITOR_ENTERED;
+
+/**
+ * Test sample sizes endpoint.
+ * This does not test that it produces the correct _values_ - it just mocks some numbers and checks
+ * that the CSV is properly printed.
+ */
+public class EstimateSampleSizesTests extends TestClassWithAuth {
+
+  private final static Logger LOGGER = LogManager.getLogger(EstimateSampleSizesTests.class);
+
+  /**
+   * Container for the mock-up database.
+   */
+  private final static PostgreSQLContainer<?> postgres = createTestContainer();
+
+  /**
+   * An Audit CVR Upload endpoint to test.
+   */
+  private final ACVRUpload uploadEndpoint = new ACVRUpload();
+
+  /**
+   * The name of the county we will pretend to be logged in as administrator for.
+   */
+  private static final String countyName = "Adams";
+
+  /**
+   * The ID (according to co_counties.sql) of the county we will pretend to be logged in as
+   * administrator for.
+   */
+  private static final long countyID = 1L;
+
+  /**
+   * Mocked Contest Results, one for IRV and one for Plurality.
+   */
+  private static final List<ContestResult> mockedContestResults = new ArrayList<>();
+
+  /**
+   * Database init.
+   */
+  @BeforeClass
+  public static void beforeAll() {
+    postgres.start();
+    Persistence.setProperties(createHibernateProperties(postgres));
+
+    final var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
+    ScriptUtils.runInitScript(containerDelegate, "SQL/corla-three-candidates-ten-votes-inconsistent-types.sql");
+    ScriptUtils.runInitScript(containerDelegate, "SQL/adams-partway-through-audit.sql");
+  }
+
+  /**
+   * Init mocks, particularly for authentication.
+   */
+  @BeforeClass
+  public void initMocks() {
+    testUtils.log(LOGGER, "initMocks");
+
+    // Mock successful auth as a county.
+    mockAuth(countyName, countyID);
+  }
+
+  /**
+   *
+   */
+  @Test
+  @Transactional
+  void testACVRUploadAndStorage() {
+    testUtils.log(LOGGER, "testACVRUploadAndStorage");
+
+    // Mock the main class; mock its auth as the mocked Adams county auth.
+    try (MockedStatic<Main> mockedMain = Mockito.mockStatic(Main.class);
+         MockedStatic<ContestCounter> mockedCounter = Mockito.mockStatic(ContestCounter.class)) {
+      mockedMain.when(Main::authentication).thenReturn(auth);
+      mockedCounter.when(ContestCounter::countAllContests).thenReturn(mockedContestResults);
+
+      // We seem to need a dummy request to run before.
+      final Request request = new SparkRequestStub("", new HashSet<>());
+      uploadEndpoint.before(request, response);
+
+      uploadEndpoint.endpointBody(request, response);
+
+      String csv = response.body();
+      assertEquals(csv, String.join(",", List.of(
+          "County",
+          "Contest Name",
+          "Contest Type",
+          "Ballots Cast",
+          "Total ballots",
+          "Diluted Margin",
+          "Sample Size")));
+    }
+  }
+}

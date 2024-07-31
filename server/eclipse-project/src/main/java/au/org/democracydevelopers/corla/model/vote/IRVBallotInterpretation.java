@@ -6,7 +6,6 @@ import us.freeandfair.corla.persistence.PersistentEntity;
 import us.freeandfair.corla.persistence.StringListConverter;
 
 import javax.persistence.*;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
