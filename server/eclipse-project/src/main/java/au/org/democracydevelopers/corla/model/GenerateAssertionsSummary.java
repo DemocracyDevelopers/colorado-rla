@@ -63,13 +63,13 @@ public class GenerateAssertionsSummary {
    * Name of the contest.
    */
   @Column(name = "contest_name", unique = true, updatable = false, nullable = false)
-  public String contestName;
+  private String contestName;
 
   /**
    * Name of the winner of the contest, as determined by raire-java.
    */
   @Column(name = "winner", updatable = false, nullable = false)
-  public String winner;
+  private String winner;
 
   /**
    * An error (matching one of the RaireServiceErrors.RaireErrorCodes), if there was one. Errors
@@ -78,7 +78,7 @@ public class GenerateAssertionsSummary {
    * continue.
    */
   @Column(name = "error", updatable = false, nullable = false)
-  public String error;
+  private String error;
 
   /**
    * A warning, if there was one, or emptystring if none. Warnings (e.g. TIME_OUT_TRIMMING_ASSERTIONS)
@@ -86,17 +86,45 @@ public class GenerateAssertionsSummary {
    * time allowed might be beneficial.
    */
   @Column(name = "warning", updatable = false, nullable = false)
-  public String warning;
+  private String warning;
 
   /**
    * The message associated with the error, for example the names of the tied winners.
    */
   @Column(name = "message", updatable = false, nullable = false)
-  public String message;
+  private String message;
 
   /**
    * Default no-args constructor (required for persistence).
    */
   public GenerateAssertionsSummary() {
+  }
+
+  /**
+   * @return the winner.
+   */
+  public String getWinner() {
+    return winner;
+  }
+
+  /**
+   * @return the error, or emptystring if there is none.
+   */
+  public String getError() {
+    return error;
+  }
+
+  /**
+   * @return a warning, or emptystring if there is none.
+   */
+  public String getWarning() {
+    return warning;
+  }
+
+  /**
+   * @return the message associated with the error, or emptystring if there is none.
+   */
+  public String getMessage() {
+    return message;
   }
 }

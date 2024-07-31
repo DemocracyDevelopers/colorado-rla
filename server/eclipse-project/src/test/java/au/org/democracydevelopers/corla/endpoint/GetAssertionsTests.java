@@ -100,7 +100,7 @@ public class GetAssertionsTests extends TestClassWithDatabase {
      * Base url - this is set up to use the wiremock server, but could be set here to wherever you have the
      * raire-service running to test with that directly.
      */
-    static String baseUrl;
+    private static String baseUrl;
 
     /**
      * Database init.

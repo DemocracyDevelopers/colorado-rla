@@ -670,14 +670,14 @@ public class DominionCVRExportParser {
             // If it is IRV, convert it into an ordered list of names (without parentheses), then
             // store.
             final IRVChoices irvVotes = new IRVChoices(votes);
-            List<String> orderedChoices = irvVotes.getValidIntentAsOrderedList();
+            final List<String> orderedChoices = irvVotes.getValidIntentAsOrderedList();
             if(!irvVotes.isValid()) {
               // IRV preferences were invalid. Store a record of the raw votes for debugging/record-
               // keeping purposes, but use the valid interpretation as the choices in the audit.
-              IRVBallotInterpretation irvInterpretation = new IRVBallotInterpretation(co,
+              final IRVBallotInterpretation irvInterpretation = new IRVBallotInterpretation(co,
                   RecordType.UPLOADED, cvr_id, imprinted_id, votes, orderedChoices);
               Persistence.save(irvInterpretation);
-              String msg = "Interpretation of invalid IRV choices.";
+              final String msg = "Interpretation of invalid IRV choices.";
               LOGGER.warn(String.format("%s %s %s.", prefix, msg,
                   irvInterpretation.logMessage(CVR_NUMBER_HEADER, IMPRINTED_ID_HEADER)));
             }
