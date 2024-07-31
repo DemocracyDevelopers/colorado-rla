@@ -461,7 +461,8 @@ public class IRVComparisonAudit extends ComparisonAudit {
       // exists, in each of the audit's assertions.
       boolean removed = false;
       for (Assertion a : assertions) {
-        removed = removed || a.removeDiscrepancy(theRecord);
+        boolean removed_a = a.removeDiscrepancy(theRecord);
+        removed = removed || removed_a;
       }
 
       // Update the discrepancy tallies in the base ComparisonAudit class, for reporting purposes,
