@@ -98,10 +98,24 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
   /**
    * Some expected votes.
    */
-  private final List<String> ABC = List.of("Alice","Bob","Chuan");
-  private final List<String> ACB = List.of("Alice","Chuan","Bob");
-  private final List<String> BAC = List.of("Bob","Alice","Chuan");
-  private final List<String> CAB = List.of("Chuan","Alice","Bob");
+  private static final List<String> ABC = List.of("Alice","Bob","Chuan");
+  private static final List<String> ACB = List.of("Alice","Chuan","Bob");
+  private static final List<String> BAC = List.of("Bob","Alice","Chuan");
+  private static final List<String> CAB = List.of("Chuan","Alice","Bob");
+
+  /**
+   * The 10 expected votes in the TinyIRV files.
+   * There are 10 votes:
+   * 3 Alice, Bob, Chuan
+   * 3 Alice, Chuan, Bob
+   * 1 Bob, Alice, Chuan
+   * 3 Chuan, Alice, Bob
+   */
+  private static final List<List<String>> expectedChoices = List.of(
+      ABC,ABC,ABC,
+      ACB,ACB,ACB,
+      BAC,
+      CAB, CAB, CAB);
 
   @BeforeClass
   public static void beforeAll() {
@@ -147,17 +161,7 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
     assertEquals(contest.votesAllowed().intValue(), 3);
     assertEquals(contest.winnersAllowed().intValue(), 1);
 
-    // There are 10 votes:
-    // 3 Alice, Bob, Chuan
-    // 3 Alice, Chuan, Bob
-    // 1 Bob, Alice, Chuan
-    // 3 Chuan, Alice, Bob
-    final List<List<String>> expectedChoices = List.of(
-        ABC,ABC,ABC,
-        ACB,ACB,ACB,
-        BAC,
-        CAB, CAB, CAB);
-
+    // Check that the 10 expected votes are there.
     final List<CVRContestInfo> cvrs = getMatching(fromString("Saguache").id(),
         CastVoteRecord.RecordType.UPLOADED).map(cvr -> cvr.contestInfoForContest(contest)).toList();
     assertEquals(10, cvrs.size());
@@ -575,7 +579,6 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
     testUtils.log(LOGGER, "parseBadVoteForPluralityError");
     final Path path = Paths.get(BAD_CSV_PATH + "badVoteForPlurality.csv");
     final Reader reader = Files.newBufferedReader(path);
-    // County sedgwick = fromString("Sedgwick");
 
     final DominionCVRExportParser parser = new DominionCVRExportParser(reader, fromString("Sedgwick"), blank, true);
     assertTrue(parser.parse().success);
@@ -662,12 +665,49 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
   }
 
   /**
+   *
+   * The parser throws an ArrayOutOfBounds exception when given a csv with no contests (because at
+   * DominionCVRExportParser:870 it tries to get the 0-th element of an empty list, i.e. the list of column headers).
+   * I'm not certain whether this is intended behaviour, but it's _different_ behaviour from what happens with an
+   * all-STV contest (see below).
+   * @throws IOException never.
+   */
+  @Test(expectedExceptions = ArrayIndexOutOfBoundsException.class)
+  @Transactional
+  void noContestUploadIsAnError() throws IOException {
+    testUtils.log(LOGGER, "noContestUploadIsAnError");
+    final Path path = Paths.get(TINY_CSV_PATH + "NoContest.csv");
+    final Reader reader = Files.newBufferedReader(path);
+
+    County montezuma = fromString("Montezuma");
+    final DominionCVRExportParser parser = new DominionCVRExportParser(reader, montezuma, blank, true);
+    assertTrue(parser.parse().success);
+  }
+
+  /**
+   * An all-STV CVR is OK, though it will produce a somewhat strange state in which a county has uploaded a file but has
+   * no contests.
+   * @throws IOException never.
+   */
+  @Test
+  @Transactional
+  void allSTVUploadIsOK() throws IOException {
+    testUtils.log(LOGGER, "allSTVUploadIsOK");
+    final Path path = Paths.get(TINY_CSV_PATH + "TinySTVOnly.csv");
+    final Reader reader = Files.newBufferedReader(path);
+
+    County bent = fromString("Bent");
+    final DominionCVRExportParser parser = new DominionCVRExportParser(reader, bent, blank, true);
+    assertTrue(parser.parse().success);
+  }
+
+  /**
    * The actual work function for the three files with mixed IRV, STV and plurality. Although the
    * position of the STV contest varies in these three files, the other data is the same, so the
    * parsed result should be the same.
    * @param path       The path to the CSV file.
    * @param countyName The name of the county.
-   * @throws IOException
+   * @throws IOException never.
    */
   void doIRVAndSTVAndPluralityTest(Path path, String countyName) throws IOException {
     final Reader reader = Files.newBufferedReader(path);
@@ -693,17 +733,7 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
     assertEquals(IRVContest.votesAllowed().intValue(), 3);
     assertEquals(IRVContest.winnersAllowed().intValue(), 1);
 
-    // There are 10 votes:
-    // 3 Alice, Bob, Chuan
-    // 3 Alice, Chuan, Bob
-    // 1 Bob, Alice, Chuan
-    // 3 Chuan, Alice, Bob
-    final List<List<String>> expectedChoices = List.of(
-        ABC,ABC,ABC,
-        ACB,ACB,ACB,
-        BAC,
-        CAB, CAB, CAB);
-
+    // Check that the 10 expected votes are there.
     final List<CVRContestInfo> cvrs = getMatching(fromString(countyName).id(),
         CastVoteRecord.RecordType.UPLOADED).map(cvr -> cvr.contestInfoForContest(IRVContest)).toList();
     assertEquals(10, cvrs.size());
