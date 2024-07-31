@@ -259,7 +259,7 @@ public abstract class Assertion implements PersistentEntity {
   }
 
   /**
-   * Get an (unmodifiable) map of the assertion's CRV ID-discrepancy records. This is used
+   * Get an (unmodifiable) map of the assertion's CVR ID-discrepancy records. This is used
    * for testing purposes.
    */
   public Map<Long,Integer> getCvrDiscrepancy(){

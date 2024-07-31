@@ -71,11 +71,6 @@ public class RankedBallotInterpretationReportTests extends TestClassWithDatabase
    */
   static PostgreSQLContainer<?> postgres = createTestContainer();
 
-  /**
-   * Blank properties for submitting to the DominionCVRExportParser instance.
-   */
-  private static final Properties blank = new Properties();
-
   @BeforeClass
   public static void beforeAll() {
     postgres.start();

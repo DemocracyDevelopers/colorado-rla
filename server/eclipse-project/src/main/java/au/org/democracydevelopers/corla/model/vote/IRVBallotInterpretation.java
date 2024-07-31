@@ -1,6 +1,5 @@
 package au.org.democracydevelopers.corla.model.vote;
 
-import org.apache.commons.lang.StringEscapeUtils;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.Contest;
 import us.freeandfair.corla.persistence.PersistentEntity;
@@ -10,7 +9,6 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * A record of the interpretation of invalid IRV ballots. Used for reporting, not for the actual
@@ -98,8 +96,8 @@ public class IRVBallotInterpretation implements PersistentEntity {
    * @param orderedChoices the way colorado-rla interpreted the raw choices, as an order list of names.
    */
   public IRVBallotInterpretation(final Contest contest, final CastVoteRecord.RecordType recordType,
-          int cvrNumber, final String imprintedId, final List<String> rawChoices,
-                                                               final List<String> orderedChoices) {
+                                 int cvrNumber, final String imprintedId,
+                                 final List<String> rawChoices, final List<String> orderedChoices) {
     this.contest = contest;
     this.recordType = recordType;
     this.cvrNumber = cvrNumber;
@@ -118,6 +116,7 @@ public class IRVBallotInterpretation implements PersistentEntity {
         "Contest " + contest.name(),
         cvrNumberHeader + " " + cvrNumber,
         imprintedIDHeader + " " + imprintedID,
+        "Record type " + recordType.name(),
         "Choices " + String.join(",", rawChoices),
         "Interpretation [" + String.join(",", interpretation) + "]"
     )));
