@@ -714,7 +714,7 @@ public class IRVComparisonAuditTests extends AssertionTests {
   /**
    * Discrepancy computation and recording for 'Mixed Contest' with CVR "B","A","C","D" and
    * audited ballot "A","B","C","D". The maximum discrepancy is 1. Also checks risk measurement
-   * before the removal of the recorded discrepancies against the ballot/CVR pair.
+   * before and after the removal of the recorded discrepancies against the ballot/CVR pair.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testComputeRecordRemoveDiscrepancyCVR_BACD_ACVR_ABCD(RecordType auditedType){
@@ -750,7 +750,7 @@ public class IRVComparisonAuditTests extends AssertionTests {
   /**
    * Discrepancy computation and recording for 'Mixed Contest 2' with CVR "B","A","C","D" and
    * audited ballot "A","B","C","D". The maximum discrepancy is -1. Also checks risk measurement
-   * before the removal of the recorded discrepancies against the ballot/CVR pair.
+   * before and after the removal of the recorded discrepancies against the ballot/CVR pair.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testComputeRecordRemoveDiscrepancyCVR_BACD_ACVR_ABCD_mixed2(RecordType auditedType){
@@ -776,11 +776,17 @@ public class IRVComparisonAuditTests extends AssertionTests {
 
     ca.removeDiscrepancy(auditInfo, -1);
     checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+
+    // ca.riskMeasurement() at this point, where the audited sample count is 100, should yield
+    // a risk of 0.088.
+    Assert.assertEquals(testUtils.doubleComparator.compare(0.088,
+        ca.riskMeasurement().doubleValue()), 0);
   }
 
   /**
    * Discrepancy computation and recording for 'Simple Contest 3' with CVR "B","A","C","D" and
-   * audited ballot "A","B","C","D". The maximum discrepancy is -2.
+   * audited ballot "A","B","C","D". The maximum discrepancy is -2. Also checks risk measurement
+   * before and after the removal of the recorded discrepancies against the ballot/CVR pair.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testComputeRecordRemoveDiscrepancyCVR_BACD_ACVR_ABCD_simple3(RecordType auditedType){
@@ -801,8 +807,16 @@ public class IRVComparisonAuditTests extends AssertionTests {
 
     checkDiscrepancies(ca, 0, 0, 0, 1, 0);
 
+    riskMeasurementCheck(ca, List.of(Pair.make(10, 0.463),
+        Pair.make(50, 0.314), Pair.make(100, 0.194)));
+
     ca.removeDiscrepancy(auditInfo, -2);
     checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+
+    // ca.riskMeasurement() at this point, where the audited sample count is 100, should yield
+    // a risk of 0.380.
+    Assert.assertEquals(testUtils.doubleComparator.compare(0.380,
+        ca.riskMeasurement().doubleValue()), 0);
   }
 
   /**
@@ -864,7 +878,8 @@ public class IRVComparisonAuditTests extends AssertionTests {
 
   /**
    * Discrepancy computation and recording for 'Mixed Contest' with CVR blank and audited ballot
-   * "A","B","C","D". The maximum discrepancy is 0.
+   * "A","B","C","D". The maximum discrepancy is 0. Also checks risk measurement before and after
+   * the removal of the recorded discrepancies against the ballot/CVR pair.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testComputeRecordRemoveDiscrepancyCVR_blank_ACVR_ABCD(RecordType auditedType){
@@ -885,8 +900,16 @@ public class IRVComparisonAuditTests extends AssertionTests {
 
     checkDiscrepancies(ca, 0, 0, 0, 0, 1);
 
+    riskMeasurementCheck(ca, List.of(Pair.make(10, 0.926),
+        Pair.make(50, 0.681), Pair.make(100, 0.464)));
+
     ca.removeDiscrepancy(auditInfo, 0);
     checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+
+    // ca.riskMeasurement() at this point, where the audited sample count is , should yield
+    // a risk of .
+    Assert.assertEquals(testUtils.doubleComparator.compare(0.617,
+        ca.riskMeasurement().doubleValue()), 0);
   }
 
   /**
