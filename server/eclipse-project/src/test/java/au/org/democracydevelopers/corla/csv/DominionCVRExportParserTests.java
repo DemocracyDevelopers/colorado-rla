@@ -88,11 +88,6 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
    */
   private static final String badNumsRegexp = "Unexpected or uninterpretable numbers in header:.*";
 
-  /**
-   * Blank properties for submitting to the DominionCVRExportParser instance.
-   */
-  private static final Properties blank = new Properties();
-
   @BeforeClass
   public static void beforeAll() {
     postgres.start();

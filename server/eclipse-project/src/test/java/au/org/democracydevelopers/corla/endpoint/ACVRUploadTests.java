@@ -1,10 +1,7 @@
 package au.org.democracydevelopers.corla.endpoint;
 
 import au.org.democracydevelopers.corla.model.vote.IRVBallotInterpretation;
-import au.org.democracydevelopers.corla.util.SparkRequestStub;
-import au.org.democracydevelopers.corla.util.SparkResponseStub;
-import au.org.democracydevelopers.corla.util.TestOnlyQueries;
-import au.org.democracydevelopers.corla.util.testUtils;
+import au.org.democracydevelopers.corla.util.*;
 import org.mockito.*;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
@@ -13,13 +10,11 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import spark.HaltException;
 import us.freeandfair.corla.Main;
-import us.freeandfair.corla.auth.AuthenticationInterface;
 import us.freeandfair.corla.controller.ComparisonAuditController;
 import us.freeandfair.corla.endpoint.ACVRUpload;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
-import us.freeandfair.corla.util.TestClassWithDatabase;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -28,25 +23,21 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import spark.Request;
-import spark.Response;
 
 import javax.transaction.Transactional;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static us.freeandfair.corla.model.Administrator.AdministratorType.COUNTY;
 import static us.freeandfair.corla.model.CastVoteRecord.RecordType.AUDITOR_ENTERED;
 
 /**
  * Test upload of IRV audit cvrs. Includes tests of both valid and invalid IRV CVRs, and tests that
  * the interpreted ballots are properly stored in the database.
+ * This makes use of TestClassWithAuth to mock authentication as Adams County.
  * TODO test reaudits, both IRV and plurality (can they be mixed in one CVR?)
  * See <a href="https://github.com/orgs/DemocracyDevelopers/projects/1/views/1?pane=issue&itemId=72434202">...</a>
  */
-public class ACVRUploadTests extends TestClassWithDatabase {
+public class ACVRUploadTests extends TestClassWithAuth {
 
   private final static Logger LOGGER = LogManager.getLogger(ACVRUploadTests.class);
 
@@ -71,10 +62,6 @@ public class ACVRUploadTests extends TestClassWithDatabase {
    */
   private static final long countyID = 1L;
 
-  /**
-   * The county we will pretend to be logged in as administrator for.
-   */
-  private static final County county = new County(countyName, countyID);
 
   /**
    * Flag for checking whether the audit round has already been started.
@@ -317,12 +304,6 @@ public class ACVRUploadTests extends TestClassWithDatabase {
       "  \"auditBoardIndex\": -1" +
       "}";
 
-  @Mock
-  private AuthenticationInterface auth;
-
-  @Mock
-  private ThreadLocal<List<LogEntry>> mockedAsm;
-
   /**
    * Database init.
    */
@@ -338,31 +319,15 @@ public class ACVRUploadTests extends TestClassWithDatabase {
   }
 
   /**
-   * Init mocked objects, which is a little complicated because we have to simulate auth for a
-   * county's audit board in the ACVR endpoint.
+   * Init mocks, particularly for authentication.
    */
   @BeforeClass
   public void initMocks() {
     testUtils.log(LOGGER, "initMocks");
 
-    MockitoAnnotations.openMocks(this);
-
-    // Mock successful auth as a county. No need to mock the CountyDashboard retrieval from
-    // the database, because that is loaded in via co-counties.sql.
-    try {
-      when(auth.authenticatedCounty(any())).thenReturn(county);
-      when(auth.secondFactorAuthenticated(any())).thenReturn(true);
-      when(auth.authenticatedAdministrator(any())).thenReturn(new Administrator(
-          "countyadmin"+countyID, COUNTY, countyName+" County", county));
-      when(auth.authenticatedAs(any(), any(), any())).thenReturn(true);
-      when(mockedAsm.get()).thenReturn(new ArrayList<>());
-    } catch (Exception e) {
-      testUtils.log(LOGGER, "Initiating mocks didn't work.");
-      // Do nothing. If auth isn't properly initialized, the tests will fail.
-    }
+    // Mock successful auth as a county.
+    mockAuth(countyName, countyID);
   }
-
-  private final Response response = new SparkResponseStub();
 
   /**
    * Basic test of proper functioning for uploaded audit CVRs, including:
