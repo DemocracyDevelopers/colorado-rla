@@ -13,12 +13,8 @@ import org.apache.log4j.Logger;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CountyContestResultQueries;
-import us.freeandfair.corla.util.SparkHelper;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -105,7 +101,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     final String prefix = "[endpointBody]";
     LOGGER.debug(String.format("%s %s", prefix, "Started Estimate Sample sizes."));
 
-    try {
+    // try {
         final String data = estimateSampleSizes();
 
         if (data.isEmpty()) {
@@ -116,22 +112,26 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
         } else {
           the_response.header("Content-Type", "test/csv");
           the_response.header("Content-Disposition", "attachment; filename*=UTF-8''sample_sizes.csv");
-          final OutputStream os = SparkHelper.getRaw(the_response).getOutputStream();
-          os.write(((String.join(",", HEADERS)) + "\n" + data).getBytes(StandardCharsets.UTF_8));
-          os.close();
+          //final OutputStream os = SparkHelper.getRaw(the_response).getOutputStream();
+          //os.write(((String.join(",", HEADERS)) + "\n" + data).getBytes(StandardCharsets.UTF_8));
+          //os.close();
 
+          the_response.body((String.join(",", HEADERS)) + "\n" + data);
           LOGGER.debug(String.format("%s %s.", prefix, "Completed sample size estimation"));
           ok(the_response);
         }
 
+        /*
     } catch (final IOException e) {
       // Something went wrong with getting the Spark response or writing to the output stream.
 
       final String msg = "I/O Error in sample size estimation.";
       LOGGER.error(msg, e);
       serverError(the_response, msg);
-    }
 
+         */
+
+    // }
     return my_endpoint_result.get();
   }
 
