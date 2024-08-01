@@ -20,9 +20,7 @@ import us.freeandfair.corla.Main;
 import us.freeandfair.corla.controller.ComparisonAuditController;
 import us.freeandfair.corla.controller.ContestCounter;
 import us.freeandfair.corla.endpoint.ACVRUpload;
-import us.freeandfair.corla.model.CastVoteRecord;
-import us.freeandfair.corla.model.ContestResult;
-import us.freeandfair.corla.model.CountyDashboard;
+import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 
@@ -30,6 +28,7 @@ import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static au.org.democracydevelopers.corla.util.testUtils.tinyIRV;
 import static org.testng.Assert.assertEquals;
@@ -56,6 +55,8 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
    */
   private final ACVRUpload uploadEndpoint = new ACVRUpload();
 
+  private List<ContestResult> mockedContestResults;
+
   /**
    * Database init.
    */
@@ -65,9 +66,11 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
     Persistence.setProperties(createHibernateProperties(postgres));
 
     final var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
-    ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
-    ScriptUtils.runInitScript(containerDelegate, "SQL/corla-three-candidates-ten-votes-inconsistent-types.sql");
+    // ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
+    ScriptUtils.runInitScript(containerDelegate, "SQL/simple-assertions.sql");
     ScriptUtils.runInitScript(containerDelegate, "SQL/adams-partway-through-audit.sql");
+
+
   }
 
   /**
@@ -79,6 +82,19 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
 
     // Mock successful auth as a state admin.
     mockAuth("State test 1", 1L, STATE);
+
+    // Set up mocked contest results
+    // Matches county name in simple-assertions.
+    County oneNEBAssertionCounty = new County("One NEB Assertion County", 1L);
+    ContestResult pluralityContestResult = new ContestResult("pluralityContest");
+    pluralityContestResult.addContests(Set.of(new Contest()));
+    pluralityContestResult.addCounties(Set.of(oneNEBAssertionCounty));
+    // matches contest name in simple-assertions.
+    ContestResult irvContestResult = new ContestResult("One NEB Assertion Contest");
+    pluralityContestResult.addContests(Set.of(new Contest()));
+    pluralityContestResult.addCounties(Set.of(oneNEBAssertionCounty));
+
+    mockedContestResults = List.of(pluralityContestResult, irvContestResult);
   }
 
   /**
