@@ -21,6 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.endpoint;
 
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
@@ -28,6 +29,7 @@ import org.apache.log4j.Logger;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -44,16 +46,19 @@ import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipInputStream;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import us.freeandfair.corla.persistence.Persistence;
 
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertNotNull;
 
 /**
  * Test the GetAssertions endpoint, both CSV and JSON versions. The response is supposed to be a zip file containing
  * the assertions.
+ * Includes tests that AbstractAllIrvEndpoint::getIRVContestResults returns the correct values and
+ * throws the correct exceptions.
  * TODO This really isn't a completely comprehensive set of tests yet. We also need:
  * - API testing
  * - Testing for retrieving the data from the zip.
@@ -61,9 +66,14 @@ import static org.testng.Assert.assertEquals;
  * - Testing that the service throws appropriate exceptions if the raire service connection isn't set up properly.
  * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/125">...</a>
  */
-public class GetAssertionsTests {
+public class GetAssertionsTests extends TestClassWithDatabase {
 
     private static final Logger LOGGER = LogManager.getLogger(GetAssertionsTests.class);
+
+    /**
+     * Container for the mock-up database.
+     */
+    private final static PostgreSQLContainer<?> postgres = createTestContainer();
 
     /**
      * Endpoint for getting assertions.
@@ -90,8 +100,16 @@ public class GetAssertionsTests {
      * Base url - this is set up to use the wiremock server, but could be set here to wherever you have the
      * raire-service running to test with that directly.
      */
-    static String baseUrl;
+    private static String baseUrl;
 
+    /**
+     * Database init.
+     */
+    @BeforeClass
+    public static void beforeAll() {
+        postgres.start();
+        Persistence.setProperties(createHibernateProperties(postgres));
+    }
     /**
      * Initialise mocked objects prior to the first test.
      */

@@ -25,8 +25,8 @@ import static au.org.democracydevelopers.corla.util.testUtils.log;
 import static java.lang.Math.ceil;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 import au.org.democracydevelopers.corla.util.testUtils;
 import java.math.BigDecimal;

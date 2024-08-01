@@ -48,12 +48,6 @@ public class GetAssertionsRequest extends ContestRequest {
       LogManager.getLogger(GetAssertionsRequest.class);
 
   /**
-   * The winner, as stated by the request. This is written into response metadata
-   * _without_ being checked.
-   */
-  public final String winner;
-
-  /**
    * The risk limit for the audit, expected to be in the range [0,1]. Defaults to zero, because
    * then we know we will never mistakenly claim the risk limit has been met.
    */
@@ -64,19 +58,17 @@ public class GetAssertionsRequest extends ContestRequest {
    * @param contestName           the name of the contest
    * @param totalAuditableBallots the total number of ballots in the universe.
    * @param candidates            a list of candidates by name
-   * @param winner                the winner's name
    * @param riskLimit             the risk limit for the audit, expected to be in the range [0,1].
    */
   @ConstructorProperties({"contestName", "totalAuditableBallots", "candidates", "winner", "riskLimit"})
   public GetAssertionsRequest(String contestName, int totalAuditableBallots, List<String> candidates,
-                              String winner, BigDecimal riskLimit) {
+                              BigDecimal riskLimit) {
     super(contestName, totalAuditableBallots, candidates);
 
     final String prefix = "[GetAssertionsRequest constructor]";
     LOGGER.debug(String.format("%s Making GetAssertionsRequest for contest %s", prefix,
         contestName));
 
-    this.winner = winner;
     this.riskLimit = riskLimit;
   }
 }

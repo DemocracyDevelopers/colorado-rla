@@ -39,6 +39,7 @@ import spark.Response;
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.model.ContestResult;
+import us.freeandfair.corla.persistence.Persistence;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -46,7 +47,6 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * The Generate Assertions endpoint. Takes a GenerateAssertionsRequest, and optional parameters
@@ -94,7 +94,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
   /**
    * Default winner to be used in the case where winner is unknown.
    */
-  protected static final String UNKNOWN_WINNER = "Unknown";
+  public static final String UNKNOWN_WINNER = "Unknown";
 
   /**
    * {@inheritDoc}
@@ -133,7 +133,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
     final String contestName = the_request.queryParamOrDefault(CONTEST_NAME, "");
 
     // Get all the IRV contest results.
-    final List<ContestResult> IRVContestResults = AbstractAllIrvEndpoint.getIRVContestResults();
+    final List<ContestResult> IRVContestResults = getIRVContestResults();
 
     try {
       if(validateParameters(the_request)) {
@@ -165,6 +165,9 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
       LOGGER.debug(String.format("%s %s.", prefix, "Error processing Generate Assertions request"));
       serverError(the_response, e.getMessage());
     }
+
+    // The only change is updating the winners in the IRV ContestResults.
+    Persistence.flush();
 
     return my_endpoint_result.get();
   }
@@ -248,28 +251,23 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
       final boolean gotRaireError = raireResponse.containsHeader(RaireServiceErrors.ERROR_CODE_KEY);
 
       if (statusCode == HttpStatus.SC_OK && !gotRaireError) {
-        // OK response. Update the stored winner and return it.
+        // OK response. Return the winner.
 
         LOGGER.debug(String.format("%s %s %s.", prefix, "OK response received from RAIRE for",
             contestName));
         GenerateAssertionsResponse responseFromRaire = Main.GSON.fromJson(EntityUtils.toString(raireResponse.getEntity()),
             GenerateAssertionsResponse.class);
 
-        updateWinnersAndLosers(cr, candidates, responseFromRaire.winner);
-
         LOGGER.debug(String.format("%s %s %s.", prefix,
             "Completed assertion generation for contest", contestName));
         return new GenerateAssertionsResponseWithErrors(contestName, responseFromRaire.winner, "");
 
       } else if (statusCode == HttpStatus.SC_INTERNAL_SERVER_ERROR && gotRaireError) {
-        // Error response about a specific contest, e.g. "TIED_WINNERS".
-        // Return the error, record it.
+        // Error response about a specific contest, e.g. "TIED_WINNERS". Return the error.
 
         final String code = raireResponse.getFirstHeader(RaireServiceErrors.ERROR_CODE_KEY).getValue();
         LOGGER.debug(String.format("%s %s %s.", prefix, "Error response " + code,
             "received from RAIRE for " + contestName));
-
-        updateWinnersAndLosers(cr, candidates, UNKNOWN_WINNER);
 
         LOGGER.debug(String.format("%s %s %s.", prefix,
             "Error response for assertion generation for contest ", contestName));
@@ -282,7 +280,6 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
         LOGGER.error(String.format("%s %s", prefix, msg));
         throw new RuntimeException(msg);
       }
-
     } catch (URISyntaxException | MalformedURLException e) {
       // The raire service url is malformed, probably a config error.
       final String msg = "Bad configuration of Raire service url: " + raireUrl + ". Check your config file.";
@@ -323,20 +320,6 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
       LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
       throw new RuntimeException(msg + contestName + e.getMessage());
     }
-  }
-
-  /**
-   * Update the contestresults in the database according to RAIRE's assessed winners. Set all
-   * non-winners to be losers, which means all candidates if the contest is un-auditable.
-   *
-   * @param cr         the contest result, i.e. aggregaged (possibly cross-county) IRV contest.
-   * @param candidates the list of candidate names.
-   * @param winner     the winner, as determined by raire.
-   * TODO This is currently non-functional - see Issue #136 <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/136">...</a>
-   */
-  private void updateWinnersAndLosers(ContestResult cr, List<String> candidates, String winner) {
-    cr.setWinners(Set.of(winner));
-    cr.setLosers(candidates.stream().filter(c -> !c.equalsIgnoreCase(winner)).collect(Collectors.toSet()));
   }
 
   /**

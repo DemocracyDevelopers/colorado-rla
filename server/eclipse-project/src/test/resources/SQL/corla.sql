@@ -465,6 +465,38 @@ create table dos_dashboard
 alter table dos_dashboard
     owner to corlaadmin;
 
+create table generate_assertions_summary
+(
+    id           bigserial
+        primary key,
+    contest_name varchar(255) not null
+        constraint uk_g5q4xm0ga61nbiccn44irhivx
+            unique,
+    error        varchar(255) not null,
+    message      varchar(255) not null,
+    version      bigint       not null,
+    warning      varchar(255) not null,
+    winner       varchar(255) not null
+);
+
+create table irv_ballot_interpretation
+(
+    id             bigint        not null
+        primary key,
+    cvr_number     integer       not null,
+    imprinted_id   varchar(255)  not null,
+    interpretation varchar(1024) not null,
+    raw_choices    varchar(1024) not null,
+    record_type    varchar(255)  not null,
+    version        bigint,
+    contest_id     bigint        not null
+        constraint fkinw3u6cigskdttcwqosnsl98e
+            references contest
+);
+
+alter table irv_ballot_interpretation
+    owner to corlaadmin;
+
 create table contest_to_audit
 (
     dashboard_id bigint not null

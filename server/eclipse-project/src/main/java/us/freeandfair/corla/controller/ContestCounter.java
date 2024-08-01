@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import au.org.democracydevelopers.corla.model.ContestType;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -26,16 +27,16 @@ public final class ContestCounter {
   /**
    * Class-wide logger
    */
-  public static final Logger LOGGER =
-    LogManager.getLogger(ContestCounter.class);
+  public static final Logger LOGGER = LogManager.getLogger(ContestCounter.class);
 
-  /** prevent contruction **/
+  /** private to prevent construction **/
   private ContestCounter() {
   }
 
   /**
    * Group all CountyContestResults by contest name and tally the votes
    * across all counties that have reported results.
+   * This only works for plurality - not valid, and not needed, for IRV.
    *
    * @return List<ContestResult> A high level view of contests and their
    * participants.
@@ -54,6 +55,7 @@ public final class ContestCounter {
   /**
    * Calculates all the pairwise margins - like a cross product - using
    * the vote totals. When there are no losers, all margins are zero.
+   * Not valid for IRV.
    *
    * @param winners those who won the contest
    * @param losers those who did not win the contest
@@ -82,6 +84,7 @@ public final class ContestCounter {
   /**
    * Set voteTotals on CONTEST based on all counties that have that
    * Contest name in their uploaded CVRs
+   * Not valid for IRV.
    **/
   public static ContestResult
     countContest(final Map.Entry<String, List<CountyContestResult>> countyContestResults) {
@@ -165,7 +168,7 @@ public final class ContestCounter {
 
   /**
    * Ranks a list of the choices in descending order by number of votes
-   * received.
+   * received. Not relevant to IRV; not related to ranked-choice voting.
    **/
   public static List<Entry<String, Integer>> rankTotals(final Map<String,Integer> voteTotals) {
     return voteTotals.entrySet().stream()
@@ -175,7 +178,7 @@ public final class ContestCounter {
 
   /**
    * Find the set of winners for the ranking of voteTotals. Assumes only
-   * one winner allowed.
+   * one winner allowed. Not valid for IRV.
    *
    * @param voteTotals a map of choice name to number of votes
    */
@@ -184,7 +187,7 @@ public final class ContestCounter {
   }
 
   /**
-   * Find the set of winners for the ranking of voteTotals
+   * Find the set of winners for the ranking of voteTotals. Not valid for IRV.
    *
    * @param voteTotals a map of choice name to number of votes
    * @param winnersAllowed how many can win this contest?
@@ -199,7 +202,7 @@ public final class ContestCounter {
 
   /**
    * Find the set of losers given a ranking of voteTotals and some set
-   * of contest winners.
+   * of contest winners. Not valid for IRV.
    *
    * @param voteTotals a map of choice name to number of votes
    * @param winners the choices that aren't losers
