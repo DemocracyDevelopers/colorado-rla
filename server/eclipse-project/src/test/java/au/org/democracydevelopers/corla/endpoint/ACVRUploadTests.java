@@ -28,6 +28,7 @@ import javax.transaction.Transactional;
 import java.util.HashSet;
 import java.util.List;
 
+import static us.freeandfair.corla.endpoint.Endpoint.AuthorizationType.COUNTY;
 import static us.freeandfair.corla.model.CastVoteRecord.RecordType.AUDITOR_ENTERED;
 
 /**
@@ -326,7 +327,7 @@ public class ACVRUploadTests extends TestClassWithAuth {
     testUtils.log(LOGGER, "initMocks");
 
     // Mock successful auth as a county.
-    mockAuth(countyName, countyID);
+    mockAuth(countyName, countyID, COUNTY);
   }
 
   /**

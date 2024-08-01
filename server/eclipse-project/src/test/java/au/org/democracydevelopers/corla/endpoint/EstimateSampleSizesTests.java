@@ -34,6 +34,7 @@ import java.util.List;
 import static au.org.democracydevelopers.corla.util.testUtils.tinyIRV;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+import static us.freeandfair.corla.endpoint.Endpoint.AuthorizationType.STATE;
 import static us.freeandfair.corla.model.CastVoteRecord.RecordType.AUDITOR_ENTERED;
 
 /**
@@ -56,22 +57,6 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
   private final ACVRUpload uploadEndpoint = new ACVRUpload();
 
   /**
-   * The name of the county we will pretend to be logged in as administrator for.
-   */
-  private static final String countyName = "Adams";
-
-  /**
-   * The ID (according to co_counties.sql) of the county we will pretend to be logged in as
-   * administrator for.
-   */
-  private static final long countyID = 1L;
-
-  /**
-   * Mocked Contest Results, one for IRV and one for Plurality.
-   */
-  private static final List<ContestResult> mockedContestResults = new ArrayList<>();
-
-  /**
    * Database init.
    */
   @BeforeClass
@@ -92,8 +77,8 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
   public void initMocks() {
     testUtils.log(LOGGER, "initMocks");
 
-    // Mock successful auth as a county.
-    mockAuth(countyName, countyID);
+    // Mock successful auth as a state admin.
+    mockAuth("State test 1", 1L, STATE);
   }
 
   /**
