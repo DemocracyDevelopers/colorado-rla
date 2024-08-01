@@ -1,5 +1,6 @@
 package au.org.democracydevelopers.corla.endpoint;
 
+import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.model.vote.IRVBallotInterpretation;
 import au.org.democracydevelopers.corla.util.SparkRequestStub;
 import au.org.democracydevelopers.corla.util.TestClassWithAuth;
@@ -23,14 +24,13 @@ import us.freeandfair.corla.endpoint.ACVRUpload;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
+import us.freeandfair.corla.query.ContestQueries;
+import us.freeandfair.corla.query.CountyQueries;
 
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import static au.org.democracydevelopers.corla.util.testUtils.tinyIRV;
+import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static us.freeandfair.corla.endpoint.Endpoint.AuthorizationType.STATE;
@@ -51,26 +51,57 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
   private final static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
-   * An Audit CVR Upload endpoint to test.
+   * The estimate sample sizes endpoint.
    */
-  private final ACVRUpload uploadEndpoint = new ACVRUpload();
+  private final EstimateSampleSizes endpoint = new EstimateSampleSizes();
 
-  private List<ContestResult> mockedContestResults;
+  /**
+   * The IRV contest. Pulled from the database.
+   */
+  private static Contest irvContest;
+
+  /**
+   * Contest Results to be returned when mocking the contest counter.
+   */
+  private static List<ContestResult> mockedContestResults;
 
   /**
    * Database init.
    */
   @BeforeClass
+  @Transactional
   public static void beforeAll() {
     postgres.start();
     Persistence.setProperties(createHibernateProperties(postgres));
 
     final var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
-    // ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
+    ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
     ScriptUtils.runInitScript(containerDelegate, "SQL/simple-assertions.sql");
-    ScriptUtils.runInitScript(containerDelegate, "SQL/adams-partway-through-audit.sql");
+    // ScriptUtils.runInitScript(containerDelegate, "SQL/adams-partway-through-audit.sql");
 
 
+    // Set up mocked contest results
+    // Matches county name in simple-assertions.
+    Persistence.openSession();
+    County oneNEBAssertionCounty = CountyQueries.fromString("1");
+    ContestResult pluralityContestResult = new ContestResult("pluralityContest");
+    Contest pluralityContest = new Contest("pluralityContest", oneNEBAssertionCounty, ContestType.PLURALITY.toString(), List.of(alice, bob, chuan), 2,1,12);
+    pluralityContestResult.addContests(Set.of(pluralityContest));
+    pluralityContestResult.addCounties(Set.of(oneNEBAssertionCounty));
+
+    Optional<Contest> contest =  ContestQueries.forCounty(oneNEBAssertionCounty).stream().findFirst();
+    if(contest.isPresent()) {
+      irvContest = contest.get();
+    } else {
+      throw new RuntimeException("Database setup seems wrong");
+    }
+
+    // matches contest name in simple-assertions.
+    ContestResult irvContestResult = new ContestResult("One NEB Assertion Contest");
+    irvContestResult.addContests(Set.of(irvContest));
+    irvContestResult.addCounties(Set.of(oneNEBAssertionCounty));
+
+    mockedContestResults = List.of(pluralityContestResult, irvContestResult);
   }
 
   /**
@@ -83,18 +114,6 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
     // Mock successful auth as a state admin.
     mockAuth("State test 1", 1L, STATE);
 
-    // Set up mocked contest results
-    // Matches county name in simple-assertions.
-    County oneNEBAssertionCounty = new County("One NEB Assertion County", 1L);
-    ContestResult pluralityContestResult = new ContestResult("pluralityContest");
-    pluralityContestResult.addContests(Set.of(new Contest()));
-    pluralityContestResult.addCounties(Set.of(oneNEBAssertionCounty));
-    // matches contest name in simple-assertions.
-    ContestResult irvContestResult = new ContestResult("One NEB Assertion Contest");
-    pluralityContestResult.addContests(Set.of(new Contest()));
-    pluralityContestResult.addCounties(Set.of(oneNEBAssertionCounty));
-
-    mockedContestResults = List.of(pluralityContestResult, irvContestResult);
   }
 
   /**
@@ -109,13 +128,16 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
     try (MockedStatic<Main> mockedMain = Mockito.mockStatic(Main.class);
          MockedStatic<ContestCounter> mockedCounter = Mockito.mockStatic(ContestCounter.class)) {
       mockedMain.when(Main::authentication).thenReturn(auth);
+
+
+
       mockedCounter.when(ContestCounter::countAllContests).thenReturn(mockedContestResults);
 
       // We seem to need a dummy request to run before.
       final Request request = new SparkRequestStub("", new HashSet<>());
-      uploadEndpoint.before(request, response);
+      endpoint.before(request, response);
 
-      uploadEndpoint.endpointBody(request, response);
+      endpoint.endpointBody(request, response);
 
       String csv = response.body();
       assertEquals(csv, String.join(",", List.of(
