@@ -144,6 +144,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
    */
   public String estimateSampleSizes() {
     List<estimateData> dataRows = new ArrayList<>();
+    BigDecimal riskLimit;
 
     // For estimation of sample sizes for each audit, we need to collect the ContestResult
     // for each contest. For Plurality audits, this will involve tabulating the votes across
@@ -155,9 +156,14 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     final List<ContestResult> countedCRs = ContestCounter.countAllContests().stream().peek(cr ->
         cr.setAuditReason(AuditReason.OPPORTUNISTIC_BENEFITS)).toList();
 
-    // Get the DoS Dashboard (will contain risk limit for audit).
-    final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
-    final BigDecimal riskLimit = dosdb.auditInfo().riskLimit();
+    // Try to get the DoS Dashboard, which may contain the risk limit for the audit.
+    riskLimit = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class).auditInfo().riskLimit();
+    if (riskLimit == null) {
+      // If the risk limit is not initialized, set the printed risk limit to zero. This is a
+      // safe approximation because a zero risk limit cannot be met.
+      // FIXME - throw an error.
+      riskLimit = BigDecimal.ZERO;
+    }
 
     // Iterate over all the contest results, getting relevant data into an estimateData record.
     for (ContestResult cr : countedCRs) {

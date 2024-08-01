@@ -327,6 +327,7 @@ public class ACVRUploadTests extends TestClassWithAuth {
     testUtils.log(LOGGER, "initMocks");
 
     // Mock successful auth as a county.
+    MockitoAnnotations.openMocks(this);
     mockAuth(countyName, countyID, COUNTY);
   }
 

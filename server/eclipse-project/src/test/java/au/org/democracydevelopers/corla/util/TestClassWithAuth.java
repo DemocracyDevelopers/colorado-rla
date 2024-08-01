@@ -57,7 +57,6 @@ public abstract class TestClassWithAuth extends TestClassWithDatabase {
    */
   protected void mockAuth(String name, long ID, Endpoint.AuthorizationType authType) {
 
-    MockitoAnnotations.openMocks(this);
     // Mock successful auth as a county. No need to mock the CountyDashboard retrieval from
     // the database, because that is loaded in via co-counties.sql.
     when(auth.secondFactorAuthenticated(any())).thenReturn(true);
