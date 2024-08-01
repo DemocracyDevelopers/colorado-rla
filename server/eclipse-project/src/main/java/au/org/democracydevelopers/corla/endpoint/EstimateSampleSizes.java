@@ -15,6 +15,8 @@ import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CountyContestResultQueries;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -118,7 +120,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
 
           the_response.body((String.join(",", HEADERS)) + "\n" + data);
           LOGGER.debug(String.format("%s %s.", prefix, "Completed sample size estimation"));
-          ok(the_response);
+          okString(the_response);
         }
 
         /*
@@ -185,20 +187,26 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
   /**
    * A record to store the data we need in the report. Stores relevant data (in some cases after
    * retrieving it from more complex structures) and outputs it as a CSV row (toString()).
-   * @param countyName            The name of the county.
-   * @param contestName           The name of the contest.
-   * @param contestType           The type, as a string, IRV or plurality.
-   * @param contestBallots        The number of ballots that actually contained the contest.
-   * @param totalAuditableBallots The total universe of ballots for this contest's audit.
-   * @param dilutedMargin         The margin divided by the total Auditable ballots.
-   * @param estimatedSamples      The estimated samples to audit.
+   * @param countyName       The name of the county.
+   * @param contestName      The name of the contest.
+   * @param contestType      The type, as a string, IRV or plurality.
+   * @param contestBallots   The number of ballots that actually contained the contest.
+   * @param totalBallots     The total universe of ballots for this contest's audit.
+   * @param dilutedMargin    The margin divided by the total Auditable ballots.
+   * @param estimatedSamples The estimated samples to audit.
    */
   private record estimateData(String countyName, String contestName, String contestType,
-                              int contestBallots, long totalAuditableBallots, BigDecimal dilutedMargin,
+                              int contestBallots, long totalBallots, BigDecimal dilutedMargin,
                               int estimatedSamples) {
 
-    // Construct the record by pulling relevant data out of the ComparisonAudit data structure.
-    // If the county name is unique, we print it; if not, we just print "Multiple."
+    /**
+     * Construct the record by pulling relevant data out of the ComparisonAudit data structure.
+     * If the county name is unique, we print it; if not, we just print "Multiple."
+     * @param countyNames    The list of names of the Counties in which the contest occurs.
+     * @param ca             The comparisonAudit (used to extract the type, diluted margin, and estimated samples).
+     * @param contestBallots The number of ballots that actually contained the contest.
+     * @param totalBallots   The total universe of ballots for this contest's audit.
+     */
     public estimateData(List<String> countyNames, ComparisonAudit ca, int contestBallots, long totalBallots) {
       this(countyNames.size() == 1 ? countyNames.get(0) : "Multiple",
           ca.getContestName(),
@@ -210,9 +218,13 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
       );
     }
 
-    // Print the record as a csv row.
-    // Headers:
-    // "County", "Contest Name", "Contest Type", "Ballots Cast", "Total ballots", "Diluted Margin", "Sample Size"
+
+    /**
+     * Print the record as a csv row.
+     * Headers:
+     * "County", "Contest Name", "Contest Type", "Ballots Cast", "Total ballots", "Diluted Margin", "Sample Size"
+     * @return all the data as a csv row.
+     */
     @Override
     public String toString() {
       return String.join(",",
@@ -221,9 +233,12 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
               escapeCsv(contestName),
               contestType,
               "" + contestBallots,
-              "" + totalAuditableBallots,
-              dilutedMargin.toString(),
-              "" + estimatedSamples
+              "" + totalBallots,
+              // Format the diluted margin to have two significant figures.
+              new DecimalFormat("0.##############").format(dilutedMargin.round(new MathContext(2))),
+              // Max out the estimatedSamples at totalAuditableBallots, because it looks weird to have a sample
+              // size greater than the possible universe.
+              "" + Math.min(estimatedSamples,totalBallots)
           ));
     }
   }
