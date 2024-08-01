@@ -424,8 +424,6 @@ public class NENAssertionTests extends AssertionTests {
     checkRiskMeasurement(a, Map.of(5, 0.870, 10, 0.770, 50, 0.291, 80, 0.140));
   }
 
-
-
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) in the context where no discrepancy has
    * been recorded for the given CVR-ACVR pair, and the assertion has no prior recorded
