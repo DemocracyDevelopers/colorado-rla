@@ -51,11 +51,6 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
   private final EstimateSampleSizes endpoint = new EstimateSampleSizes();
 
   /**
-   * The IRV contest. Pulled from the database.
-   */
-  private static Contest irvContest;
-
-  /**
    * Contest Results to be returned when mocking the contest counter.
    */
   private static List<ContestResult> mockedContestResults;
@@ -139,7 +134,7 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
    */
   @Test
   @Transactional
-  void basicEstimatedSampleSizesPluralityAndIRV() throws IOException {
+  void basicEstimatedSampleSizesPluralityAndIRV() {
     testUtils.log(LOGGER, "basicEstimatedSampleSizesPluralityAndIRV");
 
     // Mock the main class; mock its auth as the mocked Adams county auth.
