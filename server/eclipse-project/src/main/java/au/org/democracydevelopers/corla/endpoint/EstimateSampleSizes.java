@@ -103,49 +103,37 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     final String prefix = "[endpointBody]";
     LOGGER.debug(String.format("%s %s", prefix, "Started Estimate Sample sizes."));
 
-    // try {
-        final String data = estimateSampleSizes();
+    try {
+      final String data = estimateSampleSizes();
 
-        if (data.isEmpty()) {
-          final String msg = "Could not find data for sample size estimation.";
+      if (data.isEmpty()) {
+        final String msg = "Could not find data for sample size estimation.";
+        LOGGER.debug(String.format("%s %s.", prefix, msg));
+        dataNotFound(the_response, msg);
+      } else {
+        the_response.header("Content-Type", "test/csv");
+        the_response.header("Content-Disposition", "attachment; filename*=UTF-8''sample_sizes.csv");
 
-          LOGGER.debug(String.format("%s %s.", prefix, msg));
-          dataNotFound(the_response, msg);
-        } else {
-          the_response.header("Content-Type", "test/csv");
-          the_response.header("Content-Disposition", "attachment; filename*=UTF-8''sample_sizes.csv");
-          //final OutputStream os = SparkHelper.getRaw(the_response).getOutputStream();
-          //os.write(((String.join(",", HEADERS)) + "\n" + data).getBytes(StandardCharsets.UTF_8));
-          //os.close();
-
-          the_response.body((String.join(",", HEADERS)) + "\n" + data);
-          LOGGER.debug(String.format("%s %s.", prefix, "Completed sample size estimation"));
-          okString(the_response);
-        }
-
-        /*
-    } catch (final IOException e) {
-      // Something went wrong with getting the Spark response or writing to the output stream.
-
-      final String msg = "I/O Error in sample size estimation.";
-      LOGGER.error(msg, e);
-      serverError(the_response, msg);
-
-         */
-
-    // }
+        the_response.body((String.join(",", HEADERS)) + "\n" + data);
+        LOGGER.debug(String.format("%s %s.", prefix, "Completed sample size estimation"));
+        okString(the_response);
+      }
+    } catch (IllegalStateException e) {
+      // This occurs if the risk limit has not been set in the state dashboard.
+      dataNotFound(the_response, e.getMessage());
+    }
     return my_endpoint_result.get();
   }
 
   /**
    * Compute sample sizes for all contests for which CountyContestResults exist in the database.
-   *
    * @return A list of string arrays containing rows with the following data: county name,
    * contest name, contest type, single or multi-jurisdictional, ballots cast, diluted margin,
    * and estimated sample size.
    */
   public String estimateSampleSizes() {
-    List<estimateData> dataRows = new ArrayList<>();
+    final String prefix = "[estimateSampleSizes]";
+    final List<estimateData> dataRows = new ArrayList<>();
     BigDecimal riskLimit;
 
     // For estimation of sample sizes for each audit, we need to collect the ContestResult
@@ -161,10 +149,10 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     // Try to get the DoS Dashboard, which may contain the risk limit for the audit.
     riskLimit = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class).auditInfo().riskLimit();
     if (riskLimit == null) {
-      // If the risk limit is not initialized, set the printed risk limit to zero. This is a
-      // safe approximation because a zero risk limit cannot be met.
-      // FIXME - throw an error.
-      riskLimit = BigDecimal.ZERO;
+      // If the risk limit is not initialized, it is not possible to estimate sample sizes.
+      String msg = "No risk limit set";
+      LOGGER.error(String.format("%s %s.", prefix, msg));
+      throw new IllegalStateException(msg);
     }
 
     // Iterate over all the contest results, getting relevant data into an estimateData record.
@@ -187,6 +175,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
   /**
    * A record to store the data we need in the report. Stores relevant data (in some cases after
    * retrieving it from more complex structures) and outputs it as a CSV row (toString()).
+   *
    * @param countyName       The name of the county.
    * @param contestName      The name of the contest.
    * @param contestType      The type, as a string, IRV or plurality.
@@ -202,6 +191,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     /**
      * Construct the record by pulling relevant data out of the ComparisonAudit data structure.
      * If the county name is unique, we print it; if not, we just print "Multiple."
+     *
      * @param countyNames    The list of names of the Counties in which the contest occurs.
      * @param ca             The comparisonAudit (used to extract the type, diluted margin, and estimated samples).
      * @param contestBallots The number of ballots that actually contained the contest.
@@ -223,6 +213,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
      * Print the record as a csv row.
      * Headers:
      * "County", "Contest Name", "Contest Type", "Ballots Cast", "Total ballots", "Diluted Margin", "Sample Size"
+     *
      * @return all the data as a csv row.
      */
     @Override
@@ -238,7 +229,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
               new DecimalFormat("0.##############").format(dilutedMargin.round(new MathContext(2))),
               // Max out the estimatedSamples at totalAuditableBallots, because it looks weird to have a sample
               // size greater than the possible universe.
-              "" + Math.min(estimatedSamples,totalBallots)
+              "" + Math.min(estimatedSamples, totalBallots)
           ));
     }
   }
