@@ -184,6 +184,7 @@ public class AssertionTests extends TestClassWithDatabase {
     Persistence.setProperties(createHibernateProperties(postgres));
 
     var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
     ScriptUtils.runInitScript(containerDelegate, "SQL/simple-assertions.sql");
   }
 
