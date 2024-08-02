@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
+import au.org.democracydevelopers.corla.util.testUtils;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -183,6 +184,7 @@ public class AssertionTests extends TestClassWithDatabase {
     Persistence.setProperties(createHibernateProperties(postgres));
 
     var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
     ScriptUtils.runInitScript(containerDelegate, "SQL/simple-assertions.sql");
   }
 
@@ -659,5 +661,19 @@ public class AssertionTests extends TestClassWithDatabase {
     assertEquals(a.otherCount.intValue(), other);
 
     assertEquals(a.cvrDiscrepancy, cvrDiscrepancy);
+  }
+
+  /**
+   * Checks whether an assertion's riskMeasurement() method calculates the correct risks for
+   * varying sample numbers (note that discrepancies may be present and stored in the given
+   * Assertion).
+   * @param a Assertion whose riskMeasurement() method we are testing.
+   * @param risks Map of expected sample counts to risk values.
+   */
+  public static void checkRiskMeasurement(Assertion a, final Map<Integer,Double> risks){
+    for(Map.Entry<Integer,Double> entry : risks.entrySet()){
+      final BigDecimal r = a.riskMeasurement(entry.getKey());
+      assertEquals(testUtils.doubleComparator.compare(entry.getValue(), r.doubleValue()), 0);
+    }
   }
 }

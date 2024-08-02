@@ -71,11 +71,6 @@ public class RankedBallotInterpretationReportTests extends TestClassWithDatabase
    */
   static PostgreSQLContainer<?> postgres = createTestContainer();
 
-  /**
-   * Blank properties for submitting to the DominionCVRExportParser instance.
-   */
-  private static final Properties blank = new Properties();
-
   @BeforeClass
   public static void beforeAll() {
     postgres.start();
@@ -92,7 +87,8 @@ public class RankedBallotInterpretationReportTests extends TestClassWithDatabase
 
   /**
    * Simple test of successful parsing of a tiny IRV test example, ThreeCandidatesTenVotes.csv.
-   * Tests that all the metadata and all the votes are correct.
+   * Tests that all the metadata and all the votes are correct. There are no invalid ballots, so the
+   * csv has no data.
    * @throws IOException never.
    */
   @Test
