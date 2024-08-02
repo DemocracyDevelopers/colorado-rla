@@ -664,7 +664,8 @@ public class AssertionTests extends TestClassWithDatabase {
 
   /**
    * Checks whether an assertion's riskMeasurement() method calculates the correct risks for
-   * varying sample numbers.
+   * varying sample numbers (note that discrepancies may be present and stored in the given
+   * Assertion).
    * @param a Assertion whose riskMeasurement() method we are testing.
    * @param risks Map of expected sample counts to risk values.
    */

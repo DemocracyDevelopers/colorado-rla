@@ -53,6 +53,8 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
  * -- Scoring of NEB assertions.
  * -- Computation of discrepancies for NEB assertions.
  * -- The logic involved in the re-auditing of ballots.
+ * -- Risk measurement (we use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+ *    Risk Limiting Audits to compute the expected risk values).
  * Refer to the Guide to RAIRE for details on how NEB assertions are scored, and how
  * discrepancies are computed (Part 2, Appendix A).
  */

@@ -23,7 +23,7 @@ package au.org.democracydevelopers.corla.model;
 
 import static au.org.democracydevelopers.corla.util.testUtils.log;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.Assert.assertEquals;
 
 import au.org.democracydevelopers.corla.model.assertion.Assertion;
 import au.org.democracydevelopers.corla.model.assertion.AssertionTests;
@@ -593,9 +593,9 @@ public class IRVComparisonAuditTests extends AssertionTests {
   }
 
   /**
-   * Test that if we follow discrepancy computation with an invalid call to recordDiscrepancy().
-   * (Invalid in the sense that the provided discrepancy type is not the maximum across the
-   * audit's assertions for the given CVR).
+   * Test that if we follow discrepancy computation with an invalid call to recordDiscrepancy() then
+   * an IllegalArgumentException is thrown. (Invalid in the sense that the provided discrepancy type
+   * is not the maximum across the audit's assertions for the given CVR).
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void testRecordWrongDiscrepancy(){
@@ -714,7 +714,9 @@ public class IRVComparisonAuditTests extends AssertionTests {
   /**
    * Discrepancy computation and recording for 'Mixed Contest' with CVR "B","A","C","D" and
    * audited ballot "A","B","C","D". The maximum discrepancy is 1. Also checks risk measurement
-   * before and after the removal of the recorded discrepancies against the ballot/CVR pair.
+   * before and after the removal of the recorded discrepancies against the ballot/CVR pair. We
+   * use Equation 9 in Stark's Super Simple Simultaneous Comparison Single-Ballot Risk Limiting
+   * Audits to compute the expected risk values.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testComputeRecordRemoveDiscrepancyCVR_BACD_ACVR_ABCD(RecordType auditedType){
@@ -750,7 +752,9 @@ public class IRVComparisonAuditTests extends AssertionTests {
   /**
    * Discrepancy computation and recording for 'Mixed Contest 2' with CVR "B","A","C","D" and
    * audited ballot "A","B","C","D". The maximum discrepancy is -1. Also checks risk measurement
-   * before and after the removal of the recorded discrepancies against the ballot/CVR pair.
+   * before and after the removal of the recorded discrepancies against the ballot/CVR pair. We
+   * use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot Risk Limiting Audits to compute the expected
+   * risk values.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testComputeRecordRemoveDiscrepancyCVR_BACD_ACVR_ABCD_mixed2(RecordType auditedType){
@@ -786,7 +790,9 @@ public class IRVComparisonAuditTests extends AssertionTests {
   /**
    * Discrepancy computation and recording for 'Simple Contest 3' with CVR "B","A","C","D" and
    * audited ballot "A","B","C","D". The maximum discrepancy is -2. Also checks risk measurement
-   * before and after the removal of the recorded discrepancies against the ballot/CVR pair.
+   * before and after the removal of the recorded discrepancies against the ballot/CVR pair. We
+   * use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot Risk Limiting Audits to compute the expected
+   * risk values.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testComputeRecordRemoveDiscrepancyCVR_BACD_ACVR_ABCD_simple3(RecordType auditedType){
@@ -879,7 +885,8 @@ public class IRVComparisonAuditTests extends AssertionTests {
   /**
    * Discrepancy computation and recording for 'Mixed Contest' with CVR blank and audited ballot
    * "A","B","C","D". The maximum discrepancy is 0. Also checks risk measurement before and after
-   * the removal of the recorded discrepancies against the ballot/CVR pair.
+   * the removal of the recorded discrepancies against the ballot/CVR pair. We use Equation 9 in
+   * Stark's Super Simple Simultaneous Single-Ballot Risk Limiting Audits to compute the expected risk values.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testComputeRecordRemoveDiscrepancyCVR_blank_ACVR_ABCD(RecordType auditedType){

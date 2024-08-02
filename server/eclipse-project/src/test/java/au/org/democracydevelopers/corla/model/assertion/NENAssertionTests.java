@@ -51,6 +51,8 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
  * -- Scoring of NEN assertions.
  * -- Computation of discrepancies.
  * -- The logic involved in the re-auditing of ballots.
+ * -- Risk measurement (we use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+ *    Risk Limiting Audits to compute the expected risk values).
  * Refer to the Guide to RAIRE for details on how NEN assertions are scored, and how
  * discrepancies are computed (Part 2, Appendix A.)
  */
@@ -195,6 +197,8 @@ public class NENAssertionTests extends AssertionTests {
 
   /**
    * Test riskMeasurement() for an NEN assertion with no discrepancies.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRiskMeasurementNoDiscrepancies(){
@@ -213,6 +217,8 @@ public class NENAssertionTests extends AssertionTests {
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote overstatement, in the context
    * where the assertion has no recorded discrepancies. Also check risk measurement given one
    * 1 vote overstatement and varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordOneVoteOverstatement1(){
@@ -234,6 +240,8 @@ public class NENAssertionTests extends AssertionTests {
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote understatement, in the context
    * where the assertion has no recorded discrepancies. Also check risk measurement in the context
    * where the assertion has one 1 vote understatement and varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordOneVoteUnderstatement1(){
@@ -255,6 +263,8 @@ public class NENAssertionTests extends AssertionTests {
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overstatement, in the context
    * where the assertion has no recorded discrepancies. Also check risk measurement in the context
    * where the assertion has one 2 vote overstatement and varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordTwoVoteOverstatement1(){
@@ -276,6 +286,8 @@ public class NENAssertionTests extends AssertionTests {
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
    * where the assertion has no recorded discrepancies. Also check risk measurement in the context
    * where the assertion has one 2 vote understatement and varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordTwoVoteUnderstatement1(){
@@ -297,6 +309,8 @@ public class NENAssertionTests extends AssertionTests {
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
    * where the assertion has no recorded discrepancies. Also check risk measurement in the context
    * where the assertion has one other discrepancies and varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordOther1(){
@@ -318,6 +332,8 @@ public class NENAssertionTests extends AssertionTests {
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote overstatement, in the context
    * where the assertion has already recorded discrepancies. Also test risk measurement in this
    * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordOneVoteOverstatement2(){
@@ -340,6 +356,8 @@ public class NENAssertionTests extends AssertionTests {
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote understatement, in the context
    * where the assertion has already recorded discrepancies. Also test risk measurement in this
    * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordOneVoteUnderstatement2(){
@@ -362,6 +380,8 @@ public class NENAssertionTests extends AssertionTests {
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overstatement, in the context
    * where the assertion has already recorded discrepancies. Also test risk measurement in this
    * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordTwoVoteOverstatement2(){
@@ -384,6 +404,8 @@ public class NENAssertionTests extends AssertionTests {
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
    * where the assertion has already recorded discrepancies. Also test risk measurement in this
    * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordTwoVoteUnderstatement2(){
@@ -406,6 +428,8 @@ public class NENAssertionTests extends AssertionTests {
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for an "other" discrepancy, in the context
    * where the assertion has already recorded discrepancies. Also test risk measurement in this
    * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordOther2(){
@@ -432,6 +456,8 @@ public class NENAssertionTests extends AssertionTests {
    * there, the value matching the ID key is retrieved, the associated discrepancy type
    * decremented, and the ID removed from the map. If it is not there, then the discrepancy counts
    * and the map are not changed.  Also test risk measurement in this context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveNoMatch1(){
@@ -454,6 +480,8 @@ public class NENAssertionTests extends AssertionTests {
    * been computed for the given CVR-ACVR pair, and the assertion has some discrepancies recorded
    * already. It should not change the assertion's discrepancy counts. Also test risk measurement in
    * this context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveNoMatch2(){
@@ -475,6 +503,8 @@ public class NENAssertionTests extends AssertionTests {
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote overstatement. Also test risk
    * measurement in this context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveOneVoteOverstatement1(){
@@ -495,6 +525,8 @@ public class NENAssertionTests extends AssertionTests {
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote understatement. Also test risk
    * measurement in this context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveOneVoteUnderstatement1(){
@@ -515,6 +547,8 @@ public class NENAssertionTests extends AssertionTests {
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote overstatement. Also test risk
    * measurement in this context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveTwoVoteOverstatement1(){
@@ -535,6 +569,8 @@ public class NENAssertionTests extends AssertionTests {
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote understatement. Also test risk
    * measurement in this context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveTwoVoteUnderstatement1(){
@@ -555,6 +591,8 @@ public class NENAssertionTests extends AssertionTests {
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for an "other" discrepancy. Also test risk
    * measurement in this context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveOther1(){
@@ -576,6 +614,8 @@ public class NENAssertionTests extends AssertionTests {
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote overstatement, in the context
    * where the assertion has already recorded discrepancies. Also test risk measurement in this
    * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveOneVoteOverstatement2(){
@@ -598,6 +638,8 @@ public class NENAssertionTests extends AssertionTests {
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote understatement, in the context
    * where the assertion has already recorded discrepancies. Also test risk measurement in this
    * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveOneVoteUnderstatement2(){
@@ -620,6 +662,8 @@ public class NENAssertionTests extends AssertionTests {
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote overstatement, in the context
    * where the assertion has already recorded discrepancies. Also test risk measurement in this
    * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveTwoVoteOverstatement2(){
@@ -642,6 +686,8 @@ public class NENAssertionTests extends AssertionTests {
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
    * where the assertion has already recorded discrepancies. Also test risk measurement in this
    * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveTwoVoteUnderstatement2(){
@@ -664,6 +710,8 @@ public class NENAssertionTests extends AssertionTests {
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for an "other" discrepancy, in the context
    * where the assertion has already recorded discrepancies. Also test risk measurement in this
    * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveOther2(){
