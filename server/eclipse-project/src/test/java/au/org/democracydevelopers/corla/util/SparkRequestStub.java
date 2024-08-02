@@ -15,7 +15,12 @@ public class SparkRequestStub extends Request {
     private final String _body;
     private final Set<String> _queryParams;
 
-    public SparkRequestStub(final String body, final Set<String> queryParams)
+  /**
+   * Constructor, for use in testing.
+   * @param body        The body of the request.
+   * @param queryParams The http query parameters.
+   */
+  public SparkRequestStub(final String body, final Set<String> queryParams)
     {
       super();
 
@@ -23,10 +28,25 @@ public class SparkRequestStub extends Request {
       _queryParams = queryParams;
     }
 
-    public String body()
+  /**
+   * Get the body.
+   * @return the body.
+   */
+  public String body()
     {
         return _body;
     }
-    public String host() { return "Test host";}
-    public Set<String> queryParams() { return _queryParams;}
+
+  /**
+   * This is a mock of getting the host, but obviously isn't set up
+   * to return the actual host.
+   * @return a test string.
+   */
+  public String host() { return "Test host";}
+
+  /**
+   * Get the query parameters that were set in the constructor.
+   * @return the query parameters.
+   */
+  public Set<String> queryParams() { return _queryParams;}
 }

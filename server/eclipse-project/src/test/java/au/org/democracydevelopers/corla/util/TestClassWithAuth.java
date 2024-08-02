@@ -1,7 +1,6 @@
 package au.org.democracydevelopers.corla.util;
 
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import spark.Response;
 import us.freeandfair.corla.auth.AuthenticationInterface;
 import us.freeandfair.corla.endpoint.Endpoint;
@@ -10,7 +9,6 @@ import us.freeandfair.corla.util.TestClassWithDatabase;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -21,9 +19,6 @@ import static us.freeandfair.corla.model.Administrator.AdministratorType.STATE;
  * This test class is designed for testing endpoints. It mocks successful authentication to allow
  * for direct calling of endpointBody(request, response).
  * Some notes:
- * - Currently, it only mocks the _county_ auth. TODO add state auth mock - you probably just have to
- * change the AdministratorType to STATE instead of COUNTY in the call to new Administrator in initMocks,
- * and obviously make the username one of the state uids in your database.
  * - It is highly dependent on the mocked Spark functions in SparkRequestStub and SparkResponseStub.
  *   Not all the Spark functions have been implemented - if you find that the attempt to use one of
  *   them fails, you need to implement it in either SparkRequestStub or SparkResponseStub.
@@ -32,8 +27,6 @@ import static us.freeandfair.corla.model.Administrator.AdministratorType.STATE;
  * one test. I haven't tried testing parallel runs of mocked auth for _different_ counties.
  * See ACVRUploadTests for an example. Calling endpoint.before(request, response) was necessary for
  * that endpoint.
- *
- *
  */
 public abstract class TestClassWithAuth extends TestClassWithDatabase {
 
@@ -55,7 +48,8 @@ public abstract class TestClassWithAuth extends TestClassWithDatabase {
    * @param ID   The ID of the county or state admin - must match whatever is loaded into the test database.
    * For example, to mock Auth as Adams County (ID = 1), use mockAuth("Adams", 1L, COUNTY);
    */
-  protected void mockAuth(String name, long ID, Endpoint.AuthorizationType authType) {
+  protected void mockAuth(final String name, final long ID,
+                          final Endpoint.AuthorizationType authType) {
 
     // Mock successful auth as a county. No need to mock the CountyDashboard retrieval from
     // the database, because that is loaded in via co-counties.sql.
@@ -81,6 +75,4 @@ public abstract class TestClassWithAuth extends TestClassWithDatabase {
       when(auth.authenticatedCounty(any())).thenReturn(null);
     }
   }
-
-
 }

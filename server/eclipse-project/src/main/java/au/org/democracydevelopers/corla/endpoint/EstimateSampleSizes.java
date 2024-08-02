@@ -135,7 +135,6 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
   public String estimateSampleSizes() {
     final String prefix = "[estimateSampleSizes]";
     final List<EstimateData> dataRows = new ArrayList<>();
-    BigDecimal riskLimit;
 
     // For estimation of sample sizes for each audit, we need to collect the ContestResult
     // for each contest. For Plurality audits, this will involve tabulating the votes across
@@ -148,16 +147,16 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
         cr.setAuditReason(AuditReason.OPPORTUNISTIC_BENEFITS)).toList();
 
     // Try to get the DoS Dashboard, which may contain the risk limit for the audit.
-    riskLimit = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class).auditInfo().riskLimit();
+    final BigDecimal riskLimit = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class).auditInfo().riskLimit();
     if (riskLimit == null) {
       // If the risk limit is not initialized, it is not possible to estimate sample sizes.
-      String msg = "No risk limit set";
+      final String msg = "No risk limit set";
       LOGGER.error(String.format("%s %s.", prefix, msg));
       throw new IllegalStateException(msg);
     }
 
     // Iterate over all the contest results, getting relevant data into an EstimateData record.
-    for (ContestResult cr : countedCRs) {
+    for (final ContestResult cr : countedCRs) {
 
       final ComparisonAudit ca = createAuditOfCorrectType(cr, riskLimit);
       final List<String> countyNames = ca.getCounties().stream().map(County::name).toList();
@@ -172,14 +171,13 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
 
     // Sort the data according to the name of the county, and then by contest.
     Collections.sort(dataRows);
-    // dataRows.sort((first, second) -> first.countyName.compareTo(second.countyName()));
     return String.join("\n", dataRows.stream().map(EstimateData::toString).toList());
   }
 
   /**
-   * A record to store the data we need in the report. Stores relevant data (in some cases after
-   * retrieving it from more complex structures) and outputs it as a CSV row (toString()).
-   *
+   * A record to store the data we need for each row in the sample size estimate csv. Stores relevant
+   * data (in some cases after retrieving it from more complex structures) and outputs it as a CSV
+   * row (toString()).
    * @param countyName       The name of the county.
    * @param contestName      The name of the contest.
    * @param contestType      The type, as a string, IRV or plurality.
@@ -201,7 +199,8 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
      * @param contestBallots The number of ballots that actually contained the contest.
      * @param totalBallots   The total universe of ballots for this contest's audit.
      */
-    public EstimateData(List<String> countyNames, ComparisonAudit ca, int contestBallots, long totalBallots) {
+    public EstimateData(final List<String> countyNames, final ComparisonAudit ca,
+                        final int contestBallots, final long totalBallots) {
       this(countyNames.size() == 1 ? countyNames.get(0) : "Multiple",
           ca.getContestName(),
           ca instanceof IRVComparisonAudit ? ContestType.IRV.toString() : ContestType.PLURALITY.toString(),
@@ -246,7 +245,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
      *         +1 if this value is greater than the other value.
      */
     @Override
-    public int compareTo(EstimateData anotherRow) {
+    public int compareTo(final EstimateData anotherRow) {
       // If the county names are the same, sort by contest name.
       if (countyName.equals(anotherRow.countyName)) {
         return contestName.compareTo(anotherRow.contestName());

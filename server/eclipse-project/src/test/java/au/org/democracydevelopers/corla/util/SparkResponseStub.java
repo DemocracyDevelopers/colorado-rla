@@ -3,6 +3,8 @@ package au.org.democracydevelopers.corla.util;
 import spark.Response;
 
 import javax.servlet.ServletOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A class that can behave like a Spark request, for testing endpoints.
@@ -15,8 +17,7 @@ import javax.servlet.ServletOutputStream;
 public class SparkResponseStub extends Response {
     private String _body;
     private int _statusCode;
-    private String _name;
-    private String _value;
+    private Map<String,String> headers = new HashMap<>();
     private ServletOutputStream _os;
 
     public SparkResponseStub() {
@@ -24,7 +25,7 @@ public class SparkResponseStub extends Response {
     }
 
     /**
-     * set the body
+     * Set the body.
      * @param body the body to be set.
      */
     public void body(String body) {
@@ -32,25 +33,33 @@ public class SparkResponseStub extends Response {
     }
 
     /**
-     * Get the body
+     * Get the body.
      */
     public String body() {
         return _body;
     }
 
+    /**
+     * Set the http status code.
+     * @param statusCode the http status code.
+     */
     public void status(int statusCode) {
         _statusCode = statusCode;
     }
 
+    /**
+     * Set the header - add <name,value> to the headers map.
+     * @param name  the name of the header.
+     * @param value the value for it to be set to.
+     */
     public void header(final String name, final String value) {
-        _name = name;
-        _value = value;
+        headers.put(name, value);
     }
 
-    public int getStatus() {
-        return _statusCode;
-    }
-
+    /**
+     * Get the http status.
+     * @return the status.
+     */
     public int status() {
         return _statusCode;
     }
