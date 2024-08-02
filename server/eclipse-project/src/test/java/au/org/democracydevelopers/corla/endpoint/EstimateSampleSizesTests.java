@@ -22,7 +22,6 @@ import us.freeandfair.corla.query.ContestQueries;
 import us.freeandfair.corla.query.CountyQueries;
 
 import javax.transaction.Transactional;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -180,8 +179,8 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
       String csv = response.body();
       assertEquals(csv, String.join("\n", List.of(
           "County,Contest Name,Contest Type,Ballots Cast,Total ballots,Diluted Margin,Sample Size",
-          "Adams,pluralityContest,PLURALITY,0,10000,0.12,56",
-          "Adams,One NEB Assertion Contest,IRV,0,20000,0.32,21"
+          "Adams,One NEB Assertion Contest,IRV,0,20000,0.32,21",
+          "Adams,pluralityContest,PLURALITY,0,10000,0.12,56"
       )));
 
 

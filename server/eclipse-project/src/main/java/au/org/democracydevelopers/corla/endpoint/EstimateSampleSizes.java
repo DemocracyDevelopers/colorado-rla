@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.apache.commons.text.StringEscapeUtils.escapeCsv;
@@ -133,7 +134,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
    */
   public String estimateSampleSizes() {
     final String prefix = "[estimateSampleSizes]";
-    final List<estimateData> dataRows = new ArrayList<>();
+    final List<EstimateData> dataRows = new ArrayList<>();
     BigDecimal riskLimit;
 
     // For estimation of sample sizes for each audit, we need to collect the ContestResult
@@ -155,7 +156,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
       throw new IllegalStateException(msg);
     }
 
-    // Iterate over all the contest results, getting relevant data into an estimateData record.
+    // Iterate over all the contest results, getting relevant data into an EstimateData record.
     for (ContestResult cr : countedCRs) {
 
       final ComparisonAudit ca = createAuditOfCorrectType(cr, riskLimit);
@@ -166,10 +167,13 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
       final int contestBallots = CountyContestResultQueries.withContestName(ca.getContestName())
           .stream().mapToInt(CountyContestResult::contestBallotCount).sum();
 
-      dataRows.add(new estimateData(countyNames, ca, contestBallots, cr.getBallotCount()));
+      dataRows.add(new EstimateData(countyNames, ca, contestBallots, cr.getBallotCount()));
     }
 
-    return String.join("\n", dataRows.stream().map(estimateData::toString).toList());
+    // Sort the data according to the name of the county, and then by contest.
+    Collections.sort(dataRows);
+    // dataRows.sort((first, second) -> first.countyName.compareTo(second.countyName()));
+    return String.join("\n", dataRows.stream().map(EstimateData::toString).toList());
   }
 
   /**
@@ -184,9 +188,9 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
    * @param dilutedMargin    The margin divided by the total Auditable ballots.
    * @param estimatedSamples The estimated samples to audit.
    */
-  private record estimateData(String countyName, String contestName, String contestType,
+  private record EstimateData(String countyName, String contestName, String contestType,
                               int contestBallots, long totalBallots, BigDecimal dilutedMargin,
-                              int estimatedSamples) {
+                              int estimatedSamples) implements Comparable<EstimateData> {
 
     /**
      * Construct the record by pulling relevant data out of the ComparisonAudit data structure.
@@ -197,7 +201,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
      * @param contestBallots The number of ballots that actually contained the contest.
      * @param totalBallots   The total universe of ballots for this contest's audit.
      */
-    public estimateData(List<String> countyNames, ComparisonAudit ca, int contestBallots, long totalBallots) {
+    public EstimateData(List<String> countyNames, ComparisonAudit ca, int contestBallots, long totalBallots) {
       this(countyNames.size() == 1 ? countyNames.get(0) : "Multiple",
           ca.getContestName(),
           ca instanceof IRVComparisonAudit ? ContestType.IRV.toString() : ContestType.PLURALITY.toString(),
@@ -231,6 +235,24 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
               // size greater than the possible universe.
               "" + Math.min(estimatedSamples, totalBallots)
           ));
+    }
+
+    /**
+     * For sorting the csv rows. First compare the county names as strings; if they're equal, use the
+     * contest name as a secondary sort.
+     * @param  anotherRow other row to be compared with.
+     * @return -1 if this value is (lexicographically by county and contest name) less than the other value,
+     *         0 if their county and contest names are equal (which is unexpected)
+     *         +1 if this value is greater than the other value.
+     */
+    @Override
+    public int compareTo(EstimateData anotherRow) {
+      // If the county names are the same, sort by contest name.
+      if (countyName.equals(anotherRow.countyName)) {
+        return contestName.compareTo(anotherRow.contestName());
+      }
+      // If the county names are different, sort by county name.
+      return countyName.compareTo(anotherRow.countyName);
     }
   }
 }
