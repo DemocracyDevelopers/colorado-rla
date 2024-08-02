@@ -28,6 +28,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
+import au.org.democracydevelopers.corla.util.testUtils;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +53,8 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
  * -- Scoring of NEB assertions.
  * -- Computation of discrepancies for NEB assertions.
  * -- The logic involved in the re-auditing of ballots.
- * -- TODO: Test Assertion::riskMeasurement()
+ * -- Risk measurement (we use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+ *    Risk Limiting Audits to compute the expected risk values).
  * Refer to the Guide to RAIRE for details on how NEB assertions are scored, and how
  * discrepancies are computed (Part 2, Appendix A).
  */
@@ -143,6 +145,20 @@ public class NEBAssertionTests extends AssertionTests {
   }
 
   /**
+   * Test riskMeasurement() for an NEB assertion with no discrepancies.
+   */
+  @Test
+  public void testNEBRiskMeasurementNoDiscrepancies(){
+    log(LOGGER, "testNEBRiskMeasurementNoDiscrepancies");
+
+    Assertion a = createNEBAssertion("W", "L", TC,  80,
+        0.2, 8,  Map.of(), 0, 0,
+        0, 0, 0);
+
+    checkRiskMeasurement(a, Map.of(5, 0.603, 10, 0.364, 50, 0.006, 100, 0.0));
+  }
+
+  /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) in the context where no discrepancy has
    * been computed for the given CVR-ACVR pair, and the assertion has no prior recorded
    * discrepancies. It should not change the assertion's discrepancy counts. What
@@ -184,7 +200,8 @@ public class NEBAssertionTests extends AssertionTests {
   }
 
   /**
-   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote overstatement.
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote overstatement. Also check risk
+   * measurement given one 1 vote overstatement and varying sample counts.
    */
   @Test
   public void testNEBRecordOneVoteOverstatement1(){
@@ -192,16 +209,19 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC, 123, 0.31,
         8, Map.of(1L, 1), 0, 0, 0,
         0, 0);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 0, 0, 0, Map.of(1L, 1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.859, 10, 0.383, 20, 0.076, 50, 0.001));
   }
 
   /**
-   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote understatement.
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote understatement. Also check risk
+   * measurement given one 1 vote understatement and varying sample counts.
    */
   @Test
   public void testNEBRecordOneVoteUnderstatement1(){
@@ -209,16 +229,20 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", TC,50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC,10, 0.02,
         8, Map.of(1L, -1), 0, 0, 0,
         0, 0);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 1, 0, 0, 0, Map.of(1L, -1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.643, 10, 0.613, 20, 0.556, 50,
+        0.416, 200, 0.098));
   }
 
   /**
-   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overstatement.
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overstatement.  Also check risk
+   * measurement given one 2 vote overstatement and varying sample counts.
    */
   @Test
   public void testNEBRecordTwoVoteOverstatement1(){
@@ -226,16 +250,19 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC, 81, 0.29,
         8, Map.of(1L, 2), 0, 0, 0,
         0, 0);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 1, 0, 0, Map.of(1L, 2));
+
+    checkRiskMeasurement(a, Map.of(5, 1.0, 20, 1.0, 50, 0.014));
   }
 
   /**
-   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote understatement.
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote understatement. Also check risk
+   * measurement given one 2 vote understatement and varying sample counts.
    */
   @Test
   public void testNEBRecordTwoVoteUnderstatement1(){
@@ -243,16 +270,19 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", TC,50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC,5, 0.001,
         8, Map.of(1L, -2), 0, 0, 0,
         0, 0);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 1, 0, Map.of(1L, -2));
+
+    checkRiskMeasurement(a, Map.of(5, 0.508, 20, 0.505, 50, 0.497, 500, 0.401));
   }
 
   /**
-   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote understatement.
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for an "other" discrepancy. Also check risk
+   * measurement given one "other" discrepancy and varying sample counts.
    */
   @Test
   public void testNEBRecordOther1(){
@@ -260,17 +290,20 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC, 55, 0.12,
         8, Map.of(1L, 0), 0, 0, 0,
         0, 0);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 1, Map.of(1L, 0));
+
+    checkRiskMeasurement(a, Map.of(5, 0.743, 10, 0.552, 20, 0.304, 50, 0.051));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote overstatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also check that risk measurement
+   * yields the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRecordOneVoteOverstatement2(){
@@ -285,11 +318,14 @@ public class NEBAssertionTests extends AssertionTests {
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 2, 0, 0, 1, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 1));
+
+    checkRiskMeasurement(a, Map.of(5, 1.0, 20, 0.706, 50, 0.161, 80, 0.037));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote understatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also check that risk measurement
+   * yields the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRecordOneVoteUnderstatement2(){
@@ -297,18 +333,21 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC, 63, 0.34,
         8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -1),
         1, 0, 0, 1, 1);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 1, 0, 1, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.271, 10, 0.111, 20, 0.019));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overstatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also check that risk measurement
+   * yields the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRecordTwoVoteOverstatement2(){
@@ -316,18 +355,21 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", TC,50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC,25, 0.08,
         8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 2),
         1, 0, 0, 1, 1);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 1, 1, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 2));
+
+    checkRiskMeasurement(a, Map.of(5, 1.0, 50, 1.0, 100, 0.516, 200, 0.01));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also check that risk measurement
+   * yields the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRecordTwoVoteUnderstatement2(){
@@ -335,18 +377,21 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC, 75, 0.25,
         8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -2),
         1, 0, 0, 1, 1);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 0, 2, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -2));
+
+    checkRiskMeasurement(a, Map.of(5, 0.264, 10, 0.139, 20, 0.039));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also check that risk measurement
+   * yields the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRecordOther2(){
@@ -354,13 +399,15 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC, 77, 0.19,
         8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0),
         1, 0, 0, 1, 1);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 0, 1, 2,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0));
+
+    checkRiskMeasurement(a, Map.of(5, 0.608, 10, 0.377, 20, 0.144, 50, 0.008));
   }
 
   /**
@@ -370,7 +417,8 @@ public class NEBAssertionTests extends AssertionTests {
    * removeDiscrepancy() does is look for the CVRAuditInfo's ID in its cvrDiscrepancy map. If it is
    * there, the value matching the ID key is retrieved, the associated discrepancy type
    * decremented, and the ID removed from the map. If it is not there, then the discrepancy counts
-   * and the map are not changed, and the method returns false.
+   * and the map are not changed, and the method returns false. Also check that risk measurement
+   * yields the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRemoveNoMatch1(){
@@ -378,17 +426,20 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC, 51, 0.11,
         8, Map.of(), 0, 0, 0, 0, 0);
 
     assertFalse(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of());
+
+    checkRiskMeasurement(a, Map.of(5, 0.762, 10, 0.581, 20, 0.337, 50, 0.066));
   }
 
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) in the context where no discrepancy has
    * been computed for the given CVR-ACVR pair, and the assertion has some discrepancies recorded
-   * already. It should not change the assertion's discrepancy counts.
+   * already. It should not change the assertion's discrepancy counts. Also check that risk measurement
+   * yields the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRemoveNoMatch2(){
@@ -396,17 +447,20 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC, 53, 0.12,
         8, Map.of(2L, -1, 3L, 1), 1, 1,
         0, 0, 0);
 
     assertFalse(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 1, 0, 0, 0,
         Map.of(2L, -1, 3L, 1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.967, 10, 0.718, 20, 0.396, 50, 0.066));
   }
 
   /**
-   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote overstatement.
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote overstatement.  Also check that
+   * risk measurement yields the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRemoveOneVoteOverstatement1(){
@@ -414,16 +468,19 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC, 60, 0.23,
         8, Map.of(1L, 1), 1, 0, 0,
         0, 0);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of(1L,1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.556, 10, 0.309, 20, 0.096, 50, 0.003));
   }
 
   /**
-   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote understatement.
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote understatement. Also check that
+   * risk measurement yields the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRemoveOneVoteUnderstatement1(){
@@ -431,16 +488,19 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", TC,50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC,41, 0.09,
         8, Map.of(1L, -1), 0, 1, 0,
         0, 0);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of(1L,-1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.801, 10, 0.642, 20, 0.413, 50, 0.109));
   }
 
   /**
-   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote overstatement.
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote overstatement. Also check that
+   * risk measurement yields the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRemoveTwoVoteOverstatement1(){
@@ -448,16 +508,19 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", TC,50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC,35, 0.06,
         8, Map.of(1L, 2), 0, 0, 1,
         0, 0);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of(1L,2));
+
+    checkRiskMeasurement(a, Map.of(5, 0.864, 10, 0.746, 20, 0.557, 50, 0.231));
   }
 
   /**
-   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote understatement.
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote understatement. Also check that
+   * risk measurement yields the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRemoveTwoVoteUnderstatement1(){
@@ -471,10 +534,13 @@ public class NEBAssertionTests extends AssertionTests {
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of(1L,-2));
+
+    checkRiskMeasurement(a, Map.of(5, 0.781, 10, 0.611, 20, 0.373, 50, 0.085));
   }
 
   /**
-   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote understatement.
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for an "other" discrepancy. Also check that
+   * risk measurement yields the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRemoveOther1(){
@@ -482,17 +548,20 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC, 200, 0.5,
         8, Map.of(1L, 0), 0, 0, 0,
         0, 1);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of(1L,0));
+
+    checkRiskMeasurement(a, Map.of(5, 0.253, 10, 0.064, 20, 0.004));
   }
 
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote overstatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also check that risk measurement yields
+   * the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRemoveOneVoteOverstatement2(){
@@ -507,11 +576,14 @@ public class NEBAssertionTests extends AssertionTests {
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 0, 1, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.768, 10, 0.6, 50, 0.083));
   }
 
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote understatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also check that risk measurement yields
+   * the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRemoveOneVoteUnderstatement2(){
@@ -519,18 +591,21 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC, 64, 0.39,
         8, Map.of(1L, 0, 2L, 1, 3L, -1, 4L, -1),
         1, 2, 0, 0, 1);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 1, 0, 0, 1,
         Map.of(1L, 0, 2L, 1, 3L, -1, 4L, -1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.46, 10, 0.163, 50, 0.0));
   }
 
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote overstatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also check that risk measurement yields
+   * the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRemoveTwoVoteOverstatement2(){
@@ -538,18 +613,21 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC, 37, 0.06,
         8, Map.of(1L, 2, 2L, 1, 3L, -2, 4L, 2),
         1, 0, 2, 1, 0);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 1, 1, 0,
         Map.of(1L, 2, 2L, 1, 3L, -2, 4L, 2));
+
+    checkRiskMeasurement(a, Map.of(5, 1.0, 100, 1.0, 150, 0.323, 200, 0.075));
   }
 
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also check that risk measurement yields
+   * the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRemoveTwoVoteUnderstatement2(){
@@ -557,18 +635,21 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", TC,50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC,71, 0.28,
         8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -2),
         1, 0, 0, 2, 1);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 0, 1, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -2));
+
+    checkRiskMeasurement(a, Map.of(5, 0.476, 10, 0.231, 20, 0.054));
   }
 
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also check that risk measurement yields
+   * the correct values for varying sample sizes.
    */
   @Test
   public void testNEBRemoveOther2(){
@@ -576,13 +657,15 @@ public class NEBAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNEBAssertion("W", "L", TC, 50, 0.1,
+    Assertion a = createNEBAssertion("W", "L", TC, 63, 0.21,
         8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0),
         1, 0, 0, 1, 2);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 0, 1, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0));
+
+    checkRiskMeasurement(a, Map.of(5, 0.577, 10, 0.338, 20, 0.117, 50, 0.005));
   }
 
   /**

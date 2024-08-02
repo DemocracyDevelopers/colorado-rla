@@ -22,6 +22,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.util;
 
 import java.util.Properties;
+
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -33,6 +34,11 @@ import us.freeandfair.corla.persistence.Persistence;
  * a postgres container (initialised with one a given SQL script) and hibernate properties.
  */
 public abstract class TestClassWithDatabase {
+
+  /**
+   * Blank properties for submitting to the DominionCVRExportParser instance.
+   */
+  protected static final Properties blank = new Properties();
 
   /**
    * Begin a new transaction before each test method in the class is run.

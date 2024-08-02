@@ -216,7 +216,6 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
     assertEquals(List.of("B", "D", "C"), cvrs.get(224).choices());
   }
 
-
   /**
    * Test of successful parsing of a file with valid headers but invalid IRV votes - it includes
    * duplicate candidates and skipped or repeated ranks.

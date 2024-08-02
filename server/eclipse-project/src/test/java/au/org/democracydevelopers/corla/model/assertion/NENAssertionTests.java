@@ -51,7 +51,8 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
  * -- Scoring of NEN assertions.
  * -- Computation of discrepancies.
  * -- The logic involved in the re-auditing of ballots.
- * -- TODO: Test Assertion::riskMeasurement()
+ * -- Risk measurement (we use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+ *    Risk Limiting Audits to compute the expected risk values).
  * Refer to the Guide to RAIRE for details on how NEN assertions are scored, and how
  * discrepancies are computed (Part 2, Appendix A.)
  */
@@ -195,8 +196,29 @@ public class NENAssertionTests extends AssertionTests {
   }
 
   /**
+   * Test riskMeasurement() for an NEN assertion with no discrepancies.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
+   */
+  @Test
+  public void testNENRiskMeasurementNoDiscrepancies(){
+    log(LOGGER, "testNENRiskMeasurementNoDiscrepancies");
+
+    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 50,
+        0.1, 8,  Map.of(), 0, 0,
+        0, 0, 0);
+
+    checkRiskMeasurement(a, Map.of(5, 0.781, 10, 0.611, 100, 0.007));
+  }
+
+
+
+  /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote overstatement, in the context
-   * where the assertion has no recorded discrepancies.
+   * where the assertion has no recorded discrepancies. Also check risk measurement given one
+   * 1 vote overstatement and varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordOneVoteOverstatement1(){
@@ -210,11 +232,16 @@ public class NENAssertionTests extends AssertionTests {
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 0, 0, 0, Map.of(1L, 1));
+
+    checkRiskMeasurement(a, Map.of(5, 1.0, 10, 1.0, 20, 0.719, 100, 0.014));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote understatement, in the context
-   * where the assertion has no recorded discrepancies.
+   * where the assertion has no recorded discrepancies. Also check risk measurement in the context
+   * where the assertion has one 1 vote understatement and varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordOneVoteUnderstatement1(){
@@ -222,17 +249,22 @@ public class NENAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 50,
-        0.1, 8,  Map.of(1L, -1), 0, 0,
+    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 60,
+        0.15, 8,  Map.of(1L, -1), 0, 0,
         0, 0, 0);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 1, 0, 0, 0, Map.of(1L, -1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.464, 10, 0.319, 50, 0.016));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overstatement, in the context
-   * where the assertion has no recorded discrepancies.
+   * where the assertion has no recorded discrepancies. Also check risk measurement in the context
+   * where the assertion has one 2 vote overstatement and varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordTwoVoteOverstatement1(){
@@ -240,17 +272,22 @@ public class NENAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo, 50,
-        0.1, 8,  Map.of(1L, 2), 0, 0,
+    Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo, 102,
+        0.22, 8,  Map.of(1L, 2), 0, 0,
         0, 0, 0);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 1, 0, 0, Map.of(1L, 2));
+
+    checkRiskMeasurement(a, Map.of(5, 1.0, 20, 1.0, 30, 0.927, 50, 0.099));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
-   * where the assertion has no recorded discrepancies.
+   * where the assertion has no recorded discrepancies. Also check risk measurement in the context
+   * where the assertion has one 2 vote understatement and varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordTwoVoteUnderstatement1(){
@@ -258,17 +295,22 @@ public class NENAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 50,
-        0.1, 8, Map.of(1L, -2), 0, 0, 0,
+    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 80,
+        0.32, 8, Map.of(1L, -2), 0, 0, 0,
         0, 0);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 1, 0, Map.of(1L, -2));
+
+    checkRiskMeasurement(a, Map.of(5, 0.221, 10, 0.096, 20, 0.018));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
-   * where the assertion has no recorded discrepancies.
+   * where the assertion has no recorded discrepancies. Also check risk measurement in the context
+   * where the assertion has one other discrepancies and varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordOther1(){
@@ -276,17 +318,22 @@ public class NENAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(1L);
 
-    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 50,
-        0.1, 8,  Map.of(1L, 0), 0, 0, 0,
+    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 59,
+        0.19, 8,  Map.of(1L, 0), 0, 0, 0,
         0, 0);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 1, Map.of(1L, 0));
+
+    checkRiskMeasurement(a, Map.of(5, 0.619, 10, 0.383, 50, 0.008));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote overstatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also test risk measurement in this
+   * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordOneVoteOverstatement2(){
@@ -294,18 +341,23 @@ public class NENAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo, 50,
-        0.1, 8,  Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 1),
+    Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo, 100,
+        0.14, 8,  Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 1),
         1, 0, 0, 1, 1);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 2, 0, 0, 1, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 1));
+
+    checkRiskMeasurement(a, Map.of(5, 1.0, 10, 0.943, 50, 0.058, 80, 0.007));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a one vote understatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also test risk measurement in this
+   * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordOneVoteUnderstatement2(){
@@ -313,18 +365,23 @@ public class NENAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 50,
-        0.1, 8,  Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -1),
+    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 42,
+        0.09, 8,  Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -1),
         1, 0, 0, 1, 1);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 1, 0, 1, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.531, 10, 0.426, 50, 0.072, 80, 0.019));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote overstatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also test risk measurement in this
+   * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordTwoVoteOverstatement2(){
@@ -332,18 +389,23 @@ public class NENAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 50,
-        0.1, 8,  Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 2),
+    Assertion a = createNENAssertion("W", "L", TC,  AssertionTests.wlo, 88,
+        0.21, 8,  Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 2),
         1, 0, 0, 1, 1);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 1, 1, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 2));
+
+    checkRiskMeasurement(a, Map.of(5, 1.0, 10, 1.0, 50, 0.127, 80, 0.005));
   }
 
   /**
    * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also test risk measurement in this
+   * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordTwoVoteUnderstatement2(){
@@ -358,11 +420,16 @@ public class NENAssertionTests extends AssertionTests {
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 0, 2, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -2));
+
+    checkRiskMeasurement(a, Map.of(5, 0.391, 10, 0.306, 50, 0.043, 80, 0.01));
   }
 
   /**
-   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * Test Assertion::recordDiscrepancy(CVRAuditInfo) for an "other" discrepancy, in the context
+   * where the assertion has already recorded discrepancies. Also test risk measurement in this
+   * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRecordOther2(){
@@ -370,16 +437,16 @@ public class NENAssertionTests extends AssertionTests {
     CVRAuditInfo info = new CVRAuditInfo();
     info.setID(4L);
 
-    Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo, 50,
-        0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0),
+    Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo, 35,
+        0.05, 8, Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0),
         1, 0, 0, 1, 1);
 
     assertTrue(a.recordDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 0, 1, 2,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0));
+
+    checkRiskMeasurement(a, Map.of(5, 0.870, 10, 0.770, 50, 0.291, 80, 0.140));
   }
-
-
 
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) in the context where no discrepancy has
@@ -388,7 +455,9 @@ public class NENAssertionTests extends AssertionTests {
    * removeDiscrepancy() does is look for the CVRAuditInfo's ID in its cvrDiscrepancy map. If it is
    * there, the value matching the ID key is retrieved, the associated discrepancy type
    * decremented, and the ID removed from the map. If it is not there, then the discrepancy counts
-   * and the map are not changed.
+   * and the map are not changed.  Also test risk measurement in this context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveNoMatch1(){
@@ -397,17 +466,22 @@ public class NENAssertionTests extends AssertionTests {
     info.setID(1L);
 
     Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo,
-        50, 0.1, 8, Map.of(), 0, 0,
+        24, 0.07, 8, Map.of(), 0, 0,
         0, 0, 0);
 
     assertFalse(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of());
+
+    checkRiskMeasurement(a, Map.of(5, 0.843, 10, 0.710, 50, 0.180, 100, 0.033));
   }
 
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) in the context where no discrepancy has
    * been computed for the given CVR-ACVR pair, and the assertion has some discrepancies recorded
-   * already. It should not change the assertion's discrepancy counts.
+   * already. It should not change the assertion's discrepancy counts. Also test risk measurement in
+   * this context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveNoMatch2(){
@@ -416,16 +490,21 @@ public class NENAssertionTests extends AssertionTests {
     info.setID(1L);
 
     Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo,
-        50, 0.1, 8, Map.of(2L, -1, 3L, 1),
+        91, 0.412, 8, Map.of(2L, -1, 3L, 1),
         1, 1, 0, 0, 0);
 
     assertFalse(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 1, 0, 0, 0,
         Map.of(2L, -1, 3L, 1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.431, 10, 0.143, 20, 0.016));
   }
 
   /**
-   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote overstatement.
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote overstatement. Also test risk
+   * measurement in this context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveOneVoteOverstatement1(){
@@ -434,15 +513,20 @@ public class NENAssertionTests extends AssertionTests {
     info.setID(1L);
 
     Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo,
-        50, 0.1, 8, Map.of(1L, 1), 1,
+        66, 0.341, 8, Map.of(1L, 1), 1,
         0, 0, 0, 0);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of(1L, 1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.408, 10, 0.167, 20, 0.028));
   }
 
   /**
-   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote understatement.
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote understatement. Also test risk
+   * measurement in this context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveOneVoteUnderstatement1(){
@@ -451,15 +535,20 @@ public class NENAssertionTests extends AssertionTests {
     info.setID(1L);
 
     Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo,
-        50, 0.1, 8, Map.of(1L, -1), 0,
+        44, 0.083, 8, Map.of(1L, -1), 0,
         1, 0, 0, 0);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of(1L, -1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.816, 10, 0.665, 20, 0.443, 50, 0.130));
   }
 
   /**
-   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote overstatement.
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote overstatement. Also test risk
+   * measurement in this context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveTwoVoteOverstatement1(){
@@ -468,15 +557,20 @@ public class NENAssertionTests extends AssertionTests {
     info.setID(1L);
 
     Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo,
-        50, 0.1, 8, Map.of(1L, 2), 0,
+        51, 0.099, 8, Map.of(1L, 2), 0,
         0, 1, 0, 0);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of(1L, 2));
+
+    checkRiskMeasurement(a, Map.of(5, 0.783, 10, 0.614, 20, 0.377, 50, 0.087));
   }
 
   /**
-   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote understatement.
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote understatement. Also test risk
+   * measurement in this context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveTwoVoteUnderstatement1(){
@@ -485,15 +579,20 @@ public class NENAssertionTests extends AssertionTests {
     info.setID(1L);
 
     Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo,
-        50, 0.1, 8, Map.of(1L, -2), 0,
+        37, 0.1, 8, Map.of(1L, -2), 0,
         0, 0, 1, 0);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of(1L, -2));
+
+    checkRiskMeasurement(a, Map.of(5, 0.781, 10, 0.611, 20, 0.373, 50, 0.085));
   }
 
   /**
-   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote understatement.
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for an "other" discrepancy. Also test risk
+   * measurement in this context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveOther1(){
@@ -502,16 +601,21 @@ public class NENAssertionTests extends AssertionTests {
     info.setID(1L);
 
     Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo,
-        50, 0.1, 8, Map.of(1L, 0), 0,
+        55, 0.131, 8, Map.of(1L, 0), 0,
         0, 0, 0, 1);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 0, 0, 0, 0, 0, Map.of(1L, 0));
+
+    checkRiskMeasurement(a, Map.of(5, 0.722, 10, 0.521, 20, 0.272, 50, 0.039));
   }
 
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote overstatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also test risk measurement in this
+   * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveOneVoteOverstatement2(){
@@ -520,17 +624,22 @@ public class NENAssertionTests extends AssertionTests {
     info.setID(4L);
 
     Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo,
-        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
+        56, 0.199, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
             4L, 1), 2, 0, 0, 1, 1);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 0, 1, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.594, 10, 0.359, 20, 0.131, 50, 0.006));
   }
 
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a one vote understatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also test risk measurement in this
+   * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveOneVoteUnderstatement2(){
@@ -539,17 +648,22 @@ public class NENAssertionTests extends AssertionTests {
     info.setID(4L);
 
     Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo,
-        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -1,
+        50, 0.112, 8, Map.of(1L, 0, 2L, 1, 3L, -1,
             4L, -1), 1, 2, 0, 0, 1);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 1, 0, 0, 1,
         Map.of(1L, 0, 2L, 1, 3L, -1, 4L, -1));
+
+    checkRiskMeasurement(a, Map.of(5, 0.986, 10, 0.748, 20, 0.43, 50, 0.082));
   }
 
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote overstatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also test risk measurement in this
+   * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveTwoVoteOverstatement2(){
@@ -558,17 +672,22 @@ public class NENAssertionTests extends AssertionTests {
     info.setID(4L);
 
     Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo,
-        50, 0.1, 8, Map.of(1L, 2, 2L, 1, 3L, -2,
+        25, 0.066, 8, Map.of(1L, 2, 2L, 1, 3L, -2,
             4L, 2), 1, 0, 2, 1, 0);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 1, 1, 0,
         Map.of(1L, 2, 2L, 1, 3L, -2, 4L, 2));
+
+    checkRiskMeasurement(a, Map.of(5, 1.0, 50, 1.0, 150, 0.206, 200, 0.041));
   }
 
   /**
    * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * where the assertion has already recorded discrepancies. Also test risk measurement in this
+   * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveTwoVoteUnderstatement2(){
@@ -577,17 +696,22 @@ public class NENAssertionTests extends AssertionTests {
     info.setID(4L);
 
     Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo,
-        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
+        54, 0.102, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
             4L, -2), 1, 0, 0, 2, 1);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 0, 1, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, -2));
+
+    checkRiskMeasurement(a, Map.of(5, 0.764, 10, 0.594, 50, 0.079));
   }
 
   /**
-   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for a two vote understatement, in the context
-   * where the assertion has already recorded discrepancies.
+   * Test Assertion::removeDiscrepancy(CVRAuditInfo) for an "other" discrepancy, in the context
+   * where the assertion has already recorded discrepancies. Also test risk measurement in this
+   * context with varying sample counts.
+   * We use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot
+   * Risk Limiting Audits to compute the expected risk values.
    */
   @Test
   public void testNENRemoveOther2(){
@@ -596,12 +720,14 @@ public class NENAssertionTests extends AssertionTests {
     info.setID(4L);
 
     Assertion a = createNENAssertion("W", "L", TC, AssertionTests.wlo,
-        50, 0.1, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
+        133, 0.301, 8, Map.of(1L, 0, 2L, 1, 3L, -2,
             4L, 0), 1, 0, 0, 1, 2);
 
     assertTrue(a.removeDiscrepancy(info));
     checkCountsDiscrepancyMap(a, 1, 0, 0, 1, 1,
         Map.of(1L, 0, 2L, 1, 3L, -2, 4L, 0));
+
+    checkRiskMeasurement(a, Map.of(5, 0.449, 10, 0.205, 20, 0.043));
   }
 
 
@@ -825,7 +951,7 @@ public class NENAssertionTests extends AssertionTests {
    * "C" are continuing candidates. (In this case, a one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENomputeDiscrepancyOneOver1(RecordType recordType){
+  public void testNENComputeDiscrepancyOneOver1(RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneOver1[%s]", recordType));
     resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1066,7 +1192,7 @@ public class NENAssertionTests extends AssertionTests {
 
   /**
    * Given a CVR with a vote "A", "B", "C", "D" and audited ballot with a vote of "B", "A", "C", "D",
-   * check that the right discrepancy is computed for the assertions D NEB C assuming "B", "C",
+   * check that the right discrepancy is computed for the assertions D NEN C assuming "B", "C",
    * and "D" are continuing, and D NEN E assuming "C", "D", and "E" are continuing.
    * (In this case, an "other" discrepancy).
    */
@@ -1383,7 +1509,7 @@ public class NENAssertionTests extends AssertionTests {
   /**
    * Given a CVR with vote "A", "B", "C", "D", and a ballot with no consensus, check that
    * the right discrepancy is computed for assertions A NEN F given that "A", "C", and "F" are
-   * continuing, B NEB C given "B", and "C" are continuing, and D NEN F given "D" and "F" are
+   * continuing, B NEN C given "B", and "C" are continuing, and D NEN F given "D" and "F" are
    * continuing. (A two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
@@ -1853,8 +1979,8 @@ public class NENAssertionTests extends AssertionTests {
    * in error. The n+1'th call the removeDiscrepancy should throw an exception.
    */
   @Test(expectedExceptions = RuntimeException.class)
-  public void testNEBExcessRemovalCausesErrorTwoVoteUnder(){
-    log(LOGGER, "testNEBExcessRemovalCausesErrorTwoVoteUnder");
+  public void testNENExcessRemovalCausesErrorTwoVoteUnder(){
+    log(LOGGER, "testNENExcessRemovalCausesErrorTwoVoteUnder");
 
     final int N = 2;
     CVRAuditInfo info = new CVRAuditInfo();
@@ -1877,8 +2003,8 @@ public class NENAssertionTests extends AssertionTests {
    * in error. The n+1'th call the removeDiscrepancy should throw an exception.
    */
   @Test(expectedExceptions = RuntimeException.class)
-  public void testNEBExcessRemovalCausesErrorOneVoteUnder(){
-    log(LOGGER, "testNEBExcessRemovalCausesErrorOneVoteUnder");
+  public void testNENExcessRemovalCausesErrorOneVoteUnder(){
+    log(LOGGER, "testNENExcessRemovalCausesErrorOneVoteUnder");
 
     final int N = 2;
     CVRAuditInfo info = new CVRAuditInfo();
@@ -1901,8 +2027,8 @@ public class NENAssertionTests extends AssertionTests {
    * in error. The n+1'th call the removeDiscrepancy should throw an exception.
    */
   @Test(expectedExceptions = RuntimeException.class)
-  public void testNEBExcessRemovalCausesErrorOneVoteOver(){
-    log(LOGGER, "testNEBExcessRemovalCausesErrorOneVoteOver");
+  public void testNENExcessRemovalCausesErrorOneVoteOver(){
+    log(LOGGER, "testNENExcessRemovalCausesErrorOneVoteOver");
 
     final int N = 2;
     CVRAuditInfo info = new CVRAuditInfo();
@@ -1925,8 +2051,8 @@ public class NENAssertionTests extends AssertionTests {
    * in error. The n+1'th call the removeDiscrepancy should throw an exception.
    */
   @Test(expectedExceptions = RuntimeException.class)
-  public void testNEBExcessRemovalCausesErrorOther(){
-    log(LOGGER, "testNEBExcessRemovalCausesErrorOther");
+  public void testNENExcessRemovalCausesErrorOther(){
+    log(LOGGER, "testNENExcessRemovalCausesErrorOther");
 
     final int N = 2;
     CVRAuditInfo info = new CVRAuditInfo();
@@ -2141,7 +2267,7 @@ public class NENAssertionTests extends AssertionTests {
    * @param twoVoteOver Number of two vote overstatements to associate with the assertion.
    * @param twoVoteUnder Number of two vote understatements to associate with the assertion.
    * @param other Number of other discrepancies to associate with the assertion.
-   * @return an NEB assertion with the given specification.
+   * @return an NEN assertion with the given specification.
    */
   private static Assertion createNENAssertion(String winner, String loser, String contestName,
       List<String> continuing, int rawMargin, double dilutedMargin, double difficulty,
