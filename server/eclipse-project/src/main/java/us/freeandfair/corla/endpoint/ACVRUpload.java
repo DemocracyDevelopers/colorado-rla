@@ -45,7 +45,7 @@ import us.freeandfair.corla.persistence.Persistence;
  * @version 1.0.0
  * Edits by Vanessa Teague to incorporate recording of IRV invalid ballot interpretations. These
  * are made only if the upload is OK but the IRV ballot is not a valid list of IRV preferences.
- * These are stored in the IRVBallotInterpretations table.
+ * These are stored in the IRVBallotInterpretation table.
  */
 @SuppressWarnings({"PMD.AtLeastOneConstructor", "PMD.CyclomaticComplexity"})
 // TODO: consider rewriting along the same lines as CVRExportUpload
@@ -233,7 +233,7 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
    *                             they are a valid list of IRV choices.
    */
   private void recordIRVBallotInterpretations(final CastVoteRecord cvr, final RecordType recordType,
-                               int cvrNumber, final String imprintedID) throws IRVParsingException {
+                               final int cvrNumber, final String imprintedID) throws IRVParsingException {
     for(CVRContestInfo contestInfo : cvr.contestInfo()) {
       if(contestInfo.contest().description().equals(ContestType.IRV.toString())) {
         final IRVChoices irvChoices = new IRVChoices(contestInfo.rawChoices());

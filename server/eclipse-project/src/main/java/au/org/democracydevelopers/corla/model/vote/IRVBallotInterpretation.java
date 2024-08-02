@@ -6,7 +6,6 @@ import us.freeandfair.corla.persistence.PersistentEntity;
 import us.freeandfair.corla.persistence.StringListConverter;
 
 import javax.persistence.*;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,7 +95,7 @@ public class IRVBallotInterpretation implements PersistentEntity {
    * @param orderedChoices the way colorado-rla interpreted the raw choices, as an order list of names.
    */
   public IRVBallotInterpretation(final Contest contest, final CastVoteRecord.RecordType recordType,
-                                 int cvrNumber, final String imprintedId,
+                                 final int cvrNumber, final String imprintedId,
                                  final List<String> rawChoices, final List<String> orderedChoices) {
     this.contest = contest;
     this.recordType = recordType;

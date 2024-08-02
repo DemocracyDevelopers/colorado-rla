@@ -331,13 +331,13 @@ public class ACVRUploadTests extends TestClassWithAuth {
 
   /**
    * Basic test of proper functioning for uploaded audit CVRs, including:
-   * 1. a valid IRV vote
+   * 1. a valid IRV vote,
    * 2. an invalid IRV vote, which should be stored as its valid interpretation,
    * 3. a blank IRV vote,
-   * 4. a vote with non-IRV choices ("Alice" instead of "Alice(1)")
-   * 5. a vote with invalid choices (names not in the list of choices for the contest)
-   * 6. a vote that doesn't properly correspond to the IDs it should have
-   * 7. an unparseable vote (typos in json data)
+   * 4. a vote with non-IRV choices ("Alice" instead of "Alice(1)"),
+   * 5. a vote with invalid choices (names not in the list of choices for the contest),
+   * 6. a vote that doesn't properly correspond to the IDs it should have, and
+   * 7. an unparseable vote (typos in json data).
    * We check that it is accepted and that the right records for CVR and CVRContestInfo are
    * stored in the database.
    */
@@ -364,36 +364,38 @@ public class ACVRUploadTests extends TestClassWithAuth {
       assertEquals(preCvrs.size(), 10);
       assertEquals(preACvrs.size(), 0);
 
-      // // 1. Upload the first audit CVR (1-1-1; id 240509) (votes ["Bob(1)", "Chuan(2)"]) to the endpoint;
-      // // check that the right database records result, with correct interpreted vote ["Bob", "Chuan"].
-      // final Request request1 = new SparkRequestStub(validIRVAsJson, new HashSet<>());
+      // First test: upload the first audit CVR (1-1-1; id 240509) (votes ["Bob(1)", "Chuan(2)"]) to
+      // the endpoint. Check that the right database records result, with correct interpreted vote
+      // ["Bob", "Chuan"].
       testSuccessResponse(240509L, "1-1-1", validIRVAsJson, List.of("Bob", "Chuan"), 1);
 
-      // // 2. Test that an invalid IRV vote [Chuan(1), Chuan(2), Bob(2), Alice(3)] is accepted and that its
-      // // valid interpretation [Chuan, Bob, Alice] is properly stored.
+      // Second test: upload an invalid IRV vote [Chuan(1), Chuan(2), Bob(2), Alice(3)]. Check that
+      // it is accepted and that its valid interpretation [Chuan, Bob, Alice] is properly stored.
       testSuccessResponse(240510L, "1-1-2", invalidIRVAsJson, List.of("Chuan","Bob","Alice"), 2);
       testIRVBallotInterpretations(2, "1-1-2", List.of("Chuan(1)","Chuan(2)","Bob(2)","Alice(3)"),
           List.of("Chuan","Bob","Alice"));
 
-      // // 3. Upload a blank vote. Check the results.
+      // Third test: upload a blank vote. Check the results.
       testSuccessResponse(240511L, "1-1-3", blankIRVAsJson, List.of(), 3);
 
-      // // 4. Upload a vote with plurality-style choices (no parenthesized ranks). This should cause an error.
+      // Fourth test: upload a vote with plurality-style choices (no parenthesized ranks). This
+      // should cause an error.
 
       //  Expected error messages for malformed upload cvrs.
       String malformedACVRMsg = "malformed audit CVR upload";
 
       testErrorResponse(240512L, pluralityIRVAsJson, malformedACVRMsg);
 
-      // // 5. Upload a vote with IRV choices that are not among the valid candidates. This should
-      // cause an error.
+      // Fifth test: upload a vote with IRV choices that are not among the valid candidates. This
+      // should cause an error.
       testErrorResponse(240513L, wrongCandidateNamesIRVAsJson, malformedACVRMsg);
 
-      // // 6. Upload a vote with IDs that do not correspond properly to the expected CVR. This
-      // should cause an error.
+      // Sixth test: upload a vote with IDs that do not correspond properly to the expected CVR.
+      // This should cause an error.
       testErrorResponse(240514L, IRVWithInconsistentIDsAsJson, malformedACVRMsg);
 
-      // // 7. Upload a vote that has typos preventing json deserialization. This should cause an error.
+      // Seventh test: upload a vote that has typos preventing json deserialization. This should
+      // cause an error.
       testErrorResponse(240515L, IRVJsonDeserializationFail, malformedACVRMsg);
     }
   }
@@ -406,7 +408,7 @@ public class ACVRUploadTests extends TestClassWithAuth {
    * @param rawChoices          The raw choices (with parentheses, presumed invalid).
    * @param validInterpretation The valid interpretation of the raw choices.
    */
-  private void testIRVBallotInterpretations(long CvrNum, final String imprintedId,
+  private void testIRVBallotInterpretations(final long CvrNum, final String imprintedId,
                            final List<String> rawChoices, final List<String> validInterpretation) {
     final String CVRHeader = "CVR Number";
     final String imprintedIDHeader = "Imprinted ID";

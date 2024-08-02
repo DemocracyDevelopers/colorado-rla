@@ -79,9 +79,8 @@ public class CVRContestInfo implements Serializable {
   private List<String> my_choices = new ArrayList<>();
 
   /**
-   * Raw, uninterpreted choices for this contest, for IRV. For example, These raw choices
-   * are used during ballot parsing, and are not required to be
-   * stored in the database.
+   * Raw, uninterpreted choices for this contest, for IRV. These raw choices are used during ballot
+   * parsing, and are not required to be stored in the database.
    */
   @Transient
   private final List<String> my_raw_choices = new ArrayList<>();
@@ -168,7 +167,7 @@ public class CVRContestInfo implements Serializable {
   }
   
   /**
-   * @return the choices in this record.
+   * @return the choices in this record, as an unmodifiable list.
    */
   public List<String> choices() {
     return Collections.unmodifiableList(my_choices);
