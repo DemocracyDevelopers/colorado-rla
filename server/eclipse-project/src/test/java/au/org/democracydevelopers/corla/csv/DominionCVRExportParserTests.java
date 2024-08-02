@@ -665,7 +665,6 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
   }
 
   /**
-   *
    * The parser throws an ArrayOutOfBounds exception when given a csv with no contests (because at
    * DominionCVRExportParser:870 it tries to get the 0-th element of an empty list, i.e. the list of column headers).
    * I'm not certain whether this is intended behaviour, but it's _different_ behaviour from what happens with an
@@ -674,7 +673,7 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
    */
   @Test(expectedExceptions = ArrayIndexOutOfBoundsException.class)
   @Transactional
-  void noContestUploadIsAnError() throws IOException {
+  public void noContestUploadIsAnError() throws IOException {
     testUtils.log(LOGGER, "noContestUploadIsAnError");
     final Path path = Paths.get(TINY_CSV_PATH + "NoContest.csv");
     final Reader reader = Files.newBufferedReader(path);
@@ -691,7 +690,7 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
    */
   @Test
   @Transactional
-  void allSTVUploadIsOK() throws IOException {
+  public void allSTVUploadIsOK() throws IOException {
     testUtils.log(LOGGER, "allSTVUploadIsOK");
     final Path path = Paths.get(TINY_CSV_PATH + "TinySTVOnly.csv");
     final Reader reader = Files.newBufferedReader(path);
@@ -709,7 +708,7 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
    * @param countyName The name of the county.
    * @throws IOException never.
    */
-  void doIRVAndSTVAndPluralityTest(Path path, String countyName) throws IOException {
+  private void doIRVAndSTVAndPluralityTest(Path path, String countyName) throws IOException {
     final Reader reader = Files.newBufferedReader(path);
 
     County cheyenne = fromString(countyName);

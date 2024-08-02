@@ -361,7 +361,7 @@ public class DominionCVRExportParser {
         // fine with candidate names of the form Alice(1), Alice(2), etc.
         // STV_NO_VOTES = -1 in the_votes_allowed to encode that it's an STV contest.
         if(isPlurality || isSTV) {
-          String contestName
+          final String contestName
               = c.substring(0, c.indexOf(isPlurality ? PLURALITY_VOTE_FOR : IRV_VOTE_FOR)).strip();
           the_names.add(contestName);
           the_contest_types.put(contestName, ContestType.PLURALITY);
@@ -371,7 +371,7 @@ public class DominionCVRExportParser {
         // If winners and allowed votes are as expected for IRV, this is an IRV contest.
         // We expect the count to be the real number of choices times the number of ranks.
         } else if(isIRV && count % irvVotesAllowed == 0) {
-          String contestName = c.substring(0, c.indexOf(IRV_WINNERS_ALLOWED)).strip();
+          final String contestName = c.substring(0, c.indexOf(IRV_WINNERS_ALLOWED)).strip();
           the_names.add(contestName);
           the_contest_types.put(contestName, ContestType.IRV);
           // Each real choice (i.e. candidate name) is repeated 'irvVotesAllowed' times, e.g.
