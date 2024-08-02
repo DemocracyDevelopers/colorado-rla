@@ -50,6 +50,18 @@ import static au.org.democracydevelopers.corla.csv.IRVHeadersParser.validateIRVP
  *
  * @author Daniel M. Zimmerman <dmz@freeandfair.us>
  * @version 1.0.0
+ * Additions by Vanessa Teague for IRV and STV parsing.
+ * This parser can cope with 3 different kinds of contests, defined by their headers.
+ * - plurality single- and multi- winner contests, which are parsed directly and saved,
+ * - IRV (ranked single-winner) contests, which are parsed with some extra complexity for dealing with
+ *   their special candidate headers (names and ranks), and saved,
+ * - STV (ranked multi-winner) contests, which by request are accepted but then dropped completely.
+ *   These are ephemerally parsed into the Contest data structures, which are then used to parse each
+ *   CVR, but no CountyContestResult is added to my_results, no Contest is persisted, and none of the
+ *   choices are added into the CVRContestInfo structures attached to the CVR. This processing is
+ *   intended to replicate the situation in which the STV contest had simply been omitted from the
+ *   CSV file. However, parsing errors (invalid headers, missing headers, etc) will still cause an
+ *   error message.
  */
 @SuppressWarnings({"PMD.GodClass", "PMD.CyclomaticComplexity", "PMD.ExcessiveImports",
     "PMD.ModifiedCyclomaticComplexity", "PMD.StdCyclomaticComplexity"})
@@ -164,6 +176,11 @@ public class DominionCVRExportParser {
    * We only audit when there is one winner.
    */
   private static final String IRV_WINNERS_ALLOWED = "(Number of positions=";
+
+  /**
+   * Indicator (-1) to show that there are no votes allowed. This is used to identify STV contests.
+   */
+  private static final int STV_NO_VOTES = -1;
 
   /**
    * The parser to be used.
@@ -334,20 +351,27 @@ public class DominionCVRExportParser {
         final int pluralityVotesAllowed = extractPositiveInteger(c, PLURALITY_VOTE_FOR, ")");
         final int irvVotesAllowed = extractPositiveInteger(c, IRV_VOTE_FOR, ")");
         final int irvWinners = extractPositiveInteger(c, IRV_WINNERS_ALLOWED, ",");
-
         // If winners and allowed votes are as expected for plurality, this is a plurality contest.
-        if(pluralityVotesAllowed > 0 && irvVotesAllowed == -1 && irvWinners == -1) {
-          String contestName = c.substring(0, c.indexOf(PLURALITY_VOTE_FOR)).strip();
+        final boolean isPlurality = pluralityVotesAllowed > 0 && irvVotesAllowed == -1 && irvWinners == -1;
+        final boolean isIRV = pluralityVotesAllowed == -1 && irvVotesAllowed > 0 && irvWinners == 1;
+        // If it looks like IRV but has more than one winner, it's an STV contest.
+        final boolean isSTV = pluralityVotesAllowed == -1 && irvVotesAllowed > 0 && irvWinners > 1;
+
+        // Counterintuitively, we also code the STV contest as a 'plurality' contest, which works
+        // fine with candidate names of the form Alice(1), Alice(2), etc.
+        // STV_NO_VOTES = -1 in the_votes_allowed to encode that it's an STV contest.
+        if(isPlurality || isSTV) {
+          final String contestName
+              = c.substring(0, c.indexOf(isPlurality ? PLURALITY_VOTE_FOR : IRV_VOTE_FOR)).strip();
           the_names.add(contestName);
           the_contest_types.put(contestName, ContestType.PLURALITY);
           the_choice_counts.put(contestName, count);
-          the_votes_allowed.put(contestName, pluralityVotesAllowed);
+          the_votes_allowed.put(contestName, isPlurality ? pluralityVotesAllowed : STV_NO_VOTES);
 
         // If winners and allowed votes are as expected for IRV, this is an IRV contest.
-        } else if(pluralityVotesAllowed == -1 && irvVotesAllowed > 0 && irvWinners == 1
-            // We expect the count to be the real number of choices times the number of ranks.
-            && count % irvVotesAllowed == 0) {
-          String contestName = c.substring(0, c.indexOf(IRV_WINNERS_ALLOWED)).strip();
+        // We expect the count to be the real number of choices times the number of ranks.
+        } else if(isIRV && count % irvVotesAllowed == 0) {
+          final String contestName = c.substring(0, c.indexOf(IRV_WINNERS_ALLOWED)).strip();
           the_names.add(contestName);
           the_contest_types.put(contestName, ContestType.IRV);
           // Each real choice (i.e. candidate name) is repeated 'irvVotesAllowed' times, e.g.
@@ -355,9 +379,6 @@ public class DominionCVRExportParser {
           the_choice_counts.put(contestName, count / irvVotesAllowed);
           the_votes_allowed.put(contestName, irvVotesAllowed);
 
-        // TODO Clarify whether we should accept, though not audit, an STV contest, as below,
-        // See issue https://github.com/DemocracyDevelopers/colorado-rla/issues/107
-        // } else if (pluralityVotesAllowed == -1 && irvVotesAllowed > 0 && irvWinners > 1) {
         } else {
           // The header didn't have the keywords we expected.
           final String msg = "Could not parse header: ";
@@ -450,6 +471,7 @@ public class DominionCVRExportParser {
             choice = new IRVPreference(choiceLine.get(index)).candidateName;
           } else {
             // Plurality - just use the candidate/choice name as is.
+            // Also for STV - it will just keep the names followed by rank.
             choice = choiceLine.get(index).strip();
           }
           final String explanation = explanationLine.get(index).trim();
@@ -467,6 +489,7 @@ public class DominionCVRExportParser {
 
         // Winners allowed is always 1 for IRV, but is assumed to be equal to votesAllowed for
         // plurality, because the Dominion format doesn't give us that separately.
+        // For STV, it doesn't matter because the contest will be dropped.
         final int winnersAllowed = isIRV ? 1 : votesAllowed.get(contestName);
 
         final Contest c = new Contest(contestName, my_county, contestTypes.get(contestName).toString(),
@@ -474,8 +497,8 @@ public class DominionCVRExportParser {
 
         LOGGER.debug(String.format("[addContests: county=%s, contest=%s", my_county.name(), c));
 
-        // If we've just finished a plurality contest header, index is already at the right place
-        // for the next contest.
+        // If we've just finished a plurality or STV contest header, index is already at the right
+        // place for the next contest.
         // If we've just finished the 1st-preference IRV choices, e.g. "Alice(1), Bob(1), Chuan(1)",
         // index will now be pointed at the beginning of the IRV 2nd preferences, e.g.
         // "Alice(2), Bob(2), Chuan(2)", so we have to advance it to the next contest. There is a
@@ -484,10 +507,13 @@ public class DominionCVRExportParser {
         index = index + (isIRV ? choices.size() * (votesAllowed.get(contestName) - 1) : 0);
         contest_count = contest_count + 1;
         try {
-          Persistence.saveOrUpdate(c);
-          final CountyContestResult r = CountyContestResultQueries.matching(my_county, c);
+          // Don't make a CountyContestResult for, and don't persist, an STV contest.
+          if(votesAllowed.get(contestName) != STV_NO_VOTES) {
+            Persistence.saveOrUpdate(c);
+            final CountyContestResult r = CountyContestResultQueries.matching(my_county, c);
+            my_results.add(r);
+          }
           my_contests.add(c);
-          my_results.add(r);
         } catch (PersistenceException pe) {
           result.success = false;
           result.errorMessage = StringUtils.abbreviate(DBExceptionUtil.getConstraintFailureReason(pe), 250);
@@ -503,34 +529,6 @@ public class DominionCVRExportParser {
     }
     result.success = true ;
     return result ;
-  }
-
-  /**
-   * Checks whether a contest choice is "Write-in" or various other spellings. Note this is not the
-   * same as _being_ a write-in candidate - we are looking for the fictitious candidate who
-   * indicates the beginning of the write-ins.  If it is a plurality contest, we look for expected
-   * write-in strings such as "Write-in", "WRITEIN", "write_in", etc.
-   * If it is an IRV contest, we parse it as candidate_name(rank) and check whether candidate_name
-   * matches an expected write-in string.
-   * @param choice the candidate name (possibly with a rank in parentheses, if IRV).
-   * @param contestType PLURALITY or IRV.
-   * @return true if it matches some variation on "Write-in", allowing '-', '_', empty space or
-   *         whitespace between (any capitalization of) "Write" and any capitalization of "in".
-   * @throws IRVParsingException if the contestType is IRV but the choice cannot be parsed as
-   *                             name(rank).
-   */
-  private boolean nameIsWriteIn(String choice, ContestType contestType) throws IRVParsingException {
-    // The upper case matches "WRITE" [something] "IN", where the something can be 0 or more of
-    // '-', '_', space or tab.
-    final String writeInRegexp = "WRITE[-_ \t]*IN";
-
-    // If it's IRV, ignore the rank in parentheses and just check the name.
-    if(contestType == ContestType.IRV) {
-      return (new IRVPreference(choice).candidateName.toUpperCase()).matches(writeInRegexp);
-    } else {
-      // If it's plurality, just match the name directly.
-      return choice.toUpperCase().matches(writeInRegexp);
-    }
   }
 
   /**
@@ -682,7 +680,9 @@ public class DominionCVRExportParser {
                   irvInterpretation.logMessage(CVR_NUMBER_HEADER, IMPRINTED_ID_HEADER)));
             }
             contest_info.add(new CVRContestInfo(co, null, null, orderedChoices));
-        } else {
+
+        } else if(co.votesAllowed() != STV_NO_VOTES) {
+          // Don't store an STV contest (indicated by STV_NO_VOTES in votesAllowed).
           // Store plurality vote.
           contest_info.add(new CVRContestInfo(co, null, null, votes));
         }
