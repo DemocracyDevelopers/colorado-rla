@@ -38,7 +38,6 @@ import static us.freeandfair.corla.model.CastVoteRecord.RecordType.REAUDITED;
  * Test upload of IRV audit cvrs. Includes tests of both valid and invalid IRV CVRs, and tests that
  * the interpreted ballots are properly stored in the database.
  * This makes use of TestClassWithAuth to mock authentication as Adams County.
- * TODO test reaudits, both IRV and plurality (can they be mixed in one CVR?)
  * See <a href="https://github.com/orgs/DemocracyDevelopers/projects/1/views/1?pane=issue&itemId=72434202">...</a>
  */
 public class ACVRUploadTests extends TestClassWithAuth {
@@ -309,7 +308,7 @@ public class ACVRUploadTests extends TestClassWithAuth {
       "}";
 
   /**
-   * 8. Reaudit of valid IRV vote, for CVR ID 240509; imprinted ID 1-1-1.
+   * 8 & 9. Reaudit of valid IRV vote, for CVR ID 240509; imprinted ID 1-1-1.
    */
   private static final String validIRVReauditAsJson = "{" +
       "  \"cvr_id\": 240509," +
@@ -332,6 +331,38 @@ public class ACVRUploadTests extends TestClassWithAuth {
       "        \"choices\": [" +
       "          \"Alice(1)\"," +
       "          \"Chuan(2)\"" +
+      "        ]" +
+      "      }" +
+      "    ]" +
+      "  }," +
+      "  \"reaudit\": true," +
+      "  \"comment\": \"\"," +
+      "  \"auditBoardIndex\": -1" +
+      "}";
+
+  /**
+   * 10. Attempt to reaudit a vote that has not yet been audited - #7, the IRV vote with typos.
+   * Should cause an error.
+   */
+  private static final String IRVReauditNoPriorUpload = "{" +
+      "  \"cvr_id\": 240515," +
+      "  \"audit_cvr\": {" +
+      "    \"record_type\": \"AUDITOR_ENTERED\"," +
+      "    \"county_id\": 1," +
+      "    \"cvr_number\": 7," +
+      "    \"sequence_number\": 1," +
+      "    \"scanner_id\": 1," +
+      "    \"batch_id\": \"1\"," +
+      "    \"record_id\": 7," +
+      "    \"imprinted_id\": \"1-1-7\"," +
+      "    \"uri\": \"acvr:1:1-1-7\"," +
+      "    \"ballot_type\": \"Ballot 1 - Type 1\"," +
+      "    \"contest_info\": [" +
+      "      {" +
+      "        \"contest\": 240503," +
+      "        \"comment\": \"A comment\"," +
+      "        \"consensus\": \"YES\"," +
+      "        \"choices\": [" +
       "        ]" +
       "      }" +
       "    ]" +
@@ -451,6 +482,9 @@ public class ACVRUploadTests extends TestClassWithAuth {
       // Test that the previous upload (from test 8), with a vote for Alice and Chuan (validIRVReauditAsJson) is now tagged as REAUDITED.
       // There should be two reaudited ballots now, and the max revision should be 2.
       testPreviousAreReaudited(240509L, "1-1-1", List.of("Alice","Chuan"), 2, 2);
+
+      // Tenth test: try to "re-"audit something that has not previously been successfully audited. Should throw an error.
+      testErrorResponse(240515L, IRVReauditNoPriorUpload, "");
     }
   }
 
