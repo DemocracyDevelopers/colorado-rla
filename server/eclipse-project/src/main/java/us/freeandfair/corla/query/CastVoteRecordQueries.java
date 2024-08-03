@@ -577,11 +577,16 @@ public final class CastVoteRecordQueries {
     q.setString("imprintedId", cvr.imprintedID());
 
     try {
-      return (Long) q.getSingleResult();
+      // Make sure not to return null, which causes errors later. 0L is the correct return value if
+      // there are no prior revisions in the database.
+      final Long result = (Long) q.getSingleResult();
+      return result == null ? 0L : result;
     } catch (final PersistenceException e) {
       // the DB had a problem!
       // TODO: Technically this should probably be an error code?
       // TODO: Otherwise there's no way to discern this from a CVR with no revisions?
+      // VT: Agree. Since 0L is used for "valid; no prior revisions", suggest using a different value
+      // here or throwing an exception.
       return 0L;
     }
 
