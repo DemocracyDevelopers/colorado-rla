@@ -456,19 +456,19 @@ public class ACVRUploadTests extends TestClassWithAuth {
       //  Expected error messages for malformed upload cvrs.
       String malformedACVRMsg = "malformed audit CVR upload";
 
-      testErrorResponse(240512L, pluralityIRVAsJson, malformedACVRMsg);
+      testErrorResponseAndNoMatchingCvr(240512L, pluralityIRVAsJson, malformedACVRMsg);
 
       // Fifth test: upload a vote with IRV choices that are not among the valid candidates. This
       // should cause an error.
-      testErrorResponse(240513L, wrongCandidateNamesIRVAsJson, malformedACVRMsg);
+      testErrorResponseAndNoMatchingCvr(240513L, wrongCandidateNamesIRVAsJson, malformedACVRMsg);
 
       // Sixth test: upload a vote with IDs that do not correspond properly to the expected CVR.
       // This should cause an error.
-      testErrorResponse(240514L, IRVWithInconsistentIDsAsJson, malformedACVRMsg);
+      testErrorResponseAndNoMatchingCvr(240514L, IRVWithInconsistentIDsAsJson, malformedACVRMsg);
 
       // Seventh test: upload a vote that has typos preventing json deserialization. This should
       // cause an error.
-      testErrorResponse(240515L, IRVJsonDeserializationFail, malformedACVRMsg);
+      testErrorResponseAndNoMatchingCvr(240515L, IRVJsonDeserializationFail, malformedACVRMsg);
 
       // Eighth test: upload a reaudit ballot.
       // Check that the new data successfully replaces the prior upload.
@@ -484,7 +484,7 @@ public class ACVRUploadTests extends TestClassWithAuth {
       testPreviousAreReaudited(240509L, "1-1-1", List.of("Alice","Chuan"), 2, 2);
 
       // Tenth test: try to "re-"audit something that has not previously been successfully audited. Should throw an error.
-      testErrorResponse(240515L, IRVReauditNoPriorUpload, "");
+      testErrorResponseAndNoMatchingCvr(240515L, IRVReauditNoPriorUpload, "CVR has not previously been audited");
     }
   }
 
@@ -585,7 +585,7 @@ public class ACVRUploadTests extends TestClassWithAuth {
    * @param CvrAsJson     The upload cvr, as a json string.
    * @param expectedError The expected error message.
    */
-  private void testErrorResponse(final long CvrId, final String CvrAsJson, final String expectedError) {
+  private void testErrorResponseAndNoMatchingCvr(final long CvrId, final String CvrAsJson, final String expectedError) {
     final Request request = new SparkRequestStub(CvrAsJson, new HashSet<>());
     String errorBody = "";
 
