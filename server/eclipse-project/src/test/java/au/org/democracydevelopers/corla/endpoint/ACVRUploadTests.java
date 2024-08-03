@@ -306,6 +306,39 @@ public class ACVRUploadTests extends TestClassWithAuth {
       "}";
 
   /**
+   * 8. Reaudit of valid IRV vote, for CVR ID 240509; imprinted ID 1-1-1.
+   */
+  private static final String validIRVReauditAsJson = "{" +
+      "  \"cvr_id\": 240509," +
+      "  \"audit_cvr\": {" +
+      "    \"record_type\": \"AUDITOR_ENTERED\"," +
+      "    \"county_id\": 1," +
+      "    \"cvr_number\": 1," +
+      "    \"sequence_number\": 1," +
+      "    \"scanner_id\": 1," +
+      "    \"batch_id\": \"1\"," +
+      "    \"record_id\": 1," +
+      "    \"imprinted_id\": \"1-1-1\"," +
+      "    \"uri\": \"acvr:1:1-1-1\"," +
+      "    \"ballot_type\": \"Ballot 1 - Type 1\"," +
+      "    \"contest_info\": [" +
+      "      {" +
+      "        \"contest\": 240503," +
+      "        \"comment\": \"A comment\"," +
+      "        \"consensus\": \"YES\"," +
+      "        \"choices\": [" +
+      "          \"Alice(1)\"," +
+      "          \"Chuan(2)\"" +
+      "        ]" +
+      "      }" +
+      "    ]" +
+      "  }," +
+      "  \"reaudit\": true," +
+      "  \"comment\": \"\"," +
+      "  \"auditBoardIndex\": -1" +
+      "}";
+
+  /**
    * Database init.
    */
   @BeforeClass
@@ -338,8 +371,9 @@ public class ACVRUploadTests extends TestClassWithAuth {
    * 3. a blank IRV vote,
    * 4. a vote with non-IRV choices ("Alice" instead of "Alice(1)"),
    * 5. a vote with invalid choices (names not in the list of choices for the contest),
-   * 6. a vote that doesn't properly correspond to the IDs it should have, and
-   * 7. an unparseable vote (typos in json data).
+   * 6. a vote that doesn't properly correspond to the IDs it should have,
+   * 7. an unparseable vote (typos in json data), and
+   * 8. a reaudit.
    * We check that it is accepted and that the right records for CVR and CVRContestInfo are
    * stored in the database.
    */
@@ -399,6 +433,10 @@ public class ACVRUploadTests extends TestClassWithAuth {
       // Seventh test: upload a vote that has typos preventing json deserialization. This should
       // cause an error.
       testErrorResponse(240515L, IRVJsonDeserializationFail, malformedACVRMsg);
+
+      // Eighth test: upload a reaudit ballot.
+      testSuccessResponse(240509L, "1-1-1", validIRVReauditAsJson,
+          List.of("Alice","Chuan"), 3);
     }
   }
 
