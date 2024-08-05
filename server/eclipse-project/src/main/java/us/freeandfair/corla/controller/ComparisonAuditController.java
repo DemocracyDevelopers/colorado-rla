@@ -232,13 +232,14 @@ public final class ComparisonAuditController {
                                 final String comment) {
 
     LOGGER.info("[reaudit] cvr: " + cvr.toString());
-    final CVRAuditInfo cai =
-      Persistence.getByID(cvr.id(), CVRAuditInfo.class);
-    final CastVoteRecord oldAcvr = cai.acvr();
-    if (null == oldAcvr) {
+
+    // VT: If this cvr has not been audited before, I believe cai will be null.
+    final CVRAuditInfo cai = Persistence.getByID(cvr.id(), CVRAuditInfo.class);
+    if (cai == null || cai.acvr() == null) {
       LOGGER.error("can't reaudit a cvr that hasn't been audited");
       return false;
     }
+    final CastVoteRecord oldAcvr = cai.acvr();
 
     final Integer former_count = unaudit(cdb, cai);
     LOGGER.debug("[reaudit] former_count: " + former_count.toString());
