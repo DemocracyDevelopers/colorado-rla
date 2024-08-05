@@ -83,9 +83,10 @@ public class NEBAssertionTests extends AssertionTests {
    * @param other Number of other discrepancies related to the assertion.
    */
   @Test(dataProvider = "SampleParameters", dataProviderClass = AssertionTests.class)
-  public void testNEBOptimistic(BigDecimal riskLimit, Integer rawMargin, BigDecimal dilutedMargin,
-      BigDecimal difficulty, Map<Long,Integer> cvrDiscrepancies, Integer oneVoteOver, Integer oneVoteUnder,
-      Integer twoVoteOver, Integer twoVoteUnder, Integer other){
+  public void testNEBOptimistic(final BigDecimal riskLimit, final Integer rawMargin,
+      final BigDecimal dilutedMargin, final BigDecimal difficulty, final Map<Long,Integer> cvrDiscrepancies,
+      final Integer oneVoteOver, final Integer oneVoteUnder, final Integer twoVoteOver,
+      final Integer twoVoteUnder, final Integer other){
 
     log(LOGGER, String.format("testNEBOptimistic[%f;%f;%d;%d:%d;%d;%d]", riskLimit, dilutedMargin,
         oneVoteOver, oneVoteUnder, twoVoteOver, twoVoteUnder, other));
@@ -118,10 +119,10 @@ public class NEBAssertionTests extends AssertionTests {
    * @param other Number of other discrepancies related to the assertion.
    */
   @Test(dataProvider = "ParametersVaryingSamples", dataProviderClass = AssertionTests.class)
-  public void testNEBEstimatedVaryingSamples(Integer auditedSamples, BigDecimal riskLimit,
-      Integer rawMargin, BigDecimal dilutedMargin, BigDecimal difficulty,
-      Map<Long,Integer> cvrDiscrepancies, Integer oneVoteOver, Integer oneVoteUnder,
-      Integer twoVoteOver, Integer twoVoteUnder, Integer other)
+  public void testNEBEstimatedVaryingSamples(final Integer auditedSamples, final BigDecimal riskLimit,
+      final Integer rawMargin, final BigDecimal dilutedMargin, final BigDecimal difficulty,
+      final Map<Long,Integer> cvrDiscrepancies, final Integer oneVoteOver, final Integer oneVoteUnder,
+      final Integer twoVoteOver, final Integer twoVoteUnder, final Integer other)
   {
     log(LOGGER, String.format("testNEBEstimatedVaryingSamples[%d;%f;%f;%d;%d:%d;%d;%d]",
         auditedSamples, riskLimit, dilutedMargin, oneVoteOver, oneVoteUnder, twoVoteOver,
@@ -771,7 +772,7 @@ public class NEBAssertionTests extends AssertionTests {
    * Two CastVoteRecord's with a blank vote will not trigger a discrepancy.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyNone1(RecordType auditedType){
+  public void testNEBComputeDiscrepancyNone1(final RecordType auditedType){
     testNEBComputeDiscrepancyNone(blank, auditedType);
   }
 
@@ -779,7 +780,7 @@ public class NEBAssertionTests extends AssertionTests {
    * Two CastVoteRecord's with a single vote for "A" will not trigger a discrepancy.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyNone2(RecordType auditedType){
+  public void testNEBComputeDiscrepancyNone2(final RecordType auditedType){
     testNEBComputeDiscrepancyNone(A, auditedType);
   }
 
@@ -787,7 +788,7 @@ public class NEBAssertionTests extends AssertionTests {
    * Two CastVoteRecord's with a single vote for "B" will not trigger a discrepancy.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyNone3(RecordType auditedType){
+  public void testNEBComputeDiscrepancyNone3(final RecordType auditedType){
     testNEBComputeDiscrepancyNone(B, auditedType);
   }
 
@@ -795,7 +796,7 @@ public class NEBAssertionTests extends AssertionTests {
    * Two CastVoteRecord's with a vote for "A", "B", "C", "D" will not trigger a discrepancy.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyNone4(RecordType auditedType){
+  public void testNEBComputeDiscrepancyNone4(final RecordType auditedType){
     testNEBComputeDiscrepancyNone(ABCD, auditedType);
   }
 
@@ -803,7 +804,7 @@ public class NEBAssertionTests extends AssertionTests {
    * Two CastVoteRecord's with a vote for "B", "A", "C", "D" will not trigger a discrepancy.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyNone5(RecordType auditedType){
+  public void testNEBComputeDiscrepancyNone5(final RecordType auditedType){
     testNEBComputeDiscrepancyNone(BACD, auditedType);
   }
 
@@ -813,7 +814,7 @@ public class NEBAssertionTests extends AssertionTests {
    * field in the CVR and audited ballot CastVoteRecords.
    * @param info A vote configuration.
    */
-  public void testNEBComputeDiscrepancyNone(CVRContestInfo info, RecordType auditedType){
+  public void testNEBComputeDiscrepancyNone(final CVRContestInfo info, final RecordType auditedType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyNone[%s;%s]", info.choices(), auditedType));
     resetMocks(info, info, RecordType.UPLOADED, ConsensusValue.YES, auditedType, TC);
 
@@ -858,7 +859,7 @@ public class NEBAssertionTests extends AssertionTests {
    * vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyOneOver1(RecordType recordType){
+  public void testNEBComputeDiscrepancyOneOver1(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOneOver1[%s]", recordType));
     resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -874,7 +875,7 @@ public class NEBAssertionTests extends AssertionTests {
    * is computed for the assertions A NEB C. (In this case, a one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyOneOver2(RecordType recordType){
+  public void testNEBComputeDiscrepancyOneOver2(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOneOver2[%s]", recordType));
     resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -891,7 +892,7 @@ public class NEBAssertionTests extends AssertionTests {
    * is computed for the assertions A NEB B. (In this case, a one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyOneOver3(RecordType recordType){
+  public void testNEBComputeDiscrepancyOneOver3(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOneOver3[%s]", recordType));
     resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -908,7 +909,7 @@ public class NEBAssertionTests extends AssertionTests {
    * is computed for the assertions A NEB B. (In this case, a two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyTwoOver1(RecordType recordType){
+  public void testNEBComputeDiscrepancyTwoOver1(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyTwoOver1[%s]", recordType));
     resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -925,7 +926,7 @@ public class NEBAssertionTests extends AssertionTests {
    * two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyTwoOver2(RecordType recordType){
+  public void testNEBComputeDiscrepancyTwoOver2(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyTwoOver2[%s]", recordType));
     resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -942,7 +943,7 @@ public class NEBAssertionTests extends AssertionTests {
    * one vote understatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyOneUnder1(RecordType recordType){
+  public void testNEBComputeDiscrepancyOneUnder1(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOneUnder1[%s]", recordType));
     resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -959,7 +960,7 @@ public class NEBAssertionTests extends AssertionTests {
    * one vote understatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyOneUnder2(RecordType recordType){
+  public void testNEBComputeDiscrepancyOneUnder2(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOneUnder2[%s]", recordType));
     resetMocks(blank, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -976,7 +977,7 @@ public class NEBAssertionTests extends AssertionTests {
    * discrepancy is computed for the assertion A NEB C. (In this case, a one vote understatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyOneUnder3(RecordType recordType){
+  public void testNEBComputeDiscrepancyOneUnder3(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOneUnder3[%s]", recordType));
     resetMocks(B, A, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -993,7 +994,7 @@ public class NEBAssertionTests extends AssertionTests {
    * discrepancy is computed for the assertion A NEB B. (In this case, a two vote understatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyTwoUnder1(RecordType recordType){
+  public void testNEBComputeDiscrepancyTwoUnder1(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyTwoUnder1[%s]", recordType));
     resetMocks(B, A, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1010,7 +1011,7 @@ public class NEBAssertionTests extends AssertionTests {
    * vote understatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyTwoUnder2(RecordType recordType){
+  public void testNEBComputeDiscrepancyTwoUnder2(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyTwoUnder2[%s]", recordType));
     resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1028,7 +1029,7 @@ public class NEBAssertionTests extends AssertionTests {
    * "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyOther1(RecordType recordType){
+  public void testNEBComputeDiscrepancyOther1(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOther1[%s]", recordType));
     resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1045,7 +1046,7 @@ public class NEBAssertionTests extends AssertionTests {
    * discrepancy is computed for the assertion C NEB D. (In this case, an "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyOther2(RecordType recordType){
+  public void testNEBComputeDiscrepancyOther2(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOther2[%s]", recordType));
     resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1061,7 +1062,7 @@ public class NEBAssertionTests extends AssertionTests {
    * discrepancy is computed for the assertion C NEB D. (In this case, an "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyOther3(RecordType recordType){
+  public void testNEBComputeDiscrepancyOther3(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyOther3[%s]", recordType));
     resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1077,7 +1078,7 @@ public class NEBAssertionTests extends AssertionTests {
    * discrepancy is computed for the assertion A NEB B. (In this case, a one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyPhantomRecordOneOver1(RecordType recordType){
+  public void testNEBComputeDiscrepancyPhantomRecordOneOver1(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordOneOver1[%s]", recordType));
     resetMocks(blank, blank, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType, TC);
 
@@ -1093,7 +1094,7 @@ public class NEBAssertionTests extends AssertionTests {
    * discrepancy is computed for the assertion F NEB G. (In this case, a one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyPhantomRecordOneOver2(RecordType recordType){
+  public void testNEBComputeDiscrepancyPhantomRecordOneOver2(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordOneOver2[%s]", recordType));
     resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType, TC);
 
@@ -1109,7 +1110,7 @@ public class NEBAssertionTests extends AssertionTests {
    * discrepancy is computed for the assertion A NEB B. (In this case, an "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyPhantomRecordOther1(RecordType recordType){
+  public void testNEBComputeDiscrepancyPhantomRecordOther1(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordOther1[%s]", recordType));
     resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType, TC);
 
@@ -1125,7 +1126,7 @@ public class NEBAssertionTests extends AssertionTests {
    * discrepancy is computed for the assertion B NEB A. (In this case, a two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyPhantomRecordTwoOver1(RecordType recordType){
+  public void testNEBComputeDiscrepancyPhantomRecordTwoOver1(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordTwoOver1[%s]", recordType));
     resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType, TC);
 
@@ -1141,7 +1142,7 @@ public class NEBAssertionTests extends AssertionTests {
    * the right discrepancy is computed for any NEB assertion. (A two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyPhantomRecordNoConsensus1(RecordType recordType){
+  public void testNEBComputeDiscrepancyPhantomRecordNoConsensus1(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordNoConsensus1[%s]", recordType));
     resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.NO, recordType, TC);
 
@@ -1161,7 +1162,7 @@ public class NEBAssertionTests extends AssertionTests {
    * the right discrepancy is computed for any NEB assertion. (A two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyPhantomRecordNoConsensus2(RecordType recordType){
+  public void testNEBComputeDiscrepancyPhantomRecordNoConsensus2(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomRecordNoConsensus2[%s]", recordType));
     resetMocks(blank, blank, RecordType.PHANTOM_RECORD, ConsensusValue.NO, recordType, TC);
 
@@ -1275,7 +1276,7 @@ public class NEBAssertionTests extends AssertionTests {
    * the right discrepancy is computed for assertions A NEB F, and A NEB C. (A two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyNoConsensusNormalCVR1(RecordType recordType){
+  public void testNEBComputeDiscrepancyNoConsensusNormalCVR1(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyNoConsensusNormalCVR1[%s]", recordType));
     resetMocks(ABCD, ABCD, RecordType.UPLOADED, ConsensusValue.NO, recordType, TC);
 
@@ -1293,7 +1294,7 @@ public class NEBAssertionTests extends AssertionTests {
    * the right discrepancy is computed for assertions F NEB A, and D NEB A. (An "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyNoConsensusNormalCVR2(RecordType recordType){
+  public void testNEBComputeDiscrepancyNoConsensusNormalCVR2(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyNoConsensusNormalCVR2[%s]", recordType));
     resetMocks(ABCD, ABCD, RecordType.UPLOADED, ConsensusValue.NO, recordType, TC);
 
@@ -1311,7 +1312,7 @@ public class NEBAssertionTests extends AssertionTests {
    * the right discrepancy is computed for assertions B NEB C, and B NEB D. (A one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyNoConsensusNormalCVR3(RecordType recordType){
+  public void testNEBComputeDiscrepancyNoConsensusNormalCVR3(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyNoConsensusNormalCVR3[%s]", recordType));
     resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.NO, recordType, TC);
 
@@ -1329,7 +1330,7 @@ public class NEBAssertionTests extends AssertionTests {
    * discrepancy is computed for any NEB assertion. (A one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyNoConsensusNormalCVR4(RecordType recordType){
+  public void testNEBComputeDiscrepancyNoConsensusNormalCVR4(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyNoConsensusNormalCVR4[%s]", recordType));
     resetMocks(blank, ABCD, RecordType.UPLOADED, ConsensusValue.NO, recordType, TC);
 
@@ -1349,7 +1350,7 @@ public class NEBAssertionTests extends AssertionTests {
    * no discrepancy results for any NEB assertion.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBNoContestOnCVRAuditedBallot(RecordType recordType){
+  public void testNEBNoContestOnCVRAuditedBallot(final RecordType recordType){
     log(LOGGER, String.format("testNEBNoContestOnCVRAuditedBallot[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
@@ -1412,7 +1413,7 @@ public class NEBAssertionTests extends AssertionTests {
    * results (for any NEB assertion).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyPhantomCVRBallotNoContest(RecordType recordType){
+  public void testNEBComputeDiscrepancyPhantomCVRBallotNoContest(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyPhantomCVRBallotNoContest[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
@@ -1437,7 +1438,7 @@ public class NEBAssertionTests extends AssertionTests {
    * 1 (a one vote overstatement) results (for any NEB assertion).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyCVRNoContestBallotNoConsensus(RecordType recordType){
+  public void testNEBComputeDiscrepancyCVRNoContestBallotNoConsensus(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyCVRNoContestBallotNoConsensus[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
@@ -1464,7 +1465,7 @@ public class NEBAssertionTests extends AssertionTests {
    * for all the tested assertions.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyCVRNoContestBallotScoreOfZero(RecordType recordType){
+  public void testNEBComputeDiscrepancyCVRNoContestBallotScoreOfZero(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyCVRNoContestBallotScoreOfZero[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
@@ -1490,7 +1491,7 @@ public class NEBAssertionTests extends AssertionTests {
    * of the audited ballot score).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyCVRNoContestBallotScoreOfMinusOne(RecordType recordType){
+  public void testNEBComputeDiscrepancyCVRNoContestBallotScoreOfMinusOne(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyCVRNoContestBallotScoreOfMinusOne[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
@@ -1516,7 +1517,7 @@ public class NEBAssertionTests extends AssertionTests {
    * of the audited ballot score).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyCVRNoContestBallotScoreOfOne(RecordType recordType){
+  public void testNEBComputeDiscrepancyCVRNoContestBallotScoreOfOne(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyCVRNoContestBallotScoreOfOne[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
@@ -1541,7 +1542,7 @@ public class NEBAssertionTests extends AssertionTests {
    * discrepancy) for all the tested assertions.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyNormalCVRBallotNoContestZero(RecordType recordType){
+  public void testNEBComputeDiscrepancyNormalCVRBallotNoContestZero(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyNormalCVRBallotNoContestZero[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
@@ -1566,7 +1567,7 @@ public class NEBAssertionTests extends AssertionTests {
    * overstatement) for all the tested assertions.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyNormalCVRBallotNoContestOne(RecordType recordType){
+  public void testNEBComputeDiscrepancyNormalCVRBallotNoContestOne(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyNormalCVRBallotNoContestOne[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
@@ -1591,7 +1592,7 @@ public class NEBAssertionTests extends AssertionTests {
    * understatement) for all the tested assertions.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNEBComputeDiscrepancyNormalCVRBallotNoContestMinusOne(RecordType recordType){
+  public void testNEBComputeDiscrepancyNormalCVRBallotNoContestMinusOne(final RecordType recordType){
     log(LOGGER, String.format("testNEBComputeDiscrepancyNormalCVRBallotNoContestMinusOne[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
@@ -1909,7 +1910,7 @@ public class NEBAssertionTests extends AssertionTests {
    * with varying diluted margins, discrepancies, and current audited sample count.
    */
   @Test(dataProvider = "AuditSampleNumbers", dataProviderClass = AssertionTests.class)
-  public void computeEstimatedSamplesToAudit(int auditedSampleCount){
+  public void computeEstimatedSamplesToAudit(final int auditedSampleCount){
     Assertion a1 = createNEBAssertion("A", "B", TC, 100, 0.01,
         100, Map.of(), 0, 0, 0, 0, 0);
 
@@ -2009,9 +2010,10 @@ public class NEBAssertionTests extends AssertionTests {
    * @param other Number of other discrepancies to associate with the assertion.
    * @return an NEB assertion with the given specification.
    */
-  private static Assertion createNEBAssertion(String winner, String loser, String contestName,
-      int rawMargin, double dilutedMargin, double difficulty, Map<Long,Integer> cvrDiscrepancy,
-      int oneVoteOver, int oneVoteUnder, int twoVoteOver, int twoVoteUnder, int other){
+  private static Assertion createNEBAssertion(final String winner, final String loser,
+      final String contestName, final int rawMargin, final double dilutedMargin, final double difficulty,
+      final Map<Long,Integer> cvrDiscrepancy, final int oneVoteOver, final int oneVoteUnder,
+      final int twoVoteOver, final int twoVoteUnder, final int other){
 
     Assertion a = new NEBAssertion();
     AssertionTests.populateAssertion(a, winner, loser, contestName, List.of(), rawMargin,
