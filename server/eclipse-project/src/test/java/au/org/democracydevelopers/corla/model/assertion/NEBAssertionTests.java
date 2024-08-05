@@ -28,7 +28,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
-import au.org.democracydevelopers.corla.util.testUtils;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
