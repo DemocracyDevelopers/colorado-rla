@@ -119,3 +119,10 @@ INSERT INTO assertion_assumed_continuing values (30, 'C');
 
 INSERT INTO contest (county_id, id, version, description, name, sequence_number, votes_allowed, winners_allowed) VALUES (4,11,0,'IRV','Simple Contest 3',11,4,1);
 INSERT INTO assertion (assertion_type, contest_name, difficulty, diluted_margin, loser, margin, current_risk, estimated_samples_to_audit, one_vote_over_count, one_vote_under_count, optimistic_samples_to_audit, other_count, two_vote_over_count, two_vote_under_count, version, winner) values ('NEB', 'Simple Contest 3', 100, 0.02, 'B', 100, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'A');
+
+
+INSERT INTO contest (county_id, id, version, description, name, sequence_number, votes_allowed, winners_allowed) VALUES (4,12,0,'IRV','Simple Contest 4',12,4,1);
+INSERT INTO assertion (assertion_type, contest_name, difficulty, diluted_margin, loser, margin, current_risk, estimated_samples_to_audit, one_vote_over_count, one_vote_under_count, optimistic_samples_to_audit, other_count, two_vote_over_count, two_vote_under_count, version, winner) values ('NEN', 'Simple Contest 4', 200, 0.07, 'B', 200, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'F');
+INSERT INTO assertion_assumed_continuing values (32, 'A');
+INSERT INTO assertion_assumed_continuing values (32, 'B');
+INSERT INTO assertion_assumed_continuing values (32, 'F');
