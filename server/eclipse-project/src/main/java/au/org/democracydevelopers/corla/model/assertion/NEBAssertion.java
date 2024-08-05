@@ -83,7 +83,7 @@ public class NEBAssertion extends Assertion {
    * {@inheritDoc}
    */
   public String getDescription(){
-    return String.format("%s NEB %s: oneOver = %d; two Over = %d; oneUnder = %d, twoUnder = %d; " +
+    return String.format("%s NEB %s: oneOver = %d; twoOver = %d; oneUnder = %d, twoUnder = %d; " +
         "other = %d; optimistic = %d; estimated = %d; risk %f.", winner, loser, oneVoteOverCount,
         twoVoteOverCount, oneVoteUnderCount, twoVoteUnderCount, otherCount, optimisticSamplesToAudit,
         estimatedSamplesToAudit, currentRisk);
