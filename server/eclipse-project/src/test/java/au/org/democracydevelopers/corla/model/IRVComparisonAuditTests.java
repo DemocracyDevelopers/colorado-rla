@@ -127,6 +127,12 @@ public class IRVComparisonAuditTests extends AssertionTests {
   private ContestResult simpleContest3;
 
   /**
+   * Mock of a ContestResult for the contest 'Simple Contest 4'.
+   */
+  @Mock
+  private ContestResult simpleContest4;
+
+  /**
    * Mock of a CVRAuditInfo object, matched to a CVR with id 1.
    */
   @Mock
@@ -170,6 +176,9 @@ public class IRVComparisonAuditTests extends AssertionTests {
 
     when(simpleContest3.getContestName()).thenReturn("Simple Contest 3");
     when(simpleContest3.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.02));
+
+    when(simpleContest4.getContestName()).thenReturn("Simple Contest 4");
+    when(simpleContest4.getDilutedMargin()).thenReturn(BigDecimal.valueOf(0.07));
 
     when(auditInfo.id()).thenReturn(1L);
     when(auditInfo.cvr()).thenReturn(cvr);
@@ -637,11 +646,16 @@ public class IRVComparisonAuditTests extends AssertionTests {
     ca.addContestCVRIds(List.of(1L));
     ca.recordDiscrepancy(auditInfo, 2);
 
+    // Note that only the maximum discrepancy across assertions is recorded in the base level
+    // classes discrepancy counts (for reporting purposes). Each assertion's discrepancies are
+    // taken into account for risk measurement.
     checkDiscrepancies(ca, 0, 1, 0, 0, 0);
 
     riskMeasurementCheck(ca, List.of(Pair.make(1000, 0.214),
         Pair.make(1500, 0.019)));
 
+    // Note that all discrepancies associated with this CVR/ballot are removed, across all
+    // assertions in the audit (i.e., not just where it represented a discrepancy of 2).
     ca.removeDiscrepancy(auditInfo, 2);
     checkDiscrepancies(ca, 0, 0, 0, 0, 0);
 
@@ -735,11 +749,16 @@ public class IRVComparisonAuditTests extends AssertionTests {
     ca.addContestCVRIds(List.of(1L));
     ca.recordDiscrepancy(auditInfo, 1);
 
+    // Note that only the maximum discrepancy across assertions is recorded in the base level
+    // classes discrepancy counts (for reporting purposes). Each assertion's discrepancies are
+    // taken into account for risk measurement.
     checkDiscrepancies(ca, 1, 0, 0, 0, 0);
 
     riskMeasurementCheck(ca, List.of(Pair.make(10, 1.0),
         Pair.make(100, 0.894), Pair.make(200, 0.415)));
 
+    // Note that all discrepancies associated with this CVR/ballot are removed, across all
+    // assertions in the audit (i.e., not just where it represented a discrepancy of 1).
     ca.removeDiscrepancy(auditInfo, 1);
     checkDiscrepancies(ca, 0, 0, 0, 0, 0);
 
@@ -753,8 +772,8 @@ public class IRVComparisonAuditTests extends AssertionTests {
    * Discrepancy computation and recording for 'Mixed Contest 2' with CVR "B","A","C","D" and
    * audited ballot "A","B","C","D". The maximum discrepancy is -1. Also checks risk measurement
    * before and after the removal of the recorded discrepancies against the ballot/CVR pair. We
-   * use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot Risk Limiting Audits to compute the expected
-   * risk values.
+   * use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot Risk Limiting Audits to
+   * compute the expected risk values.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testComputeRecordRemoveDiscrepancyCVR_BACD_ACVR_ABCD_mixed2(RecordType auditedType){
@@ -773,11 +792,16 @@ public class IRVComparisonAuditTests extends AssertionTests {
     ca.addContestCVRIds(List.of(1L));
     ca.recordDiscrepancy(auditInfo, -1);
 
+    // Note that only the maximum discrepancy across assertions is recorded in the base level
+    // classes discrepancy counts (for reporting purposes). Each assertion's discrepancies are
+    // taken into account for risk measurement.
     checkDiscrepancies(ca, 0, 0, 1, 0, 0);
 
     riskMeasurementCheck(ca, List.of(Pair.make(10, 0.412),
         Pair.make(50, 0.151), Pair.make(100, 0.045)));
 
+    // Note that all discrepancies associated with this CVR/ballot are removed, across all
+    // assertions in the audit (i.e., not just where it represented a discrepancy of -1).
     ca.removeDiscrepancy(auditInfo, -1);
     checkDiscrepancies(ca, 0, 0, 0, 0, 0);
 
@@ -791,8 +815,8 @@ public class IRVComparisonAuditTests extends AssertionTests {
    * Discrepancy computation and recording for 'Simple Contest 3' with CVR "B","A","C","D" and
    * audited ballot "A","B","C","D". The maximum discrepancy is -2. Also checks risk measurement
    * before and after the removal of the recorded discrepancies against the ballot/CVR pair. We
-   * use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot Risk Limiting Audits to compute the expected
-   * risk values.
+   * use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot Risk Limiting Audits to
+   * compute the expected risk values. Simple Contest 3 contains one NEB assertion.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testComputeRecordRemoveDiscrepancyCVR_BACD_ACVR_ABCD_simple3(RecordType auditedType){
@@ -822,6 +846,44 @@ public class IRVComparisonAuditTests extends AssertionTests {
     // ca.riskMeasurement() at this point, where the audited sample count is 100, should yield
     // a risk of 0.380.
     Assert.assertEquals(testUtils.doubleComparator.compare(0.380,
+        ca.riskMeasurement().doubleValue()), 0);
+  }
+
+  /**
+   * Discrepancy computation and recording for 'Simple Contest 4' with blank CVR vote and
+   * audited ballot "A","B","C","D". The maximum discrepancy is 0. Also checks risk measurement
+   * before and after the removal of the recorded discrepancy against the ballot/CVR pair. We
+   * use Equation 9 in Stark's Super Simple Simultaneous Single-Ballot Risk Limiting Audits to
+   * compute the expected risk values. Simple Contest 4 contains one NEN assertion.
+   */
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
+  public void testComputeRecordRemoveDiscrepancyCVR_BACD_ACVR_ABCD_simple4(RecordType auditedType){
+    log(LOGGER, String.format("testComputeRecordDiscrepancyCVR_BACD_ACVR_ABCD_simple4[%s]", auditedType));
+    resetMocks(blank, ABCD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Simple Contest 4");
+    IRVComparisonAudit ca = createIRVComparisonAuditSimple4();
+
+    final OptionalInt d = ca.computeDiscrepancy(cvr, auditedCvr);
+    assert(d.isPresent());
+    assertEquals(0, d.getAsInt());
+
+    // Note that computeDiscrepancy() does not update internal discrepancy counts, only
+    // recordDiscrepancy() and removeDiscrepancy() do.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+
+    ca.addContestCVRIds(List.of(1L));
+    ca.recordDiscrepancy(auditInfo, 0);
+
+    checkDiscrepancies(ca, 0, 0, 0, 0, 1);
+
+    riskMeasurementCheck(ca, List.of(Pair.make(10, 0.710),
+        Pair.make(50, 0.180), Pair.make(100, 0.033)));
+
+    ca.removeDiscrepancy(auditInfo, 0);
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
+
+    // ca.riskMeasurement() at this point, where the audited sample count is 100, should yield
+    // a risk of 0.033.
+    Assert.assertEquals(testUtils.doubleComparator.compare(0.033,
         ca.riskMeasurement().doubleValue()), 0);
   }
 
@@ -905,6 +967,9 @@ public class IRVComparisonAuditTests extends AssertionTests {
     ca.addContestCVRIds(List.of(1L));
     ca.recordDiscrepancy(auditInfo, 0);
 
+    // Note that only the maximum discrepancy across assertions is recorded in the base level
+    // classes discrepancy counts (for reporting purposes). Each assertion's discrepancies are
+    // taken into account for risk measurement.
     checkDiscrepancies(ca, 0, 0, 0, 0, 1);
 
     riskMeasurementCheck(ca, List.of(Pair.make(10, 0.926),
@@ -1020,6 +1085,23 @@ public class IRVComparisonAuditTests extends AssertionTests {
 
     checkIRVComparisonAudit(ca, AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS,
         AuditStatus.NOT_STARTED, 0.02);
+
+    final List<Assertion> assertions = ca.getAssertions();
+    assertEquals(1, assertions.size());
+
+    return ca;
+  }
+
+  /**
+   * Create and return an IRVComparisonAudit for the contest 'Simple Contest 4'.
+   * @return IRVComparisonAudit for the contest 'Simple Contest $'.
+   */
+  private IRVComparisonAudit createIRVComparisonAuditSimple4(){
+    IRVComparisonAudit ca = new IRVComparisonAudit(simpleContest4,
+        AssertionTests.riskLimit5, AuditReason.COUNTY_WIDE_CONTEST);
+
+    checkIRVComparisonAudit(ca, AssertionTests.riskLimit5, AuditReason.COUNTY_WIDE_CONTEST,
+        AuditStatus.NOT_STARTED, 0.07);
 
     final List<Assertion> assertions = ca.getAssertions();
     assertEquals(1, assertions.size());
