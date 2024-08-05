@@ -146,3 +146,5 @@ INSERT INTO assertion_assumed_continuing values (36, 'G');
 INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (36, -1, 1);
 INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (36, 0, 2);
 INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (36, 0, 3);
+
+INSERT INTO contest (county_id, id, version, description, name, sequence_number, votes_allowed, winners_allowed) VALUES (4,13,0,'IRV','No Assertions',13,4,1);

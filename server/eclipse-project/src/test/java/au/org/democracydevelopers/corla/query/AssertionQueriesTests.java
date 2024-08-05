@@ -92,7 +92,9 @@ public class AssertionQueriesTests extends TestClassWithDatabase {
   @Test
   public void testExistentContestNoAssertions(){
     testUtils.log(LOGGER, "testExistentContestNoAssertions");
-    final List<Assertion> assertions = AssertionQueries.matching("Contest Number 9");
+    final List<Assertion> assertions = AssertionQueries.matching("No Assertions");
+
+    assertTrue(assertions.isEmpty());
   }
 
   /**
