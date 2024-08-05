@@ -85,7 +85,7 @@ public class NENAssertion extends Assertion {
    * {@inheritDoc}
    */
   public String getDescription(){
-    return String.format("%s NEN %s assuming (%s) are continuing: oneOver = %d; two Over = %d; " +
+    return String.format("%s NEN %s assuming (%s) are continuing: oneOver = %d; twoOver = %d; " +
         "oneUnder = %d, twoUnder = %d; other = %d; optimistic = %d; estimated = %d; risk %f.",
         winner, loser, assumedContinuing, oneVoteOverCount, twoVoteOverCount, oneVoteUnderCount,
         twoVoteUnderCount, otherCount, optimisticSamplesToAudit, estimatedSamplesToAudit, currentRisk);
