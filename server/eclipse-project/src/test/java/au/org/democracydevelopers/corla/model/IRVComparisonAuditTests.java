@@ -1076,7 +1076,7 @@ public class IRVComparisonAuditTests extends AssertionTests {
 
     assert(a instanceof NEBAssertion);
 
-    final String expected = String.format("%s NEB %s: oneOver = %d; two Over = %d; oneUnder = %d, " +
+    final String expected = String.format("%s NEB %s: oneOver = %d; twoOver = %d; oneUnder = %d, " +
             "twoUnder = %d; other = %d; optimistic = %d; estimated = %d; risk %f.", winner, loser,
         oneOver, twoOver, oneUnder, twoUnder, other, optimistic, estimated,
         BigDecimal.valueOf(risk).setScale(Assertion.RISK_DECIMALS, RoundingMode.HALF_UP));
@@ -1112,7 +1112,7 @@ public class IRVComparisonAuditTests extends AssertionTests {
     assert(a instanceof NENAssertion);
 
     final String expected = String.format("%s NEN %s assuming (%s) are continuing: oneOver = %d; " +
-            "two Over = %d; oneUnder = %d, twoUnder = %d; other = %d; optimistic = %d; estimated = %d; " +
+            "twoOver = %d; oneUnder = %d, twoUnder = %d; other = %d; optimistic = %d; estimated = %d; " +
             "risk %f.", winner, loser, continuing, oneOver, twoOver, oneUnder, twoUnder, other,
             optimistic, estimated, BigDecimal.valueOf(risk).setScale(Assertion.RISK_DECIMALS,
             RoundingMode.HALF_UP));
