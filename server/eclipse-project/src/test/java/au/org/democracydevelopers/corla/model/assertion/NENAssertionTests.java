@@ -90,9 +90,10 @@ public class NENAssertionTests extends AssertionTests {
    * @param other Number of other discrepancies related to the assertion.
    */
   @Test(dataProvider = "SampleParameters", dataProviderClass = AssertionTests.class)
-  public void testNENOptimistic(BigDecimal riskLimit, Integer rawMargin, BigDecimal dilutedMargin,
-      BigDecimal difficulty, Map<Long,Integer> cvrDiscrepancies, Integer oneVoteOver,
-      Integer oneVoteUnder, Integer twoVoteOver, Integer twoVoteUnder, Integer other)
+  public void testNENOptimistic(final BigDecimal riskLimit, final Integer rawMargin,
+      final BigDecimal dilutedMargin, final BigDecimal difficulty, final Map<Long,Integer> cvrDiscrepancies,
+      final Integer oneVoteOver, final Integer oneVoteUnder, final Integer twoVoteOver,
+      final Integer twoVoteUnder, final Integer other)
   {
     log(LOGGER, String.format("testNENOptimistic[%f;%f;%d;%d:%d;%d;%d]", riskLimit,
         dilutedMargin, oneVoteOver, oneVoteUnder, twoVoteOver, twoVoteUnder, other));
@@ -125,10 +126,10 @@ public class NENAssertionTests extends AssertionTests {
    * @param other Number of other discrepancies related to the assertion.
    */
   @Test(dataProvider = "ParametersVaryingSamples", dataProviderClass = AssertionTests.class)
-  public void testNENEstimatedVaryingSamples(Integer auditedSamples, BigDecimal riskLimit,
-      Integer rawMargin, BigDecimal dilutedMargin, BigDecimal difficulty,
-      Map<Long,Integer> cvrDiscrepancies, Integer oneVoteOver, Integer oneVoteUnder,
-      Integer twoVoteOver, Integer twoVoteUnder, Integer other)
+  public void testNENEstimatedVaryingSamples(final Integer auditedSamples, final BigDecimal riskLimit,
+      final Integer rawMargin, final BigDecimal dilutedMargin, final BigDecimal difficulty,
+      final Map<Long,Integer> cvrDiscrepancies, final Integer oneVoteOver, final Integer oneVoteUnder,
+      final Integer twoVoteOver, final Integer twoVoteUnder, final Integer other)
   {
     log(LOGGER, String.format("testNENEstimatedVaryingSamples[%d;%f;%f;%d;%d:%d;%d;%d]",
         auditedSamples, riskLimit, dilutedMargin, oneVoteOver, oneVoteUnder, twoVoteOver,
@@ -867,7 +868,7 @@ public class NENAssertionTests extends AssertionTests {
    * Two CastVoteRecord's with a blank vote will not trigger a discrepancy.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyNone1(RecordType auditedType){
+  public void testNENComputeDiscrepancyNone1(final RecordType auditedType){
     testNENComputeDiscrepancyNone(blank, auditedType);
   }
 
@@ -875,7 +876,7 @@ public class NENAssertionTests extends AssertionTests {
    * Two CastVoteRecord's with a single vote for "A" will not trigger a discrepancy.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyNone2(RecordType auditedType){
+  public void testNENComputeDiscrepancyNone2(final RecordType auditedType){
     testNENComputeDiscrepancyNone(A, auditedType);
   }
 
@@ -883,7 +884,7 @@ public class NENAssertionTests extends AssertionTests {
    * Two CastVoteRecord's with a single vote for "B" will not trigger a discrepancy.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyNone3(RecordType auditedType){
+  public void testNENComputeDiscrepancyNone3(final RecordType auditedType){
     testNENComputeDiscrepancyNone(B, auditedType);
   }
 
@@ -891,7 +892,7 @@ public class NENAssertionTests extends AssertionTests {
    * Two CastVoteRecord's with a vote for "A", "B", "C", "D" will not trigger a discrepancy.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyNone4(RecordType auditedType){
+  public void testNENComputeDiscrepancyNone4(final RecordType auditedType){
     testNENComputeDiscrepancyNone(ABCD, auditedType);
   }
 
@@ -899,7 +900,7 @@ public class NENAssertionTests extends AssertionTests {
    * Two CastVoteRecord's with a vote for "B", "A", "C", "D" will not trigger a discrepancy.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyNone5(RecordType auditedType){
+  public void testNENComputeDiscrepancyNone5(final RecordType auditedType){
     testNENComputeDiscrepancyNone(BACD, auditedType);
   }
 
@@ -909,7 +910,7 @@ public class NENAssertionTests extends AssertionTests {
    * field in the CVR and audited ballot CastVoteRecords.
    * @param info A vote configuration.
    */
-  public void testNENComputeDiscrepancyNone(CVRContestInfo info, RecordType auditedType){
+  public void testNENComputeDiscrepancyNone(final CVRContestInfo info, final RecordType auditedType){
     log(LOGGER, String.format("testNENComputeDiscrepancyNone[%s;%s]", info.choices(), auditedType));
     resetMocks(info, info, RecordType.UPLOADED, ConsensusValue.YES, auditedType, TC);
 
@@ -951,7 +952,7 @@ public class NENAssertionTests extends AssertionTests {
    * "C" are continuing candidates. (In this case, a one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyOneOver1(RecordType recordType){
+  public void testNENComputeDiscrepancyOneOver1(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneOver1[%s]", recordType));
     resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -969,7 +970,7 @@ public class NENAssertionTests extends AssertionTests {
    * (In this case, a one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyOneOver2(RecordType recordType){
+  public void testNENComputeDiscrepancyOneOver2(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneOver2[%s]", recordType));
     resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -987,7 +988,7 @@ public class NENAssertionTests extends AssertionTests {
    * (In this case, a one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyOneOver3(RecordType recordType){
+  public void testNENComputeDiscrepancyOneOver3(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneOver3[%s]", recordType));
     resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1005,7 +1006,7 @@ public class NENAssertionTests extends AssertionTests {
    * "D" are continuing candidates. (In this case, a one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyOneOver4(RecordType recordType){
+  public void testNENComputeDiscrepancyOneOver4(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneOver4[%s]", recordType));
     resetMocks(ABCD, DABC, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1023,7 +1024,7 @@ public class NENAssertionTests extends AssertionTests {
    * are continuing. (In this case, a two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyTwoOver1(RecordType recordType){
+  public void testNENComputeDiscrepancyTwoOver1(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyTwoOver1[%s]", recordType));
     resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1044,7 +1045,7 @@ public class NENAssertionTests extends AssertionTests {
    * and "D" are continuing. (In this case, a two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyTwoOver2(RecordType recordType){
+  public void testNENComputeDiscrepancyTwoOver2(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyTwoOver2[%s]", recordType));
     resetMocks(ABCD, DABC, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1063,7 +1064,7 @@ public class NENAssertionTests extends AssertionTests {
    * (In this case, a two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyTwoOver3(RecordType recordType){
+  public void testNENComputeDiscrepancyTwoOver3(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyTwoOver2[%s]", recordType));
     resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1084,7 +1085,7 @@ public class NENAssertionTests extends AssertionTests {
    * and "D" are continuing. (In this case, a one vote understatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyOneUnder1(RecordType recordType){
+  public void testNENComputeDiscrepancyOneUnder1(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneUnder1[%s]", recordType));
     resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1102,7 +1103,7 @@ public class NENAssertionTests extends AssertionTests {
    * are continuing. (In this case, a one vote understatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyOneUnder2(RecordType recordType){
+  public void testNENComputeDiscrepancyOneUnder2(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneUnder2[%s]", recordType));
     resetMocks(blank, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1120,7 +1121,7 @@ public class NENAssertionTests extends AssertionTests {
    * (In this case, a one vote understatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyOneUnder3(RecordType recordType){
+  public void testNENComputeDiscrepancyOneUnder3(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneUnder3[%s]", recordType));
     resetMocks(B, A, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1138,7 +1139,7 @@ public class NENAssertionTests extends AssertionTests {
    * (In this case, a one vote understatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyOneUnder4(RecordType recordType){
+  public void testNENComputeDiscrepancyOneUnder4(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOneUnder4[%s]", recordType));
     resetMocks(B, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1156,7 +1157,7 @@ public class NENAssertionTests extends AssertionTests {
    * (In this case, a two vote understatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyTwoUnder1(RecordType recordType){
+  public void testNENComputeDiscrepancyTwoUnder1(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyTwoUnder1[%s]", recordType));
     resetMocks(B, A, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1175,7 +1176,7 @@ public class NENAssertionTests extends AssertionTests {
    * (In this case, a two vote understatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyTwoUnder2(RecordType recordType){
+  public void testNENComputeDiscrepancyTwoUnder2(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyTwoUnder2[%s]", recordType));
     resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1197,7 +1198,7 @@ public class NENAssertionTests extends AssertionTests {
    * (In this case, an "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyOther1(RecordType recordType){
+  public void testNENComputeDiscrepancyOther1(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOther1[%s]", recordType));
     resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1218,7 +1219,7 @@ public class NENAssertionTests extends AssertionTests {
    * (In this case, an "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyOther2(RecordType recordType){
+  public void testNENComputeDiscrepancyOther2(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOther2[%s]", recordType));
     resetMocks(A, B, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1236,7 +1237,7 @@ public class NENAssertionTests extends AssertionTests {
    * continuing. (In this case, an "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyOther3(RecordType recordType){
+  public void testNENComputeDiscrepancyOther3(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOther3[%s]", recordType));
     resetMocks(A, blank, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1254,7 +1255,7 @@ public class NENAssertionTests extends AssertionTests {
    * continuing. (In this case, an "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyOther4(RecordType recordType){
+  public void testNENComputeDiscrepancyOther4(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOther4[%s]", recordType));
     resetMocks(A, BACD, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1273,7 +1274,7 @@ public class NENAssertionTests extends AssertionTests {
    * (In this case, an "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyOther5(RecordType recordType){
+  public void testNENComputeDiscrepancyOther5(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyOther5[%s]", recordType));
     resetMocks(blank, BA, RecordType.UPLOADED, ConsensusValue.YES, recordType, TC);
 
@@ -1294,7 +1295,7 @@ public class NENAssertionTests extends AssertionTests {
    * C NEN A given A, B, C, and D are continuing. (In this case, a one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyPhantomRecordOneOver1(RecordType recordType){
+  public void testNENComputeDiscrepancyPhantomRecordOneOver1(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyPhantomRecordOneOver1[%s]", recordType));
     resetMocks(blank, blank, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType, TC);
 
@@ -1316,7 +1317,7 @@ public class NENAssertionTests extends AssertionTests {
    * (In this case, a one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyPhantomRecordOneOver2(RecordType recordType){
+  public void testNENComputeDiscrepancyPhantomRecordOneOver2(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyPhantomRecordOneOver2[%s]", recordType));
     resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType, TC);
 
@@ -1339,7 +1340,7 @@ public class NENAssertionTests extends AssertionTests {
    * continuing. (In this case, an "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyPhantomRecordOther1(RecordType recordType){
+  public void testNENComputeDiscrepancyPhantomRecordOther1(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyPhantomRecordOther1[%s]", recordType));
     resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType, TC);
 
@@ -1363,7 +1364,7 @@ public class NENAssertionTests extends AssertionTests {
    * and D NEN C assuming only "C" and "D" are continuing. (In this case, a two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyPhantomRecordTwoOver1(RecordType recordType){
+  public void testNENComputeDiscrepancyPhantomRecordTwoOver1(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyPhantomRecordTwoOver1[%s]", recordType));
     resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.YES, recordType, TC);
 
@@ -1383,7 +1384,7 @@ public class NENAssertionTests extends AssertionTests {
    * the right discrepancy is computed for any NEN assertion. (A two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyPhantomRecordNoConsensus1(RecordType recordType){
+  public void testNENComputeDiscrepancyPhantomRecordNoConsensus1(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyPhantomRecordNoConsensus1[%s]", recordType));
     resetMocks(blank, ABCD, RecordType.PHANTOM_RECORD, ConsensusValue.NO, recordType, TC);
 
@@ -1397,7 +1398,7 @@ public class NENAssertionTests extends AssertionTests {
    * the right discrepancy is computed for any NEN assertion. (A two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyPhantomRecordNoConsensus2(RecordType recordType){
+  public void testNENComputeDiscrepancyPhantomRecordNoConsensus2(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyPhantomRecordNoConsensus2[%s]", recordType));
     resetMocks(blank, blank, RecordType.PHANTOM_RECORD, ConsensusValue.NO, recordType, TC);
 
@@ -1513,7 +1514,7 @@ public class NENAssertionTests extends AssertionTests {
    * continuing. (A two vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyNoConsensusNormalCVR1(RecordType recordType){
+  public void testNENComputeDiscrepancyNoConsensusNormalCVR1(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyNoConsensusNormalCVR1[%s]", recordType));
     resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.NO, recordType, TC);
 
@@ -1536,7 +1537,7 @@ public class NENAssertionTests extends AssertionTests {
    * is computed for assertion F NEN A given "A" and "F" are continuing. (An "other" discrepancy).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyNoConsensusNormalCVR2(RecordType recordType){
+  public void testNENComputeDiscrepancyNoConsensusNormalCVR2(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyNoConsensusNormalCVR2[%s]", recordType));
     resetMocks(ABCD, A, RecordType.UPLOADED, ConsensusValue.NO, recordType, TC);
 
@@ -1554,7 +1555,7 @@ public class NENAssertionTests extends AssertionTests {
    * continuing, and C NEN D given "B", "C", and "D" are continuing. (A one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyNoConsensusNormalCVR3(RecordType recordType){
+  public void testNENComputeDiscrepancyNoConsensusNormalCVR3(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyNoConsensusNormalCVR3[%s]", recordType));
     resetMocks(ABCD, blank, RecordType.UPLOADED, ConsensusValue.NO, recordType, TC);
 
@@ -1574,7 +1575,7 @@ public class NENAssertionTests extends AssertionTests {
    * discrepancy is computed for any NEN assertion. (A one vote overstatement).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyNoConsensusNormalCVR4(RecordType recordType){
+  public void testNENComputeDiscrepancyNoConsensusNormalCVR4(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyNoConsensusNormalCVR4[%s]", recordType));
     resetMocks(blank, ABCD, RecordType.UPLOADED, ConsensusValue.NO, recordType, TC);
 
@@ -1588,7 +1589,7 @@ public class NENAssertionTests extends AssertionTests {
    * no discrepancy results for any NEN assertion.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENNoContestOnCVRAuditedBallot(RecordType recordType){
+  public void testNENNoContestOnCVRAuditedBallot(final RecordType recordType){
     log(LOGGER, String.format("testNENNoContestOnCVRAuditedBallot[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
@@ -1637,7 +1638,7 @@ public class NENAssertionTests extends AssertionTests {
    * results (for any NEN assertion).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyPhantomCVRBallotNoContest(RecordType recordType){
+  public void testNENComputeDiscrepancyPhantomCVRBallotNoContest(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyPhantomCVRBallotNoContest[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(blank));
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
@@ -1661,7 +1662,7 @@ public class NENAssertionTests extends AssertionTests {
    * 1 (a one vote overstatement) results (for any NEN assertion).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyCVRNoContestBallotNoConsensus(RecordType recordType){
+  public void testNENComputeDiscrepancyCVRNoContestBallotNoConsensus(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyCVRNoContestBallotNoConsensus[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
@@ -1687,7 +1688,7 @@ public class NENAssertionTests extends AssertionTests {
    * for all the tested assertions.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyCVRNoContestBallotScoreOfZero(RecordType recordType){
+  public void testNENComputeDiscrepancyCVRNoContestBallotScoreOfZero(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyCVRNoContestBallotScoreOfZero[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
@@ -1718,7 +1719,7 @@ public class NENAssertionTests extends AssertionTests {
    * of the audited ballot score).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyCVRNoContestBallotScoreOfMinusOne(RecordType recordType){
+  public void testNENComputeDiscrepancyCVRNoContestBallotScoreOfMinusOne(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyCVRNoContestBallotScoreOfMinusOne[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
@@ -1749,7 +1750,7 @@ public class NENAssertionTests extends AssertionTests {
    * of the audited ballot score).
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyCVRNoContestBallotScoreOfOne(RecordType recordType){
+  public void testNENComputeDiscrepancyCVRNoContestBallotScoreOfOne(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyCVRNoContestBallotScoreOfOne[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
@@ -1779,7 +1780,7 @@ public class NENAssertionTests extends AssertionTests {
    * discrepancy) for all the tested assertions.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyNormalCVRBallotNoContestZero(RecordType recordType){
+  public void testNENComputeDiscrepancyNormalCVRBallotNoContestZero(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyNormalCVRBallotNoContestZero[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(A));
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
@@ -1809,7 +1810,7 @@ public class NENAssertionTests extends AssertionTests {
    * overstatement) for all the tested assertions.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyNormalCVRBallotNoContestOne(RecordType recordType){
+  public void testNENComputeDiscrepancyNormalCVRBallotNoContestOne(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyNormalCVRBallotNoContestOne[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
@@ -1839,7 +1840,7 @@ public class NENAssertionTests extends AssertionTests {
    * understatement) for all the tested assertions.
    */
   @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
-  public void testNENComputeDiscrepancyNormalCVRBallotNoContestMinusOne(RecordType recordType){
+  public void testNENComputeDiscrepancyNormalCVRBallotNoContestMinusOne(final RecordType recordType){
     log(LOGGER, String.format("testNENComputeDiscrepancyNormalCVRBallotNoContestMinusOne[%s]", recordType));
     when(cvr.contestInfoForContestResult(TC)).thenReturn(Optional.of(ABCD));
     when(auditedCvr.contestInfoForContestResult(TC)).thenReturn(Optional.empty());
@@ -2165,7 +2166,7 @@ public class NENAssertionTests extends AssertionTests {
    * with varying diluted margins, discrepancies, and current audited sample count.
    */
   @Test(dataProvider = "AuditSampleNumbers", dataProviderClass = AssertionTests.class)
-  public void computeEstimatedSamplesToAudit(int auditedSampleCount){
+  public void computeEstimatedSamplesToAudit(final int auditedSampleCount){
     log(LOGGER, String.format("computeEstimatedSamplesToAudit[%d]",auditedSampleCount));
     Assertion a1 = createNENAssertion("A", "B", TC, List.of("A","B"),100,
         0.01, 100, Map.of(), 0, 0, 0,
@@ -2269,10 +2270,11 @@ public class NENAssertionTests extends AssertionTests {
    * @param other Number of other discrepancies to associate with the assertion.
    * @return an NEN assertion with the given specification.
    */
-  private static Assertion createNENAssertion(String winner, String loser, String contestName,
-      List<String> continuing, int rawMargin, double dilutedMargin, double difficulty,
-      Map<Long,Integer> cvrDiscrepancy, int oneVoteOver, int oneVoteUnder, int twoVoteOver,
-      int twoVoteUnder, int other){
+  private static Assertion createNENAssertion(final String winner, final String loser,
+      final String contestName, final List<String> continuing, final int rawMargin,
+      final double dilutedMargin, final double difficulty,
+      final Map<Long,Integer> cvrDiscrepancy, final int oneVoteOver, final int oneVoteUnder,
+      final int twoVoteOver, final int twoVoteUnder, final int other){
 
     Assertion a = new NENAssertion();
     AssertionTests.populateAssertion(a, winner, loser, contestName, continuing, rawMargin,

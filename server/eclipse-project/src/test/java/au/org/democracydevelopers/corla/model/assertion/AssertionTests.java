@@ -223,8 +223,9 @@ public class AssertionTests extends TestClassWithDatabase {
    * @param acvrRecType Record type for the audited ballot.
    * @param contestName Name of the contest whose votes we are encoding.
    */
-  protected void resetMocks(CVRContestInfo cvrInfo, CVRContestInfo acvrInfo, RecordType cvrRecType,
-      ConsensusValue acvrConsensus, RecordType acvrRecType, final String contestName){
+  protected void resetMocks(final CVRContestInfo cvrInfo, CVRContestInfo acvrInfo,
+      final RecordType cvrRecType, final ConsensusValue acvrConsensus, final RecordType acvrRecType,
+      final String contestName){
     when(cvr.contestInfoForContestResult(contestName)).thenReturn(Optional.of(cvrInfo));
     when(auditedCvr.contestInfoForContestResult(contestName)).thenReturn(Optional.of(acvrInfo));
 
@@ -519,10 +520,11 @@ public class AssertionTests extends TestClassWithDatabase {
    * @param twoVoteUnder Number of two vote understatements to associate with the assertion.
    * @param other Number of other discrepancies to associate with the assertion.
    */
-  public static void populateAssertion(Assertion a, String winner, String loser, String contestName,
-      List<String> continuing, int rawMargin, double dilutedMargin, double difficulty,
-      Map<Long,Integer> cvrDiscrepancy, int oneVoteOver, int oneVoteUnder, int twoVoteOver,
-      int twoVoteUnder, int other){
+  public static void populateAssertion(Assertion a, final String winner, final String loser,
+      final String contestName, final List<String> continuing, final int rawMargin,
+      final double dilutedMargin, final double difficulty, final Map<Long,Integer> cvrDiscrepancy,
+      final int oneVoteOver, final int oneVoteUnder, final int twoVoteOver,
+      final int twoVoteUnder, final int other){
 
     a.winner = winner;
     a.loser  = loser;
@@ -553,8 +555,8 @@ public class AssertionTests extends TestClassWithDatabase {
    * @return the optimistic number of ballots to sample when auditing the assertion with
    * the given characteristics.
    */
-  public static int optimistic(BigDecimal riskLimit, double dilutedMargin, int o1, int o2,
-      int u1, int u2, BigDecimal gamma){
+  public static int optimistic(final BigDecimal riskLimit, final double dilutedMargin, final int o1,
+      final int o2, final int u1, final int u2, final BigDecimal gamma){
 
     final double dgamma = gamma.doubleValue();
     final double oneOnOneGamma = 1/dgamma;
@@ -585,8 +587,8 @@ public class AssertionTests extends TestClassWithDatabase {
    * the given characteristics, under the assumption that overstatements will continue at
    * the current rate,
    */
-  public static int estimated(BigDecimal riskLimit, double dilutedMargin, int o1, int o2,
-      int u1, int u2, BigDecimal gamma, int auditedSamples){
+  public static int estimated(final BigDecimal riskLimit, final double dilutedMargin, final int o1,
+      final int o2, final int u1, final int u2, final BigDecimal gamma, final int auditedSamples){
 
     final int optimistic = optimistic(riskLimit, dilutedMargin, o1, o2, u1, u2, gamma);
     if(auditedSamples == 0){
@@ -606,7 +608,8 @@ public class AssertionTests extends TestClassWithDatabase {
    * @param o Number of other discrepancies.
    * @return True if the assertion has the specified discrepancy counts
    */
-  public static boolean countsEqual(Assertion a, int o1, int o2, int u1, int u2, int o){
+  public static boolean countsEqual(final Assertion a, final int o1, final int o2, final int u1,
+      final int u2, final int o){
     return a.otherCount == o && a.oneVoteOverCount == o1 && a.oneVoteUnderCount == u1 &&
         a.twoVoteOverCount == o2 && a.twoVoteUnderCount == u2;
   }
@@ -627,9 +630,9 @@ public class AssertionTests extends TestClassWithDatabase {
    * @param u2 Expected two vote understatement count after discrepancy computation.
    * @param o Expected "other" discrepancy count after discrepancy computation.
    */
-  public static void checkComputeDiscrepancy(CastVoteRecord cvr, CastVoteRecord auditedCvr,
-      List<Assertion> assertions, int dType, Map<Long,Integer> cvrDiscrepancies, int o1, int o2,
-      int u1, int u2, int o)
+  public static void checkComputeDiscrepancy(final CastVoteRecord cvr, final CastVoteRecord auditedCvr,
+      List<Assertion> assertions, final int dType, final Map<Long,Integer> cvrDiscrepancies,
+      final int o1, final int o2, final int u1, final int u2, final int o)
   {
     for(Assertion a : assertions){
       OptionalInt d = a.computeDiscrepancy(cvr, auditedCvr);
@@ -651,8 +654,9 @@ public class AssertionTests extends TestClassWithDatabase {
    * @param other Expected number of other discrepancies.
    * @param cvrDiscrepancy Expected internal map of CVR ID to discrepancy type.
    */
-  public static void checkCountsDiscrepancyMap(final Assertion a, int oneOver, int oneUnder,
-      int twoOver, int twoUnder, int other, final Map<Long,Integer> cvrDiscrepancy){
+  public static void checkCountsDiscrepancyMap(final Assertion a, final int oneOver,
+      final int oneUnder, final int twoOver, final int twoUnder, final int other,
+      final Map<Long,Integer> cvrDiscrepancy){
 
     assertEquals(a.oneVoteOverCount.intValue(), oneOver);
     assertEquals(a.oneVoteUnderCount.intValue(), oneUnder);

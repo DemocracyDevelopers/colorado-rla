@@ -126,3 +126,32 @@ INSERT INTO assertion (assertion_type, contest_name, difficulty, diluted_margin,
 INSERT INTO assertion_assumed_continuing values (32, 'A');
 INSERT INTO assertion_assumed_continuing values (32, 'B');
 INSERT INTO assertion_assumed_continuing values (32, 'F');
+
+INSERT INTO contest (county_id, id, version, description, name, sequence_number, votes_allowed, winners_allowed) VALUES (4,13,0,'IRV','Mixed Assertions With Discrepancies',13,4,1);
+INSERT INTO assertion (assertion_type, contest_name, difficulty, diluted_margin, loser, margin, current_risk, estimated_samples_to_audit, one_vote_over_count, one_vote_under_count, optimistic_samples_to_audit, other_count, two_vote_over_count, two_vote_under_count, version, winner) values ('NEB', 'Mixed Assertions With Discrepancies', 159, 0.0159, 'C', 159, 1, 0, 0, 0, 0, 0, 0, 2, 0, 'B');
+INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (33, -2, 1);
+INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (33, -2, 2);
+
+INSERT INTO assertion (assertion_type, contest_name, difficulty, diluted_margin, loser, margin, current_risk, estimated_samples_to_audit, one_vote_over_count, one_vote_under_count, optimistic_samples_to_audit, other_count, two_vote_over_count, two_vote_under_count, version, winner) values ('NEB', 'Mixed Assertions With Discrepancies', 50, 0.12345, 'G', 1235, 1, 0, 0, 2, 0, 1, 0, 0, 0, 'F');
+INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (34, 0, 1);
+INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (34, -1, 2);
+INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (34, -1, 3);
+
+INSERT INTO assertion (assertion_type, contest_name, difficulty, diluted_margin, loser, margin, current_risk, estimated_samples_to_audit, one_vote_over_count, one_vote_under_count, optimistic_samples_to_audit, other_count, two_vote_over_count, two_vote_under_count, version, winner) values ('NEB', 'Mixed Assertions With Discrepancies', 17, 0.33247528, 'I', 3325, 1, 0, 0, 0, 0, 0, 2, 0, 0, 'H');
+INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (35, 2, 1);
+INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (35, 2, 2);
+
+INSERT INTO assertion (assertion_type, contest_name, difficulty, diluted_margin, loser, margin, current_risk, estimated_samples_to_audit, one_vote_over_count, one_vote_under_count, optimistic_samples_to_audit, other_count, two_vote_over_count, two_vote_under_count, version, winner) values ('NEN', 'Mixed Assertions With Discrepancies', 100, 0.01, 'B', 100, 1, 0, 2, 0, 0, 0, 0, 0, 0, 'A');
+INSERT INTO assertion_assumed_continuing values (36, 'A');
+INSERT INTO assertion_assumed_continuing values (36, 'B');
+INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (36, 1, 1);
+INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (36, 1, 2);
+
+INSERT INTO assertion (assertion_type, contest_name, difficulty, diluted_margin, loser, margin, current_risk, estimated_samples_to_audit, one_vote_over_count, one_vote_under_count, optimistic_samples_to_audit, other_count, two_vote_over_count, two_vote_under_count, version, winner) values ('NEN', 'Mixed Assertions With Discrepancies', 50, 0.12345, 'G', 1235, 1, 0, 0, 1, 0, 2, 0, 0, 0, 'F');
+INSERT INTO assertion_assumed_continuing values (37, 'F');
+INSERT INTO assertion_assumed_continuing values (37, 'G');
+INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (37, -1, 1);
+INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (37, 0, 2);
+INSERT INTO assertion_discrepancies (id, discrepancy, cvr_id) values (37, 0, 3);
+
+INSERT INTO contest (county_id, id, version, description, name, sequence_number, votes_allowed, winners_allowed) VALUES (4,14,0,'IRV','No Assertions',14,4,1);
