@@ -31,6 +31,7 @@ const REPORT_TYPES: ReportType[] = [
     {key:'ActivityReport', label:'Activity Report'},
     {key:'StateReport', label:'State Report'},
     {key:'JSON', label:'Json Reports'},
+    {key:'summarize_IRV', label:'IRV summaries'},
     {key:'ranked_ballot_interpretation', label:'Ranked vote interpretation'}
 ];
 
