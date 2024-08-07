@@ -21,25 +21,29 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.communication.responseFromRaire;
 
-import java.util.Objects;
 
 /**
- * The success response when a ContestRequest is sent to raire's generate-assertions endpoint. This
- * simply returns the winner, as calculated by raire, along with the name of the contest for which
- * the initial request was made.
- * This record is identical to the record of the same name in raire-service. Used for
+ * The response when a ContestRequest is sent to raire's generate-assertions endpoint.
+ * This class is identical to the record of the same name in raire-service. Used for
  * deserialization.
+ * All four states of the two booleans are possible - for example, generation may succeed, but
+ * receive a TIME_OUT_TRIMMING_ASSERTIONS warning, in which case retry will be true.
  */
 public final class GenerateAssertionsResponse {
   public String contestName;
-  public String winner;
+  public boolean succeeded;
+  public boolean retry;
 
-  /**
-   * @param contestName The name of the contest.
-   * @param winner      The winner of the contest, as calculated by raire.
-   */
-  public GenerateAssertionsResponse(String contestName, String winner) {
+
+/**
+ * All args constructor.
+ * @param contestName The name of the contest.
+ * @param succeeded   Whether assertion generation succeeded.
+ * @param retry       Whether it is worth retrying assertion generation.
+ */
+  public GenerateAssertionsResponse(String contestName, boolean succeeded, boolean retry) {
     this.contestName = contestName;
-    this.winner = winner;
+    this.succeeded = succeeded;
+    this.retry = retry;
   }
 }
