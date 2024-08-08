@@ -22,7 +22,8 @@ SELECT DISTINCT
    cvr_a.timestamp,
    cai.cvr_id,
    cpa.audit_reason,
-   raw_choice_per_voting_computer
+   raw_choice_per_voting_computer,
+   raw_audit_board_selection
 
 FROM
     cvr_audit_info AS cai
@@ -60,7 +61,7 @@ FROM
   LEFT JOIN (
       -- Get matching raw IRV votes for audit ballots (if there are any in irv_ballot_interpretation).
       -- Note that reaudited ballots won't show up here - only the most recent audit record.
-      SELECT raw_choices AS raw_choice_per_voting_computer,
+      SELECT raw_choices AS raw_audit_board_selection,
              contest_id,
              imprinted_id
         FROM irv_ballot_interpretation
