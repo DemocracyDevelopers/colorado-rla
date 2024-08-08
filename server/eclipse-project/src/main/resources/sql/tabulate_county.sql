@@ -13,7 +13,8 @@ FROM
 WHERE
   county_contest_vote_total.result_id = county_contest_result.id AND
   county_contest_result.contest_id = contest.id AND
-  county_contest_result.county_id = county.id
+  county_contest_result.county_id = county.id AND
+  contest.description = 'PLURALITY'
 ORDER BY
   county.name ASC,
   contest.id ASC,

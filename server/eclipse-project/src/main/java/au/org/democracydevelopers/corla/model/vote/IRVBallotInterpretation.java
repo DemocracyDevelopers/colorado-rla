@@ -34,7 +34,6 @@ public class IRVBallotInterpretation implements PersistentEntity {
   @Version
   private Long version;
 
-
   /**
    * The contest to which the interpreted vote belongs.
    */

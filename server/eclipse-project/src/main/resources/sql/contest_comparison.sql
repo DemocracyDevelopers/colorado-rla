@@ -21,7 +21,8 @@ SELECT DISTINCT
    cci_a.comment AS audit_board_comment,
    cvr_a.timestamp,
    cai.cvr_id,
-   cpa.audit_reason
+   cpa.audit_reason,
+   raw_choice_per_voting_computer
 
 FROM
    cvr_audit_info AS cai
@@ -47,6 +48,16 @@ FROM
  LEFT JOIN
    comparison_audit AS cpa
    ON cpa.audit_reason = cta.reason and cast (cci.cvr_id as TEXT) = ANY (string_to_array(substring(cpa.contest_cvr_ids from 2 for (char_length(cpa.contest_cvr_ids)-2)), ','))
+ LEFT JOIN (
+       -- Get matching raw IRV votes for upload ballots (if there are any in irv_ballot_interpretation).
+       SELECT raw_choices AS raw_choice_per_voting_computer,
+              contest_id,
+              imprinted_id
+           FROM irv_ballot_interpretation
+           WHERE irv_ballot_interpretation.record_type = 'UPLOADED'
+   ) as irv_up
+   ON irv_up.contest_id = cci.contest_id
+     AND irv_up.imprinted_id = cvr_s.imprinted_id
 
 ORDER BY county_name, contest_name
 ;
