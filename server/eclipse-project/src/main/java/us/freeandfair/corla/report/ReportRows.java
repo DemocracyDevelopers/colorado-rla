@@ -463,6 +463,8 @@ public class ReportRows {
   }
 
   /** build a list of rows for a contest based on tributes **/
+  // FIXME VT: Check that this is getting the right data for IRV, particularly the (min) margin, diluted margin, etc.
+  // used in ResultsReport.
   public static List<List<String>> getResultsReport(final String contestName) {
     final List<List<String>> rows = new ArrayList();
 

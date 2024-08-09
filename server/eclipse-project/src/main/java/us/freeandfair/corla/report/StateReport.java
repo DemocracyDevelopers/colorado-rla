@@ -510,6 +510,9 @@ public class StateReport {
           cell.setCellStyle(bold_right_style);
           cell.setCellValue("Diluted Margin %");
 
+          // FIXME VT: This is completely wrong for IRV. Maybe just redo it completely with the overall
+          // W/L, margin, and diluted margin from the whole contest.
+          // Also check that the Discrepancies (above) are correct.
           for (final String choice : ccr.rankedChoices()) {
             row = summary_sheet.createRow(row_number++);
             max_cell_number = Math.max(max_cell_number, cell_number);
