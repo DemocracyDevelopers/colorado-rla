@@ -233,7 +233,7 @@ public final class ComparisonAuditController {
 
     LOGGER.info("[reaudit] cvr: " + cvr.toString());
 
-    // VT: If this cvr has not been audited before, I believe cai will be null.
+    // DemocracyDevelopers: If this cvr has not been audited before, cai will be null.
     final CVRAuditInfo cai = Persistence.getByID(cvr.id(), CVRAuditInfo.class);
     if (cai == null || cai.acvr() == null) {
       LOGGER.error("can't reaudit a cvr that hasn't been audited");

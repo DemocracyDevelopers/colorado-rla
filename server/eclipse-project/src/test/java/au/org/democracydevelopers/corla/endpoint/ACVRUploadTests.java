@@ -407,11 +407,11 @@ public class ACVRUploadTests extends TestClassWithAuth {
    * 5. a vote with invalid choices (names not in the list of choices for the contest),
    * 6. a vote that doesn't properly correspond to the IDs it should have,
    * 7. an unparseable vote (typos in json data),
-   * 8. a reaudit (which checks that the superseded upload is market REAUDITED), and
-   * 9. a second reaudit with the same data (which checks that the previous reaudit is also now marked REAUDITED and that
-   *    there are now two revisions).
-   * We check that it is accepted and that the right records for CVR and CVRContestInfo are
-   * stored in the database.
+   * 8. a reaudit (which checks that the superseded upload is marked REAUDITED), and
+   * 9. a second reaudit with the same data (which checks that the previous reaudit is also now
+   *    marked REAUDITED and that there are now two revisions).
+   * We check that it is accepted (or rejected if it should be) and that the right records for CVR
+   * and CVRContestInfo are stored in the database.
    */
   @Test
   @Transactional
@@ -470,16 +470,18 @@ public class ACVRUploadTests extends TestClassWithAuth {
       // cause an error.
       testErrorResponseAndNoMatchingCvr(240515L, IRVJsonDeserializationFail, malformedACVRMsg);
 
-      // Eighth test: upload a reaudit ballot.
+      // Eighth test: upload a reaudited ballot.
       // Check that the new data successfully replaces the prior upload.
       testSuccessResponse(240509L, "1-1-1", validIRVReauditAsJson, List.of("Alice","Chuan"), 3);
-      // Test that the previous upload, with a vote for Bob and Chuan (validIRVAsJson) is now tagged as REAUDITED.
+      // Test that the previous upload, with a vote for Bob and Chuan (validIRVAsJson) is now tagged
+      // as REAUDITED.
       testPreviousAreReaudited(240509L, "1-1-1", List.of("Bob","Chuan"), 1, 1);
 
-      // Ninth test: re-upload the same reaudit ballot, again.
+      // Ninth test: upload the same ballot being reaudited, again.
       // Check that the new data is identical (it replaces it, but it's the same).
       testSuccessResponse(240509L, "1-1-1", validIRVReauditAsJson, List.of("Alice","Chuan"), 3);
-      // Test that the previous upload (from test 8), with a vote for Alice and Chuan (validIRVReauditAsJson) is now tagged as REAUDITED.
+      // Test that the previous upload (from test 8), with a vote for Alice and Chuan
+      // (validIRVReauditAsJson) is now tagged as REAUDITED.
       // There should be two reaudited ballots now, and the max revision should be 2.
       testPreviousAreReaudited(240509L, "1-1-1", List.of("Alice","Chuan"), 2, 2);
 
@@ -567,11 +569,12 @@ public class ACVRUploadTests extends TestClassWithAuth {
     // Find the maximum revision; check that it matches the expected maximum revision (this should match the number of
     // reaudits).
     assertFalse(acvrs.isEmpty());
-    OptionalLong maxRevision = acvrs.stream().mapToLong(CastVoteRecord::getRevision).max();
+    final OptionalLong maxRevision = acvrs.stream().mapToLong(CastVoteRecord::getRevision).max();
     assertEquals(maxRevision, OptionalLong.of(expectedMaxRevision));
 
     // Check that there is one record with the expected revision and it has the expected vote choices.
-    List<CastVoteRecord> maxRevisionAcvrs = acvrs.stream().filter(a -> a.getRevision() == expectedMaxRevision).toList();
+    final List<CastVoteRecord> maxRevisionAcvrs
+        = acvrs.stream().filter(a -> a.getRevision() == expectedMaxRevision).toList();
     assertEquals(maxRevisionAcvrs.size(), 1);
     assertTrue(maxRevisionAcvrs.get(0).contestInfoForContestResult(tinyIRV).isPresent());
     final List<String> choices = maxRevisionAcvrs.get(0).contestInfoForContestResult(tinyIRV).get().choices();
