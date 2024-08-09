@@ -134,9 +134,8 @@ public class ExportQueries {
 
     try {
       os.write("[".getBytes(StandardCharsets.UTF_8));
-      Object[] resultsArr = results.toArray();
 
-      for(Object line : resultsArr) {
+      for(final Object line : results.toArray()) {
         try {
           os.write(line.toString().getBytes(StandardCharsets.UTF_8));
         } catch (java.io.IOException e) {
