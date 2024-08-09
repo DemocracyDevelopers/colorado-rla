@@ -180,8 +180,8 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
    * @param timeLimitSeconds  the time limit for raire assertion generation, per contest.
    * @param raireUrl          the url where the raire-service is running.
    */
-  protected List<GenerateAssertionsResponse> generateAllAssertions(List<ContestResult> IRVContestResults,
-                                                                   double timeLimitSeconds, String raireUrl) {
+  protected List<GenerateAssertionsResponse> generateAllAssertions(final List<ContestResult> IRVContestResults,
+                                            final double timeLimitSeconds, final String raireUrl) {
     final String prefix = "[generateAllAssertions]";
     LOGGER.debug(String.format("%s %s.", prefix, "Generating assertions for all IRV contests"));
 
@@ -213,8 +213,8 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
    * @return The GenerateAssertionsResponseWithErrors, which usually contains a
    * winner but may instead be UNKNOWN_WINNER and an error message.
    */
-  protected GenerateAssertionsResponse generateAssertionsUpdateWinners(List<ContestResult> IRVContestResults,
-                                                                       String contestName, double timeLimitSeconds, String raireUrl) {
+  protected GenerateAssertionsResponse generateAssertionsUpdateWinners(final List<ContestResult> IRVContestResults,
+                   final String contestName, final double timeLimitSeconds, final String raireUrl) {
     final String prefix = "[generateAssertionsUpdateWinners]";
     LOGGER.debug(String.format("%s %s %s.", prefix, "Generating assertions for contest ", contestName));
 
@@ -251,8 +251,8 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
 
         // OK response, which may indicate either that assertion generation succeeded, or that it
         // failed and raire generated a useful error. Return raire's response.
-        GenerateAssertionsResponse responseFromRaire = Main.GSON.fromJson(EntityUtils.toString(raireResponse.getEntity()),
-            GenerateAssertionsResponse.class);
+        final GenerateAssertionsResponse responseFromRaire
+            = Main.GSON.fromJson(EntityUtils.toString(raireResponse.getEntity()), GenerateAssertionsResponse.class);
 
         LOGGER.debug(String.format("%s %s %s %s.", prefix, responseFromRaire.succeeded ? "Success" : "Failure",
             "response for raire assertion generation for contest", contestName));
@@ -265,12 +265,12 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
         LOGGER.error(String.format("%s %s", prefix, msg));
         throw new RuntimeException(msg);
       }
-    } catch (URISyntaxException | MalformedURLException e) {
+    } catch (final URISyntaxException | MalformedURLException e) {
       // The raire service url is malformed, probably a config error.
       final String msg = "Bad configuration of Raire service url: " + raireUrl + ". Check your config file.";
       LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
       throw new RuntimeException(msg);
-    } catch (NoSuchElementException e ) {
+    } catch (final NoSuchElementException e) {
       // This happens if the contest name is not in the IRVContestResults, or if the Contest Result
       // does not actually contain any contests (the latter should never happen).
       LOGGER.error(String.format("%s %s %s.", prefix, e.getMessage(), contestName));
@@ -281,25 +281,25 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
       final String msg = "Error interpreting Raire response for contest ";
       LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
       throw new RuntimeException(msg + contestName);
-    } catch (UnsupportedEncodingException e) {
+    } catch (final UnsupportedEncodingException e) {
       // This really shouldn't happen, but would happen if the effort to make the
       // generateAssertionsRequest as json failed.
       final String msg = "Error generating request to Raire for contest ";
       LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
       throw new RuntimeException(msg + contestName + e.getMessage());
-    } catch (ClientProtocolException e) {
+    } catch (final ClientProtocolException e) {
       // This also really shouldn't happen, but would happen if the effort to use the httpClient
       // to send a message threw an exception.
       final String msg = "Error sending request to Raire for contest ";
       LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
       throw new RuntimeException(msg + contestName + e.getMessage());
-    } catch (NullPointerException e) {
+    } catch (final NullPointerException e) {
       // This also shouldn't happen - it would indicate an unexpected problem such as the httpClient
       // returning a null response.
       final String msg = "Error requesting or receiving assertions for contest ";
       LOGGER.error(String.format("%s %s %s.", prefix, msg, contestName));
       throw new RuntimeException(msg + contestName);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       // Generic error that can be thrown by the httpClient if the connection attempt fails.
       final String msg = "I/O error during generate assertions attempt for contest ";
       LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
@@ -323,11 +323,11 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
       if (timeLimit != null && Double.parseDouble(timeLimit) <= 0) {
         return false;
       }
-    } catch (NumberFormatException e) {
+    } catch (final NumberFormatException e) {
       return false;
     }
 
-    // An absent contest name is fine, but a present null or blank one is invalid.
+    // An absent contest name is OK, but a present null or blank one is invalid.
     final String contestName = the_request.queryParams(CONTEST_NAME);
     return contestName == null || !contestName.isEmpty();
   }
