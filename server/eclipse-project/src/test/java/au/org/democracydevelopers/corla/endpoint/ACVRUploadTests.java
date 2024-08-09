@@ -21,21 +21,23 @@ import org.apache.log4j.Logger;
 import static au.org.democracydevelopers.corla.util.testUtils.tinyIRV;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.assertFalse;
 
 import spark.Request;
 
 import javax.transaction.Transactional;
 import java.util.HashSet;
 import java.util.List;
+import java.util.OptionalLong;
 
 import static us.freeandfair.corla.endpoint.Endpoint.AuthorizationType.COUNTY;
 import static us.freeandfair.corla.model.CastVoteRecord.RecordType.AUDITOR_ENTERED;
+import static us.freeandfair.corla.model.CastVoteRecord.RecordType.REAUDITED;
 
 /**
  * Test upload of IRV audit cvrs. Includes tests of both valid and invalid IRV CVRs, and tests that
  * the interpreted ballots are properly stored in the database.
  * This makes use of TestClassWithAuth to mock authentication as Adams County.
- * TODO test reaudits, both IRV and plurality (can they be mixed in one CVR?)
  * See <a href="https://github.com/orgs/DemocracyDevelopers/projects/1/views/1?pane=issue&itemId=72434202">...</a>
  */
 public class ACVRUploadTests extends TestClassWithAuth {
@@ -306,6 +308,71 @@ public class ACVRUploadTests extends TestClassWithAuth {
       "}";
 
   /**
+   * 8 & 9. Reaudit of valid IRV vote, for CVR ID 240509; imprinted ID 1-1-1.
+   */
+  private static final String validIRVReauditAsJson = "{" +
+      "  \"cvr_id\": 240509," +
+      "  \"audit_cvr\": {" +
+      "    \"record_type\": \"AUDITOR_ENTERED\"," +
+      "    \"county_id\": 1," +
+      "    \"cvr_number\": 1," +
+      "    \"sequence_number\": 1," +
+      "    \"scanner_id\": 1," +
+      "    \"batch_id\": \"1\"," +
+      "    \"record_id\": 1," +
+      "    \"imprinted_id\": \"1-1-1\"," +
+      "    \"uri\": \"acvr:1:1-1-1\"," +
+      "    \"ballot_type\": \"Ballot 1 - Type 1\"," +
+      "    \"contest_info\": [" +
+      "      {" +
+      "        \"contest\": 240503," +
+      "        \"comment\": \"A comment\"," +
+      "        \"consensus\": \"YES\"," +
+      "        \"choices\": [" +
+      "          \"Alice(1)\"," +
+      "          \"Chuan(2)\"" +
+      "        ]" +
+      "      }" +
+      "    ]" +
+      "  }," +
+      "  \"reaudit\": true," +
+      "  \"comment\": \"\"," +
+      "  \"auditBoardIndex\": -1" +
+      "}";
+
+  /**
+   * 10. Attempt to reaudit a vote that has not yet been audited - #7, the IRV vote with typos.
+   * Should cause an error.
+   */
+  private static final String IRVReauditNoPriorUpload = "{" +
+      "  \"cvr_id\": 240515," +
+      "  \"audit_cvr\": {" +
+      "    \"record_type\": \"AUDITOR_ENTERED\"," +
+      "    \"county_id\": 1," +
+      "    \"cvr_number\": 7," +
+      "    \"sequence_number\": 1," +
+      "    \"scanner_id\": 1," +
+      "    \"batch_id\": \"1\"," +
+      "    \"record_id\": 7," +
+      "    \"imprinted_id\": \"1-1-7\"," +
+      "    \"uri\": \"acvr:1:1-1-7\"," +
+      "    \"ballot_type\": \"Ballot 1 - Type 1\"," +
+      "    \"contest_info\": [" +
+      "      {" +
+      "        \"contest\": 240503," +
+      "        \"comment\": \"A comment\"," +
+      "        \"consensus\": \"YES\"," +
+      "        \"choices\": [" +
+      "        ]" +
+      "      }" +
+      "    ]" +
+      "  }," +
+      "  \"reaudit\": true," +
+      "  \"comment\": \"\"," +
+      "  \"auditBoardIndex\": -1" +
+      "}";
+
+  /**
    * Database init.
    */
   @BeforeClass
@@ -338,10 +405,13 @@ public class ACVRUploadTests extends TestClassWithAuth {
    * 3. a blank IRV vote,
    * 4. a vote with non-IRV choices ("Alice" instead of "Alice(1)"),
    * 5. a vote with invalid choices (names not in the list of choices for the contest),
-   * 6. a vote that doesn't properly correspond to the IDs it should have, and
-   * 7. an unparseable vote (typos in json data).
-   * We check that it is accepted and that the right records for CVR and CVRContestInfo are
-   * stored in the database.
+   * 6. a vote that doesn't properly correspond to the IDs it should have,
+   * 7. an unparseable vote (typos in json data),
+   * 8. a reaudit (which checks that the superseded upload is marked REAUDITED), and
+   * 9. a second reaudit with the same data (which checks that the previous reaudit is also now
+   *    marked REAUDITED and that there are now two revisions).
+   * We check that it is accepted (or rejected if it should be) and that the right records for CVR
+   * and CVRContestInfo are stored in the database.
    */
   @Test
   @Transactional
@@ -386,19 +456,37 @@ public class ACVRUploadTests extends TestClassWithAuth {
       //  Expected error messages for malformed upload cvrs.
       String malformedACVRMsg = "malformed audit CVR upload";
 
-      testErrorResponse(240512L, pluralityIRVAsJson, malformedACVRMsg);
+      testErrorResponseAndNoMatchingCvr(240512L, pluralityIRVAsJson, malformedACVRMsg);
 
       // Fifth test: upload a vote with IRV choices that are not among the valid candidates. This
       // should cause an error.
-      testErrorResponse(240513L, wrongCandidateNamesIRVAsJson, malformedACVRMsg);
+      testErrorResponseAndNoMatchingCvr(240513L, wrongCandidateNamesIRVAsJson, malformedACVRMsg);
 
       // Sixth test: upload a vote with IDs that do not correspond properly to the expected CVR.
       // This should cause an error.
-      testErrorResponse(240514L, IRVWithInconsistentIDsAsJson, malformedACVRMsg);
+      testErrorResponseAndNoMatchingCvr(240514L, IRVWithInconsistentIDsAsJson, malformedACVRMsg);
 
       // Seventh test: upload a vote that has typos preventing json deserialization. This should
       // cause an error.
-      testErrorResponse(240515L, IRVJsonDeserializationFail, malformedACVRMsg);
+      testErrorResponseAndNoMatchingCvr(240515L, IRVJsonDeserializationFail, malformedACVRMsg);
+
+      // Eighth test: upload a reaudited ballot.
+      // Check that the new data successfully replaces the prior upload.
+      testSuccessResponse(240509L, "1-1-1", validIRVReauditAsJson, List.of("Alice","Chuan"), 3);
+      // Test that the previous upload, with a vote for Bob and Chuan (validIRVAsJson) is now tagged
+      // as REAUDITED.
+      testPreviousAreReaudited(240509L, "1-1-1", List.of("Bob","Chuan"), 1, 1);
+
+      // Ninth test: upload the same ballot being reaudited, again.
+      // Check that the new data is identical (it replaces it, but it's the same).
+      testSuccessResponse(240509L, "1-1-1", validIRVReauditAsJson, List.of("Alice","Chuan"), 3);
+      // Test that the previous upload (from test 8), with a vote for Alice and Chuan
+      // (validIRVReauditAsJson) is now tagged as REAUDITED.
+      // There should be two reaudited ballots now, and the max revision should be 2.
+      testPreviousAreReaudited(240509L, "1-1-1", List.of("Alice","Chuan"), 2, 2);
+
+      // Tenth test: try to "re-"audit something that has not previously been successfully audited. Should throw an error.
+      testErrorResponseAndNoMatchingCvr(240515L, IRVReauditNoPriorUpload, "CVR has not previously been audited");
     }
   }
 
@@ -427,14 +515,14 @@ public class ACVRUploadTests extends TestClassWithAuth {
 
   /**
    * Test expected consequences of successful ACVR upload.
-   * @param CvrId                      The CVR number (last number of the imprinted ID).
+   * @param CvrId                      The CVR ID (of the original UPLOADED CVR).
    * @param expectedImprintedId        The imprinted id, scanner-batch-record.
    * @param CvrAsJson                  The upload cvr, as a json string.
    * @param expectedInterpretedChoices The expected valid interpretation, which should be stored.
    * @param expectedACVRs              The number of audit CVRs expected in total.
    */
   private void testSuccessResponse(final long CvrId, final String expectedImprintedId, final String CvrAsJson,
-               final List<String> expectedInterpretedChoices, final int expectedACVRs) {
+                                   final List<String> expectedInterpretedChoices, final int expectedACVRs) {
     final Request request = new SparkRequestStub(CvrAsJson, new HashSet<>());
     uploadEndpoint.endpointBody(request, response);
 
@@ -443,7 +531,7 @@ public class ACVRUploadTests extends TestClassWithAuth {
         AUDITOR_ENTERED).toList();
     assertEquals(acvrs.size(), expectedACVRs);
 
-    // There should now be an ACVR with matching cvrId.
+    // There should now be an AUDITOR_ENTERED ACVR with matching cvrId.
     final CastVoteRecord acvr = acvrs.stream().filter(a -> a.getCvrId() == CvrId).findFirst().orElseThrow();
     assertEquals(acvr.recordType(), AUDITOR_ENTERED);
     // Check that we have the right record: CvrId and Imprinted ID should match.
@@ -457,13 +545,50 @@ public class ACVRUploadTests extends TestClassWithAuth {
   }
 
   /**
+   * Check that some previously-uploaded ballot has been tagged as "REAUDITED". This happens when a new ballot with the
+   * same CvrId is uploaded with "reaudit = true". The idea is that the most recent REAUDIT is always simply
+   * of type AUDITOR_ENTERED, but all _previously_ submitted versions of the same ballot are tagged as REAUDITED - these
+   * are then omitted from discrepancy and risk calculations, because only the most recent upload counts.
+   * @param CvrId                      The CVR ID (of the original UPLOADED CVR).
+   * @param expectedImprintedId        The imprinted id, scanner-batch-record.
+   * @param expectedInterpretedChoices The expected valid interpretation, which should be stored.
+   * @param expectedReauditedBallots   The number of expected REAUDITED ballots with this CvrId.
+   * @param expectedMaxRevision        The revision of the old audit cvr (null for the first audit ballot; 1L for the
+   *                                   first reaudit, then incrementing by 1 for subsequent reaudits.
+   */
+  private void testPreviousAreReaudited(final long CvrId, final String expectedImprintedId,
+      final List<String> expectedInterpretedChoices, final long expectedReauditedBallots, final long expectedMaxRevision) {
+
+    // Check for the expected number of Reaudited ballots of the required CvrId.
+    final List<CastVoteRecord> acvrs = CastVoteRecordQueries.getMatching(1L, REAUDITED).filter(a -> a.getCvrId() == CvrId).toList();
+    assertEquals(acvrs.size(), expectedReauditedBallots);
+
+    // Check that we have the right records: Imprinted ID should match.
+    assertTrue(acvrs.stream().allMatch(cvr -> cvr.imprintedID().equals(expectedImprintedId)));
+
+    // Find the maximum revision; check that it matches the expected maximum revision (this should match the number of
+    // reaudits).
+    assertFalse(acvrs.isEmpty());
+    final OptionalLong maxRevision = acvrs.stream().mapToLong(CastVoteRecord::getRevision).max();
+    assertEquals(maxRevision, OptionalLong.of(expectedMaxRevision));
+
+    // Check that there is one record with the expected revision and it has the expected vote choices.
+    final List<CastVoteRecord> maxRevisionAcvrs
+        = acvrs.stream().filter(a -> a.getRevision() == expectedMaxRevision).toList();
+    assertEquals(maxRevisionAcvrs.size(), 1);
+    assertTrue(maxRevisionAcvrs.get(0).contestInfoForContestResult(tinyIRV).isPresent());
+    final List<String> choices = maxRevisionAcvrs.get(0).contestInfoForContestResult(tinyIRV).get().choices();
+    assertTrue(testUtils.equalStringLists(choices, expectedInterpretedChoices));
+  }
+
+  /**
    * Test that submitting the given ACVR to the endpoint produces the given error, and that there are no corresponding
    * ACVRs stored in the database afterward.
    * @param CvrId         The CVR ID (of the original UPLOADED CVR).
    * @param CvrAsJson     The upload cvr, as a json string.
    * @param expectedError The expected error message.
    */
-  private void testErrorResponse(final long CvrId, final String CvrAsJson, final String expectedError) {
+  private void testErrorResponseAndNoMatchingCvr(final long CvrId, final String CvrAsJson, final String expectedError) {
     final Request request = new SparkRequestStub(CvrAsJson, new HashSet<>());
     String errorBody = "";
 
