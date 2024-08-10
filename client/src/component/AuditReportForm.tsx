@@ -76,38 +76,39 @@ class AuditReportForm extends React.Component<FormProps, FormState> {
  
         return (
             <Popover position={Position.BOTTOM_LEFT} canEscapeKeyClose={true}
-                enforceFocus={false} >
-                <Button  large disabled={ !this.props.canRenderReport }  
-                         intent={ Intent.PRIMARY }>
-                         Choose report to download</Button>
-                <div key="text" style={{margin: "10px", minWidth: "300px", maxWidth:"370px"}}>
+                     enforceFocus={false}>
+
+                <Button large disabled={!this.props.canRenderReport} intent={Intent.PRIMARY}>
+                    Choose report to download</Button>
+                <div key="text" style={{margin: "10px", minWidth: "300px", maxWidth: "370px"}}>
                     <h5>Audit reports</h5>
                     <FormGroup>
 
-                    {REPORT_TYPES.map(ty => {
-                        let key = ty.key;
-                        let label = ty.label;
-                        return <div className='checkbox'><Checkbox key={key}
-                                  label={label}
-                                  value={key} 
-                                  checked={this.state.checkedReports[key] || false}
-                                  onChange={this.handleCheckboxChange}
-                                  style={{ minWidth: '10px', paddingLeft: '30px' }}/></div>
-                                })
-                    }
+                        {REPORT_TYPES.map(ty => {
+                            let key = ty.key;
+                            let label = ty.label;
+                            return <div className='checkbox'><Checkbox key={key}
+                                                                       label={label}
+                                                                       value={key}
+                                                                       checked={this.state.checkedReports[key] || false}
+                                                                       onChange={this.handleCheckboxChange}
+                                                                       style={{minWidth: '10px', paddingLeft: '30px'}}/>
+                            </div>
+                        })
+                        }
                     </FormGroup>
-                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 15 }}>
+                    <div style={{display: "flex", justifyContent: "flex-end", marginTop: 15}}>
 
-                        <Button className={Classes.POPOVER_DISMISS} 
-                                intent={Intent.PRIMARY} 
-                                icon='import' 
-                               onClick={() => fetchAuditReport(Object.keys(this.state.checkedReports).join(","))}
-                                >
+                        <Button className={Classes.POPOVER_DISMISS}
+                                intent={Intent.PRIMARY}
+                                icon='import'
+                                onClick={() => fetchAuditReport(Object.keys(this.state.checkedReports).join(","))}
+                        >
                             Download Report
                         </Button>
-                        </div>
-                 </div>
-            </Popover> 
+                    </div>
+                </div>
+            </Popover>
 
         );
     }
