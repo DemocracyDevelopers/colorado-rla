@@ -484,94 +484,13 @@ public class StateReport {
         // County-level results really don't make sense for IRV. Therefore print a
         // very brief summary and a reference to the assertions csv.
         for (final CountyContestResult ccr : e.getValue().drivingContestResults()) {
-          row_number++;
-          row = summary_sheet.createRow(row_number++);
-          cell_number = 0;
 
-          cell = row.createCell(cell_number++);
-          cell.setCellStyle(bold_style);
+          CellStatus status = makeContestSummary(row_number, max_cell_number, ccr, summary_sheet,
+              bold_style, integer_style, bold_right_style, decimal_style,
+              standard_style, standard_right_style);
 
-          final boolean isIRV = ccr.contest().description().equals(ContestType.IRV.toString());
-
-          if (isIRV) {
-            cell.setCellValue(ccr.contest().name() + " - IRV");
-          } else {
-            cell.setCellValue(ccr.contest().name() + " - Vote For " + ccr.contest().votesAllowed());
-          }
-
-          // Keep the choices column, for both IRV and plurality.
-          cell = row.createCell(cell_number++);
-          cell.setCellStyle(bold_style);
-          cell.setCellValue("Choice");
-
-          if (isIRV) {
-            // If it's IRV, the summary data is in the assertions csv. Add a message.
-            cell = row.createCell(cell_number++);
-            cell.setCellStyle(standard_style);
-            cell.setCellValue("See assertions csv");
-          } else {
-            // Plurality. Print the other data - winners, vote tallies, margins.
-            cell = row.createCell(cell_number++);
-            cell.setCellStyle(bold_right_style);
-            cell.setCellValue("W/L");
-
-            cell = row.createCell(cell_number++);
-            cell.setCellStyle(bold_right_style);
-            cell.setCellValue("Votes");
-
-            cell = row.createCell(cell_number++);
-            cell.setCellStyle(bold_right_style);
-            cell.setCellValue("Margin");
-
-            cell = row.createCell(cell_number++);
-            cell.setCellStyle(bold_right_style);
-            cell.setCellValue("Diluted Margin %");
-          }
-
-          for (final String choice : ccr.rankedChoices()) {
-            // List all the choices, for both IRV and plurality.
-            row = summary_sheet.createRow(row_number++);
-            max_cell_number = Math.max(max_cell_number, cell_number);
-
-            cell_number = 1;
-            cell = row.createCell(cell_number++);
-            cell.setCellStyle(standard_style);
-            cell.setCellValue(choice);
-
-            if (!isIRV) {
-              // Print the other data - winners, vote tallies, margins - only for plurality, not IRV.
-              cell = row.createCell(cell_number++);
-              cell.setCellStyle(standard_right_style);
-              if ((ccr.winners().stream().anyMatch(w -> w.equalsIgnoreCase(choice)))) {
-                cell.setCellValue("W");
-              } else {
-                cell.setCellValue("L");
-              }
-
-              cell = row.createCell(cell_number++);
-              cell.setCellStyle(integer_style);
-              cell.setCellType(CellType.NUMERIC);
-              cell.setCellValue(ccr.voteTotals().get(choice));
-
-              if (ccr.winners().contains(choice)) {
-                cell = row.createCell(cell_number++);
-                cell.setCellStyle(integer_style);
-                cell.setCellType(CellType.NUMERIC);
-                final OptionalInt margin = ccr.marginToNearestLoser(choice);
-                if (margin.isPresent()) {
-                  cell.setCellValue(margin.getAsInt());
-                }
-
-                cell = row.createCell(cell_number++);
-                cell.setCellStyle(decimal_style);
-                cell.setCellType(CellType.NUMERIC);
-                final BigDecimal diluted_margin = ccr.countyDilutedMarginToNearestLoser(choice);
-                if (diluted_margin != null) {
-                  cell.setCellValue(diluted_margin.doubleValue() * 100);
-                }
-              }
-            }
-          }
+            row_number = status.row_number;
+            max_cell_number = status.max_cell_number;
         }
       }
     }
@@ -762,7 +681,105 @@ public class StateReport {
     
     return workbook;
   }
-  
+
+  protected static CellStatus makeContestSummary(int row_number, int max_cell_number, CountyContestResult ccr, Sheet summary_sheet,
+        CellStyle bold_style, CellStyle integer_style, CellStyle bold_right_style, CellStyle decimal_style,
+                                   CellStyle standard_style, CellStyle standard_right_style) {
+      row_number++;
+      Row row = summary_sheet.createRow(row_number++);
+      int cell_number = 0;
+
+      Cell cell = row.createCell(cell_number++);
+      cell.setCellStyle(bold_style);
+
+      final boolean isIRV = ccr.contest().description().equals(ContestType.IRV.toString());
+
+      if (isIRV) {
+        cell.setCellValue(ccr.contest().name() + " - IRV");
+      } else {
+        cell.setCellValue(ccr.contest().name() + " - Vote For " + ccr.contest().votesAllowed());
+      }
+
+      // Keep the choices column, for both IRV and plurality.
+      cell = row.createCell(cell_number++);
+      cell.setCellStyle(bold_style);
+      cell.setCellValue("Choice");
+
+      if (isIRV) {
+        // If it's IRV, the summary data is in the assertions csv. Add a message.
+        cell = row.createCell(cell_number++);
+        cell.setCellStyle(standard_style);
+        cell.setCellValue("See assertions csv");
+      } else {
+        // Plurality. Print the other data - winners, vote tallies, margins.
+        cell = row.createCell(cell_number++);
+        cell.setCellStyle(bold_right_style);
+        cell.setCellValue("W/L");
+
+        cell = row.createCell(cell_number++);
+        cell.setCellStyle(bold_right_style);
+        cell.setCellValue("Votes");
+
+        cell = row.createCell(cell_number++);
+        cell.setCellStyle(bold_right_style);
+        cell.setCellValue("Margin");
+
+        cell = row.createCell(cell_number++);
+        cell.setCellStyle(bold_right_style);
+        cell.setCellValue("Diluted Margin %");
+      }
+
+      for (final String choice : ccr.rankedChoices()) {
+        // List all the choices, for both IRV and plurality.
+        row = summary_sheet.createRow(row_number++);
+        max_cell_number = Math.max(max_cell_number, cell_number);
+
+        cell_number = 1;
+        cell = row.createCell(cell_number++);
+        cell.setCellStyle(standard_style);
+        cell.setCellValue(choice);
+
+        if (!isIRV) {
+          // Print the other data - winners, vote tallies, margins - only for plurality, not IRV.
+          cell = row.createCell(cell_number++);
+          cell.setCellStyle(standard_right_style);
+          if ((ccr.winners().stream().anyMatch(w -> w.equalsIgnoreCase(choice)))) {
+            cell.setCellValue("W");
+          } else {
+            cell.setCellValue("L");
+          }
+
+          cell = row.createCell(cell_number++);
+          cell.setCellStyle(integer_style);
+          cell.setCellType(CellType.NUMERIC);
+          cell.setCellValue(ccr.voteTotals().get(choice));
+
+          if (ccr.winners().contains(choice)) {
+            cell = row.createCell(cell_number++);
+            cell.setCellStyle(integer_style);
+            cell.setCellType(CellType.NUMERIC);
+            final OptionalInt margin = ccr.marginToNearestLoser(choice);
+            if (margin.isPresent()) {
+              cell.setCellValue(margin.getAsInt());
+            }
+
+            cell = row.createCell(cell_number++);
+            cell.setCellStyle(decimal_style);
+            cell.setCellType(CellType.NUMERIC);
+            final BigDecimal diluted_margin = ccr.countyDilutedMarginToNearestLoser(choice);
+            if (diluted_margin != null) {
+              cell.setCellValue(diluted_margin.doubleValue() * 100);
+            }
+          }
+        }
+      }
+    return new CellStatus(row_number, max_cell_number);
+  }
+
+  // Just a way of making a pair so we can thread the current row number
+  // and the max cell number through the for loop.
+  public record CellStatus(int row_number, int max_cell_number) {};
+
   /**
    * @return the PDF representation of this report, as a byte array.
    */
