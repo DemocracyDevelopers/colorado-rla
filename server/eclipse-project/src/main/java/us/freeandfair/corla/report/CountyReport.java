@@ -217,6 +217,7 @@ public class CountyReport {
   /**
    * @return the Excel representation of this report, as a byte array.
    * @exception IOException if the report cannot be generated.
+   * FIXME VT: I believe this is never used, except by the county-report endpoint, which is never used.
    */
   public byte[] generateExcel() throws IOException {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -230,6 +231,7 @@ public class CountyReport {
 
   /**
    * @return the Excel workbook for this report.
+   * FIXME VT: I believe this is never used, except by generateExcel(), which is never used, except via an endpoint that is never used.
    */
   @SuppressWarnings({"checkstyle:magicnumber", "checkstyle:executablestatementcount",
       "checkstyle:methodlength", "PMD.ExcessiveMethodLength", "PMD.NcssMethodCount",
