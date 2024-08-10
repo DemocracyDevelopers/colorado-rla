@@ -33,7 +33,6 @@ import java.util.zip.ZipOutputStream;
 
 import au.org.democracydevelopers.corla.communication.requestToRaire.GetAssertionsRequest;
 import au.org.democracydevelopers.corla.communication.responseFromRaire.RaireServiceErrors;
-import au.org.democracydevelopers.corla.query.GenerateAssertionsSummaryQueries;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -50,8 +49,6 @@ import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.model.DoSDashboard;
 import us.freeandfair.corla.util.SparkHelper;
-
-import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 
 /**
  * The Get Assertions endpoint. Takes a GetAssertionsRequest, and an optional format parameter specifying CSV or JSON,
@@ -132,11 +129,11 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
         try {
 
             final ZipOutputStream os = new ZipOutputStream(SparkHelper.getRaw(the_response).getOutputStream());
-            getAssertions(os, riskLimit, raireUrl, suffix);
 
             the_response.header("Content-Type", "application/zip");
-            the_response.header("Content-Disposition", "attachment; filename*=UTF-8''assertions.zip");
-
+            the_response.header("Content-Disposition",
+                "attachment; filename*=UTF-8''assertions_" + suffix + ".zip");
+            getAssertions(os, riskLimit, raireUrl, suffix);
             ok(the_response);
 
         } catch (URISyntaxException | MalformedURLException e) {
