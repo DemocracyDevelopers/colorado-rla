@@ -23,8 +23,6 @@ package au.org.democracydevelopers.corla.endpoint;
 
 import au.org.democracydevelopers.corla.communication.requestToRaire.GenerateAssertionsRequest;
 import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
-import au.org.democracydevelopers.corla.communication.responseFromRaire.RaireServiceErrors;
-import au.org.democracydevelopers.corla.communication.responseToColoradoRla.GenerateAssertionsResponseWithErrors;
 
 import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
@@ -50,6 +48,8 @@ import us.freeandfair.corla.persistence.Persistence;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.assertFalse;
 
 /**
  * Test the GetAssertions endpoint, both CSV and JSON versions. The response is supposed to be a zip file containing
@@ -81,13 +81,19 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
    * Mock response for Boulder Mayoral '23
    */
   private final static GenerateAssertionsResponse boulderResponse
-      = new GenerateAssertionsResponse(boulderMayoral, "Aaron Brockett");
+      = new GenerateAssertionsResponse(boulderMayoral, true, false);
 
   /**
    * Mock response for tinyExample1 contest
    */
   private final static GenerateAssertionsResponse tinyIRVResponse
-      = new GenerateAssertionsResponse(tinyIRV, "Alice");
+      = new GenerateAssertionsResponse(tinyIRV, true, false);
+
+  /**
+   * Mock response for tiedIRV contest
+   */
+  private final static GenerateAssertionsResponse tiedIRVResponse
+      = new GenerateAssertionsResponse(tiedIRV, false, false);
 
   /**
    * Request for Boulder Mayoral '23
@@ -181,7 +187,8 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
     tiedIRVContestResult.addContests(Set.of(tiedIRVContest));
 
     // Default raire server. You can instead run the real raire service and set baseUrl accordingly,
-    // though the tests of invalid/uninterpretable data will fail.
+    // though the tests of invalid/uninterpretable data will fail, and of course you have to have
+    // appropriate contests in the database.
     wireMockRaireServer.start();
     baseUrl = wireMockRaireServer.baseUrl();
     String badUrl = baseUrl + badEndpoint;
@@ -200,14 +207,13 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
             .withBody(gson.toJson(tinyIRVResponse))));
-    // Mock a TIED_WINNERS response to the tiedIRV contest.
+    // Mock failed, don't redo response to the tiedIRV contest.
     stubFor(post(urlEqualTo(raireGenerateAssertionsEndpoint))
         .withRequestBody(equalToJson(gson.toJson(tiedIRVRequest)))
         .willReturn(aResponse()
-            .withStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+            .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
-            .withHeader(RaireServiceErrors.ERROR_CODE_KEY,
-                RaireServiceErrors.RaireErrorCodes.TIED_WINNERS.toString())));
+            .withBody(gson.toJson(tiedIRVResponse))));
     // Mock a 404 for badUrl.
     stubFor(post(urlEqualTo(badUrl))
         .withRequestBody(equalToJson(gson.toJson(tinyIRVRequest)))
@@ -221,7 +227,6 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
             .withBody(gson.toJson(tinyIRVCandidates))));
-
     // Mock an OK response with invalid json.
     stubFor(post(urlEqualTo(invalidResponseEndpoint))
         .withRequestBody(equalToJson(gson.toJson(tinyIRVRequest)))
@@ -239,57 +244,60 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
 
   /**
    * Calls the single-contest version of the endpoint for the boulder Mayor '23 example, checks
-   * for the right winner.
+   * that generation succeeded and does not recommend retry.
    */
   @Test
   public void rightBoulderIRVWinner() {
     testUtils.log(LOGGER, "rightBoulderIRVWinner");
 
     GenerateAssertions endpoint = new GenerateAssertions();
-    GenerateAssertionsResponseWithErrors result = endpoint.generateAssertionsUpdateWinners(
+    GenerateAssertionsResponse result = endpoint.generateAssertionsUpdateWinners(
         mockedIRVContestResults, boulderRequest.contestName, boulderRequest.timeLimitSeconds,
         baseUrl + raireGenerateAssertionsEndpoint);
 
     assertEquals(result.contestName, boulderMayoral);
-    assertEquals(result.winner, "Aaron Brockett");
+    assertTrue(result.succeeded);
+    assertFalse(result.retry);
   }
 
   /**
-   * Calls the single-contest version of the endpoint for the tied contests, checks that the
-   * winner is unknown and the TIED_WINNERS error is returned.
+   * Calls the single-contest version of the endpoint for the tied contests, checks that
+   * assertion generation fails and does not recommend retry.
    */
   @Test
-  public void tiedWinnersCorrectlyRecorded() {
-  testUtils.log(LOGGER, "tiedWinnersCorrectlyRecorded");
+  public void tiedWinnersFailsNoRetry() {
+  testUtils.log(LOGGER, "tiedWinnersFailsNoRetry");
 
   GenerateAssertions endpoint = new GenerateAssertions();
-  GenerateAssertionsResponseWithErrors result = endpoint.generateAssertionsUpdateWinners(
+  GenerateAssertionsResponse result = endpoint.generateAssertionsUpdateWinners(
       List.of(tiedIRVContestResult), tiedIRV, tiedIRVRequest.timeLimitSeconds,
       baseUrl + raireGenerateAssertionsEndpoint);
 
   assertEquals(result.contestName, tiedIRV);
-  assertEquals(result.winner, UNKNOWN_WINNER);
-  assertEquals(result.raireError ,RaireServiceErrors.RaireErrorCodes.TIED_WINNERS.toString());
+  assertFalse(result.succeeded);
+  assertFalse(result.retry);
   }
 
   /**
-   * Calls the generateAssertions main endpoint function and checks that the right winners are
-   * returned, for the two example contests (Boulder and TinyIRV).
+   * Calls the generateAssertions main endpoint function for the two example contests (Boulder and TinyIRV).
+   * and checks that both succeed and do not recommend retry.
    */
   @Test
-  public void rightWinners() {
-    testUtils.log(LOGGER, "rightWinners");
+  public void successAsExpected() {
+    testUtils.log(LOGGER, "successAsExpected");
 
     GenerateAssertions endpoint = new GenerateAssertions();
-    List<GenerateAssertionsResponseWithErrors> results
+    List<GenerateAssertionsResponse> results
         = endpoint.generateAllAssertions(mockedIRVContestResults, boulderRequest.timeLimitSeconds,
         baseUrl + raireGenerateAssertionsEndpoint);
 
     assertEquals(results.size(), 2);
     assertEquals(results.get(0).contestName, boulderMayoral);
-    assertEquals(results.get(0).winner, "Aaron Brockett");
+    assertTrue(results.get(0).succeeded);
+    assertFalse(results.get(0).retry);
     assertEquals(results.get(1).contestName, tinyIRV);
-    assertEquals(results.get(1).winner, "Alice");
+    assertTrue(results.get(1).succeeded);
+    assertFalse(results.get(1).retry);
   }
 
   /**
