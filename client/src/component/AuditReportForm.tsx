@@ -83,7 +83,6 @@ class AuditReportForm extends React.Component<FormProps, FormState> {
                 <div key="text" style={{margin: "10px", minWidth: "300px", maxWidth: "370px"}}>
                     <h5>Audit reports</h5>
                     <FormGroup>
-
                         {REPORT_TYPES.map(ty => {
                             let key = ty.key;
                             let label = ty.label;
@@ -97,14 +96,18 @@ class AuditReportForm extends React.Component<FormProps, FormState> {
                         })
                         }
                     </FormGroup>
-                    <div style={{display: "flex", justifyContent: "flex-end", marginTop: 15}}>
-
+                    <div style={{display: "flex", flexDirection:"row", justifyContent: "space-between", marginTop: 15}}>
                         <Button className={Classes.POPOVER_DISMISS}
                                 intent={Intent.PRIMARY}
                                 icon='import'
-                                onClick={() => fetchAuditReport(Object.keys(this.state.checkedReports).join(","))}
-                        >
-                            Download Report
+                                onClick={() => fetchAuditReport(REPORT_TYPES.map(rt => rt.key).join(","))}>
+                            Download All
+                        </Button>
+                        <Button className={Classes.POPOVER_DISMISS}
+                                intent={Intent.PRIMARY}
+                                icon='import'
+                                onClick={() => fetchAuditReport(Object.keys(this.state.checkedReports).join(","))}>
+                            Download Selected
                         </Button>
                     </div>
                 </div>
