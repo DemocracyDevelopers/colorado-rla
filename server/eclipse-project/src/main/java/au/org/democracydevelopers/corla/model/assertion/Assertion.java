@@ -259,6 +259,11 @@ public abstract class Assertion implements PersistentEntity {
   }
 
   /**
+   * Get the assertion's absolute margin.
+   */
+  public int getMargin() { return margin; }
+
+  /**
    * Get an (unmodifiable) map of the assertion's CVR ID-discrepancy records. This is used
    * for testing purposes.
    */

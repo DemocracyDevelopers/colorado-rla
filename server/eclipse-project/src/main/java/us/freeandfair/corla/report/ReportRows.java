@@ -26,7 +26,6 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import us.freeandfair.corla.controller.ContestCounter;
-import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CVRAuditInfo;
 import us.freeandfair.corla.model.CVRContestInfo;
@@ -39,8 +38,6 @@ import us.freeandfair.corla.query.CountyQueries;
 import us.freeandfair.corla.query.TributeQueries;
 
 import us.freeandfair.corla.util.SuppressFBWarnings;
-
-import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 
 /**
  *  Contains the query-ing and processing of two report types:
@@ -402,10 +399,16 @@ public class ReportRows {
 
       // very detailed extra info
       row.put("ballot count", toString(ca.contestResult().getBallotCount()));
-      row.put("min margin", toString(ca.contestResult().getMinMargin()));
 
-      // These totals make sense only for plurality.
-      if(! (ca instanceof IRVComparisonAudit)) {
+      if(ca instanceof IRVComparisonAudit) {
+        // For IRV, get the min margin direct from the IRVComparisonAudit.
+        row.put("min margin", toString(((IRVComparisonAudit) ca).getMinMargin()));
+
+      } else {
+        // For plurality, get the min margin from the contestResult.
+        row.put("min margin", toString(ca.contestResult().getMinMargin()));
+
+        // These totals make sense only for plurality. Omit entirely for IRV.
         final List<Entry<String, Integer>> rankedTotals =
             ContestCounter.rankTotals(ca.contestResult().getVoteTotals());
 
@@ -463,8 +466,6 @@ public class ReportRows {
   }
 
   /** build a list of rows for a contest based on tributes **/
-  // FIXME VT: Check that this is getting the right data for IRV, particularly the (min) margin, diluted margin, etc.
-  // used in ResultsReport.
   public static List<List<String>> getResultsReport(final String contestName) {
     final List<List<String>> rows = new ArrayList();
 

@@ -228,8 +228,6 @@ public class CountyReport {
 
   /**
    * @return the Excel workbook for this report.
-   * FIXME VT: Refactor the lines that have just been edited in StateReport to make the summaries
-   * shorter for IRV.
    */
   @SuppressWarnings({"checkstyle:magicnumber", "checkstyle:executablestatementcount",
       "checkstyle:methodlength", "PMD.ExcessiveMethodLength", "PMD.NcssMethodCount",
