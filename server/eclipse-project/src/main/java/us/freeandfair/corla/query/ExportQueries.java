@@ -9,12 +9,15 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint;
+import au.org.democracydevelopers.corla.model.ContestType;
+import au.org.democracydevelopers.corla.model.GenerateAssertionsSummary;
+import au.org.democracydevelopers.corla.model.IRVComparisonAudit;
+import au.org.democracydevelopers.corla.query.GenerateAssertionsSummaryQueries;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -29,6 +32,9 @@ import java.sql.SQLException;
 
 import org.hibernate.query.Query;
 
+import us.freeandfair.corla.model.ComparisonAudit;
+import us.freeandfair.corla.model.Contest;
+import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.persistence.Persistence;
 
 /** export queries **/
@@ -120,6 +126,7 @@ public class ExportQueries {
    **/
   public static void jsonOut(final String query, final OutputStream os) {
     final Session s = Persistence.currentSession();
+    updateIRVContestResults(s);
     final String withoutSemi = query.replace(";", "");
     final String jsonQuery =
         String.format("SELECT cast(row_to_json(r) as text)" + " FROM (%s) r", withoutSemi);
@@ -153,6 +160,7 @@ public class ExportQueries {
   /** send query results to output stream as csv **/
   public static void csvOut(final String query, final OutputStream os) {
     final Session s = Persistence.currentSession();
+    updateIRVContestResults(s);
     final String withoutSemi = query.replace(";", "");
     s.doWork(new CSVWork(withoutSemi, os));
   }
@@ -269,4 +277,43 @@ public class ExportQueries {
     }
   }
 
+  /**
+   * This function deals, somewhat inelegantly, with the problem that the ContestResult data structure
+   * used in most queries does not have correct values for things like winners, losers, margin, and
+   * diluted margin. This sets them manually from the GenerateAssertionsSummary table, then flushes
+   * the database so that the csv reports, which are based on database queries, get the right
+   * values from the contest_result table.
+   */
+  private static void updateIRVContestResults(Session s) {
+
+    List<ComparisonAudit> comparisonAudits = ComparisonAuditQueries.sortedList();
+
+    for(ComparisonAudit ca : comparisonAudits) {
+      if(ca instanceof IRVComparisonAudit) {
+        Set<String> choices = new HashSet<>();
+        for(Contest contest : ca.contestResult().getContests()) {
+          if (contest.description().equals(ContestType.IRV.toString())) {
+            contest.choices().stream().map(ch -> choices.add(ch.name()));
+          } else {
+            // FIXME VT: log
+            throw new RuntimeException();
+          }
+        }
+
+        Optional<GenerateAssertionsSummary> summary = GenerateAssertionsSummaryQueries.matching(ca.getContestName());
+        if(summary.isPresent()) {
+          ContestResult contestResult = ca.contestResult();
+          String winner = summary.get().getWinner();
+          contestResult.setWinners(Set.of(winner));
+          choices.remove(winner);
+          contestResult.setLosers(choices);
+          contestResult.setMinMargin(((IRVComparisonAudit) ca).getMinMargin());
+          contestResult.setDilutedMargin(ca.getDilutedMargin());
+        }
+      }
+    }
+
+    s.flush();
+
+  }
 }
