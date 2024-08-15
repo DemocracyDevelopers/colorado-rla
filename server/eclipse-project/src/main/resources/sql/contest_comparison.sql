@@ -21,53 +21,32 @@ SELECT DISTINCT
    cci_a.comment AS audit_board_comment,
    cvr_a.timestamp,
    cai.cvr_id,
-   cpa.audit_reason,
-   raw_choice_per_voting_computer,
-   raw_audit_board_selection
+   cpa.audit_reason
 
 FROM
-    cvr_audit_info AS cai
-  LEFT JOIN
-    cvr_contest_info AS cci
-    ON cci.cvr_id = cai.cvr_id
-  LEFT JOIN cast_vote_record AS cvr_s
-    ON cai.cvr_id = cvr_s.id
-  LEFT JOIN cvr_contest_info AS cci_a
-    ON cai.acvr_id = cci_a.cvr_id
-      AND cci_a.contest_id = cci.contest_id
-  LEFT JOIN
-    cast_vote_record AS cvr_a
-    ON cai.acvr_id = cvr_a.id
-  LEFT JOIN
-    contest AS cn
-    ON cci.contest_id = cn.id
-  LEFT JOIN county AS cty
-    ON cn.county_id = cty.id
-  LEFT JOIN
-    contest_to_audit AS cta
-    ON (cci.contest_id = cta.contest_id or  cn.name = (select cn1.name from contest cn1 where cn1.id=cta.contest_id))
-  LEFT JOIN
-    comparison_audit AS cpa
-    ON cpa.audit_reason = cta.reason and cast (cci.cvr_id as TEXT) = ANY (string_to_array(substring(cpa.contest_cvr_ids from 2 for (char_length(cpa.contest_cvr_ids)-2)), ','))
-  LEFT JOIN (
-      -- Get matching raw IRV votes for upload ballots (if there are any in irv_ballot_interpretation).
-      SELECT raw_choices AS raw_choice_per_voting_computer,
-             contest_id,
-             imprinted_id
-        FROM irv_ballot_interpretation
-        WHERE irv_ballot_interpretation.record_type = 'UPLOADED'
-  ) as irv_up
-    ON irv_up.contest_id = cci.contest_id AND irv_up.imprinted_id = cvr_s.imprinted_id
-  LEFT JOIN (
-      -- Get matching raw IRV votes for audit ballots (if there are any in irv_ballot_interpretation).
-      -- Note that reaudited ballots won't show up here - only the most recent audit record.
-      SELECT raw_choices AS raw_audit_board_selection,
-             contest_id,
-             imprinted_id
-        FROM irv_ballot_interpretation
-        WHERE irv_ballot_interpretation.record_type = 'AUDITOR_ENTERED'
-  ) as irv_audit
-    ON irv_audit.contest_id = cci.contest_id AND irv_audit.imprinted_id = cvr_s.imprinted_id
+   cvr_audit_info AS cai
+ LEFT JOIN
+   cvr_contest_info AS cci
+   ON cci.cvr_id = cai.cvr_id
+ LEFT JOIN cast_vote_record AS cvr_s
+   ON cai.cvr_id = cvr_s.id
+ LEFT JOIN cvr_contest_info AS cci_a
+   ON cai.acvr_id = cci_a.cvr_id
+     AND cci_a.contest_id = cci.contest_id
+ LEFT JOIN
+   cast_vote_record AS cvr_a
+   ON cai.acvr_id = cvr_a.id
+ LEFT JOIN
+   contest AS cn
+   ON cci.contest_id = cn.id
+ LEFT JOIN county AS cty
+   ON cn.county_id = cty.id
+ LEFT JOIN
+   contest_to_audit AS cta
+   ON (cci.contest_id = cta.contest_id or  cn.name = (select cn1.name from contest cn1 where cn1.id=cta.contest_id))
+ LEFT JOIN
+   comparison_audit AS cpa
+   ON cpa.audit_reason = cta.reason and cast (cci.cvr_id as TEXT) = ANY (string_to_array(substring(cpa.contest_cvr_ids from 2 for (char_length(cpa.contest_cvr_ids)-2)), ','))
 
 ORDER BY county_name, contest_name
 ;
