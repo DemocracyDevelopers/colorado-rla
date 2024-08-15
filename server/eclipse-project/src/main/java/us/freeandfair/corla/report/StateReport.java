@@ -682,6 +682,23 @@ public class StateReport {
     return workbook;
   }
 
+  /**
+   * Make the cells for one contest's worth of summary data. For IRV, this just prints the
+   * contest name, choices, and the fact that it's IRV. For plurality, it outputs much more
+   * detailed data.
+   * FIXME VT: add descriptions, fix the style thing.
+   * @param row_number
+   * @param max_cell_number
+   * @param ccr
+   * @param summary_sheet
+   * @param bold_style
+   * @param integer_style
+   * @param bold_right_style
+   * @param decimal_style
+   * @param standard_style
+   * @param standard_right_style
+   * @return
+   */
   protected static CellStatus makeContestSummary(int row_number, int max_cell_number, CountyContestResult ccr, Sheet summary_sheet,
         CellStyle bold_style, CellStyle integer_style, CellStyle bold_right_style, CellStyle decimal_style,
                                    CellStyle standard_style, CellStyle standard_right_style) {
