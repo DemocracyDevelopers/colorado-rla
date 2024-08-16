@@ -485,7 +485,7 @@ public class StateReport {
         // very brief summary and a reference to the assertions csv.
         for (final CountyContestResult ccr : e.getValue().drivingContestResults()) {
 
-          CellStatus status = makeContestSummary(row_number, max_cell_number, ccr, summary_sheet,
+          final CellStatus status = makeContestSummary(row_number, max_cell_number, ccr, summary_sheet,
               bold_style, integer_style, bold_right_style, decimal_style,
               standard_style, standard_right_style);
 
@@ -701,9 +701,9 @@ public class StateReport {
    * @return a CellStatus record, which tells the ensuing generation function which row it is up to
    *         and what maximum cell number has been used.
    */
-  protected static CellStatus makeContestSummary(int row_number, int max_cell_number, CountyContestResult ccr, Sheet summary_sheet,
-        CellStyle bold_style, CellStyle integer_style, CellStyle bold_right_style, CellStyle decimal_style,
-                                   CellStyle standard_style, CellStyle standard_right_style) {
+  protected static CellStatus makeContestSummary(int row_number, int max_cell_number, final CountyContestResult ccr,
+            final Sheet summary_sheet, final CellStyle bold_style, final CellStyle integer_style, final CellStyle bold_right_style,
+            final CellStyle decimal_style, final CellStyle standard_style, final CellStyle standard_right_style) {
       row_number++;
       Row row = summary_sheet.createRow(row_number++);
       int cell_number = 0;

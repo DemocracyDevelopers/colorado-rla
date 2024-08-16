@@ -287,9 +287,9 @@ public class ExportQueries {
   /**
    * This function deals, somewhat inelegantly, with the problem that the ContestResult data structure
    * used in most queries does not have correct values for things like winners, losers, margin, and
-   * diluted margin. This sets them manually from the GenerateAssertionsSummary table, then flushes
-   * the database so that the csv reports, which are based on database queries, get the right
-   * values from the contest_result table.
+   * diluted margin for IRV contests. This function sets them manually from the
+   * GenerateAssertionsSummary table, then flushes the database so that the csv reports, which are
+   * based on database queries, get the right values from the contest_result table.
    * @param s The current Hibernate session.
    */
   private static void updateIRVContestResults(final Session s) {
@@ -304,7 +304,7 @@ public class ExportQueries {
         final Set<String> choices = new HashSet<>();
         // Get the choices for the contest. These should be the same for all the contests, but
         // gather the whole set from all of them just in case.
-        for(Contest contest : ca.contestResult().getContests()) {
+        for(final Contest contest : ca.contestResult().getContests()) {
           if (contest.description().equals(ContestType.IRV.toString())) {
             contest.choices().stream().map(ch -> choices.add(ch.name()));
           } else {
