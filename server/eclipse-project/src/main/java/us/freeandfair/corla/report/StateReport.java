@@ -686,18 +686,20 @@ public class StateReport {
    * Make the cells for one contest's worth of summary data. For IRV, this just prints the
    * contest name, choices, and the fact that it's IRV. For plurality, it outputs much more
    * detailed data.
-   * FIXME VT: add descriptions, fix the style thing.
-   * @param row_number
-   * @param max_cell_number
-   * @param ccr
-   * @param summary_sheet
-   * @param bold_style
-   * @param integer_style
-   * @param bold_right_style
-   * @param decimal_style
-   * @param standard_style
-   * @param standard_right_style
-   * @return
+   * @param row_number           Number of the current row, which is incremented as we progress and
+   *                             included in Cell Status on return.
+   * @param max_cell_number      The maximum cell number used, which is included in Cell Status on return.
+   * @param ccr                  The County Contest Result to be summarized.
+   * @param summary_sheet        The sheet to be added to.
+   * @param bold_style           All these styles are included (though they could be class-level finals)
+   *                             in case a caller from another class wants different styles.
+   * @param integer_style        "
+   * @param bold_right_style     "
+   * @param decimal_style        "
+   * @param standard_style       "
+   * @param standard_right_style "
+   * @return a CellStatus record, which tells the ensuing generation function which row it is up to
+   *         and what maximum cell number has been used.
    */
   protected static CellStatus makeContestSummary(int row_number, int max_cell_number, CountyContestResult ccr, Sheet summary_sheet,
         CellStyle bold_style, CellStyle integer_style, CellStyle bold_right_style, CellStyle decimal_style,
@@ -793,8 +795,9 @@ public class StateReport {
     return new CellStatus(row_number, max_cell_number);
   }
 
-  // Just a way of making a pair so we can thread the current row number
-  // and the max cell number through the for loop.
+  /** Just a way of making a pair so we can thread the current row number
+   * and the max cell number through the for loop.
+   */
   public record CellStatus(int row_number, int max_cell_number) {};
 
   /**
