@@ -10,6 +10,7 @@ SELECT
    cr.winners_allowed,
    cr.ballot_count AS ballot_card_count,
    agg.contest_ballot_card_count,
+   -- Note these will only be correct for IRV after a run of ExportQueries::updateIRVContestResults.
    SUBSTRING(cr.winners, 2, LENGTH(cr.winners) - 2) AS winners,
    cr.min_margin,
    ca.risk_limit,

@@ -26,7 +26,6 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import us.freeandfair.corla.controller.ContestCounter;
-import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CVRAuditInfo;
 import us.freeandfair.corla.model.CVRContestInfo;
@@ -39,8 +38,6 @@ import us.freeandfair.corla.query.CountyQueries;
 import us.freeandfair.corla.query.TributeQueries;
 
 import us.freeandfair.corla.util.SuppressFBWarnings;
-
-import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 
 /**
  *  Contains the query-ing and processing of two report types:
@@ -388,6 +385,7 @@ public class ReportRows {
         }
         row.put("Winner", toString(ca.contestResult().getWinners().iterator().next()));
       }
+
       // All this data makes sense for both IRV and plurality.
       row.put("Risk Limit met?", yesNo(riskLimitMet(ca.getRiskLimit(), riskMsmnt)));
       row.put("Risk measurement %", sigFig(percentage(riskMsmnt), 1).toString());
@@ -399,13 +397,18 @@ public class ReportRows {
       row.put("disc -2", toString(ca.discrepancyCount(-2)));
       row.put("gamma", toString(ca.getGamma()));
       row.put("audited sample count", toString(ca.getAuditedSampleCount()));
-
-      // very detailed extra info
+      // For IRV, this is the total number of mentions among all valid interpretations.
       row.put("ballot count", toString(ca.contestResult().getBallotCount()));
-      row.put("min margin", toString(ca.contestResult().getMinMargin()));
 
-      // These totals make sense only for plurality.
-      if(! (ca instanceof IRVComparisonAudit)) {
+      if(ca instanceof IRVComparisonAudit) {
+        // For IRV, get the min margin direct from the IRVComparisonAudit.
+        row.put("min margin", toString(((IRVComparisonAudit) ca).getMinMargin()));
+
+      } else {
+        // For plurality, get the min margin from the contestResult.
+        row.put("min margin", toString(ca.contestResult().getMinMargin()));
+
+        // These totals make sense only for plurality. Omit entirely for IRV.
         final List<Entry<String, Integer>> rankedTotals =
             ContestCounter.rankTotals(ca.contestResult().getVoteTotals());
 

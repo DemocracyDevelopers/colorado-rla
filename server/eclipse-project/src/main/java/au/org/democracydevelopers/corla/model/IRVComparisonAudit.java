@@ -22,7 +22,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.model;
 
 import au.org.democracydevelopers.corla.query.AssertionQueries;
-import au.org.democracydevelopers.corla.query.GenerateAssertionsSummaryQueries;
 import com.google.inject.internal.util.ImmutableList;
 
 import java.util.*;
@@ -35,7 +34,6 @@ import java.math.BigDecimal;
 
 import au.org.democracydevelopers.corla.model.assertion.Assertion;
 
-import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 import static java.util.Collections.max;
 
 /**
@@ -589,6 +587,14 @@ public class IRVComparisonAudit extends ComparisonAudit {
    */
   public ImmutableList<Assertion> getAssertions(){
     return ImmutableList.<Assertion>builder().addAll(assertions).build();
+  }
+
+  /**
+   * Return the overall margin, which is the minimum margin of all the assertions.
+   * @return the minimum assertion margin.
+   */
+  public int getMinMargin() {
+    return Collections.min(assertions.stream().map(Assertion::getMargin).toList());
   }
 
   /**
