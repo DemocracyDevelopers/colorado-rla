@@ -301,7 +301,7 @@ public class ExportQueries {
 
     for(final ComparisonAudit ca : comparisonAudits) {
       if(ca instanceof IRVComparisonAudit) {
-        Set<String> choices = new HashSet<>();
+        final Set<String> choices = new HashSet<>();
         // Get the choices for the contest. These should be the same for all the contests, but
         // gather the whole set from all of them just in case.
         for(Contest contest : ca.contestResult().getContests()) {
@@ -328,7 +328,7 @@ public class ExportQueries {
           contestResult.setMinMargin(((IRVComparisonAudit) ca).getMinMargin());
           contestResult.setDilutedMargin(ca.getDilutedMargin());
         } else {
-          // if no summary is present, just set the winner to be blank, the losers to be everyone,
+          // If no summary is present, just set the winner to be blank, the losers to be everyone,
           // and the margins to be zero.
           LOGGER.debug(String.format("%s %s %s", prefix, "Couldn't find summary for IRV contest",
               ca.getContestName()));
