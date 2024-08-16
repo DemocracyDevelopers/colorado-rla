@@ -385,6 +385,7 @@ public class ReportRows {
         }
         row.put("Winner", toString(ca.contestResult().getWinners().iterator().next()));
       }
+
       // All this data makes sense for both IRV and plurality.
       row.put("Risk Limit met?", yesNo(riskLimitMet(ca.getRiskLimit(), riskMsmnt)));
       row.put("Risk measurement %", sigFig(percentage(riskMsmnt), 1).toString());
@@ -396,8 +397,7 @@ public class ReportRows {
       row.put("disc -2", toString(ca.discrepancyCount(-2)));
       row.put("gamma", toString(ca.getGamma()));
       row.put("audited sample count", toString(ca.getAuditedSampleCount()));
-
-      // very detailed extra info
+      // For IRV, this is the total number of mentions among all valid interpretations.
       row.put("ballot count", toString(ca.contestResult().getBallotCount()));
 
       if(ca instanceof IRVComparisonAudit) {
