@@ -35,9 +35,12 @@ import org.apache.log4j.Logger;
 import spark.Request;
 import spark.Response;
 import us.freeandfair.corla.Main;
+import us.freeandfair.corla.asm.ASMUtilities;
+import us.freeandfair.corla.asm.DoSDashboardASM;
 import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.query.ComparisonAuditQueries;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -45,6 +48,8 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
+
+import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.PARTIAL_AUDIT_INFO_SET;
 
 /**
  * The Generate Assertions endpoint. Takes a GenerateAssertionsRequest, and optional parameters
@@ -118,6 +123,20 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
     final String prefix = "[endpointBody]";
     LOGGER.debug(String.format("%s %s.", prefix, "Received Generate Assertions request"));
 
+    // Check that the request is valid; abort if not.
+    if (!validateParameters(the_request)) {
+      final String msg = "Blank contest name or invalid time limit in Generate Assertions request";
+      LOGGER.debug(String.format("%s %s %s.", prefix, msg, the_request.body()));
+      badDataContents(the_response, msg);
+    }
+
+    // Check that the state is OK for assertion generation; abort if not.
+    if (!assertionGenerationAllowed(the_request)) {
+      final String msg = "Assertion generation not allowed in current state.";
+      LOGGER.error(String.format("%s %s.", prefix, msg));
+      illegalTransition(the_response, msg);
+    }
+
     final List<GenerateAssertionsResponse> responseData;
 
     final String raireUrl = Main.properties().getProperty(RAIRE_URL, "") + RAIRE_ENDPOINT;
@@ -133,8 +152,8 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
     // Get all the IRV contest results.
     final List<ContestResult> IRVContestResults = getIRVContestResults();
 
+    // Try to do the work.
     try {
-      if(validateParameters(the_request)) {
         if (contestName.isBlank()) {
           // No contest was requested - generate for all.
 
@@ -151,11 +170,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
         okJSON(the_response, Main.GSON.toJson(responseData));
 
         LOGGER.debug(String.format("%s %s.", prefix, "Completed Generate Assertions request"));
-      } else {
-        final String msg = "Blank contest name or invalid time limit in Generate Assertions request";
-        LOGGER.debug(String.format("%s %s %s.", prefix, msg, the_request.body()));
-        badDataContents(the_response, msg);
-      }
+
     } catch (IllegalArgumentException e) {
       LOGGER.debug(String.format("%s %s.", prefix, "Bad Generate Assertions request"));
       badDataContents(the_response, e.getMessage());
@@ -331,5 +346,38 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
     final String contestName = the_request.queryParams(CONTEST_NAME);
     return contestName == null || !contestName.isEmpty();
   }
-}
 
+  /**
+   * Assertion generation is allowed to commence if we are in the DOS_INITIAL_STATE or the
+   * PARTIAL_AUDIT_INFO_SET state, otherwise it is not.
+   * This function also checks that there are no ComparisonAudits in the database, though this should
+   * always be true in the required states.
+   * @param the_request the endpoint request.
+   * @return true if we are in the right state and there are no ComparisonAudits in the database.
+   */
+  private boolean assertionGenerationAllowed(final Request the_request) {
+    final String prefix = "[assertionGenerationAllowed]";
+    final String errorMsg = "Blocked assertion generation when requested for contest";
+
+    final DoSDashboardASM dashboardASM = ASMUtilities.asmFor(DoSDashboardASM.class, DoSDashboardASM.IDENTITY);
+
+    // Check that we're in either the initial state or the PARTIAL_AUDIT_INFO_SET state.
+    final boolean allowedState
+        = (dashboardASM.isInInitialState() || dashboardASM.currentState().equals(PARTIAL_AUDIT_INFO_SET));
+    if(!allowedState) {
+      LOGGER.debug(String.format("%s %s %s from illegal state %s.", prefix, errorMsg,
+          the_request.queryParams(CONTEST_NAME), dashboardASM.currentState()));
+    }
+
+    final boolean noComparisonAudits = ComparisonAuditQueries.count() == 0;
+
+    // Check that there are no ComparisonAudits in the database (which should not happen given the state).
+    if(!noComparisonAudits) {
+      LOGGER.debug(String.format("%s %s %s %s with %d ComparisonAudits in the database.", prefix, errorMsg,
+          the_request.queryParams(CONTEST_NAME), dashboardASM.currentState().toString(),
+          ComparisonAuditQueries.count()));
+    }
+
+    return allowedState && noComparisonAudits;
+  }
+}
