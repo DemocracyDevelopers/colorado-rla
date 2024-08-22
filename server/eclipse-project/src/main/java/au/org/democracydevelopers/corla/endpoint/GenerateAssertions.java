@@ -87,7 +87,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
   /**
    * Query specifier for contest name.
    */
-  private static final String CONTEST_NAME = "contestName";
+  public static final String CONTEST_NAME = "contestName";
 
   /**
    * Default time limit for assertion generation.
