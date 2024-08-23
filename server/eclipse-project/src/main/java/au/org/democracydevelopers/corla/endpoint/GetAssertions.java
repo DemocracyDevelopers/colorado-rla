@@ -128,7 +128,7 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
             the_response.header("Content-Type", "application/zip");
             the_response.header("Content-Disposition",
                 "attachment; filename*=UTF-8''assertions_" + suffix + ".zip");
-            getAssertions(os, suffix);
+            getAssertions(os, "", suffix);
             os.close();
 
             ok(the_response);
@@ -158,7 +158,7 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
      * @param zos    an output stream (to become a zip file)
      * @param suffix requested file type: "csv" or "json"
      */
-    public static void getAssertions(final ZipOutputStream zos, String suffix)
+    public static void getAssertions(final ZipOutputStream zos, String directory, String suffix)
         throws IOException {
         final String prefix = "[getAssertions]";
 
@@ -180,7 +180,9 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
 
             // Remove non-word characters for saving into .zip file; set up the zip next entry.
             final String sanitizedContestName = cr.getContestName().replaceAll("[\\W]", "");
-            zos.putNextEntry(new ZipEntry(sanitizedContestName + "_assertions." + suffix));
+            // If we have a nonempty directory, add "/" to it (apparently this is platform independent).
+            final String dirString = directory.isBlank() ? "" : directory + "/";
+            zos.putNextEntry(new ZipEntry(dirString + sanitizedContestName + "_assertions." + suffix));
 
             // Make the request.
             final GetAssertionsRequest getAssertionsRequest = new GetAssertionsRequest(
