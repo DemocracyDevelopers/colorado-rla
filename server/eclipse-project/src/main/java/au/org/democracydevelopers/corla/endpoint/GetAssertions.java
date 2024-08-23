@@ -110,7 +110,6 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
     public String endpointBody(final Request the_request, final Response the_response) {
         final String prefix = "[endpointBody]";
 
-        final String raireUrl = Main.properties().getProperty(RAIRE_URL, "") + RAIRE_ENDPOINT;
         String suffix;
 
         // If csv was requested in the query parameter, hit the get-assertions-csv endpoint; default to json.
@@ -121,10 +120,6 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
             suffix = JSON_SUFFIX;
         }
 
-        // Use the DoS Dashboard to get the risk limit; default to 0 if none is specified.
-        // This is a safe default because the true risk limit cannot be smaller.
-        BigDecimal riskLimit = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class).auditInfo().riskLimit();
-        riskLimit = riskLimit == null ? BigDecimal.ZERO : riskLimit;
 
         try {
 
@@ -133,11 +128,13 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
             the_response.header("Content-Type", "application/zip");
             the_response.header("Content-Disposition",
                 "attachment; filename*=UTF-8''assertions_" + suffix + ".zip");
-            getAssertions(os, riskLimit, raireUrl, suffix);
+            getAssertions(os, suffix);
+            os.close();
+
             ok(the_response);
 
         } catch (URISyntaxException | MalformedURLException e) {
-            final String msg = "Bad configuration of raire-service url: " + raireUrl + ". Fix the config file.";
+            final String msg = "Bad configuration of raire-service url. Fix the config file.";
             LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
             serverError(the_response, msg);
         } catch (IOException e) {
@@ -155,13 +152,18 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
      * - For each IRV contest, make a request to the raire-service get-assertions endpoint of the right format type
      * - Collate all the results into a zip
      * @param zos an output stream (to become a zip file)
-     * @param riskLimit the risk limit
-     * @param raireUrl the url where the raire-service is running
      * @param suffix requested file type: "csv" or "json"
      */
-    public void getAssertions(final ZipOutputStream zos, final BigDecimal riskLimit, String raireUrl, String suffix)
+    public void getAssertions(final ZipOutputStream zos, String suffix)
             throws IOException, URISyntaxException {
         final String prefix = "[getAssertions]";
+
+        final String raireUrl = Main.properties().getProperty(RAIRE_URL, "") + RAIRE_ENDPOINT;
+
+        // Use the DoS Dashboard to get the risk limit; default to 0 if none is specified.
+        // This is a safe default because the true risk limit cannot be smaller.
+        BigDecimal riskLimit = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class).auditInfo().riskLimit();
+        riskLimit = riskLimit == null ? BigDecimal.ZERO : riskLimit;
 
         // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
         // collating the responses.
@@ -222,8 +224,5 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
 
             zos.closeEntry();
         }
-
-        // Return all the RAIRE responses to the endpoint as a zip file.
-        zos.close();
     }
 }

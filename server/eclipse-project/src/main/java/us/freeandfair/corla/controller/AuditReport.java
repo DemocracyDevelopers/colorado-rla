@@ -222,6 +222,15 @@ public final class AuditReport {
           zos.write(sr.generateExcel());
           zos.closeEntry();
         }
+
+        if ("AssertionsJson".equalsIgnoreCase(reportName)) {
+          // FIXME VT
+        }
+
+        if ("AssertionsCSV".equalsIgnoreCase(reportName)) {
+         // FIXME VT
+
+        }
       }
     } catch (IOException e) {
       LOGGER.error(e.getMessage());
