@@ -2,6 +2,7 @@
 package us.freeandfair.corla.controller;
 
 import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.io.IOException;
@@ -34,6 +35,10 @@ import us.freeandfair.corla.model.DoSDashboard;
 import us.freeandfair.corla.persistence.Persistence;
 //import us.freeandfair.corla.query.CSVParser;
 import us.freeandfair.corla.query.ExportQueries;
+
+import static au.org.democracydevelopers.corla.endpoint.GetAssertions.CSV_SUFFIX;
+import static au.org.democracydevelopers.corla.endpoint.GetAssertions.JSON_SUFFIX;
+import static au.org.democracydevelopers.corla.endpoint.GetAssertions.getAssertions;
 //import us.freeandfair.corla.query.Reader;
 
 /**
@@ -223,13 +228,12 @@ public final class AuditReport {
           zos.closeEntry();
         }
 
-        if ("AssertionsJson".equalsIgnoreCase(reportName)) {
-          // FIXME VT
+        if ("assertions_json".equalsIgnoreCase(reportName)) {
+          getAssertions(zos, JSON_SUFFIX);
         }
 
-        if ("AssertionsCSV".equalsIgnoreCase(reportName)) {
-         // FIXME VT
-
+        if ("assertions_csv".equalsIgnoreCase(reportName)) {
+          getAssertions(zos, CSV_SUFFIX);
         }
       }
     } catch (IOException e) {

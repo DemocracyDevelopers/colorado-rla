@@ -54,7 +54,7 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
     /**
      * GSON, for serialising requests.
      */
-    protected final Gson gson = new Gson();
+    protected final static Gson gson = new Gson();
 
     /**
      * Identify RAIRE service URL from config.
@@ -64,7 +64,7 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
     /**
      * The httpClient used for making requests to the raire-service.
      */
-    protected final CloseableHttpClient httpClient = HttpClients.createDefault();
+    protected final static CloseableHttpClient httpClient = HttpClients.createDefault();
 
 
     /**
