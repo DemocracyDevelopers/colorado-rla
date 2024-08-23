@@ -48,7 +48,6 @@ import us.freeandfair.corla.controller.ContestCounter;
 import us.freeandfair.corla.model.AuditReason;
 import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.model.ContestResult;
-import us.freeandfair.corla.model.DoSDashboard;
 import us.freeandfair.corla.persistence.Persistence;
 
 import javax.transaction.Transactional;
@@ -186,8 +185,8 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
    */
   @Test
   @Transactional
-  void assertionGenerationBlockedWhenInWrongASMStateOrComparisonAuditsPresent() {
-    testUtils.log(LOGGER, "assertionGenerationBlockedWhenInWrongASMStateOrComparisonAuditsPresent");
+  void assertionGenerationBlockedWhenInWrongASMState() {
+    testUtils.log(LOGGER, "assertionGenerationBlockedWhenInWrongASMState");
 
     // Mock the main class; mock its auth as the mocked state admin auth.
     try (MockedStatic<Main> mockedMain = Mockito.mockStatic(Main.class);
