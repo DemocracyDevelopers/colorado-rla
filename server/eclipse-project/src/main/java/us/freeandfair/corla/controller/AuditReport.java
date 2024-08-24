@@ -218,6 +218,8 @@ public final class AuditReport {
           zos.closeEntry();
         }
 
+        // These can throw either IOExceptions or InterruptedExceptions, if the http call to raire
+        // fails or is interrupted.
         if ("assertions_json".equalsIgnoreCase(reportName)) {
           getAssertions(zos, "assertions-json", JSON_SUFFIX);
         }
@@ -226,7 +228,7 @@ public final class AuditReport {
           getAssertions(zos, "assertions-csv", CSV_SUFFIX);
         }
       }
-    } catch (IOException e) {
+    } catch (IOException | InterruptedException e) {
       LOGGER.error(e.getMessage());
     } finally {
       try {

@@ -41,7 +41,6 @@ import us.freeandfair.corla.model.*;
 
 import java.io.*;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.util.Properties;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -52,6 +51,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import us.freeandfair.corla.persistence.Persistence;
 
 import static au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint.RAIRE_URL;
+import static au.org.democracydevelopers.corla.endpoint.GetAssertions.getAssertions;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.assertEquals;
@@ -197,10 +197,10 @@ public class GetAssertionsTests extends TestClassWithDatabase {
       // Mock the RAIRE_URL from main.
       mockedMain.when(Main::properties).thenReturn(mockProperties);
 
-      GetAssertions endpoint = new GetAssertions();
       ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
       ZipOutputStream zos = new ZipOutputStream(bytesOut);
-      endpoint.getAssertions(zos, suffix);
+      getAssertions(zos, "", suffix);
+      zos.close();
 
       byte[] bytes = bytesOut.toByteArray();
       InputStream bais = new ByteArrayInputStream(bytes);
@@ -245,10 +245,10 @@ public class GetAssertionsTests extends TestClassWithDatabase {
       badURLProperties.setProperty(RAIRE_URL, url);
       mockedMain.when(Main::properties).thenReturn(badURLProperties);
 
-      GetAssertions endpoint = new GetAssertions();
       ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
       ZipOutputStream zos = new ZipOutputStream(bytesOut);
-      endpoint.getAssertions(zos, suffix);
+      getAssertions(zos, "", suffix);
+      zos.close();
     }
   }
 
@@ -268,7 +268,7 @@ public class GetAssertionsTests extends TestClassWithDatabase {
    *
    * @throws Exception always.
    */
-  @Test(dataProvider = "SampleBadUrls", expectedExceptions = {MalformedURLException.class, URISyntaxException.class})
+  @Test(dataProvider = "SampleBadUrls", expectedExceptions = MalformedURLException.class)
   public void badUrlThrowsUrlException(String url, String suffix) throws Exception {
     testUtils.log(LOGGER, "badUrlThrowsUrlException");
     try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults
@@ -282,10 +282,10 @@ public class GetAssertionsTests extends TestClassWithDatabase {
       badURLProperties.setProperty(RAIRE_URL, url);
       mockedMain.when(Main::properties).thenReturn(badURLProperties);
 
-      GetAssertions endpoint = new GetAssertions();
       ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
       ZipOutputStream zos = new ZipOutputStream(bytesOut);
-      endpoint.getAssertions(zos, suffix);
+      getAssertions(zos, "", suffix);
+      zos.close();
     }
   }
 }

@@ -23,9 +23,9 @@ package au.org.democracydevelopers.corla.endpoint;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.*;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -33,11 +33,6 @@ import java.util.zip.ZipOutputStream;
 
 import au.org.democracydevelopers.corla.communication.requestToRaire.GetAssertionsRequest;
 import au.org.democracydevelopers.corla.communication.responseFromRaire.RaireServiceErrors;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -141,6 +136,10 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
             final String msg = "Error creating zip file.";
             LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
             serverError(the_response, msg);
+        } catch (InterruptedException e) {
+            final String msg = "Connection to raire-service was interrupted.";
+            LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
+            serverError(the_response, msg);
         } catch (Exception e) {
             LOGGER.error(String.format("%s %s", prefix, e.getMessage()));
             serverError(the_response, e.getMessage());
@@ -154,12 +153,13 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
      * - Gather all the IRVContestResults
      * - For each IRV contest, make a request to the raire-service get-assertions endpoint of the right format type
      * - Collate all the results into a zip
-     *
+     * Needs to be synchronized just in case someone is foolish enough to call it twice in parallel
+     * with the same ZipOutputStream.
      * @param zos    an output stream (to become a zip file)
      * @param suffix requested file type: "csv" or "json"
      */
-    public static void getAssertions(final ZipOutputStream zos, String directory, String suffix)
-        throws IOException {
+    public synchronized static void getAssertions(final ZipOutputStream zos, String directory, String suffix)
+        throws IOException, InterruptedException {
         final String prefix = "[getAssertions]";
 
         final String raireUrl = Main.properties().getProperty(RAIRE_URL, "") + RAIRE_ENDPOINT;
@@ -193,29 +193,34 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
             );
 
             try {
-                // Throws URISyntaxException or MalformedURLException if the raireUrl is invalid.
-                final HttpPost requestToRaire = new HttpPost(new URL(raireUrl + "-" + suffix).toURI());
-                requestToRaire.addHeader("content-type", "application/json");
-                requestToRaire.setEntity(new StringEntity(gson.toJson(getAssertionsRequest)));
+                // Throws URISyntaxException if the raireUrl is invalid.
+                final HttpRequest requestToRaire = HttpRequest.newBuilder()
+                    .uri(new URL(raireUrl + "-" + suffix).toURI())
+                    .header("content-type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(getAssertionsRequest)))
+                    .build();
+                // final HttpPost requestToRaire = new HttpPost(new URL(raireUrl + "-" + suffix).toURI());
+                // requestToRaire.addHeader("content-type", "application/json");
+                // requestToRaire.setEntity(new StringEntity(gson.toJson(getAssertionsRequest)));
 
                 // Send it to the RAIRE service.
-                final HttpResponse raireResponse = httpClient.execute(requestToRaire);
+                final HttpResponse<String> raireResponse = httpClient.send(requestToRaire, HttpResponse.BodyHandlers.ofString());
                 LOGGER.debug(String.format("%s %s.", prefix, "Sent Assertion Request to Raire service for "
                     + getAssertionsRequest.contestName));
 
-                final int statusCode = raireResponse.getStatusLine().getStatusCode();
-                if (statusCode == HttpStatus.SC_OK) {
+                final int statusCode = raireResponse.statusCode();
+                if (statusCode == HttpURLConnection.HTTP_OK) {
                     // OK response. Put the file name and data into the .zip.
 
                     LOGGER.debug(String.format("%s %s.", prefix, "OK response received from RAIRE for "
                         + getAssertionsRequest.contestName));
-                    IOUtils.copy(raireResponse.getEntity().getContent(), zos);
+                    zos.write(raireResponse.body().getBytes(StandardCharsets.UTF_8));
 
-                } else if (raireResponse.containsHeader(RaireServiceErrors.ERROR_CODE_KEY)) {
+                } else if (raireResponse.headers().firstValue(RaireServiceErrors.ERROR_CODE_KEY).isPresent()) {
                     // Error response about a specific contest, e.g. "NO_ASSERTIONS_PRESENT".
                     // Write the error into the zip file and continue.
 
-                    final String code = raireResponse.getFirstHeader(RaireServiceErrors.ERROR_CODE_KEY).getValue();
+                    final String code = raireResponse.headers().firstValue(RaireServiceErrors.ERROR_CODE_KEY).get();
                     LOGGER.debug(String.format("%s %s %s.", prefix, "Error response " + code, "received from RAIRE for "
                         + getAssertionsRequest.contestName));
                     zos.write(code.getBytes(StandardCharsets.UTF_8));
@@ -224,13 +229,13 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
                     // Something went wrong with the connection. Cannot continue.
 
                     final String msg = "Bad response from Raire service for contest " + getAssertionsRequest.contestName
-                        + ":" + statusCode + " " + raireResponse.getStatusLine().getReasonPhrase();
+                        + ":" + statusCode + " " + raireResponse.statusCode();
                     LOGGER.error(String.format("%s %s", prefix, msg));
                     throw new RuntimeException(msg);
                 }
 
                 zos.closeEntry();
-            } catch (URISyntaxException | MalformedURLException e) {
+            } catch (URISyntaxException e) {
                 final String msg = "Bad configuration of raire-service url. Fix the config file.";
                 LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
                 throw new RuntimeException(msg);

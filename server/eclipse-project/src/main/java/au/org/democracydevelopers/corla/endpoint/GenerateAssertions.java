@@ -24,12 +24,6 @@ package au.org.democracydevelopers.corla.endpoint;
 import au.org.democracydevelopers.corla.communication.requestToRaire.GenerateAssertionsRequest;
 import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
 import com.google.gson.JsonSyntaxException;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.util.EntityUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import spark.Request;
@@ -44,9 +38,9 @@ import us.freeandfair.corla.query.ComparisonAuditQueries;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.*;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.*;
 
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.PARTIAL_AUDIT_INFO_SET;
@@ -249,25 +243,27 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
           candidates
       );
 
+      // Send it to RAIRE.
       // Throws URISyntaxException or MalformedURLException if the raireUrl is invalid.
-      final HttpPost requestToRaire = new HttpPost(new URL(raireUrl).toURI());
-      requestToRaire.addHeader("content-type", "application/json");
-      requestToRaire.setEntity(new StringEntity(Main.GSON.toJson(generateAssertionsRequest)));
+      final HttpRequest requestToRaire = HttpRequest.newBuilder()
+          .uri(new URL(raireUrl).toURI())
+          .header("content-type", "application/json")
+          .POST(HttpRequest.BodyPublishers.ofString(Main.GSON.toJson(generateAssertionsRequest)))
+          .build();
 
       // Send it to the RAIRE service.
-      final HttpResponse raireResponse = httpClient.execute(requestToRaire);
+      final HttpResponse<String> raireResponse = httpClient.send(requestToRaire, HttpResponse.BodyHandlers.ofString());
       LOGGER.debug(String.format("%s %s %s.", prefix,
           "Sent Assertion Request to Raire service for contest", contestName));
 
       // Interpret the response.
-      final int statusCode = raireResponse.getStatusLine().getStatusCode();
+      final int statusCode = raireResponse.statusCode();
 
-      if (statusCode == HttpStatus.SC_OK) {
+      if (statusCode == HttpURLConnection.HTTP_OK && raireResponse.body() != null) {
 
         // OK response, which may indicate either that assertion generation succeeded, or that it
         // failed and raire generated a useful error. Return raire's response.
-        final GenerateAssertionsResponse responseFromRaire
-            = Main.GSON.fromJson(EntityUtils.toString(raireResponse.getEntity()), GenerateAssertionsResponse.class);
+        final GenerateAssertionsResponse responseFromRaire = gson.fromJson(raireResponse.body(), GenerateAssertionsResponse.class);
 
         LOGGER.debug(String.format("%s %s %s %s.", prefix, responseFromRaire.succeeded ? "Success" : "Failure",
             "response for raire assertion generation for contest", contestName));
@@ -302,22 +298,20 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
       final String msg = "Error generating request to Raire for contest ";
       LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
       throw new RuntimeException(msg + contestName + e.getMessage());
-    } catch (final ClientProtocolException e) {
-      // This also really shouldn't happen, but would happen if the effort to use the httpClient
-      // to send a message threw an exception.
-      final String msg = "Error sending request to Raire for contest ";
-      LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
-      throw new RuntimeException(msg + contestName + e.getMessage());
     } catch (final NullPointerException e) {
       // This also shouldn't happen - it would indicate an unexpected problem such as the httpClient
       // returning a null response.
-      final String msg = "Error requesting or receiving assertions for contest ";
+      final String msg = "Error requesting or receiving assertions for contest";
       LOGGER.error(String.format("%s %s %s.", prefix, msg, contestName));
       throw new RuntimeException(msg + contestName);
     } catch (final IOException e) {
       // Generic error that can be thrown by the httpClient if the connection attempt fails.
-      final String msg = "I/O error during generate assertions attempt for contest ";
-      LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
+      final String msg = "I/O error during generate assertions attempt for contest";
+      LOGGER.error(String.format("%s %s %s. %s", prefix, msg, contestName, e.getMessage()));
+      throw new RuntimeException(msg + contestName + e.getMessage());
+    } catch (final InterruptedException e) {
+      final String msg = "Connection to RAIRE interrupted for contest";
+      LOGGER.error(String.format("%s %s %s. %s", prefix, msg, contestName, e.getMessage()));
       throw new RuntimeException(msg + contestName + e.getMessage());
     }
   }

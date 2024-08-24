@@ -22,22 +22,16 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.endpoint;
 
 import au.org.democracydevelopers.corla.model.ContestType;
-import au.org.democracydevelopers.corla.model.GenerateAssertionsSummary;
-import au.org.democracydevelopers.corla.query.GenerateAssertionsSummaryQueries;
 import com.google.gson.Gson;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.controller.ContestCounter;
 import us.freeandfair.corla.endpoint.AbstractDoSDashboardEndpoint;
 import us.freeandfair.corla.model.*;
-import us.freeandfair.corla.persistence.Persistence;
 
+import java.net.http.HttpClient;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * An abstract endpoint for communicating with raire. Includes all the information for collecting IRV contests
@@ -64,7 +58,7 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
     /**
      * The httpClient used for making requests to the raire-service.
      */
-    protected final static CloseableHttpClient httpClient = HttpClients.createDefault();
+    protected final static HttpClient httpClient = HttpClient.newHttpClient();
 
 
     /**
