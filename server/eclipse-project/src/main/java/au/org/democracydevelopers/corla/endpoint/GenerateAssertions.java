@@ -148,22 +148,22 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
 
     // Try to do the work.
     try {
-        if (contestName.isBlank()) {
-          // No contest was requested - generate for all.
+      if (contestName.isBlank()) {
+        // No contest was requested - generate for all.
 
-          responseData = generateAllAssertions(IRVContestResults, timeLimitSeconds, raireUrl);
-        } else {
-          // Generate for the specific contest requested.
+        responseData = generateAllAssertions(IRVContestResults, timeLimitSeconds, raireUrl);
+      } else {
+        // Generate for the specific contest requested.
 
-          responseData = List.of(generateAssertionsUpdateWinners(IRVContestResults, contestName,
-              timeLimitSeconds, raireUrl));
-        }
+        responseData = List.of(generateAssertionsUpdateWinners(IRVContestResults, contestName,
+            timeLimitSeconds, raireUrl));
+      }
 
-        the_response.header("Content-Type", "application/json");
+      the_response.header("Content-Type", "application/json");
 
-        okJSON(the_response, Main.GSON.toJson(responseData));
+      okJSON(the_response, Main.GSON.toJson(responseData));
 
-        LOGGER.debug(String.format("%s %s.", prefix, "Completed Generate Assertions request"));
+      LOGGER.debug(String.format("%s %s.", prefix, "Completed Generate Assertions request"));
 
     } catch (IllegalArgumentException e) {
       LOGGER.debug(String.format("%s %s.", prefix, "Bad Generate Assertions request"));
@@ -190,14 +190,14 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
    * @param raireUrl          the url where the raire-service is running.
    */
   protected List<GenerateAssertionsResponse> generateAllAssertions(final List<ContestResult> IRVContestResults,
-                                            final double timeLimitSeconds, final String raireUrl) {
+                                                                   final double timeLimitSeconds, final String raireUrl) {
     final String prefix = "[generateAllAssertions]";
     LOGGER.debug(String.format("%s %s.", prefix, "Generating assertions for all IRV contests"));
 
     // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions
     final List<GenerateAssertionsResponse> responseData = IRVContestResults.stream().map(
         r -> generateAssertionsUpdateWinners(IRVContestResults, r.getContestName(), timeLimitSeconds, raireUrl)
-        ).toList();
+    ).toList();
 
     LOGGER.debug(String.format("%s %s.", prefix, "Completed assertion generation for all IRV contests"));
     return responseData;
@@ -223,7 +223,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
    * winner but may instead be UNKNOWN_WINNER and an error message.
    */
   protected GenerateAssertionsResponse generateAssertionsUpdateWinners(final List<ContestResult> IRVContestResults,
-                   final String contestName, final double timeLimitSeconds, final String raireUrl) {
+                                                                       final String contestName, final double timeLimitSeconds, final String raireUrl) {
     final String prefix = "[generateAssertionsUpdateWinners]";
     LOGGER.debug(String.format("%s %s %s.", prefix, "Generating assertions for contest ", contestName));
 
@@ -243,16 +243,15 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
           candidates
       );
 
-      // Send it to RAIRE.
-      // Throws URISyntaxException or MalformedURLException if the raireUrl is invalid.
-      final HttpRequest requestToRaire = HttpRequest.newBuilder()
-          .uri(new URL(raireUrl).toURI())
-          .header("content-type", "application/json")
-          .POST(HttpRequest.BodyPublishers.ofString(Main.GSON.toJson(generateAssertionsRequest)))
-          .build();
-
       // Send it to the RAIRE service.
-      final HttpResponse<String> raireResponse = httpClient.send(requestToRaire, HttpResponse.BodyHandlers.ofString());
+      // Throws URISyntaxException or MalformedURLException if the raireUrl is invalid.
+      final HttpResponse<String> raireResponse = httpClient.send(HttpRequest.newBuilder()
+              .uri(new URL(raireUrl).toURI())
+              .header("content-type", "application/json")
+              .POST(HttpRequest.BodyPublishers.ofString(Main.GSON.toJson(generateAssertionsRequest)))
+              .build(),
+          HttpResponse.BodyHandlers.ofString()
+      );
       LOGGER.debug(String.format("%s %s %s.", prefix,
           "Sent Assertion Request to Raire service for contest", contestName));
 
@@ -263,9 +262,11 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
 
         // OK response, which may indicate either that assertion generation succeeded, or that it
         // failed and raire generated a useful error. Return raire's response.
-        final GenerateAssertionsResponse responseFromRaire = gson.fromJson(raireResponse.body(), GenerateAssertionsResponse.class);
+        final GenerateAssertionsResponse responseFromRaire
+            = gson.fromJson(raireResponse.body(), GenerateAssertionsResponse.class);
 
-        LOGGER.debug(String.format("%s %s %s %s.", prefix, responseFromRaire.succeeded ? "Success" : "Failure",
+        LOGGER.debug(String.format("%s %s %s %s.", prefix,
+            responseFromRaire.succeeded ? "Success" : "Failure",
             "response for raire assertion generation for contest", contestName));
         return responseFromRaire;
 
@@ -310,6 +311,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
       LOGGER.error(String.format("%s %s %s. %s", prefix, msg, contestName, e.getMessage()));
       throw new RuntimeException(msg + contestName + e.getMessage());
     } catch (final InterruptedException e) {
+      // The http connection to RAIRE was interrupted.
       final String msg = "Connection to RAIRE interrupted for contest";
       LOGGER.error(String.format("%s %s %s. %s", prefix, msg, contestName, e.getMessage()));
       throw new RuntimeException(msg + contestName + e.getMessage());
@@ -320,6 +322,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
    * Validates the parameters of a request. For this endpoint, the query parameters are optional,
    * but if the contest is present it should be non-null, and if a time limit is present it should
    * be positive.
+   *
    * @param the_request the request sent to the endpoint.
    * @return true if the request's query parameters are valid.
    */
@@ -346,6 +349,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
    * PARTIAL_AUDIT_INFO_SET state, otherwise it is not.
    * This function also checks that there are no ComparisonAudits in the database, though this should
    * always be true in the required states.
+   *
    * @param the_request the endpoint request.
    * @return true if we are in the right state and there are no ComparisonAudits in the database.
    */
@@ -358,7 +362,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
     // Check that we're in either the initial state or the PARTIAL_AUDIT_INFO_SET state.
     final boolean allowedState
         = (dashboardASM.isInInitialState() || dashboardASM.currentState().equals(PARTIAL_AUDIT_INFO_SET));
-    if(!allowedState) {
+    if (!allowedState) {
       LOGGER.debug(String.format("%s %s %s from illegal state %s.", prefix, errorMsg,
           the_request.queryParams(CONTEST_NAME), dashboardASM.currentState()));
     }
@@ -366,7 +370,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
     final boolean noComparisonAudits = ComparisonAuditQueries.count() == 0;
 
     // Check that there are no ComparisonAudits in the database (which should not happen given the state).
-    if(!noComparisonAudits) {
+    if (!noComparisonAudits) {
       LOGGER.debug(String.format("%s %s %s %s with %d ComparisonAudits in the database.", prefix, errorMsg,
           the_request.queryParams(CONTEST_NAME), dashboardASM.currentState().toString(),
           ComparisonAuditQueries.count()));

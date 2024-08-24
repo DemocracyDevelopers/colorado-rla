@@ -193,18 +193,15 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
             );
 
             try {
+                // Make the request and send it to RAIRE.
                 // Throws URISyntaxException if the raireUrl is invalid.
-                final HttpRequest requestToRaire = HttpRequest.newBuilder()
+                final HttpResponse<String> raireResponse = httpClient.send(HttpRequest.newBuilder()
                     .uri(new URL(raireUrl + "-" + suffix).toURI())
                     .header("content-type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(getAssertionsRequest)))
-                    .build();
-                // final HttpPost requestToRaire = new HttpPost(new URL(raireUrl + "-" + suffix).toURI());
-                // requestToRaire.addHeader("content-type", "application/json");
-                // requestToRaire.setEntity(new StringEntity(gson.toJson(getAssertionsRequest)));
-
-                // Send it to the RAIRE service.
-                final HttpResponse<String> raireResponse = httpClient.send(requestToRaire, HttpResponse.BodyHandlers.ofString());
+                    .build(),
+                    HttpResponse.BodyHandlers.ofString()
+                );
                 LOGGER.debug(String.format("%s %s.", prefix, "Sent Assertion Request to Raire service for "
                     + getAssertionsRequest.contestName));
 
@@ -220,9 +217,10 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
                     // Error response about a specific contest, e.g. "NO_ASSERTIONS_PRESENT".
                     // Write the error into the zip file and continue.
 
-                    final String code = raireResponse.headers().firstValue(RaireServiceErrors.ERROR_CODE_KEY).get();
-                    LOGGER.debug(String.format("%s %s %s.", prefix, "Error response " + code, "received from RAIRE for "
-                        + getAssertionsRequest.contestName));
+                    final String code
+                        = raireResponse.headers().firstValue(RaireServiceErrors.ERROR_CODE_KEY).get();
+                    LOGGER.debug(String.format("%s %s %s.", prefix, "Error response " + code,
+                        "received from RAIRE for " + getAssertionsRequest.contestName));
                     zos.write(code.getBytes(StandardCharsets.UTF_8));
 
                 } else {
