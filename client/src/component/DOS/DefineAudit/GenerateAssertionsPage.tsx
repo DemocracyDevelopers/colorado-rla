@@ -132,11 +132,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                     <td style={{color:  status.succeeded ? 'green' : 'red'}}>
                         { status.succeeded ? 'Success' : 'Failure' }
                     </td>
-                    { !status.succeeded ?
-                        (<td>{status.retry ? 'Yes' : 'No'}</td>)
-                        :
-                        (<td></td>)
-                    }
+                    <td>{status.retry ? 'Yes' : 'No'}</td>
                 </tr>
             );
         };
@@ -166,7 +162,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                         <tr>
                             <th>Contest</th>
                             <th>Assertion Generation Status</th>
-                            <th>Can Retry</th>
+                            <th>Advise Retry</th>
                         </tr>
                         </thead>
                         <tbody>{ assertionRows }</tbody>
