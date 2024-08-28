@@ -82,6 +82,8 @@ public abstract class TestClassWithDatabase {
    */
   public static Properties createHibernateProperties(PostgreSQLContainer<?> postgres) {
     Properties hibernateProperties = new Properties();
+    // TODO VT: remove hibernate.driver and dialect when all using test.properties.
+    // Update to take Properties as an input; rename to updateHibernateProperties.
     hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
     hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
     hibernateProperties.setProperty("hibernate.user", postgres.getUsername());

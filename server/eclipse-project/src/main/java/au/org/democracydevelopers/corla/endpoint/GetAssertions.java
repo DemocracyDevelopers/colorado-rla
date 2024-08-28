@@ -158,7 +158,7 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
      * @param zos    an output stream (to become a zip file)
      * @param suffix requested file type: "csv" or "json"
      */
-    public synchronized static void getAssertions(final ZipOutputStream zos, String directory, String suffix)
+    public synchronized static void getAssertions(final ZipOutputStream zos, final String directory, final String suffix)
         throws IOException, InterruptedException {
         final String prefix = "[getAssertions]";
 
