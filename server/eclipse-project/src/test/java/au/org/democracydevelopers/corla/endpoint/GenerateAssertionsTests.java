@@ -34,7 +34,6 @@ import com.google.gson.Gson;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -71,11 +70,6 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
    * Class-wide logger.
    */
   private static final Logger LOGGER = LogManager.getLogger(GenerateAssertionsTests.class);
-
-  /**
-   * Container for the mock-up database.
-   */
-  private final static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
    * Mock response for Boulder Mayoral '23
@@ -120,13 +114,18 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   /**
    * Raire endpoint for getting assertions.
    */
-  private final String raireGenerateAssertionsEndpoint = "/raire/generate-assertions";
+  private final static String raireGenerateAssertionsEndpoint = "/raire/generate-assertions";
+
+  /**
+   * The string used to identify the configured port in test.properties.
+   */
+  private final static String generateAssertionsPortNumberString = "generate_assertions_mock_port";
 
   /**
    * Wiremock server for mocking the raire service.
    * (Note the default of 8080 clashes with the raire-service default, so this is different.)
    */
-  private final WireMockServer wireMockRaireServer = new WireMockServer(8110);
+  private WireMockServer wireMockRaireServer;
 
   /**
    * Base url - this is set up to use the wiremock server, but could be set here to wherever you have the
@@ -161,8 +160,7 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
    */
   @BeforeClass
   public static void beforeAll() {
-    postgres.start();
-    Persistence.setProperties(createHibernateProperties(postgres));
+    Persistence.setProperties(config);
   }
 
   /**
@@ -186,9 +184,12 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
     tiedIRVContestResult.setWinners(Set.of(UNKNOWN_WINNER));
     tiedIRVContestResult.addContests(Set.of(tiedIRVContest));
 
-    // Default raire server. You can instead run the real raire service and set baseUrl accordingly,
+    // Set up default raire server on the port defined in test.properties.
+    // You can instead run the real raire service and set baseUrl accordingly,
     // though the tests of invalid/uninterpretable data will fail, and of course you have to have
     // appropriate contests in the database.
+    final int rairePort = Integer.parseInt(config.getProperty(generateAssertionsPortNumberString, ""));
+    wireMockRaireServer = new WireMockServer(rairePort);
     wireMockRaireServer.start();
     baseUrl = wireMockRaireServer.baseUrl();
     String badUrl = baseUrl + badEndpoint;

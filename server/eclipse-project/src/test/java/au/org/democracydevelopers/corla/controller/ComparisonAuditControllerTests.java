@@ -21,43 +21,25 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.controller;
 
-import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.model.IRVComparisonAudit;
-import au.org.democracydevelopers.corla.model.vote.IRVParsingException;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
-import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.controller.ComparisonAuditController;
 import us.freeandfair.corla.controller.ContestCounter;
-import us.freeandfair.corla.csv.DominionCVRExportParser;
 import us.freeandfair.corla.model.*;
-import us.freeandfair.corla.persistence.Persistence;
 
 import javax.transaction.Transactional;
-import java.io.IOException;
-import java.io.Reader;
-import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.math.BigDecimal;
 
-import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static org.testng.Assert.*;
-import static us.freeandfair.corla.query.CastVoteRecordQueries.getMatching;
-import static us.freeandfair.corla.query.ContestQueries.forCounties;
-import static us.freeandfair.corla.query.CountyQueries.fromString;
 
 /**
  * Test those aspects of the ComparisonAuditController that were altered for IRV:
@@ -95,10 +77,9 @@ public class ComparisonAuditControllerTests extends TestClassWithDatabase {
 
   @BeforeClass
   public static void beforeAll() {
-    postgres.start();
-    Persistence.setProperties(createHibernateProperties(postgres));
 
-    var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    var containerDelegate = setupContainerStartPostgres(postgres);
+
     ScriptUtils.runInitScript(containerDelegate,
             "SQL/co-counties.sql");
     ScriptUtils.runInitScript(containerDelegate,

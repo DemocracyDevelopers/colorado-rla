@@ -32,7 +32,9 @@ const REPORT_TYPES: ReportType[] = [
     {key:'StateReport', label:'State Report'},
     {key:'JSON', label:'Json Reports'},
     {key:'summarize_IRV', label:'IRV summaries'},
-    {key:'ranked_ballot_interpretation', label:'Ranked vote interpretation'}
+    {key:'ranked_ballot_interpretation', label:'Ranked vote interpretation'},
+    {key:'assertions_json', label:'Assertions (json)'},
+    {key:'assertions_csv', label:'Assertions (csv)'}
 ];
 
 

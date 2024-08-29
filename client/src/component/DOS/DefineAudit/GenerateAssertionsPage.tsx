@@ -62,13 +62,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                     support opportunistic discrepancy computation.
                 </p>
                 <p>
-                    Only click on 'Generate Assertions' once! This prototype is
-                    is not sophisticated enough to replace a contest's assertions
-                    in the database (re-generating assertions will just replicate
-                    those that already exist).
-                </p>
-                <p>
-                    This prototype is also not sophisticated enough to give you
+                    This prototype is not sophisticated enough to give you
                     feedback on how assertion generation is progressing ... but
                     once it is done either a green alert will tell you that it
                     was successful or a red one will tell you it has failed.
