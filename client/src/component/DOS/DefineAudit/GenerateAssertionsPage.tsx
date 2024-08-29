@@ -9,6 +9,7 @@ import exportAssertionsAsJson from 'corla/action/dos/exportAssertionsAsJson';
 import generateAssertions from 'corla/action/dos/generateAssertions';
 import DOSLayout from 'corla/component/DOSLayout';
 import AssertionStatus = DOS.AssertionStatus;
+import GenerateAssertionsSummary = DOS.GenerateAssertionsSummary;
 
 const Breadcrumbs = () => (
     <ul className='pt-breadcrumbs mb-default'>
@@ -101,6 +102,9 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                     </Button>
                 </div>
                 <div>
+                    {this.getAssertionGenerationSummaryTable()}
+                </div>
+                <div>
                     {this.getAssertionGenerationStatusTable()}
                 </div>
             </div>;
@@ -172,6 +176,45 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
         } else {
             return <div />;
         }
+    }
+    private getAssertionGenerationSummaryTable() {
+       interface RowSummary {
+           summary: GenerateAssertionsSummary;
+       }
+
+       const AssertionSummaryTableRow = (props: RowSummary) => {
+           const {summary} = props;
+
+           return (
+               <tr>
+                   <td>{summary.contestName}</td>
+                   <td>{summary.winner}</td>
+                   <td>{summary.error}</td>
+                   <td>{summary.warning}</td>
+                   <td>{summary.message}</td>
+
+               </tr>
+           );
+       };
+
+       const assertionSummaryRows = _.map(this.props.dosState.generateAssertionsSummaries, a => (
+            <AssertionSummaryTableRow summary={a} />
+       ));
+
+       return (
+           <table className='pt-html-table pt-html-table-striped rla-table mt-default'>
+               <thead>
+               <tr>
+                   <th>Contest</th>
+                   <th>Winner</th>
+                   <th>Error</th>
+                   <th>Warning</th>
+                   <th>Message</th>
+               </tr>
+               </thead>
+               <tbody>{assertionSummaryRows}</tbody>
+           </table>
+       );
     }
 }
 

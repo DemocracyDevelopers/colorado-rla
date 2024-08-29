@@ -116,7 +116,7 @@ public class DoSDashboardRefreshResponse {
    * The generate assertions summaries, for IRV contests. Keyed by contest name (which is repeated
    * in the GenerateAssertionsSummary).
    */
-  private final SortedMap<String, GenerateAssertionsSummary> my_generate_assertions_summaries;
+  private final List<GenerateAssertionsSummary> my_generate_assertions_summaries;
 
   /**
    * Constructs a new DosDashboardRefreshResponse.
@@ -143,7 +143,7 @@ public class DoSDashboardRefreshResponse {
                                         final AuditInfo the_audit_info,
                                         final SortedMap<Long, AuditReason> the_audit_reasons,
                                         final SortedMap<Long, AuditType> the_audit_types,
-                                        final SortedMap<String, GenerateAssertionsSummary> the_generate_assertions_summaries) {
+                                        final List<GenerateAssertionsSummary> the_generate_assertions_summaries) {
     my_asm_state = the_asm_state;
     my_audited_contests = the_audited_contests;
     my_estimated_ballots_to_audit = the_estimated_ballots_to_audit;
@@ -176,8 +176,6 @@ public class DoSDashboardRefreshResponse {
     final List<Long> hand_count_contests = new ArrayList<Long>();
     final SortedMap<Long, AuditReason> audit_reasons = new TreeMap<Long, AuditReason>();
     final SortedMap<Long, AuditType> audit_types = new TreeMap<Long, AuditType>();
-    final SortedMap<String, GenerateAssertionsSummary> generate_assertions_map
-        = new TreeMap<String, GenerateAssertionsSummary>();
 
     for (final ContestToAudit cta : dashboard.contestsToAudit()) {
       if (cta.audit() != AuditType.NONE) {
@@ -233,10 +231,9 @@ public class DoSDashboardRefreshResponse {
     final DoSDashboardASM asm =
         ASMUtilities.asmFor(DoSDashboardASM.class, DoSDashboardASM.IDENTITY);
 
-    // Load all the Generate Assertions Summaries from the database into the generate_assertions_map.
-    Persistence.getAll(GenerateAssertionsSummary.class).forEach(
-        s -> generate_assertions_map.put(s.getContestName(), s)
-        );
+    // Load all the Generate Assertions Summaries from the database into the generate_assertions_list.
+    final List<GenerateAssertionsSummary> generate_assertions_list
+        = Persistence.getAll(GenerateAssertionsSummary.class);
 
 
     return new DoSDashboardRefreshResponse(asm.currentState(), audited_contests,
@@ -244,7 +241,7 @@ public class DoSDashboardRefreshResponse {
                                            optimistic_ballots_to_audit, discrepancy_count,
                                            countyStatusMap(), hand_count_contests,
                                            dashboard.auditInfo(), audit_reasons, audit_types,
-                                           generate_assertions_map);
+                                           generate_assertions_list);
   }
 
   /**

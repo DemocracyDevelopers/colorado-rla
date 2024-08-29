@@ -17,6 +17,7 @@ declare namespace DOS {
         standardizingContests?: boolean;
         generatingAssertions?: boolean;
         assertionsGenerated?: boolean;
+        generateAssertionsSummaries: DOS.GenerateAssertionsSummary[];
         assertionGenerationStatuses?: DOS.AssertionGenerationStatuses;
         type: 'DOS';
     }
@@ -47,6 +48,15 @@ declare namespace DOS {
     interface DiscrepancyCount {
         // The index type is really limited to `DiscrepancyType`.
         [type: string]: number;
+    }
+
+    interface GenerateAssertionsSummary {
+        id: number;
+        contestName: string;
+        winner: string;
+        error: string;
+        warning: string;
+        message: string;
     }
 
     interface CanonicalContests {
