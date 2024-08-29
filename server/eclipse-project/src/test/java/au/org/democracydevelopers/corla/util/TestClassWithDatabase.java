@@ -24,9 +24,12 @@ package au.org.democracydevelopers.corla.util;
 import java.util.Properties;
 
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import us.freeandfair.corla.persistence.Persistence;
+
+import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 
 /**
  * This class is designed to be extended by any test class that needs to interact with a test
@@ -39,6 +42,11 @@ public abstract class TestClassWithDatabase {
    * Blank properties for submitting to the DominionCVRExportParser instance.
    */
   protected static final Properties blank = new Properties();
+
+  /**
+   * Oroperties derived from test.properties.
+   */
+  protected static Properties config = loadProperties();
 
   /**
    * Begin a new transaction before each test method in the class is run.
@@ -69,26 +77,25 @@ public abstract class TestClassWithDatabase {
         // None of these actually have to be the same as the real database (except its name),
         // but this makes it easy to match the setup scripts.
         .withDatabaseName("corla")
-        .withUsername("corlaadmin")
-        .withPassword("corlasecret")
+        .withUsername(config.getProperty("hibernate.user"))
+        .withPassword(config.getProperty("hibernate.pass"))
         .withInitScript("SQL/corla.sql");
   }
 
   /**
-   * Create and return a hibernate properties object for use in testing functionality that
-   * interacts with the database.
-   * @param postgres Postgres test container representing a test version of the database.
-   * @return Hibernate persistence properties.
+   * Do the basic setup common to all the database test containers, which are all the same except for having a different url,
+   * generated at init.
+   * @param postgres the database container.
+   * @return the database delegate.
    */
-  public static Properties createHibernateProperties(PostgreSQLContainer<?> postgres) {
-    Properties hibernateProperties = new Properties();
-    hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
-    hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
-    hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
-    hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
-    hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
+  protected static JdbcDatabaseDelegate setupContainerStartPostgres(PostgreSQLContainer<?> postgres) {
+    postgres.start();
 
-    return hibernateProperties;
+    // Each class that inherits from TestClassWithDatabase gets a different url for the mocked DB.
+    // Everything else is the same.
+    config.setProperty("hibernate.url", postgres.getJdbcUrl());
+    Persistence.setProperties(config);
+
+    return new JdbcDatabaseDelegate(postgres, "");
   }
-
 }
