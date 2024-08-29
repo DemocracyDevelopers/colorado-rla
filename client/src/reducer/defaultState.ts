@@ -31,6 +31,7 @@ export function dosState(): DOS.AppState {
         contests: {},
         countyStatus: {},
         type: 'DOS',
+        generateAssertionsSummaries: [],
     };
 }
 

@@ -167,5 +167,6 @@ export function parse(data: any) {
         publicMeetingDate: parsePublicMeetingDate(data),
         riskLimit: parseRiskLimit(data),
         seed: _.get(data, 'audit_info.seed'),
+        generateAssertionsSummaries: data.generate_assertions_summaries,
     };
 }
