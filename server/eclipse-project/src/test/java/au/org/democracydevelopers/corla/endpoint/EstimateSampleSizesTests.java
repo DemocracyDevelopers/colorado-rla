@@ -136,7 +136,7 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
       mockedMain.when(Main::authentication).thenReturn(auth);
 
       // We seem to need a dummy request to run before.
-      final Request request = new SparkRequestStub("", new HashSet<>());
+      final Request request = new SparkRequestStub("", new HashMap<String,String>());
       endpoint.before(request, response);
 
       // // First test: hit the endpoint before defining the risk limit. Should throw an error.

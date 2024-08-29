@@ -26,7 +26,7 @@ import static org.testng.Assert.assertFalse;
 import spark.Request;
 
 import javax.transaction.Transactional;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.OptionalLong;
 
@@ -425,7 +425,7 @@ public class ACVRUploadTests extends TestClassWithAuth {
       startTheRound();
 
       // We seem to need a dummy request to run before.
-      final Request request = new SparkRequestStub("", new HashSet<>());
+      final Request request = new SparkRequestStub("", new HashMap<String,String>());
       uploadEndpoint.before(request, response);
 
       // Before the test, there should be 10 UPLOADED and zero AUDITOR_ENTERED cvrs.
@@ -523,7 +523,7 @@ public class ACVRUploadTests extends TestClassWithAuth {
    */
   private void testSuccessResponse(final long CvrId, final String expectedImprintedId, final String CvrAsJson,
                                    final List<String> expectedInterpretedChoices, final int expectedACVRs) {
-    final Request request = new SparkRequestStub(CvrAsJson, new HashSet<>());
+    final Request request = new SparkRequestStub(CvrAsJson, new HashMap<String,String>());
     uploadEndpoint.endpointBody(request, response);
 
     // There should now be expectedACVRs audit cvrs.
@@ -589,7 +589,7 @@ public class ACVRUploadTests extends TestClassWithAuth {
    * @param expectedError The expected error message.
    */
   private void testErrorResponseAndNoMatchingCvr(final long CvrId, final String CvrAsJson, final String expectedError) {
-    final Request request = new SparkRequestStub(CvrAsJson, new HashSet<>());
+    final Request request = new SparkRequestStub(CvrAsJson, new HashMap<String,String>());
     String errorBody = "";
 
     try {

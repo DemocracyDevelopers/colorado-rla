@@ -61,7 +61,7 @@ import static org.testng.Assert.assertNotNull;
  * the assertions.
  * Includes tests that AbstractAllIrvEndpoint::getIRVContestResults returns the correct values and
  * throws the correct exceptions.
- * TODO This really isn't a completely comprehensive set of tests yet. We also need:
+ * TODO VT: This really isn't a completely comprehensive set of tests yet. We also need:
  * - API testing
  * - Testing for retrieving the data from the zip.
  * - More comprehensive testing of filename sanitization (from contest names).

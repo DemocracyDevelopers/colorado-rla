@@ -23,25 +23,26 @@ package au.org.democracydevelopers.corla.util;
 
 import spark.Request;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
  * A class that can behave like a Spark request, for testing endpoints.
  * Note this does _not_ (yet) implement all the functions you might need - it contains only the ones
  * that I noticed being used in colorado-rla.
- * https://javadoc.io/doc/com.sparkjava/spark-core/2.5.4/spark/Request.html
+ * <a href="https://javadoc.io/doc/com.sparkjava/spark-core/2.5.4/spark/Request.html">...</a>
  */
 public class SparkRequestStub extends Request {
 
     private final String _body;
-    private final Set<String> _queryParams;
+    private final Map<String,String> _queryParams;
 
   /**
    * Constructor, for use in testing.
    * @param body        The body of the request.
    * @param queryParams The http query parameters.
    */
-  public SparkRequestStub(final String body, final Set<String> queryParams)
+  public SparkRequestStub(final String body, final Map<String,String> queryParams)
     {
       super();
 
@@ -69,5 +70,12 @@ public class SparkRequestStub extends Request {
    * Get the query parameters that were set in the constructor.
    * @return the query parameters.
    */
-  public Set<String> queryParams() { return _queryParams;}
+  public Set<String> queryParams() {return _queryParams.keySet();}
+
+  /**
+   * Get the value of a specific query parameter.
+   * @param key
+   * @return
+   */
+  public String queryParams(String key) { return _queryParams.get(key);}
 }

@@ -190,14 +190,14 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
    * @param raireUrl          the url where the raire-service is running.
    */
   protected List<GenerateAssertionsResponse> generateAllAssertions(final List<ContestResult> IRVContestResults,
-                                                                   final double timeLimitSeconds, final String raireUrl) {
+                                                               final double timeLimitSeconds, final String raireUrl) {
     final String prefix = "[generateAllAssertions]";
     LOGGER.debug(String.format("%s %s.", prefix, "Generating assertions for all IRV contests"));
 
     // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions
     final List<GenerateAssertionsResponse> responseData = IRVContestResults.stream().map(
         r -> generateAssertionsUpdateWinners(IRVContestResults, r.getContestName(), timeLimitSeconds, raireUrl)
-    ).toList();
+        ).toList();
 
     LOGGER.debug(String.format("%s %s.", prefix, "Completed assertion generation for all IRV contests"));
     return responseData;
@@ -223,7 +223,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
    * winner but may instead be UNKNOWN_WINNER and an error message.
    */
   protected GenerateAssertionsResponse generateAssertionsUpdateWinners(final List<ContestResult> IRVContestResults,
-                                                                       final String contestName, final double timeLimitSeconds, final String raireUrl) {
+                   final String contestName, final double timeLimitSeconds, final String raireUrl) {
     final String prefix = "[generateAssertionsUpdateWinners]";
     LOGGER.debug(String.format("%s %s %s.", prefix, "Generating assertions for contest ", contestName));
 
@@ -322,7 +322,6 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
    * Validates the parameters of a request. For this endpoint, the query parameters are optional,
    * but if the contest is present it should be non-null, and if a time limit is present it should
    * be positive.
-   *
    * @param the_request the request sent to the endpoint.
    * @return true if the request's query parameters are valid.
    */
@@ -349,7 +348,6 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
    * PARTIAL_AUDIT_INFO_SET state, otherwise it is not.
    * This function also checks that there are no ComparisonAudits in the database, though this should
    * always be true in the required states.
-   *
    * @param the_request the endpoint request.
    * @return true if we are in the right state and there are no ComparisonAudits in the database.
    */
@@ -362,7 +360,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
     // Check that we're in either the initial state or the PARTIAL_AUDIT_INFO_SET state.
     final boolean allowedState
         = (dashboardASM.isInInitialState() || dashboardASM.currentState().equals(PARTIAL_AUDIT_INFO_SET));
-    if (!allowedState) {
+    if(!allowedState) {
       LOGGER.debug(String.format("%s %s %s from illegal state %s.", prefix, errorMsg,
           the_request.queryParams(CONTEST_NAME), dashboardASM.currentState()));
     }
@@ -370,7 +368,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
     final boolean noComparisonAudits = ComparisonAuditQueries.count() == 0;
 
     // Check that there are no ComparisonAudits in the database (which should not happen given the state).
-    if (!noComparisonAudits) {
+    if(!noComparisonAudits) {
       LOGGER.debug(String.format("%s %s %s %s with %d ComparisonAudits in the database.", prefix, errorMsg,
           the_request.queryParams(CONTEST_NAME), dashboardASM.currentState().toString(),
           ComparisonAuditQueries.count()));
