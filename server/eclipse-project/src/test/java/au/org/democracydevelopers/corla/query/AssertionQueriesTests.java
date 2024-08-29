@@ -34,11 +34,9 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
-import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import us.freeandfair.corla.persistence.Persistence;
 
 /**
  * This test class tests the functionality in the DemocracyDevelopers version of AssertionQueries.
@@ -59,10 +57,8 @@ public class AssertionQueriesTests extends TestClassWithDatabase {
    */
   @BeforeClass
   public static void beforeAll() {
-    postgres.start();
-    Persistence.setProperties(createHibernateProperties(postgres));
 
-    var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    var containerDelegate = setupContainerStartPostgres(postgres);
     ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
     ScriptUtils.runInitScript(containerDelegate, "SQL/simple-assertions.sql");
   }

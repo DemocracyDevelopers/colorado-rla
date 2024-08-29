@@ -38,7 +38,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
-import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -46,7 +45,6 @@ import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
-import us.freeandfair.corla.persistence.Persistence;
 
 /**
  * This class does not contain any tests, but provides utilities for use by the
@@ -180,10 +178,8 @@ public class AssertionTests extends TestClassWithDatabase {
    */
   @BeforeClass
   public static void beforeAll() {
-    postgres.start();
-    Persistence.setProperties(createHibernateProperties(postgres));
 
-    var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    var containerDelegate = setupContainerStartPostgres(postgres);
     ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
     ScriptUtils.runInitScript(containerDelegate, "SQL/simple-assertions.sql");
   }

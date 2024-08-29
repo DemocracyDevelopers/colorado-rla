@@ -23,9 +23,9 @@ package au.org.democracydevelopers.corla.endpoint;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.*;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -33,11 +33,6 @@ import java.util.zip.ZipOutputStream;
 
 import au.org.democracydevelopers.corla.communication.requestToRaire.GetAssertionsRequest;
 import au.org.democracydevelopers.corla.communication.responseFromRaire.RaireServiceErrors;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -75,12 +70,12 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
     /**
      * RAIRE service suffix for csv.
      */
-    private static final String CSV_SUFFIX = "csv";
+    public static final String CSV_SUFFIX = "csv";
 
     /**
      * RAIRE service suffix for json.
      */
-    private static final String JSON_SUFFIX = "json";
+    public static final String JSON_SUFFIX = "json";
 
     /**
      * String for "format" query parameter (value will be csv or json).
@@ -110,7 +105,6 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
     public String endpointBody(final Request the_request, final Response the_response) {
         final String prefix = "[endpointBody]";
 
-        final String raireUrl = Main.properties().getProperty(RAIRE_URL, "") + RAIRE_ENDPOINT;
         String suffix;
 
         // If csv was requested in the query parameter, hit the get-assertions-csv endpoint; default to json.
@@ -121,10 +115,6 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
             suffix = JSON_SUFFIX;
         }
 
-        // Use the DoS Dashboard to get the risk limit; default to 0 if none is specified.
-        // This is a safe default because the true risk limit cannot be smaller.
-        BigDecimal riskLimit = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class).auditInfo().riskLimit();
-        riskLimit = riskLimit == null ? BigDecimal.ZERO : riskLimit;
 
         try {
 
@@ -133,17 +123,26 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
             the_response.header("Content-Type", "application/zip");
             the_response.header("Content-Disposition",
                 "attachment; filename*=UTF-8''assertions_" + suffix + ".zip");
-            getAssertions(os, riskLimit, raireUrl, suffix);
+            getAssertions(os, "", suffix);
+            os.close();
+
             ok(the_response);
 
-        } catch (URISyntaxException | MalformedURLException e) {
-            final String msg = "Bad configuration of raire-service url: " + raireUrl + ". Fix the config file.";
+        } catch (MalformedURLException e) {
+            final String msg = "Bad configuration of raire-service url. Fix the config file.";
             LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
             serverError(the_response, msg);
         } catch (IOException e) {
             final String msg = "Error creating zip file.";
             LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
             serverError(the_response, msg);
+        } catch (InterruptedException e) {
+            final String msg = "Connection to raire-service was interrupted.";
+            LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
+            serverError(the_response, msg);
+        } catch (Exception e) {
+            LOGGER.error(String.format("%s %s", prefix, e.getMessage()));
+            serverError(the_response, e.getMessage());
         }
 
         return my_endpoint_result.get();
@@ -154,14 +153,21 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
      * - Gather all the IRVContestResults
      * - For each IRV contest, make a request to the raire-service get-assertions endpoint of the right format type
      * - Collate all the results into a zip
-     * @param zos an output stream (to become a zip file)
-     * @param riskLimit the risk limit
-     * @param raireUrl the url where the raire-service is running
+     * Needs to be synchronized just in case someone is foolish enough to call it twice in parallel
+     * with the same ZipOutputStream.
+     * @param zos    an output stream (to become a zip file)
      * @param suffix requested file type: "csv" or "json"
      */
-    public void getAssertions(final ZipOutputStream zos, final BigDecimal riskLimit, String raireUrl, String suffix)
-            throws IOException, URISyntaxException {
+    public synchronized static void getAssertions(final ZipOutputStream zos, final String directory, final String suffix)
+        throws IOException, InterruptedException {
         final String prefix = "[getAssertions]";
+
+        final String raireUrl = Main.properties().getProperty(RAIRE_URL, "") + RAIRE_ENDPOINT;
+
+        // Use the DoS Dashboard to get the risk limit; default to 0 if none is specified.
+        // This is a safe default because the true risk limit cannot be smaller.
+        BigDecimal riskLimit = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class).auditInfo().riskLimit();
+        riskLimit = riskLimit == null ? BigDecimal.ZERO : riskLimit;
 
         // Iterate through all IRV Contests, sending a request to the raire-service for each one's assertions and
         // collating the responses.
@@ -170,60 +176,68 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
 
             // Find the candidates and contest name.
             final List<String> candidates = cr.getContests().stream().findAny().orElseThrow().choices().stream()
-                    .map(Choice::name).toList();
+                .map(Choice::name).toList();
 
             // Remove non-word characters for saving into .zip file; set up the zip next entry.
             final String sanitizedContestName = cr.getContestName().replaceAll("[\\W]", "");
-            zos.putNextEntry(new ZipEntry(sanitizedContestName + "_assertions." + suffix));
+            // If we have a nonempty directory, add "/" to it (apparently this is platform independent).
+            final String dirString = directory.isBlank() ? "" : directory + "/";
+            zos.putNextEntry(new ZipEntry(dirString + sanitizedContestName + "_assertions." + suffix));
 
             // Make the request.
             final GetAssertionsRequest getAssertionsRequest = new GetAssertionsRequest(
-                    cr.getContestName(),
-                    cr.getBallotCount().intValue(),
-                    candidates,
-                    riskLimit
+                cr.getContestName(),
+                cr.getBallotCount().intValue(),
+                candidates,
+                riskLimit
             );
 
-            // Throws URISyntaxException or MalformedURLException if the raireUrl is invalid.
-            final HttpPost requestToRaire = new HttpPost(new URL(raireUrl + "-" + suffix).toURI());
-            requestToRaire.addHeader("content-type", "application/json");
-            requestToRaire.setEntity(new StringEntity(gson.toJson(getAssertionsRequest)));
-
-            // Send it to the RAIRE service.
-            final HttpResponse raireResponse = httpClient.execute(requestToRaire);
-            LOGGER.debug(String.format("%s %s.", prefix, "Sent Assertion Request to Raire service for "
+            try {
+                // Make the request and send it to RAIRE.
+                // Throws URISyntaxException if the raireUrl is invalid.
+                final HttpResponse<String> raireResponse = httpClient.send(HttpRequest.newBuilder()
+                    .uri(new URL(raireUrl + "-" + suffix).toURI())
+                    .header("content-type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(getAssertionsRequest)))
+                    .build(),
+                    HttpResponse.BodyHandlers.ofString()
+                );
+                LOGGER.debug(String.format("%s %s.", prefix, "Sent Assertion Request to Raire service for "
                     + getAssertionsRequest.contestName));
 
-            final int statusCode = raireResponse.getStatusLine().getStatusCode();
-            if(statusCode == HttpStatus.SC_OK) {
-                // OK response. Put the file name and data into the .zip.
+                final int statusCode = raireResponse.statusCode();
+                if (statusCode == HttpURLConnection.HTTP_OK) {
+                    // OK response. Put the file name and data into the .zip.
 
-                LOGGER.debug(String.format("%s %s.", prefix, "OK response received from RAIRE for "
+                    LOGGER.debug(String.format("%s %s.", prefix, "OK response received from RAIRE for "
                         + getAssertionsRequest.contestName));
-                IOUtils.copy(raireResponse.getEntity().getContent(), zos);
+                    zos.write(raireResponse.body().getBytes(StandardCharsets.UTF_8));
 
-            } else if(raireResponse.containsHeader(RaireServiceErrors.ERROR_CODE_KEY)) {
-                // Error response about a specific contest, e.g. "NO_ASSERTIONS_PRESENT".
-                // Write the error into the zip file and continue.
+                } else if (raireResponse.headers().firstValue(RaireServiceErrors.ERROR_CODE_KEY).isPresent()) {
+                    // Error response about a specific contest, e.g. "NO_ASSERTIONS_PRESENT".
+                    // Write the error into the zip file and continue.
 
-                final String code = raireResponse.getFirstHeader(RaireServiceErrors.ERROR_CODE_KEY).getValue();
-                LOGGER.debug(String.format("%s %s %s.", prefix, "Error response " + code, "received from RAIRE for "
-                        + getAssertionsRequest.contestName));
-                zos.write(code.getBytes(StandardCharsets.UTF_8));
+                    final String code
+                        = raireResponse.headers().firstValue(RaireServiceErrors.ERROR_CODE_KEY).get();
+                    LOGGER.debug(String.format("%s %s %s.", prefix, "Error response " + code,
+                        "received from RAIRE for " + getAssertionsRequest.contestName));
+                    zos.write(code.getBytes(StandardCharsets.UTF_8));
 
-            } else {
-                // Something went wrong with the connection. Cannot continue.
+                } else {
+                    // Something went wrong with the connection. Cannot continue.
 
-                final String msg = "Bad response from Raire service for contest " + getAssertionsRequest.contestName
-                        + ":" + statusCode + " " + raireResponse.getStatusLine().getReasonPhrase();
-                LOGGER.error(String.format("%s %s", prefix, msg));
+                    final String msg = "Bad response from Raire service for contest " + getAssertionsRequest.contestName
+                        + ":" + statusCode + " " + raireResponse.statusCode();
+                    LOGGER.error(String.format("%s %s", prefix, msg));
+                    throw new RuntimeException(msg);
+                }
+
+                zos.closeEntry();
+            } catch (URISyntaxException e) {
+                final String msg = "Bad configuration of raire-service url. Fix the config file.";
+                LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
                 throw new RuntimeException(msg);
             }
-
-            zos.closeEntry();
         }
-
-        // Return all the RAIRE responses to the endpoint as a zip file.
-        zos.close();
     }
 }

@@ -8,11 +8,9 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
-import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.Test;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import us.freeandfair.corla.persistence.Persistence;
 
 import java.util.Optional;
 
@@ -37,17 +35,16 @@ public class GenerateAssertionsSummaryQueriesTests extends TestClassWithDatabase
   /**
    * Container for the mock-up database.
    */
-  protected static PostgreSQLContainer<?> postgres = createTestContainer();
+  private static final PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
    * Start the test container and establish persistence properties before the first test.
    */
   @BeforeClass
   public static void beforeAll() {
-    postgres.start();
-    Persistence.setProperties(createHibernateProperties(postgres));
 
-    var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    var containerDelegate = setupContainerStartPostgres(postgres);
+
     ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
     ScriptUtils.runInitScript(containerDelegate, "SQL/simple-assertions.sql");
     ScriptUtils.runInitScript(containerDelegate, "SQL/summaries-generation-errors.sql");
