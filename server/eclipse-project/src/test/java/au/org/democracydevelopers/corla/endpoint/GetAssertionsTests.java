@@ -31,7 +31,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
-import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -48,11 +47,9 @@ import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipInputStream;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import us.freeandfair.corla.persistence.Persistence;
 
 import static au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint.RAIRE_URL;
 import static au.org.democracydevelopers.corla.endpoint.GetAssertions.*;
-import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.assertEquals;
@@ -83,21 +80,16 @@ public class GetAssertionsTests extends TestClassWithDatabase {
   /**
    * Endpoint for getting assertions.
    */
-  private final static String getAssertionsEndpoint = "/raire/get-assertions";
+  private final static String raireGetAssertionsEndpoint = "/raire/get-assertions";
 
   /**
-   * Pproperties derived from test.properties.
+   * The string used to identify the configured port in test.properties.
    */
-  private static Properties config;
+  private final static String getAssertionsPortNumberString = "get_assertions_mock_port";
 
-  /**
-   * The string used to identify the configured port.
-   */
-  private final static String portNumberString = "get_assertions_mock_port";
   /**
    * Wiremock server for mocking the raire service.
    * (Note the default of 8080 clashes with the raire-service default, so this is different.)
-   * FIXME VT: make the port num a test setting.
    */
   WireMockServer wireMockRaireServer;
 
@@ -117,11 +109,9 @@ public class GetAssertionsTests extends TestClassWithDatabase {
    */
   @BeforeClass
   public static void beforeAll() throws IOException {
-    postgres.start();
-    config = loadProperties("test.properties");
-    Persistence.setProperties(createHibernateProperties(postgres));
 
-    var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    var containerDelegate = setupContainerStartPostgres(postgres);
+
     // Load in the counties data, actually just for basic setup such as DoSDashboard.
     ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
   }
@@ -144,7 +134,7 @@ public class GetAssertionsTests extends TestClassWithDatabase {
     tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
 
     // Set up a wiremock raire server on the port defined in test.properties.
-    final int rairePort = Integer.parseInt(config.getProperty(portNumberString, ""));
+    final int rairePort = Integer.parseInt(config.getProperty(getAssertionsPortNumberString, ""));
     wireMockRaireServer = new WireMockServer(rairePort);
     wireMockRaireServer.start();
     baseUrl = wireMockRaireServer.baseUrl();
@@ -152,12 +142,12 @@ public class GetAssertionsTests extends TestClassWithDatabase {
     // Mock the above-initialized URL for the RAIRE_URL property in Main.
     mockProperties.setProperty(RAIRE_URL, baseUrl);
 
-    stubFor(post(urlEqualTo(getAssertionsEndpoint + "-" + CSV_SUFFIX))
+    stubFor(post(urlEqualTo(raireGetAssertionsEndpoint + "-" + CSV_SUFFIX))
         .willReturn(aResponse()
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/octet-stream")
             .withBody("Test csv")));
-    stubFor(post(urlEqualTo(getAssertionsEndpoint + "-" + JSON_SUFFIX))
+    stubFor(post(urlEqualTo(raireGetAssertionsEndpoint + "-" + JSON_SUFFIX))
         .willReturn(aResponse()
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
