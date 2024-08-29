@@ -86,13 +86,13 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
   private final GenerateAssertions endpoint = new GenerateAssertions();
 
   /**
-   * Mock response for tinyExample1 contest
+   * Mock response for tinyExample1 contest, which succeeded and is not worth retrying.
    */
   private final static GenerateAssertionsResponse tinyIRVResponse
       = new GenerateAssertionsResponse(tinyIRV, true, false);
 
   /**
-   * Request for tinyExample1 contest
+   * Request for tinyExample1 contest, with default/boring parameters for total ballot count and time limit.
    */
   private final static GenerateAssertionsRequest tinyIRVRequest
       = new GenerateAssertionsRequest(tinyIRV, tinyIRVCount, 5,
