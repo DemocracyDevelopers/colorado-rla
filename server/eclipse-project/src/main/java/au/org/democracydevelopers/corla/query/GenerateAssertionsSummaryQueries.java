@@ -30,6 +30,7 @@ import us.freeandfair.corla.persistence.Persistence;
 import javax.persistence.TypedQuery;
 import java.util.List;
 import java.util.Optional;
+import java.util.SortedMap;
 
 import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 
@@ -102,5 +103,4 @@ public class GenerateAssertionsSummaryQueries {
       throw new RuntimeException(msg);
     }
   }
-
 }
