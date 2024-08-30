@@ -140,14 +140,17 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
         const CombinedTableRow = (input: CombinationSummary) => {
            const {combinedData } = input;
 
-            // FIXME: succeeded and retry can now be undefined, so this needs to be updated to be blank then.
+            // Succeeded and retry can be undefined - if so this leaves the space blank.
+            // {combinedData.succeeded != undefined ? {combinedData.succeeded ? 'Success' : 'Failure'} : ''}
+            let successString = combinedData.succeeded ? 'Success' : 'Failure';
+            let retryString = combinedData.retry ? 'Yes' : 'No';
             return (
                 <tr>
                     <td>{combinedData.contestName}</td>
                     <td style={{color: combinedData.succeeded ? 'green' : 'red'}}>
-                        {combinedData.succeeded ? 'Success' : 'Failure'}
+                        {combinedData.succeeded == undefined ? '' : successString}
                     </td>
-                    <td>{combinedData.retry ? 'Yes' : 'No'}</td>
+                    <td>{combinedData.retry == undefined ? '' : retryString}</td>
                     <td>{combinedData.winner}</td>
                     <td>{combinedData.error}</td>
                     <td>{combinedData.warning}</td>
