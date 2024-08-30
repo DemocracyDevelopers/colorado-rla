@@ -9,7 +9,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
-import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import spark.HaltException;
@@ -70,10 +69,9 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
    */
   @BeforeClass
   public static void beforeAll() {
-    postgres.start();
-    Persistence.setProperties(createHibernateProperties(postgres));
 
-    final var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    final var containerDelegate = setupContainerStartPostgres(postgres);
+
     ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
     ScriptUtils.runInitScript(containerDelegate, "SQL/simple-assertions.sql");
 
