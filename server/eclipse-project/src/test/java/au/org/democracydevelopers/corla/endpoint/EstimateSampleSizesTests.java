@@ -9,7 +9,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
-import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import spark.HaltException;
@@ -25,6 +24,7 @@ import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.util.*;
 
+import static au.org.democracydevelopers.corla.util.TestClassWithDatabase.setupContainerStartPostgres;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -70,10 +70,9 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
    */
   @BeforeClass
   public static void beforeAll() {
-    postgres.start();
-    Persistence.setProperties(createHibernateProperties(postgres));
 
-    final var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    final var containerDelegate = setupContainerStartPostgres(postgres);
+
     ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
     ScriptUtils.runInitScript(containerDelegate, "SQL/simple-assertions.sql");
 

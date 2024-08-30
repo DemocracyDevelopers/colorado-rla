@@ -88,7 +88,7 @@ public abstract class TestClassWithDatabase {
    * @param postgres the database container.
    * @return the database delegate.
    */
-  protected static JdbcDatabaseDelegate setupContainerStartPostgres(PostgreSQLContainer<?> postgres) {
+  public static JdbcDatabaseDelegate setupContainerStartPostgres(PostgreSQLContainer<?> postgres) {
     postgres.start();
 
     // Each class that inherits from TestClassWithDatabase gets a different url for the mocked DB.
