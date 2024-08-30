@@ -131,7 +131,7 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
   @BeforeClass
   public static void beforeAll() {
     postgres.start();
-    Persistence.setProperties(createHibernateProperties(postgres));
+    Persistence.setProperties(config);
 
     var s = Persistence.openSession();
     s.beginTransaction();
