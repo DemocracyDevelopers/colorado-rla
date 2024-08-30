@@ -104,9 +104,6 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                     </Button>
                 </div>
                 <div>
-                    {this.getAssertionGenerationSummaryTable()}
-                </div>
-                <div>
                     {this.getAssertionGenerationStatusTable()}
                 </div>
             </div>;
@@ -143,6 +140,45 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
             );
         };
 
+
+       interface GenerationSummary {
+           summary: GenerateAssertionsSummary;
+       }
+
+       const AssertionSummaryTableRow = (props: GenerationSummary) => {
+           const {summary} = props;
+
+           return (
+               <tr>
+                   <td>{summary.contestName}</td>
+                   <td>{summary.winner}</td>
+                   <td>{summary.error}</td>
+                   <td>{summary.warning}</td>
+                   <td>{summary.message}</td>
+
+               </tr>
+           );
+       };
+
+       const assertionSummaryRows = _.map(this.props.dosState.generateAssertionsSummaries, a => (
+            <AssertionSummaryTableRow summary={a} />
+       ));
+
+
+       interface CombinedData {
+           contestName : string,
+           status : boolean,
+           retry : boolean,
+           winner : string,
+           error : string,
+           warning : string,
+           message : string
+       };
+
+       // const joinedRows : CombinedData[]  = (status : RowProps, summaries : GenerateAssertionsSummary[] ) => {
+       //    return [];
+       // }
+
         const assertionRows = _.map(this.props.dosState.assertionGenerationStatuses, a => (
             <AssertionStatusTableRow key={ a.contestName } status={ a } />
         ));
@@ -171,53 +207,27 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                             <th>Advise Retry</th>
                         </tr>
                         </thead>
-                        <tbody>{ assertionRows }</tbody>
+                        <tbody>{assertionRows}</tbody>
+                    </table>
+                    <table className='pt-html-table pt-html-table-striped rla-table mt-default'>
+                        <thead>
+                        <tr>
+                            <th>Contest</th>
+                            <th>Winner</th>
+                            <th>Error</th>
+                            <th>Warning</th>
+                            <th>Message</th>
+                        </tr>
+                        </thead>
+                        <tbody>{assertionSummaryRows}</tbody>
                     </table>
                 </div>
             );
         } else {
-            return <div />;
+            return <div/>;
         }
     }
-    private getAssertionGenerationSummaryTable() {
-       interface RowSummary {
-           summary: GenerateAssertionsSummary;
-       }
 
-       const AssertionSummaryTableRow = (props: RowSummary) => {
-           const {summary} = props;
-
-           return (
-               <tr>
-                   <td>{summary.contestName}</td>
-                   <td>{summary.winner}</td>
-                   <td>{summary.error}</td>
-                   <td>{summary.warning}</td>
-                   <td>{summary.message}</td>
-
-               </tr>
-           );
-       };
-
-       const assertionSummaryRows = _.map(this.props.dosState.generateAssertionsSummaries, a => (
-            <AssertionSummaryTableRow summary={a} />
-       ));
-
-       return (
-           <table className='pt-html-table pt-html-table-striped rla-table mt-default'>
-               <thead>
-               <tr>
-                   <th>Contest</th>
-                   <th>Winner</th>
-                   <th>Error</th>
-                   <th>Warning</th>
-                   <th>Message</th>
-               </tr>
-               </thead>
-               <tbody>{assertionSummaryRows}</tbody>
-           </table>
-       );
-    }
 }
 
 export default GenerateAssertionsPage;
