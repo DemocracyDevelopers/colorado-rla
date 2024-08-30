@@ -1,11 +1,14 @@
+import counties from 'corla/data/counties';
+import * as _ from 'lodash';
 import * as React from 'react';
 
-import { Breadcrumb, Button, Card, Intent } from '@blueprintjs/core';
+import { Breadcrumb, Button, Card, Intent, Spinner } from '@blueprintjs/core';
 
+import exportAssertionsAsCsv from 'corla/action/dos/exportAssertionsAsCsv';
+import exportAssertionsAsJson from 'corla/action/dos/exportAssertionsAsJson';
 import generateAssertions from 'corla/action/dos/generateAssertions';
 import DOSLayout from 'corla/component/DOSLayout';
-import exportAssertionsAsJson from "corla/action/dos/exportAssertionsAsJson";
-import exportAssertionsAsCsv from "corla/action/dos/exportAssertionsAsCsv";
+import AssertionStatus = DOS.AssertionStatus;
 
 const Breadcrumbs = () => (
     <ul className='pt-breadcrumbs mb-default'>
@@ -23,6 +26,8 @@ interface GenerateAssertionsPageProps {
 
 interface GenerateAssertionsPageState {
     canGenerateAssertions: boolean;
+    generatingAssertions: boolean;
+    generationTimeOutSeconds: number;
 }
 
 class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps, GenerateAssertionsPageState> {
@@ -31,6 +36,8 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
 
         this.state = {
             canGenerateAssertions: !props.dosState.assertionsGenerated && props.readyToGenerate,
+            generatingAssertions: false,
+            generationTimeOutSeconds: 5,
         };
     }
 
@@ -42,14 +49,18 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
         } = this.props;
 
         const generate = async () => {
+            this.setState({generatingAssertions: true});
             this.setState({canGenerateAssertions: false});
             this.render();
 
-            generateAssertions().then()
+            const timeoutQueryParams = new URLSearchParams();
+            timeoutQueryParams.set('generationTimeOutSeconds', this.state.generationTimeOutSeconds.toString());
+            generateAssertions(timeoutQueryParams).then()
                 .catch(reason => {
                     alert('generateAssertions error in fetchAction ' + reason);
                 });
 
+            this.setState({generatingAssertions: false});
             this.setState({canGenerateAssertions: true});
         };
 
@@ -61,49 +72,107 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                     Assertions will be generated for all IRV contests to
                     support opportunistic discrepancy computation.
                 </p>
-                <p>
-                    This prototype is not sophisticated enough to give you
-                    feedback on how assertion generation is progressing ... but
-                    once it is done either a green alert will tell you that it
-                    was successful or a red one will tell you it has failed.
-                </p>
-                <p>
-                    Then click on 'Export Assertions' and the generated assertions
-                    will be exported to a JSON file and automatically downloaded.
-                </p>
                 <div className='control-buttons mt-default'>
                     <Button onClick={generate}
-                            disabled={!this.state.canGenerateAssertions}
+                            disabled={!this.state.canGenerateAssertions || this.state.generatingAssertions}
                             className='pt-button pt-intent-primary'>
                         Generate Assertions
                     </Button>
                 </div>
-
-                <div className='control-buttons mt-default'>
-                    <Button onClick={exportAssertionsAsJson}
-                            className='pt-button pt-intent-primary'>
-                        Export Assertions as JSON
-                    </Button>
-                </div>
-
-                <div className='control-buttons mt-default'>
-                    <Button onClick={exportAssertionsAsCsv}
-                            className='pt-button pt-intent-primary'>
-                        Export Assertions as CSV
-                    </Button>
-                </div>
-
+                { this.displayTimeoutInput() &&
+                    <div>
+                        <label htmlFor='timeOut'>Timeout (in seconds): </label>
+                        <input
+                            name='timeOut'
+                            type='number'
+                            min={5}
+                            max={999}
+                            className='pt-input'
+                            style={{width: '60px'}}
+                            value={this.state.generationTimeOutSeconds}
+                            onChange={this.onTimeoutChange}>
+                        </input>
+                    </div>
+                }
                 <div className='control-buttons mt-default'>
                     <Button onClick={forward}
                             className='pt-button pt-intent-primary'>
                         Next
                     </Button>
                 </div>
+                <div>
+                    {this.getAssertionGenerationStatusTable()}
+                </div>
             </div>;
 
         return <DOSLayout main={main}/>;
     }
 
+    private displayTimeoutInput() {
+        return this.props.dosState.assertionGenerationStatuses &&
+            this.props.dosState.assertionGenerationStatuses.some(ags => !ags.succeeded && ags.retry);
+    }
+
+    private onTimeoutChange = (event: React.FormEvent<HTMLInputElement>) => {
+        const timeout = (event.target as HTMLInputElement).value;
+        this.setState({generationTimeOutSeconds: Number(timeout)});
+    }
+
+    private getAssertionGenerationStatusTable() {
+        interface RowProps {
+            status: AssertionStatus;
+        }
+
+        const AssertionStatusTableRow = (props: RowProps) => {
+            const {status} = props;
+
+            return (
+                <tr>
+                    <td>{ status.contestName }</td>
+                    <td style={{color:  status.succeeded ? 'green' : 'red'}}>
+                        { status.succeeded ? 'Success' : 'Failure' }
+                    </td>
+                    <td>{status.retry ? 'Yes' : 'No'}</td>
+                </tr>
+            );
+        };
+
+        const assertionRows = _.map(this.props.dosState.assertionGenerationStatuses, a => (
+            <AssertionStatusTableRow key={ a.contestName } status={ a } />
+        ));
+
+        if (this.state.generatingAssertions) {
+            return (
+                <Card className='mt-default'>
+                    <Spinner className='pt-medium' intent={ Intent.PRIMARY } />
+                    <div>Generating Assertions...</div>
+                </Card>
+            );
+        } else if (this.props.dosState.assertionGenerationStatuses) {
+            return (
+                <div>
+                <span className='generate-assertions-exports'>
+                    <b>Export Assertions: </b>
+                    <a href='#' onClick={exportAssertionsAsCsv}>CSV</a>
+                    &nbsp;|&nbsp;
+                    <a href='#' onClick={exportAssertionsAsJson}>JSON</a>
+                </span>
+                    <table className='pt-html-table pt-html-table-striped rla-table mt-default'>
+                        <thead>
+                        <tr>
+                            <th>Contest</th>
+                            <th>Assertion Generation Status</th>
+                            <th>Advise Retry</th>
+                        </tr>
+                        </thead>
+                        <tbody>{ assertionRows }</tbody>
+                    </table>
+                </div>
+            );
+        } else {
+            return <div />;
+        }
+    }
 }
 
 export default GenerateAssertionsPage;

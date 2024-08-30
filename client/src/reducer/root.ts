@@ -22,6 +22,7 @@ import dosLoginOk from './dos/loginOk';
 import uploadRandomSeedOk from './dos/uploadRandomSeedOk';
 
 import login1FOk from './login1FOk';
+import AssertionStatus = DOS.AssertionStatus;
 
 // Default state is preloaded in the module `corla/store`.
 export default function root(state: AppState, action: Action.App) {
@@ -166,6 +167,17 @@ export default function root(state: AppState, action: Action.App) {
     }
     case 'GENERATE_ASSERTIONS_OK': {
         const nextState = { ...state } as DOS.AppState;
+
+        // Put failed assertion generations at the front of the list
+        nextState.assertionGenerationStatuses = action.data.sort((a: AssertionStatus, b: AssertionStatus) => {
+            if (a.succeeded && !b.succeeded) {
+                return 1;
+            }
+            if (!a.succeeded && b.succeeded) {
+                return -1;
+            }
+            return 0;
+        });
 
         nextState.generatingAssertions = false;
         nextState.assertionsGenerated = true;

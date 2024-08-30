@@ -947,3 +947,8 @@ th.rla-county-contest-info {
     display: inline-block;
 
 }
+
+.generate-assertions-exports {
+    float: right;
+    margin-right: 175px;
+}

@@ -17,8 +17,17 @@ declare namespace DOS {
         standardizingContests?: boolean;
         generatingAssertions?: boolean;
         assertionsGenerated?: boolean;
+        assertionGenerationStatuses?: DOS.AssertionGenerationStatuses;
         type: 'DOS';
     }
+
+    interface AssertionStatus {
+        contestName: string;
+        succeeded: boolean;
+        retry: boolean;
+    }
+
+    interface AssertionGenerationStatuses extends Array<AssertionStatus> {}
 
     interface EstimatedBallotsToAudit {
         [contestId: number]: number;
