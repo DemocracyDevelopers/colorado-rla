@@ -36,7 +36,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
-import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -130,13 +129,12 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
    */
   @BeforeClass
   public static void beforeAll() {
-    postgres.start();
-    Persistence.setProperties(createHibernateProperties(postgres));
+
+    final var containerDelegate = setupContainerStartPostgres(postgres);
 
     var s = Persistence.openSession();
     s.beginTransaction();
 
-    final var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
     // Used to initialize the database, particularly to set the ASM state to the DOS_INITIAL_STATE.
     ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
   }

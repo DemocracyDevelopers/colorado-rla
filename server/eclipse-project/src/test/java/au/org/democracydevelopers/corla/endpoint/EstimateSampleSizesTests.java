@@ -24,7 +24,6 @@ import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.util.*;
 
-import static au.org.democracydevelopers.corla.util.TestClassWithDatabase.setupContainerStartPostgres;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
