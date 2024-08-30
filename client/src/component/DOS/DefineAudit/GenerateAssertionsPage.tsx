@@ -167,18 +167,122 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
 
        interface CombinedData {
            contestName : string,
-           status : boolean,
-           retry : boolean,
+           succeeded : boolean | undefined,
+           retry : boolean | undefined,
            winner : string,
            error : string,
            warning : string,
            message : string
-       };
+       }
 
-       // const joinedRows : CombinedData[]  = (status : RowProps, summaries : GenerateAssertionsSummary[] ) => {
-       //    return [];
-       // }
+       interface CombinationSummary {
+           combinedData : CombinedData;
+       }
 
+        const CombinedTableRow = (input: CombinationSummary) => {
+           const {combinedData } = input;
+
+            return (
+                <tr>
+                    <td>{combinedData.contestName}</td>
+                    <td style={{color: combinedData.succeeded ? 'green' : 'red'}}>
+                        {combinedData.succeeded ? 'Success' : 'Failure'}
+                    </td>
+                    <td>{combinedData.retry ? 'Yes' : 'No'}</td>
+                    <td>{combinedData.winner}</td>
+                    <td>{combinedData.error}</td>
+                    <td>{combinedData.warning}</td>
+                    <td>{combinedData.message}</td>
+                </tr>
+            );
+        };
+
+        // Join up the rows by contest name if matching. If there is no matching contest name in the other
+        // list, add a row with blanks for the missing data.
+        // Various kinds of absences are possible, because there may be empty summaries at the start;
+       // conversely, in later phases we may rerun generation (and hence get status) for only a few contests.
+       const joinRows = (statuses: DOS.AssertionGenerationStatuses | undefined, summaries: DOS.GenerateAssertionsSummary[]) => {
+           summaries.sort((a, b) => a.contestName < b.contestName ? -1 : 1);
+           let rows: CombinedData[] = [];
+
+           var i = 0;
+           var j = 0;
+
+           if(statuses === undefined) {
+               // No status yet. Just print summary data.
+               return summaries.map(s => {
+                   let row: CombinedData = {
+                       contestName : s.contestName,
+                       succeeded : undefined,
+                       retry : undefined,
+                       winner : s.winner,
+                       error : s.error,
+                       warning : s.warning,
+                       message : s.message
+                   }
+                   console.log("Status undefined. Summaries only for contest "+s.contestName);
+                   return row;
+               })
+
+           } else {
+               statuses.sort((a, b) => a.contestName < b.contestName ? -1 : 1);
+               while (i < statuses.length) {
+                   if (statuses[i].contestName === summaries[j].contestName) {
+                       // Matching contest names. Join the rows and move indices along both lists.
+                       let row: CombinedData = {
+                           contestName: statuses[i].contestName,
+                           succeeded: statuses[i].succeeded,
+                           retry: statuses[i].retry,
+                           winner: summaries[j].winner,
+                           error: summaries[j].error,
+                           warning: summaries[j].warning,
+                           message: summaries[j].message
+                       }
+                       console.log("Matching for contest "+statuses[i].contestName+" . Status = "+statuses[i].succeeded)
+                       rows.push(row);
+                       i++;
+                       j++;
+                   } else if (statuses[i].contestName < summaries[j].contestName) {
+                       // We have a status with no matching summary. Fill in the summary with blanks.
+                       // increment status index only.
+                       let row: CombinedData = {
+                           contestName: statuses[i].contestName,
+                           succeeded: statuses[i].succeeded,
+                           retry: statuses[i].retry,
+                           winner: '',
+                           error: '',
+                           warning: '',
+                           message: ''
+                       }
+                       console.log("Status only for contest "+statuses[i].contestName)
+                       rows.push(row);
+                       i++;
+                   } else if (statuses[i].contestName < summaries[j].contestName) {
+                       // We have a summary with no matching status. Fill in status 'undefined'.
+                       // Increment summary index only.
+                       let row: CombinedData = {
+                           contestName: summaries[j].contestName,
+                           succeeded: undefined,
+                           retry: undefined,
+                           winner: summaries[j].winner,
+                           error: summaries[j].error,
+                           warning: summaries[j].warning,
+                           message: summaries[j].message
+                       }
+                       console.log("Summary only for contest "+summaries[j].contestName)
+                       rows.push(row);
+                       j++;
+                   }
+               }
+           }
+
+           return rows;
+       }
+
+       const combinedRows = _.map(joinRows(this.props.dosState.assertionGenerationStatuses, this.props.dosState.generateAssertionsSummaries), d => (
+           // <CombinedTableRow contestName={d.contestName} succeeded={d.succeeded} retry={d.retry} winner={d.winner} error={d.error} warning={d.warning} message={d.message} />
+           <CombinedTableRow combinedData={d} />
+        ))
         const assertionRows = _.map(this.props.dosState.assertionGenerationStatuses, a => (
             <AssertionStatusTableRow key={ a.contestName } status={ a } />
         ));
@@ -220,6 +324,20 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                         </tr>
                         </thead>
                         <tbody>{assertionSummaryRows}</tbody>
+                    </table>
+                    <table className='pt-html-table pt-html-table-striped rla-table mt-default'>
+                        <thead>
+                        <tr>
+                            <th>Contest</th>
+                            <th>Assertion Generation Status</th>
+                            <th>Advise Retry</th>
+                            <th>Winner</th>
+                            <th>Error</th>
+                            <th>Warning</th>
+                            <th>Message</th>
+                        </tr>
+                        </thead>
+                        <tbody>{combinedRows}</tbody>
                     </table>
                 </div>
             );
