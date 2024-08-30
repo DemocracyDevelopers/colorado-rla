@@ -26,7 +26,6 @@ import spark.Response;
 import us.freeandfair.corla.auth.AuthenticationInterface;
 import us.freeandfair.corla.endpoint.Endpoint;
 import us.freeandfair.corla.model.*;
-import us.freeandfair.corla.util.TestClassWithDatabase;
 
 import java.util.ArrayList;
 import java.util.List;

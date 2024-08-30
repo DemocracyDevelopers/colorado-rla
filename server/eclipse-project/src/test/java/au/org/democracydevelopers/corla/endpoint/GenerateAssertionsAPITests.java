@@ -105,9 +105,9 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
 
   /**
    * Wiremock server for mocking the raire service.
-   * (Note the default of 8080 clashes with the raire-service default, so this is different.)
+   *
    */
-  private final WireMockServer wireMockRaireServer = new WireMockServer(8110);
+  private WireMockServer wireMockRaireServer;
 
   /**
    * Base url - this is set up to use the wiremock server, but could be set here to wherever you have the
@@ -130,13 +130,11 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
    */
   @BeforeClass
   public static void beforeAll() {
-    postgres.start();
-    Persistence.setProperties(createHibernateProperties(postgres));
+    var containerDelegate = setupContainerStartPostgres(postgres);
 
     var s = Persistence.openSession();
     s.beginTransaction();
 
-    final var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
     // Used to initialize the database, particularly to set the ASM state to the DOS_INITIAL_STATE.
     ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
   }
@@ -156,8 +154,12 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
     tinyIRVContestResult.setWinners(Set.of("Alice"));
     tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
 
-    // Default raire server. You can instead run the real raire service and set baseUrl accordingly.
-    // Of course you have to have appropriate contests in the database.
+    // Set up default raire server on the port defined in test.properties.
+    // You can instead run the real raire service and set baseUrl accordingly,
+    // though some tests may fail, depending on whether you have
+    // appropriate contests in the database.
+    final int rairePort = Integer.parseInt(config.getProperty(generateAssertionsPortNumberString, ""));
+    wireMockRaireServer = new WireMockServer(rairePort);
     wireMockRaireServer.start();
     baseUrl = wireMockRaireServer.baseUrl();
     configureFor("localhost", wireMockRaireServer.port());
