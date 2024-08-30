@@ -77,7 +77,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                 </p>
                 <div className='control-buttons mt-default'>
                     <Button onClick={generate}
-                            disabled={!this.state.canGenerateAssertions || this.state.generatingAssertions}
+                            disabled={this.state.generatingAssertions}
                             className='pt-button pt-intent-primary'>
                         Generate Assertions
                     </Button>
