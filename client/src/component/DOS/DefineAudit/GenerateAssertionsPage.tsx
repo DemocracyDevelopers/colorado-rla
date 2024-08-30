@@ -122,48 +122,6 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
     }
 
     private getAssertionGenerationStatusTable() {
-        interface RowProps {
-            status: AssertionStatus;
-        }
-
-        const AssertionStatusTableRow = (props: RowProps) => {
-            const {status} = props;
-
-            return (
-                <tr>
-                    <td>{ status.contestName }</td>
-                    <td style={{color:  status.succeeded ? 'green' : 'red'}}>
-                        { status.succeeded ? 'Success' : 'Failure' }
-                    </td>
-                    <td>{status.retry ? 'Yes' : 'No'}</td>
-                </tr>
-            );
-        };
-
-
-       interface GenerationSummary {
-           summary: GenerateAssertionsSummary;
-       }
-
-       const AssertionSummaryTableRow = (props: GenerationSummary) => {
-           const {summary} = props;
-
-           return (
-               <tr>
-                   <td>{summary.contestName}</td>
-                   <td>{summary.winner}</td>
-                   <td>{summary.error}</td>
-                   <td>{summary.warning}</td>
-                   <td>{summary.message}</td>
-
-               </tr>
-           );
-       };
-
-       const assertionSummaryRows = _.map(this.props.dosState.generateAssertionsSummaries, a => (
-            <AssertionSummaryTableRow summary={a} />
-       ));
-
 
        interface CombinedData {
            contestName : string,
@@ -182,6 +140,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
         const CombinedTableRow = (input: CombinationSummary) => {
            const {combinedData } = input;
 
+            // FIXME: succeeded and retry can now be undefined, so this needs to be updated to be blank then.
             return (
                 <tr>
                     <td>{combinedData.contestName}</td>
@@ -280,12 +239,8 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
        }
 
        const combinedRows = _.map(joinRows(this.props.dosState.assertionGenerationStatuses, this.props.dosState.generateAssertionsSummaries), d => (
-           // <CombinedTableRow contestName={d.contestName} succeeded={d.succeeded} retry={d.retry} winner={d.winner} error={d.error} warning={d.warning} message={d.message} />
            <CombinedTableRow combinedData={d} />
         ))
-        const assertionRows = _.map(this.props.dosState.assertionGenerationStatuses, a => (
-            <AssertionStatusTableRow key={ a.contestName } status={ a } />
-        ));
 
         if (this.state.generatingAssertions) {
             return (
@@ -294,7 +249,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                     <div>Generating Assertions...</div>
                 </Card>
             );
-        } else if (this.props.dosState.assertionGenerationStatuses) {
+        } else if (this.props.dosState.assertionGenerationStatuses || this.props.dosState.generateAssertionsSummaries.length > 0) {
             return (
                 <div>
                 <span className='generate-assertions-exports'>
@@ -303,28 +258,6 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                     &nbsp;|&nbsp;
                     <a href='#' onClick={exportAssertionsAsJson}>JSON</a>
                 </span>
-                    <table className='pt-html-table pt-html-table-striped rla-table mt-default'>
-                        <thead>
-                        <tr>
-                            <th>Contest</th>
-                            <th>Assertion Generation Status</th>
-                            <th>Advise Retry</th>
-                        </tr>
-                        </thead>
-                        <tbody>{assertionRows}</tbody>
-                    </table>
-                    <table className='pt-html-table pt-html-table-striped rla-table mt-default'>
-                        <thead>
-                        <tr>
-                            <th>Contest</th>
-                            <th>Winner</th>
-                            <th>Error</th>
-                            <th>Warning</th>
-                            <th>Message</th>
-                        </tr>
-                        </thead>
-                        <tbody>{assertionSummaryRows}</tbody>
-                    </table>
                     <table className='pt-html-table pt-html-table-striped rla-table mt-default'>
                         <thead>
                         <tr>
