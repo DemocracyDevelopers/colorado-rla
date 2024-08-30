@@ -49,6 +49,16 @@ public abstract class TestClassWithDatabase {
   protected static Properties config = loadProperties();
 
   /**
+   * The string used to identify the configured port in test.properties.
+   */
+  protected final static String generateAssertionsPortNumberString = "generate_assertions_mock_port";
+
+  /**
+   * The string used to identify the configured port in test.properties.
+   */
+  protected final static String getAssertionsPortNumberString = "get_assertions_mock_port";
+
+  /**
    * Begin a new transaction before each test method in the class is run.
    */
   @BeforeMethod
