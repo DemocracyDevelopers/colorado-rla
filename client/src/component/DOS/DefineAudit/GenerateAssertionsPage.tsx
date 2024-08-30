@@ -12,9 +12,9 @@ const generationTimeoutParam = 'timeLimitSeconds';
 
 const Breadcrumbs = () => (
     <ul className='pt-breadcrumbs mb-default'>
-        <li><Breadcrumb href='/sos' text='SoS' />></li>
-        <li><Breadcrumb href='/sos/audit' text='Audit Admin' /></li>
-        <li><Breadcrumb className='pt-breadcrumb-current' text='Generate Assertions' /></li>
+        <li><Breadcrumb href='/sos' text='SoS'/>></li>
+        <li><Breadcrumb href='/sos/audit' text='Audit Admin'/></li>
+        <li><Breadcrumb className='pt-breadcrumb-current' text='Generate Assertions'/></li>
     </ul>
 );
 
@@ -79,7 +79,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                         Generate Assertions
                     </Button>
                 </div>
-                { this.displayTimeoutInput() &&
+                {this.displayTimeoutInput() &&
                     <div>
                         <label htmlFor='timeOut'>Timeout (in seconds): </label>
                         <input
@@ -120,22 +120,22 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
 
     private getAssertionGenerationStatusTable() {
 
-       interface CombinedData {
-           contestName : string,
-           succeeded : boolean | undefined,
-           retry : boolean | undefined,
-           winner : string,
-           error : string,
-           warning : string,
-           message : string
-       }
+        interface CombinedData {
+            contestName: string,
+            succeeded: boolean | undefined,
+            retry: boolean | undefined,
+            winner: string,
+            error: string,
+            warning: string,
+            message: string
+        }
 
-       interface CombinationSummary {
-           combinedData : CombinedData;
-       }
+        interface CombinationSummary {
+            combinedData: CombinedData;
+        }
 
         const CombinedTableRow = (input: CombinationSummary) => {
-           const {combinedData } = input;
+            const {combinedData} = input;
 
             // Succeeded and retry can be undefined - if so this leaves the space blank.
             // {combinedData.succeeded != undefined ? {combinedData.succeeded ? 'Success' : 'Failure'} : ''}
@@ -156,21 +156,21 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
             );
         };
 
-       // Make a CombinedData structure out of a GenerateAssertionsSummary by filling in blank status.
-       const fillBlankStatus = (s: DOS.GenerateAssertionsSummary) : CombinedData => {
-           return {
-               contestName: s.contestName,
-               succeeded: undefined,
-               retry: undefined,
-               winner: s.winner,
-               error: s.error,
-               warning: s.warning,
-               message: s.message
-           };
-       }
+        // Make a CombinedData structure out of a GenerateAssertionsSummary by filling in blank status.
+        const fillBlankStatus = (s: DOS.GenerateAssertionsSummary): CombinedData => {
+            return {
+                contestName: s.contestName,
+                succeeded: undefined,
+                retry: undefined,
+                winner: s.winner,
+                error: s.error,
+                warning: s.warning,
+                message: s.message
+            };
+        }
 
         // Make a CombinedData structure out of an AssertionsStatus by filling in blank summary data.
-        const fillBlankSummary = (s: DOS.AssertionStatus) : CombinedData => {
+        const fillBlankSummary = (s: DOS.AssertionStatus): CombinedData => {
             return {
                 contestName: s.contestName,
                 succeeded: s.succeeded,
@@ -178,12 +178,12 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                 winner: '',
                 error: '',
                 warning: '',
-                message:''
+                message: ''
             };
         }
 
-       // Make a CombinedData structure out of an AssertionsStatus and a GenerateAssertionsSummary.
-        const combineSummaryAndStatus = (s: DOS.AssertionStatus, t: DOS.GenerateAssertionsSummary) : CombinedData => {
+        // Make a CombinedData structure out of an AssertionsStatus and a GenerateAssertionsSummary.
+        const combineSummaryAndStatus = (s: DOS.AssertionStatus, t: DOS.GenerateAssertionsSummary): CombinedData => {
             return {
                 contestName: s.contestName,
                 succeeded: s.succeeded,
@@ -195,59 +195,59 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
             };
         }
 
-       // Join up the rows by contest name if matching. If there is no matching contest name in the other
-       // list, add a row with blanks for the missing data.
-       // Various kinds of absences are possible, because there may be empty summaries at the start;
-       // conversely, in later phases we may rerun generation (and hence get status) for only a few contests.
-       const joinRows = (statuses: DOS.AssertionGenerationStatuses | undefined, summaries: DOS.GenerateAssertionsSummary[]) => {
-           summaries.sort((a, b) => a.contestName < b.contestName ? -1 : 1);
-           let rows: CombinedData[] = [];
-           let i=0, j=0;
+        // Join up the rows by contest name if matching. If there is no matching contest name in the other
+        // list, add a row with blanks for the missing data.
+        // Various kinds of absences are possible, because there may be empty summaries at the start;
+        // conversely, in later phases we may rerun generation (and hence get status) for only a few contests.
+        const joinRows = (statuses: DOS.AssertionGenerationStatuses | undefined, summaries: DOS.GenerateAssertionsSummary[]) => {
+            summaries.sort((a, b) => a.contestName < b.contestName ? -1 : 1);
+            let rows: CombinedData[] = [];
+            let i = 0, j = 0;
 
-           if(statuses === undefined) {
-               // No status yet. Just print summary data.
-               return summaries.map(s => {
-                   return fillBlankStatus(s);
-               })
+            if (statuses === undefined) {
+                // No status yet. Just print summary data.
+                return summaries.map(s => {
+                    return fillBlankStatus(s);
+                })
 
-           } else {
-               // Iterate along the two sorted lists at once, combining them if the contest name matches, and
-               // filling in blank data otherwise.
-               statuses.sort((a, b) => a.contestName < b.contestName ? -1 : 1);
-               while (i < statuses.length && j < summaries.length) {
-                   if (statuses[i].contestName === summaries[j].contestName) {
-                       // Matching contest names. Join the rows and move indices along both lists.
-                       rows.push(combineSummaryAndStatus(statuses[i++], summaries[j++]));
-                   } else if (statuses[i].contestName < summaries[j].contestName) {
-                       // We have a status with no matching summary. Fill in the summary with blanks.
-                       // increment status index only.
-                       rows.push(fillBlankSummary(statuses[i++]));
-                   } else if (statuses[i].contestName < summaries[j].contestName) {
-                       // We have a summary with no matching status. Fill in status 'undefined'.
-                       // Increment summary index only.
-                       rows.push(fillBlankStatus(summaries[j++]));
-                   }
-               }
-               while (i < statuses.length) {
-                  // We ran out of summaries. Fill in the rest of the statuses with summary blanks.
-                  rows.push(fillBlankSummary(statuses[i++]));
-               }
-               while (j < summaries.length) {
-                  // We ran out of statuses. Fill in the rest of the summaries with status blanks.
-                  rows.push(fillBlankStatus(summaries[j++]));
-               }
-           }
-           return rows;
-       }
+            } else {
+                // Iterate along the two sorted lists at once, combining them if the contest name matches, and
+                // filling in blank data otherwise.
+                statuses.sort((a, b) => a.contestName < b.contestName ? -1 : 1);
+                while (i < statuses.length && j < summaries.length) {
+                    if (statuses[i].contestName === summaries[j].contestName) {
+                        // Matching contest names. Join the rows and move indices along both lists.
+                        rows.push(combineSummaryAndStatus(statuses[i++], summaries[j++]));
+                    } else if (statuses[i].contestName < summaries[j].contestName) {
+                        // We have a status with no matching summary. Fill in the summary with blanks.
+                        // increment status index only.
+                        rows.push(fillBlankSummary(statuses[i++]));
+                    } else if (statuses[i].contestName < summaries[j].contestName) {
+                        // We have a summary with no matching status. Fill in status 'undefined'.
+                        // Increment summary index only.
+                        rows.push(fillBlankStatus(summaries[j++]));
+                    }
+                }
+                while (i < statuses.length) {
+                    // We ran out of summaries. Fill in the rest of the statuses with summary blanks.
+                    rows.push(fillBlankSummary(statuses[i++]));
+                }
+                while (j < summaries.length) {
+                    // We ran out of statuses. Fill in the rest of the summaries with status blanks.
+                    rows.push(fillBlankStatus(summaries[j++]));
+                }
+            }
+            return rows;
+        }
 
-       const combinedRows = _.map(joinRows(this.props.dosState.assertionGenerationStatuses, this.props.dosState.generateAssertionsSummaries), d => (
-           <CombinedTableRow combinedData={d} />
+        const combinedRows = _.map(joinRows(this.props.dosState.assertionGenerationStatuses, this.props.dosState.generateAssertionsSummaries), d => (
+            <CombinedTableRow combinedData={d}/>
         ))
 
         if (this.state.generatingAssertions) {
             return (
                 <Card className='mt-default'>
-                    <Spinner className='pt-medium' intent={ Intent.PRIMARY } />
+                    <Spinner className='pt-medium' intent={Intent.PRIMARY}/>
                     <div>Generating Assertions...</div>
                 </Card>
             );
