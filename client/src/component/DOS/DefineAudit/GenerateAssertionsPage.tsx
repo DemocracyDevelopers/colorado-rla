@@ -11,6 +11,8 @@ import DOSLayout from 'corla/component/DOSLayout';
 import AssertionStatus = DOS.AssertionStatus;
 import GenerateAssertionsSummary = DOS.GenerateAssertionsSummary;
 
+const generationTimeoutParam = 'timeLimitSeconds';
+
 const Breadcrumbs = () => (
     <ul className='pt-breadcrumbs mb-default'>
         <li><Breadcrumb href='/sos' text='SoS' />></li>
@@ -55,7 +57,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
             this.render();
 
             const timeoutQueryParams = new URLSearchParams();
-            timeoutQueryParams.set('generationTimeOutSeconds', this.state.generationTimeOutSeconds.toString());
+            timeoutQueryParams.set(generationTimeoutParam, this.state.generationTimeOutSeconds.toString());
             generateAssertions(timeoutQueryParams).then()
                 .catch(reason => {
                     alert('generateAssertions error in fetchAction ' + reason);
