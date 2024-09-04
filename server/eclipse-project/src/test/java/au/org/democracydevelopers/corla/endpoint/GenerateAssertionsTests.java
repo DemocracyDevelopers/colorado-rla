@@ -117,11 +117,6 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   private final static String raireGenerateAssertionsEndpoint = "/raire/generate-assertions";
 
   /**
-   * The string used to identify the configured port in test.properties.
-   */
-  private final static String generateAssertionsPortNumberString = "generate_assertions_mock_port";
-
-  /**
    * Wiremock server for mocking the raire service.
    * (Note the default of 8080 clashes with the raire-service default, so this is different.)
    */
