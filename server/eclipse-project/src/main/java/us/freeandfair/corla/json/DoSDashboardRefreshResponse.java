@@ -121,15 +121,17 @@ public class DoSDashboardRefreshResponse {
   /**
    * Constructs a new DosDashboardRefreshResponse.
    *
-   * @param the_discrepancy_counts            The discrepancy count for each discrepancy
-   *                                          type, by contest.
    * @param the_asm_state                     The ASM state.
    * @param the_audited_contests              The audited contests.
    * @param the_estimated_ballots_to_audit    The estimated ballots to audit, by contest.
    * @param the_optimistic_ballots_to_audit   The optimistic ballots to audit, by contest.
+   * @param the_discrepancy_counts            The discrepancy count for each discrepancy
+   *                                          type, by contest.
    * @param the_county_status                 The county statuses.
    * @param the_hand_count_contests           The hand count contests.
    * @param the_audit_info                    The election info.
+   * @param the_audit_reasons                 The reasons for auditing each contest.
+   * @param the_audit_types                   The audit type (usually either COMPARISON or NOT_AUDITABLE)
    * @param the_generate_assertions_summaries The GenerateAssertionsSummaries, for IRV contests.
    */
   @SuppressWarnings("PMD.ExcessiveParameterList")

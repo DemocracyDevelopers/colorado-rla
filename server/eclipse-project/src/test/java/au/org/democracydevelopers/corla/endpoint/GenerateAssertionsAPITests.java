@@ -91,7 +91,7 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
       = new GenerateAssertionsResponse(tinyIRV, true, false);
 
   /**
-   * Request for tinyExample1 contest, with default/boring parameters for total ballot count and time limit.
+   * Request for tinyExample1 contest, intended as a boring request with normal parameters.
    */
   private final static GenerateAssertionsRequest tinyIRVRequest
       = new GenerateAssertionsRequest(tinyIRV, tinyIRVCount, 5,
