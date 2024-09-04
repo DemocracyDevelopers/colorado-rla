@@ -1,7 +1,7 @@
+import {Breadcrumb, Button, Card, Intent, Spinner} from '@blueprintjs/core';
+import dashboardRefresh from 'corla/action/dos/dashboardRefresh';
 import * as _ from 'lodash';
 import * as React from 'react';
-
-import {Breadcrumb, Button, Card, Intent, Spinner} from '@blueprintjs/core';
 
 import exportAssertionsAsCsv from 'corla/action/dos/exportAssertionsAsCsv';
 import exportAssertionsAsJson from 'corla/action/dos/exportAssertionsAsJson';
@@ -56,12 +56,14 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
             const timeoutQueryParams = new URLSearchParams();
             timeoutQueryParams.set(generationTimeoutParam, this.state.generationTimeOutSeconds.toString());
             generateAssertions(timeoutQueryParams).then()
-                .catch(reason => {
-                    alert('generateAssertions error in fetchAction ' + reason);
-                });
-
-            this.setState({generatingAssertions: false});
-            this.setState({canGenerateAssertions: true});
+            .catch(reason => {
+                alert('generateAssertions error in fetchAction ' + reason);
+            }).finally(() => {
+                this.setState({canGenerateAssertions: true});
+                this.setState({generatingAssertions: false});
+                // Refresh dashboard to collect full assertion info
+                dashboardRefresh();
+            });
         };
 
         const main =
