@@ -36,7 +36,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
-import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -86,13 +85,13 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
   private final GenerateAssertions endpoint = new GenerateAssertions();
 
   /**
-   * Mock response for tinyExample1 contest
+   * Mock response for tinyExample1 contest, which succeeded and is not worth retrying.
    */
   private final static GenerateAssertionsResponse tinyIRVResponse
       = new GenerateAssertionsResponse(tinyIRV, true, false);
 
   /**
-   * Request for tinyExample1 contest
+   * Request for tinyExample1 contest, intended as a boring request with normal parameters.
    */
   private final static GenerateAssertionsRequest tinyIRVRequest
       = new GenerateAssertionsRequest(tinyIRV, tinyIRVCount, 5,
@@ -130,7 +129,8 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
    */
   @BeforeClass
   public static void beforeAll() {
-    var containerDelegate = setupContainerStartPostgres(postgres);
+
+    final var containerDelegate = setupContainerStartPostgres(postgres);
 
     var s = Persistence.openSession();
     s.beginTransaction();

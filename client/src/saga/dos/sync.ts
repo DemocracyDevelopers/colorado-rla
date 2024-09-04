@@ -38,6 +38,10 @@ const dashboardPollSaga = createPollSaga(
     () => DOS_POLL_DELAY,
 );
 
+function* generateAssertionsSaga() {
+    yield takeLatest('DOS_GENERATE_ASSERTIONS_SYNC', () => dashboardRefresh());
+}
+
 function* defineAuditSaga() {
     yield takeLatest('DOS_DEFINE_AUDIT_SYNC', () => dashboardRefresh());
 }
@@ -64,6 +68,7 @@ export default function* pollSaga() {
         countyOverviewSaga(),
         dashboardPollSaga(),
         defineAuditSaga(),
+        generateAssertionsSaga(),
         defineAuditReviewSaga(),
         randomSeedSaga(),
         selectContestsPollSaga(),

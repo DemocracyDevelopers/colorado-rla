@@ -1,20 +1,20 @@
-import counties from 'corla/data/counties';
 import * as _ from 'lodash';
 import * as React from 'react';
 
-import { Breadcrumb, Button, Card, Intent, Spinner } from '@blueprintjs/core';
+import {Breadcrumb, Button, Card, Intent, Spinner} from '@blueprintjs/core';
 
 import exportAssertionsAsCsv from 'corla/action/dos/exportAssertionsAsCsv';
 import exportAssertionsAsJson from 'corla/action/dos/exportAssertionsAsJson';
 import generateAssertions from 'corla/action/dos/generateAssertions';
 import DOSLayout from 'corla/component/DOSLayout';
-import AssertionStatus = DOS.AssertionStatus;
+
+const generationTimeoutParam = 'timeLimitSeconds';
 
 const Breadcrumbs = () => (
     <ul className='pt-breadcrumbs mb-default'>
-        <li><Breadcrumb href='/sos' text='SoS' />></li>
-        <li><Breadcrumb href='/sos/audit' text='Audit Admin' /></li>
-        <li><Breadcrumb className='pt-breadcrumb-current' text='Generate Assertions' /></li>
+        <li><Breadcrumb href='/sos' text='SoS'/>></li>
+        <li><Breadcrumb href='/sos/audit' text='Audit Admin'/></li>
+        <li><Breadcrumb className='pt-breadcrumb-current' text='Generate Assertions'/></li>
     </ul>
 );
 
@@ -54,7 +54,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
             this.render();
 
             const timeoutQueryParams = new URLSearchParams();
-            timeoutQueryParams.set('generationTimeOutSeconds', this.state.generationTimeOutSeconds.toString());
+            timeoutQueryParams.set(generationTimeoutParam, this.state.generationTimeOutSeconds.toString());
             generateAssertions(timeoutQueryParams).then()
                 .catch(reason => {
                     alert('generateAssertions error in fetchAction ' + reason);
@@ -74,12 +74,12 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                 </p>
                 <div className='control-buttons mt-default'>
                     <Button onClick={generate}
-                            disabled={!this.state.canGenerateAssertions || this.state.generatingAssertions}
+                            disabled={this.state.generatingAssertions}
                             className='pt-button pt-intent-primary'>
                         Generate Assertions
                     </Button>
                 </div>
-                { this.displayTimeoutInput() &&
+                {this.displayTimeoutInput() &&
                     <div>
                         <label htmlFor='timeOut'>Timeout (in seconds): </label>
                         <input
@@ -119,36 +119,139 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
     }
 
     private getAssertionGenerationStatusTable() {
-        interface RowProps {
-            status: AssertionStatus;
+
+        interface CombinedData {
+            contestName: string,
+            succeeded: boolean | undefined,
+            retry: boolean | undefined,
+            winner: string,
+            error: string,
+            warning: string,
+            message: string
         }
 
-        const AssertionStatusTableRow = (props: RowProps) => {
-            const {status} = props;
+        interface CombinationSummary {
+            combinedData: CombinedData;
+        }
 
+        const CombinedTableRow = (input: CombinationSummary) => {
+            const {combinedData} = input;
+
+            // Succeeded and retry can be undefined - if so this leaves the space blank.
+            // {combinedData.succeeded != undefined ? {combinedData.succeeded ? 'Success' : 'Failure'} : ''}
+            let successString = combinedData.succeeded ? 'Success' : 'Failure';
+            let retryString = combinedData.retry ? 'Yes' : 'No';
             return (
                 <tr>
-                    <td>{ status.contestName }</td>
-                    <td style={{color:  status.succeeded ? 'green' : 'red'}}>
-                        { status.succeeded ? 'Success' : 'Failure' }
+                    <td>{combinedData.contestName}</td>
+                    <td style={{color: combinedData.succeeded ? 'green' : 'red'}}>
+                        {combinedData.succeeded == undefined ? '' : successString}
                     </td>
-                    <td>{status.retry ? 'Yes' : 'No'}</td>
+                    <td>{combinedData.retry == undefined ? '' : retryString}</td>
+                    <td>{combinedData.winner}</td>
+                    <td>{combinedData.error}</td>
+                    <td>{combinedData.warning}</td>
+                    <td>{combinedData.message}</td>
                 </tr>
             );
         };
 
-        const assertionRows = _.map(this.props.dosState.assertionGenerationStatuses, a => (
-            <AssertionStatusTableRow key={ a.contestName } status={ a } />
-        ));
+        // Make a CombinedData structure out of a GenerateAssertionsSummary by filling in blank status.
+        const fillBlankStatus = (s: DOS.GenerateAssertionsSummary): CombinedData => {
+            return {
+                contestName: s.contestName,
+                succeeded: undefined,
+                retry: undefined,
+                winner: s.winner,
+                error: s.error,
+                warning: s.warning,
+                message: s.message
+            };
+        }
+
+        // Make a CombinedData structure out of an AssertionsStatus by filling in blank summary data.
+        const fillBlankSummary = (s: DOS.AssertionStatus): CombinedData => {
+            return {
+                contestName: s.contestName,
+                succeeded: s.succeeded,
+                retry: s.retry,
+                winner: '',
+                error: '',
+                warning: '',
+                message: ''
+            };
+        }
+
+        // Make a CombinedData structure out of an AssertionsStatus and a GenerateAssertionsSummary.
+        const combineSummaryAndStatus = (s: DOS.AssertionStatus, t: DOS.GenerateAssertionsSummary): CombinedData => {
+            return {
+                contestName: s.contestName,
+                succeeded: s.succeeded,
+                retry: s.retry,
+                winner: t.winner,
+                error: t.error,
+                warning: t.warning,
+                message: t.message
+            };
+        }
+
+        // Join up the rows by contest name if matching. If there is no matching contest name in the other
+        // list, add a row with blanks for the missing data.
+        // Various kinds of absences are possible, because there may be empty summaries at the start;
+        // conversely, in later phases we may rerun generation (and hence get status) for only a few contests.
+        const joinRows = (statuses: DOS.AssertionGenerationStatuses | undefined, summaries: DOS.GenerateAssertionsSummary[]) => {
+            summaries.sort((a, b) => a.contestName < b.contestName ? -1 : 1);
+            let rows: CombinedData[] = [];
+            let i = 0, j = 0;
+
+            if (statuses === undefined) {
+                // No status yet. Just print summary data.
+                return summaries.map(s => {
+                    return fillBlankStatus(s);
+                })
+
+            } else {
+                // Iterate along the two sorted lists at once, combining them if the contest name matches, and
+                // filling in blank data otherwise.
+                statuses.sort((a, b) => a.contestName < b.contestName ? -1 : 1);
+                while (i < statuses.length && j < summaries.length) {
+                    if (statuses[i].contestName === summaries[j].contestName) {
+                        // Matching contest names. Join the rows and move indices along both lists.
+                        rows.push(combineSummaryAndStatus(statuses[i++], summaries[j++]));
+                    } else if (statuses[i].contestName < summaries[j].contestName) {
+                        // We have a status with no matching summary. Fill in the summary with blanks.
+                        // increment status index only.
+                        rows.push(fillBlankSummary(statuses[i++]));
+                    } else if (statuses[i].contestName < summaries[j].contestName) {
+                        // We have a summary with no matching status. Fill in status 'undefined'.
+                        // Increment summary index only.
+                        rows.push(fillBlankStatus(summaries[j++]));
+                    }
+                }
+                while (i < statuses.length) {
+                    // We ran out of summaries. Fill in the rest of the statuses with summary blanks.
+                    rows.push(fillBlankSummary(statuses[i++]));
+                }
+                while (j < summaries.length) {
+                    // We ran out of statuses. Fill in the rest of the summaries with status blanks.
+                    rows.push(fillBlankStatus(summaries[j++]));
+                }
+            }
+            return rows;
+        }
+
+        const combinedRows = _.map(joinRows(this.props.dosState.assertionGenerationStatuses, this.props.dosState.generateAssertionsSummaries), d => (
+            <CombinedTableRow combinedData={d}/>
+        ))
 
         if (this.state.generatingAssertions) {
             return (
                 <Card className='mt-default'>
-                    <Spinner className='pt-medium' intent={ Intent.PRIMARY } />
+                    <Spinner className='pt-medium' intent={Intent.PRIMARY}/>
                     <div>Generating Assertions...</div>
                 </Card>
             );
-        } else if (this.props.dosState.assertionGenerationStatuses) {
+        } else if (this.props.dosState.assertionGenerationStatuses || this.props.dosState.generateAssertionsSummaries.length > 0) {
             return (
                 <div>
                 <span className='generate-assertions-exports'>
@@ -163,16 +266,21 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                             <th>Contest</th>
                             <th>Assertion Generation Status</th>
                             <th>Advise Retry</th>
+                            <th>Winner</th>
+                            <th>Error</th>
+                            <th>Warning</th>
+                            <th>Message</th>
                         </tr>
                         </thead>
-                        <tbody>{ assertionRows }</tbody>
+                        <tbody>{combinedRows}</tbody>
                     </table>
                 </div>
             );
         } else {
-            return <div />;
+            return <div/>;
         }
     }
+
 }
 
 export default GenerateAssertionsPage;

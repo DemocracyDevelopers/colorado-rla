@@ -21,10 +21,17 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.model;
 
+import au.org.democracydevelopers.corla.query.GenerateAssertionsSummaryQueries;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.persistence.PersistentEntity;
 
 import javax.persistence.*;
+
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import static java.util.Collections.min;
 
@@ -37,7 +44,7 @@ import static java.util.Collections.min;
  */
 @Entity
 @Table(name = "generate_assertions_summary")
-public class GenerateAssertionsSummary {
+public class GenerateAssertionsSummary implements PersistentEntity {
 
   /**
    * Class-wide logger.
@@ -101,6 +108,13 @@ public class GenerateAssertionsSummary {
   }
 
   /**
+   * @return the contest name.
+   */
+  public String getContestName() {
+    return contestName;
+  }
+
+  /**
    * @return the winner.
    */
   public String getWinner() {
@@ -126,5 +140,20 @@ public class GenerateAssertionsSummary {
    */
   public String getMessage() {
     return message;
+  }
+
+  @Override
+  public Long id() {
+    return id;
+  }
+
+  @Override
+  public void setID(Long the_id) {
+    id = the_id;
+  }
+
+  @Override
+  public Long version() {
+    return version;
   }
 }

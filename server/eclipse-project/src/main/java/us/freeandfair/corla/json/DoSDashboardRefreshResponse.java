@@ -26,6 +26,7 @@ import java.util.TreeMap;
 
 import javax.persistence.PersistenceException;
 
+import au.org.democracydevelopers.corla.model.GenerateAssertionsSummary;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -112,19 +113,26 @@ public class DoSDashboardRefreshResponse {
   private final SortedMap<Long, AuditType> my_audit_types;
 
   /**
+   * The generate assertions summaries, for IRV contests. Keyed by contest name (which is repeated
+   * in the GenerateAssertionsSummary).
+   */
+  private final List<GenerateAssertionsSummary> my_generate_assertions_summaries;
+
+  /**
    * Constructs a new DosDashboardRefreshResponse.
    *
-   * @param the_asm_state The ASM state.
-   * @param the_audited_contests The audited contests.
-   * @param the_estimated_ballots_to_audit The estimated ballots to audit, by
-   *          contest.
-   * @param the_optimistic_ballots_to_audit The optimistic ballots to audit, by
-   *          contest.
-   * @param the_discrepancy_count The discrepancy count for each discrepancy
-   *          type, by contest.
-   * @param the_county_status The county statuses.
-   * @param the_hand_count_contests The hand count contests.
-   * @param the_audit_info The election info.
+   * @param the_asm_state                     The ASM state.
+   * @param the_audited_contests              The audited contests.
+   * @param the_estimated_ballots_to_audit    The estimated ballots to audit, by contest.
+   * @param the_optimistic_ballots_to_audit   The optimistic ballots to audit, by contest.
+   * @param the_discrepancy_counts            The discrepancy count for each discrepancy
+   *                                          type, by contest.
+   * @param the_county_status                 The county statuses.
+   * @param the_hand_count_contests           The hand count contests.
+   * @param the_audit_info                    The election info.
+   * @param the_audit_reasons                 The reasons for auditing each contest.
+   * @param the_audit_types                   The audit type (usually either COMPARISON or NOT_AUDITABLE)
+   * @param the_generate_assertions_summaries The GenerateAssertionsSummaries, for IRV contests.
    */
   @SuppressWarnings("PMD.ExcessiveParameterList")
   protected DoSDashboardRefreshResponse(final ASMState the_asm_state,
@@ -136,7 +144,8 @@ public class DoSDashboardRefreshResponse {
                                         final List<Long> the_hand_count_contests,
                                         final AuditInfo the_audit_info,
                                         final SortedMap<Long, AuditReason> the_audit_reasons,
-                                        final SortedMap<Long, AuditType> the_audit_types) {
+                                        final SortedMap<Long, AuditType> the_audit_types,
+                                        final List<GenerateAssertionsSummary> the_generate_assertions_summaries) {
     my_asm_state = the_asm_state;
     my_audited_contests = the_audited_contests;
     my_estimated_ballots_to_audit = the_estimated_ballots_to_audit;
@@ -147,6 +156,7 @@ public class DoSDashboardRefreshResponse {
     my_audit_info = the_audit_info;
     my_audit_reasons = the_audit_reasons;
     my_audit_types = the_audit_types;
+    my_generate_assertions_summaries = the_generate_assertions_summaries;
   }
 
   /**
@@ -223,11 +233,17 @@ public class DoSDashboardRefreshResponse {
     final DoSDashboardASM asm =
         ASMUtilities.asmFor(DoSDashboardASM.class, DoSDashboardASM.IDENTITY);
 
+    // Load all the Generate Assertions Summaries from the database into the generate_assertions_list.
+    final List<GenerateAssertionsSummary> generate_assertions_list
+        = Persistence.getAll(GenerateAssertionsSummary.class);
+
+
     return new DoSDashboardRefreshResponse(asm.currentState(), audited_contests,
                                            estimated_ballots_to_audit,
                                            optimistic_ballots_to_audit, discrepancy_count,
                                            countyStatusMap(), hand_count_contests,
-                                           dashboard.auditInfo(), audit_reasons, audit_types);
+                                           dashboard.auditInfo(), audit_reasons, audit_types,
+                                           generate_assertions_list);
   }
 
   /**
