@@ -27,6 +27,7 @@ interface GenerateAssertionsPageProps {
 interface GenerateAssertionsPageState {
     generatingAssertions: boolean;
     generationTimeOutSeconds: number;
+    generationWasRun: boolean;
 }
 
 class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps, GenerateAssertionsPageState> {
@@ -36,6 +37,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
         this.state = {
             generatingAssertions: false,
             generationTimeOutSeconds: 5,
+            generationWasRun: false,
         };
     }
 
@@ -57,6 +59,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                 alert('generateAssertions error in fetchAction ' + reason);
             }).finally(() => {
                 this.setState({generatingAssertions: false});
+                this.setState({generationWasRun: true});
                 // Refresh dashboard to collect full assertion info
                 dashboardRefresh();
             });
@@ -94,6 +97,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                 }
                 <div className='control-buttons mt-default'>
                     <Button onClick={forward}
+                            disabled={this.disableNextButton()}
                             className='pt-button pt-intent-primary'>
                         Next
                     </Button>
@@ -114,6 +118,19 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
     private onTimeoutChange = (event: React.FormEvent<HTMLInputElement>) => {
         const timeout = (event.target as HTMLInputElement).value;
         this.setState({generationTimeOutSeconds: Number(timeout)});
+    }
+
+    private disableNextButton() {
+        const assertionsAlreadyGenerated = this.props.dosState.generateAssertionsSummaries.length > 0;
+        const atLeastOneIrvContest = Object.values(this.props.dosState.contests)
+            .some(contest => contest.description === 'IRV');
+
+        // Activate button if any attempt to generate is made
+        if (this.state.generationWasRun) {
+            return false;
+        }
+
+        return (!assertionsAlreadyGenerated && atLeastOneIrvContest);
     }
 
     private getAssertionGenerationStatusTable() {
