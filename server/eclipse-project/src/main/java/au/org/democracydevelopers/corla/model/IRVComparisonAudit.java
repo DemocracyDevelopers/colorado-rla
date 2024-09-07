@@ -592,8 +592,12 @@ public class IRVComparisonAudit extends ComparisonAudit {
   /**
    * Return the overall margin, which is the minimum margin of all the assertions.
    * @return the minimum assertion margin.
+   * Defaults to 0 if there are no assertions - this is an established convention for 'not auditable'.
    */
   public int getMinMargin() {
+    if(assertions.isEmpty()) {
+      return 0;
+    }
     return Collections.min(assertions.stream().map(Assertion::getMargin).toList());
   }
 
