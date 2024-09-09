@@ -46,7 +46,7 @@ public class LongListConverter implements AttributeConverter<List<Long>, String>
   
   /**
    * Converts the specified list of Longs to a database column entry.
-   * Do _not_ remove the apparently-redundant check for null or empty - this corrects an obscure
+   * Do _not_ remove the apparently-redundant check for empty - this corrects an obscure
    * but important issue related to GSON and reflection
    * (see <a href="https://github.com/google/gson/issues/1875">...</a>)
    * which caused occasional failures in ballot generation.
@@ -54,7 +54,7 @@ public class LongListConverter implements AttributeConverter<List<Long>, String>
    */
   @Override
   public String convertToDatabaseColumn(final List<Long> the_list) {
-    if (the_list == null || the_list.isEmpty()) {
+    if (the_list != null && the_list.isEmpty()) {
       return GSON.toJson(new ArrayList<Long>());
     }
     return GSON.toJson(the_list); 
