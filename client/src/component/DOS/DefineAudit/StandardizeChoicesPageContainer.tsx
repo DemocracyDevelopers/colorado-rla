@@ -16,12 +16,6 @@ import withPoll from 'corla/component/withPoll';
 
 import counties from 'corla/data/counties';
 
-// The next URL path to transition to.
-const NEXT_PATH = '/sos/audit/generate-assertions';
-
-// The previous URL path to transition to.
-// const PREV_PATH = '/sos/audit';
-
 /**
  * Denormalize the DOS.Contests data structure from the application state into
  * something that can be easily displayed in a tabular format.
@@ -67,7 +61,6 @@ interface Props {
     history: History;
 }
 
-
 const PageContainer = (props: Props) => {
     const {
         areChoicesLoaded,
@@ -77,30 +70,38 @@ const PageContainer = (props: Props) => {
         history,
     } = props;
 
-    let isRequestInProgress = false; 
+    let isRequestInProgress = false;
     const nextPage = (data: DOS.Form.StandardizeChoices.FormData) => {
         if (isRequestInProgress) {
             return;
         }
         isRequestInProgress = true;
-console.log('!!!!!!!!!!!!! calling submit set-contest-name');
+
         standardizeChoices(contests, data).then(r => {
             isRequestInProgress = false;
             // use the result here
             if (r.ok) {
-                history.push(NEXT_PATH);
-            } 
+                history.push(getNextPath());
+            }
        })
         .catch(reason => {
             alert('standardizeChoices error in submitAction ' + reason);
-        })
- 
+        });
     };
 
     const previousPage = async () => {
         await resetAudit();
         history.push('/sos/audit');
     };
+
+    function getNextPath() {
+        // Only route to Assertion Generation page if IRV contests exist
+        if (Object.values(contests).some(contest => contest.description === 'IRV')) {
+            return '/sos/audit/generate-assertions';
+        } else {
+            return '/sos/audit/estimate-sample-sizes';
+        }
+    }
 
     if (asm === 'DOS_AUDIT_ONGOING') {
         return <Redirect to='/sos' />;
@@ -112,7 +113,7 @@ console.log('!!!!!!!!!!!!! calling submit set-contest-name');
         rows = filterRows(flattenContests(contests, canonicalChoices));
 
         if (_.isEmpty(rows)) {
-            return <Redirect to={ NEXT_PATH } />;
+            return <Redirect to={ getNextPath() } />;
         }
     }
 
