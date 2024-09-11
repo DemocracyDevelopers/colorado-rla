@@ -1,7 +1,7 @@
+import {Breadcrumb, Button, Card, Intent, Spinner} from '@blueprintjs/core';
+import dashboardRefresh from 'corla/action/dos/dashboardRefresh';
 import * as _ from 'lodash';
 import * as React from 'react';
-
-import {Breadcrumb, Button, Card, Intent, Spinner} from '@blueprintjs/core';
 
 import exportAssertionsAsCsv from 'corla/action/dos/exportAssertionsAsCsv';
 import exportAssertionsAsJson from 'corla/action/dos/exportAssertionsAsJson';
@@ -25,9 +25,9 @@ interface GenerateAssertionsPageProps {
 }
 
 interface GenerateAssertionsPageState {
-    canGenerateAssertions: boolean;
     generatingAssertions: boolean;
     generationTimeOutSeconds: number;
+    generationWasRun: boolean;
 }
 
 class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps, GenerateAssertionsPageState> {
@@ -35,9 +35,9 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
         super(props);
 
         this.state = {
-            canGenerateAssertions: !props.dosState.assertionsGenerated && props.readyToGenerate,
             generatingAssertions: false,
             generationTimeOutSeconds: 5,
+            generationWasRun: false,
         };
     }
 
@@ -50,18 +50,19 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
 
         const generate = async () => {
             this.setState({generatingAssertions: true});
-            this.setState({canGenerateAssertions: false});
             this.render();
 
             const timeoutQueryParams = new URLSearchParams();
             timeoutQueryParams.set(generationTimeoutParam, this.state.generationTimeOutSeconds.toString());
             generateAssertions(timeoutQueryParams).then()
-                .catch(reason => {
-                    alert('generateAssertions error in fetchAction ' + reason);
-                });
-
-            this.setState({generatingAssertions: false});
-            this.setState({canGenerateAssertions: true});
+            .catch(reason => {
+                alert('generateAssertions error in fetchAction ' + reason);
+            }).finally(() => {
+                this.setState({generatingAssertions: false});
+                this.setState({generationWasRun: true});
+                // Refresh dashboard to collect full assertion info
+                dashboardRefresh();
+            });
         };
 
         const main =
@@ -96,6 +97,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                 }
                 <div className='control-buttons mt-default'>
                     <Button onClick={forward}
+                            disabled={this.disableNextButton()}
                             className='pt-button pt-intent-primary'>
                         Next
                     </Button>
@@ -118,16 +120,29 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
         this.setState({generationTimeOutSeconds: Number(timeout)});
     }
 
+    private disableNextButton() {
+        const assertionsAlreadyGenerated = this.props.dosState.generateAssertionsSummaries.length > 0;
+        const atLeastOneIrvContest = Object.values(this.props.dosState.contests)
+            .some(contest => contest.description === 'IRV');
+
+        // Activate button if any attempt to generate is made
+        if (this.state.generationWasRun) {
+            return false;
+        }
+
+        return (!assertionsAlreadyGenerated && atLeastOneIrvContest);
+    }
+
     private getAssertionGenerationStatusTable() {
 
         interface CombinedData {
-            contestName: string,
-            succeeded: boolean | undefined,
-            retry: boolean | undefined,
-            winner: string,
-            error: string,
-            warning: string,
-            message: string
+            contestName: string;
+            succeeded: boolean | undefined;
+            retry: boolean | undefined;
+            winner: string;
+            error: string;
+            warning: string;
+            message: string;
         }
 
         interface CombinationSummary {
@@ -139,15 +154,15 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
 
             // Succeeded and retry can be undefined - if so this leaves the space blank.
             // {combinedData.succeeded != undefined ? {combinedData.succeeded ? 'Success' : 'Failure'} : ''}
-            let successString = combinedData.succeeded ? 'Success' : 'Failure';
-            let retryString = combinedData.retry ? 'Yes' : 'No';
+            const successString = combinedData.succeeded ? 'Success' : 'Failure';
+            const retryString = combinedData.retry ? 'Yes' : 'No';
             return (
                 <tr>
                     <td>{combinedData.contestName}</td>
                     <td style={{color: combinedData.succeeded ? 'green' : 'red'}}>
-                        {combinedData.succeeded == undefined ? '' : successString}
+                        {combinedData.succeeded === undefined ? '' : successString}
                     </td>
-                    <td>{combinedData.retry == undefined ? '' : retryString}</td>
+                    <td>{combinedData.retry === undefined ? '' : retryString}</td>
                     <td>{combinedData.winner}</td>
                     <td>{combinedData.error}</td>
                     <td>{combinedData.warning}</td>
@@ -160,55 +175,57 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
         const fillBlankStatus = (s: DOS.GenerateAssertionsSummary): CombinedData => {
             return {
                 contestName: s.contestName,
-                succeeded: undefined,
-                retry: undefined,
-                winner: s.winner,
                 error: s.error,
+                message: s.message,
+                retry: undefined,
+                succeeded: undefined,
                 warning: s.warning,
-                message: s.message
+                winner: s.winner,
             };
-        }
+        };
 
         // Make a CombinedData structure out of an AssertionsStatus by filling in blank summary data.
         const fillBlankSummary = (s: DOS.AssertionStatus): CombinedData => {
             return {
                 contestName: s.contestName,
-                succeeded: s.succeeded,
-                retry: s.retry,
-                winner: '',
                 error: '',
+                message: '',
+                retry: s.retry,
+                succeeded: s.succeeded,
                 warning: '',
-                message: ''
+                winner: '',
             };
-        }
+        };
 
         // Make a CombinedData structure out of an AssertionsStatus and a GenerateAssertionsSummary.
         const combineSummaryAndStatus = (s: DOS.AssertionStatus, t: DOS.GenerateAssertionsSummary): CombinedData => {
             return {
                 contestName: s.contestName,
-                succeeded: s.succeeded,
-                retry: s.retry,
-                winner: t.winner,
                 error: t.error,
+                message: t.message,
+                retry: s.retry,
+                succeeded: s.succeeded,
                 warning: t.warning,
-                message: t.message
+                winner: t.winner,
             };
-        }
+        };
 
         // Join up the rows by contest name if matching. If there is no matching contest name in the other
         // list, add a row with blanks for the missing data.
         // Various kinds of absences are possible, because there may be empty summaries at the start;
         // conversely, in later phases we may rerun generation (and hence get status) for only a few contests.
-        const joinRows = (statuses: DOS.AssertionGenerationStatuses | undefined, summaries: DOS.GenerateAssertionsSummary[]) => {
+        const joinRows = (statuses: DOS.AssertionGenerationStatuses
+            | undefined,  summaries: DOS.GenerateAssertionsSummary[]) => {
             summaries.sort((a, b) => a.contestName < b.contestName ? -1 : 1);
-            let rows: CombinedData[] = [];
-            let i = 0, j = 0;
+            const rows: CombinedData[] = [];
+            let i = 0;
+            let j = 0;
 
             if (statuses === undefined) {
                 // No status yet. Just print summary data.
                 return summaries.map(s => {
                     return fillBlankStatus(s);
-                })
+                });
 
             } else {
                 // Iterate along the two sorted lists at once, combining them if the contest name matches, and
@@ -238,11 +255,12 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                 }
             }
             return rows;
-        }
+        };
 
-        const combinedRows = _.map(joinRows(this.props.dosState.assertionGenerationStatuses, this.props.dosState.generateAssertionsSummaries), d => (
-            <CombinedTableRow combinedData={d}/>
-        ))
+        const combinedRows = _.map(joinRows(this.props.dosState.assertionGenerationStatuses,
+            this.props.dosState.generateAssertionsSummaries), d => (
+            <CombinedTableRow key={d.contestName} combinedData={d}/>
+        ));
 
         if (this.state.generatingAssertions) {
             return (
@@ -251,7 +269,8 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
                     <div>Generating Assertions...</div>
                 </Card>
             );
-        } else if (this.props.dosState.assertionGenerationStatuses || this.props.dosState.generateAssertionsSummaries.length > 0) {
+        } else if (this.props.dosState.assertionGenerationStatuses
+            || this.props.dosState.generateAssertionsSummaries.length > 0) {
             return (
                 <div>
                 <span className='generate-assertions-exports'>
