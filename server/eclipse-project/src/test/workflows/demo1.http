@@ -18,3 +18,31 @@ Content-Type: application/json
 
 ### GET the county dashboard.
 GET http://localhost:8888/county-dashboard
+
+### POST the cvr file
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="ThreeCandidatesTenVotesPlusPlurality.csv"
+Content-Type: text/csv
+
+< ../resources/CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotesPlusPlurality.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+7760c6690caacd2568ca80ed10b8d3362d561d4573890da867b2cac10ee89659
+
+### POST the cvr hash
+POST http://localhost:8888/import-cvr-export
+Content-Type: text/plain;charset=UTF-8
+
+{
+"postData": {
+            "mimeType": "text/plain;charset=UTF-8",
+            "params": [],
+            "text": "{\"approximateRecordCount\":14,\"countyId\":1,\"fileName\":\"ThreeCandidatesTenVotesPlusPlurality.csv\",\"hash\":\"7760C6690CAACD2568CA80ED10B8D3362D561D4573890DA867B2CAC10EE89659\",\"id\":160573,\"result\":{\"success\":false},\"status\":\"HASH_VERIFIED\",\"size\":1718,\"timestamp\":\"2024-09-07T00:24:37.727471399Z\"}"
+          }
+}
