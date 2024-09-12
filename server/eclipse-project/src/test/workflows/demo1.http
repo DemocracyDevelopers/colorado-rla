@@ -36,7 +36,8 @@ Content-Type: text/csv
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-4EDBBC866D91D380CA83E02821056FCE49BF19F2C893C777CBFD3B17788EB366
+< ../resources/CSVs/Demo1/1-adams-plusByron-1-manifest.csv.sha256sum
+--TheBoundary--
 
 > {%
     const manifestUploadResponse = response.body;
@@ -63,7 +64,8 @@ Content-Type: text/csv
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-225578912f620a42740b3efe076e679bb3ee3e08ce70c6982eaf19d033d819be
+< ../resources/CSVs/Demo1/1-adams-cvrexport-plusByron-1.csv.sha256sum
+--TheBoundary--
 
 > {%
     const cvrUploadResponse = response.body;
@@ -121,7 +123,8 @@ Content-Type: text/csv
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-580881855fe76f0b9f0ad314add90576b8a7c164c0d04b3a8f1181656772dbf8
+< ../resources/CSVs/Demo1/2-alamosa-plusByron-2-manifest.csv.sha256sum
+--TheBoundary--
 
 > {%
     const manifestUploadResponse = response.body;
@@ -148,7 +151,8 @@ Content-Type: text/csv
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-039936d21d7ae6e49874ddd9e1a32a7e9152f46f51223aa43ebee380ed5b35fe
+< ../resources/CSVs/Demo1/2-alamosa-cvrexport-plusByron-2.csv.sha256sum
+--TheBoundary--
 
 > {%
     const cvrUploadResponse = response.body;
@@ -206,7 +210,8 @@ Content-Type: text/csv
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-8764688e65c2ee8e19537017293528e133107e4b57bf54f274faf0d0555c9453
+< ../resources/CSVs/split-Byron/Byron-3-manifest.csv.sha256sum
+--TheBoundary--
 
 > {%
     const manifestUploadResponse = response.body;
@@ -233,7 +238,8 @@ Content-Type: text/csv
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-b847fac58089535beffac414f37d9878f12e689edd0d50d0fb4f37d489bf6b44
+< ../resources/CSVs/Demo1/3-arapahoe-Byron-3-plus-tied-irv.csv.sha256sum
+--TheBoundary--
 
 > {%
     const cvrUploadResponse = response.body;
@@ -253,5 +259,91 @@ Content-Type: application/json
 
 {
   "username":"countyadmin3"
+}
+
+### 4. Archuleta County, using 3-arapahoe-Byron-3-plus-tied-irv.csv
+### POST request with basic login.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin4",
+  "password":""
+}
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin4",
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="Kempsey_Mayoral.manifest.csv"
+Content-Type: text/csv
+
+< ../resources/CSVs/NewSouthWales21/Kempsey_Mayoral.manifest.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+< ../resources/CSVs/NewSouthWales21/Kempsey_Mayoral.manifest.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const manifestUploadResponse = response.body;
+    client.global.set("manifestUploadResponse", manifestUploadResponse)
+%}
+
+### Run import on ballot manifest
+POST  http://localhost:8888/import-ballot-manifest
+Content-Type: application/json
+
+{{manifestUploadResponse}}
+
+### POST the cvr file and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="4-archuleta-kempsey-plusByron-4.csv"
+Content-Type: text/csv
+
+< ../resources/CSVs/Demo1/4-archuleta-kempsey-plusByron-4.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+
+< ../resources/CSVs/Demo1/4-archuleta-kempsey-plusByron-4.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse);
+%}
+
+### Request the CVR export to be imported
+### Oddly enough, this requires resending the response from the file upload.
+POST http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":"countyadmin4"
 }
 
