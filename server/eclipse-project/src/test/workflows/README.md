@@ -2,7 +2,9 @@ This directory contains the http file (demo1.http) for loading up the database i
 
 Before running demo1.http, run colorado-rla by following the 
 [developer instructions](https://github.com/DemocracyDevelopers/colorado-rla/blob/main/docs/25_developer.md). 
-Remember to load the test credentials from colorado-rla/test/corla-test-credentials.psql.
+Then load the test credentials from colorado-rla/test/corla-test-credentials.psql.
+
+Now you should be able to run demo1.http by clicking on the double-green-arrow in IntelliJ.
 
 The NSW 2021 Byron Mayoral contest has been spread across all 64 Colorado counties 
 These are stored in src/test/resources/CSVs/split-Byron.

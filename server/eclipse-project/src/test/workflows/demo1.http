@@ -39,9 +39,9 @@ Content-Type: text/csv
 225578912f620a42740b3efe076e679bb3ee3e08ce70c6982eaf19d033d819be
 
 > {%
-    const cvrid = response.body.split(",")[4].replace("\"id\":","");
-    console.log("CVR ID:"+cvrid);
-    client.global.set("cvrID", cvrid);
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse);
+
 %}
 
 ### Request the CVR export to be imported
@@ -50,17 +50,7 @@ Content-Type: text/csv
 POST http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
-{
-  "approximateRecordCount": 288,
-  "countyId": 1,
-  "fileName": "1-adams-cvrexport-plusByron-1.csv",
-  "hash": "225578912F620A42740B3EFE076E679BB3EE3E08CE70C6982EAF19D033D819BE",
-  "id": {{cvrID}},
-  "result": {"success": false},
-  "status": "HASH_VERIFIED",
-  "size": 64925,
-  "timestamp": "2024-09-07T00:24:52.892324812Z"
-}
+{{cvrUploadResponse}}
 
 ### POST the manifest and its hash
 POST http://localhost:8888/upload-file
@@ -79,23 +69,12 @@ Content-Type: text/csv
 4EDBBC866D91D380CA83E02821056FCE49BF19F2C893C777CBFD3B17788EB366
 
 > {%
-    const manifestId = response.body.split(",")[4].split(":")[1].trim()
-    console.log("Manifest ID:"+manifestId);
-    client.global.set("manifestID", manifestId);
+    const manifestUploadResponse = response.body;
+    client.global.set("manifestUploadResponse", manifestUploadResponse)
 %}
 
 ### Run import on ballot manifest
 POST  http://localhost:8888/import-ballot-manifest
 Content-Type: application/json
 
-{
-"approximateRecordCount": 2,
-    "countyId": 1,
-    "fileName": "1-adams-plusByron-1-manifest.csv",
-    "hash": "4EDBBC866D91D380CA83E02821056FCE49BF19F2C893C777CBFD3B17788EB366",
-    "id": {{manifestID}},
-    "result": {"success": false},
-    "status": "HASH_VERIFIED",
-    "size": 78,
-    "timestamp": "2024-09-07T00:24:52.892324812Z"
-}
+{{manifestUploadResponse}}
