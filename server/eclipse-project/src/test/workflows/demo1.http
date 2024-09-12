@@ -1,6 +1,6 @@
 ### This loads all the CVRs for Demo1 - see README for details.
 
-### 1. Adams County
+### 1. Adams County, using 1-adams-cvrexport-plusByron-1.csv.
 ### POST request with basic login.
 POST http://localhost:8888/auth-admin
 Content-Type: application/json
@@ -41,12 +41,10 @@ Content-Type: text/csv
 > {%
     const cvrUploadResponse = response.body;
     client.global.set("cvrUploadResponse", cvrUploadResponse);
-
 %}
 
 ### Request the CVR export to be imported
-### TODO The ID must match the ID in the database, which gets returned in the upload to response.
-### Timestamp doesn't seem to matter.
+### Oddly enough, this requires resending the response from the file upload.
 POST http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
@@ -78,3 +76,97 @@ POST  http://localhost:8888/import-ballot-manifest
 Content-Type: application/json
 
 {{manifestUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":"countyadmin1"
+}
+
+### 2. Alamosa County, using 2-alamosa-cvrexport-plusByron-2.csv
+### POST request with basic login.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin2",
+  "password":""
+}
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin2",
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
+### POST the cvr file and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="2-alamosa-cvrexport-plusByron-2.csv"
+Content-Type: text/csv
+
+< ../resources/CSVs/Demo1/2-alamosa-cvrexport-plusByron-2.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+039936d21d7ae6e49874ddd9e1a32a7e9152f46f51223aa43ebee380ed5b35fe
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse);
+%}
+
+### Request the CVR export to be imported
+### Oddly enough, this requires resending the response from the file upload.
+POST http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="2-alamosa-plusByron-2-manifest.csv"
+Content-Type: text/csv
+
+< ../resources/CSVs/Demo1/2-alamosa-plusByron-2-manifest.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+580881855fe76f0b9f0ad314add90576b8a7c164c0d04b3a8f1181656772dbf8
+
+> {%
+    const manifestUploadResponse = response.body;
+    client.global.set("manifestUploadResponse", manifestUploadResponse)
+%}
+
+### Run import on ballot manifest
+POST  http://localhost:8888/import-ballot-manifest
+Content-Type: application/json
+
+{{manifestUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":"countyadmin2"
+}
+
