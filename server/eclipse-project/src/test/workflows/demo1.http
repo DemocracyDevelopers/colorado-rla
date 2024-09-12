@@ -22,6 +22,33 @@ Content-Type: application/json
 ### GET the county dashboard.
 GET http://localhost:8888/county-dashboard
 
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="1-adams-plusByron-1-manifest.csv"
+Content-Type: text/csv
+
+< ../resources/CSVs/Demo1/1-adams-plusByron-1-manifest.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+4EDBBC866D91D380CA83E02821056FCE49BF19F2C893C777CBFD3B17788EB366
+
+> {%
+    const manifestUploadResponse = response.body;
+    client.global.set("manifestUploadResponse", manifestUploadResponse)
+%}
+
+### Run import on ballot manifest
+POST  http://localhost:8888/import-ballot-manifest
+Content-Type: application/json
+
+{{manifestUploadResponse}}
+
 ### POST the cvr file and its hash
 POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
@@ -49,33 +76,6 @@ POST http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
-
-### POST the manifest and its hash
-POST http://localhost:8888/upload-file
-Content-Type: multipart/form-data; boundary=TheBoundary
-
---TheBoundary
-Content-Disposition: form-data; name="file"; filename="1-adams-plusByron-1-manifest.csv"
-Content-Type: text/csv
-
-< ../resources/CSVs/Demo1/1-adams-plusByron-1-manifest.csv
-
---TheBoundary
-Content-Disposition: form-data; name="hash"
-Content-Type: text/csv
-
-4EDBBC866D91D380CA83E02821056FCE49BF19F2C893C777CBFD3B17788EB366
-
-> {%
-    const manifestUploadResponse = response.body;
-    client.global.set("manifestUploadResponse", manifestUploadResponse)
-%}
-
-### Run import on ballot manifest
-POST  http://localhost:8888/import-ballot-manifest
-Content-Type: application/json
-
-{{manifestUploadResponse}}
 
 ### Log out
 POST http://localhost:8888/unauthenticate
@@ -107,6 +107,33 @@ Content-Type: application/json
 ### GET the county dashboard.
 GET http://localhost:8888/county-dashboard
 
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="2-alamosa-plusByron-2-manifest.csv"
+Content-Type: text/csv
+
+< ../resources/CSVs/Demo1/2-alamosa-plusByron-2-manifest.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+580881855fe76f0b9f0ad314add90576b8a7c164c0d04b3a8f1181656772dbf8
+
+> {%
+    const manifestUploadResponse = response.body;
+    client.global.set("manifestUploadResponse", manifestUploadResponse)
+%}
+
+### Run import on ballot manifest
+POST  http://localhost:8888/import-ballot-manifest
+Content-Type: application/json
+
+{{manifestUploadResponse}}
+
 ### POST the cvr file and its hash
 POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
@@ -135,21 +162,51 @@ Content-Type: application/json
 
 {{cvrUploadResponse}}
 
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":"countyadmin2"
+}
+
+### 3. Arapahoe County, using 3-arapahoe-Byron-3-plus-tied-irv.csv
+### POST request with basic login.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin3",
+  "password":""
+}
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin3",
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
 ### POST the manifest and its hash
 POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="2-alamosa-plusByron-2-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="Byron-3-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/Demo1/2-alamosa-plusByron-2-manifest.csv
+< ../resources/CSVs/split-Byron/Byron-3-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-580881855fe76f0b9f0ad314add90576b8a7c164c0d04b3a8f1181656772dbf8
+8764688e65c2ee8e19537017293528e133107e4b57bf54f274faf0d0555c9453
 
 > {%
     const manifestUploadResponse = response.body;
@@ -162,11 +219,39 @@ Content-Type: application/json
 
 {{manifestUploadResponse}}
 
+### POST the cvr file and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="3-arapahoe-Byron-3-plus-tied-irv.csv"
+Content-Type: text/csv
+
+< ../resources/CSVs/Demo1/3-arapahoe-Byron-3-plus-tied-irv.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+b847fac58089535beffac414f37d9878f12e689edd0d50d0fb4f37d489bf6b44
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse);
+%}
+
+### Request the CVR export to be imported
+### Oddly enough, this requires resending the response from the file upload.
+POST http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
 ### Log out
 POST http://localhost:8888/unauthenticate
 Content-Type: application/json
 
 {
-  "username":"countyadmin2"
+  "username":"countyadmin3"
 }
 
