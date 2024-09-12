@@ -168,8 +168,7 @@ export default function root(state: AppState, action: Action.App) {
     case 'GENERATE_ASSERTIONS_OK': {
         const nextState = { ...state } as DOS.AppState;
 
-        // Put failed assertion generations at the front of the list
-        nextState.assertionGenerationStatuses = action.data.sort((a: AssertionStatus, b: AssertionStatus) => {
+        const compareStatus = (a: AssertionStatus, b: AssertionStatus) => {
             if (a.succeeded && !b.succeeded) {
                 return 1;
             }
@@ -177,7 +176,10 @@ export default function root(state: AppState, action: Action.App) {
                 return -1;
             }
             return 0;
-        });
+        };
+
+        // Put failed assertion generations at the front of the list
+        nextState.assertionGenerationStatuses = action.data.sort(compareStatus);
 
         nextState.generatingAssertions = false;
         nextState.assertionsGenerated = true;
