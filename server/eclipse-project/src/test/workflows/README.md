@@ -16,6 +16,6 @@ These are loaded from src/test/resources/CSVs/Demo1.
 - Alamosa County has test data from AdamsAndAlamosa, with 284 Byron Mayoral votes Byron-2.csv appended. Demo1 uses the ballot manifests from AdamsAndAlamosa.
 - Arapahoe has 284 Byron Mayoral votes from Byron-3.csv, with the tied IRV contest from Tiny-IRV-Examples/ThreeCandidatesTenVotes_TiedIRV appended to make /Demo1/3-arapahoe-Byron-3-plus-tied-irv.csv. Demo1 uses the ballot manifest split-Byron/Byron-3-manifest.csv.
 - Archuleta has the votes from NewSouthWales/Kempsey_Mayoral.csv, with 131 Byron Mayoral votes from Byron-4.csv appended to make 4-archuleta-kempsey-plusByron-4.csv. Demo1 uses the ballot manifest NewSouthWales/Kempsey_Mayoral.manifest.csv. 
-- Boulder has the redacted real data from Boulder23, with 284 Byron Mayoral votes from Byron-7.csv appended. Demo1 uses Boulder's manifest from Boulder23/Boulder-IRV-Manifest.csv.
+- Boulder has the redacted real data from Boulder23, with 284 Byron Mayoral votes from Byron-7.csv appended to make 7-boulder-2023-plusByron-7.csv. Demo1 uses Boulder's manifest from Boulder23/Boulder-IRV-Manifest.csv.
  
 For each other county n, the demo loads split-Byron/Byron-n.csv and uses the accompanying manifest.  

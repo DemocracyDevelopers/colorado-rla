@@ -261,7 +261,7 @@ Content-Type: application/json
   "username":"countyadmin3"
 }
 
-### 4. Archuleta County, using 3-arapahoe-Byron-3-plus-tied-irv.csv
+### 4. Archuleta County, using 4-archuleta-kempsey-plusByron-4.csv
 ### POST request with basic login.
 POST http://localhost:8888/auth-admin
 Content-Type: application/json
@@ -347,3 +347,88 @@ Content-Type: application/json
   "username":"countyadmin4"
 }
 
+### Now run counties n = 5..64, except 7 (Boulder) which is done separately, uploading split-Byron-n for each.
+### POST request with basic login.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin5",
+  "password":""
+}
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin5",
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="Byron-5-manifest.csv"
+Content-Type: text/csv
+
+< ../resources/CSVs/split-Byron/Byron-5-manifest.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+< ../resources/CSVs/split-Byron/Byron-1-manifest.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const manifestUploadResponse = response.body;
+    client.global.set("manifestUploadResponse", manifestUploadResponse)
+%}
+
+### Run import on ballot manifest
+POST  http://localhost:8888/import-ballot-manifest
+Content-Type: application/json
+
+{{manifestUploadResponse}}
+
+### POST the cvr file and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="Byron-5.csv"
+Content-Type: text/csv
+
+< ../resources/CSVs/split-Byron/Byron-5.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+
+< ../resources/CSVs/split-Byron/Byron-5.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse);
+%}
+
+### Request the CVR export to be imported
+### Oddly enough, this requires resending the response from the file upload.
+POST http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":"countyadmin5"
+}
