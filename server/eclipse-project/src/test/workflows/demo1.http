@@ -39,8 +39,10 @@ Content-Type: text/csv
 225578912f620a42740b3efe076e679bb3ee3e08ce70c6982eaf19d033d819be
 
 > {%
-    client.global.set("cvrID", response.body.text);
-    console.log("Response text:"+response.body);
+    const idLine = response.body.split(",")[4];
+    const idOnly = idLine.replace("\"id\":","");
+    console.log("Extracting ID only:"+idOnly);
+    client.global.set("cvrID", idOnly);
 %}
 
 ### < ../resources/CSVs/Demo1/1-adams-cvrexport-plusByron-1.csv.sha256sum
@@ -55,7 +57,7 @@ Content-Type: application/json
   "countyId": 1,
   "fileName": "1-adams-cvrexport-plusByron-1.csv",
   "hash": "225578912F620A42740B3EFE076E679BB3EE3E08CE70C6982EAF19D033D819BE",
-  "id": 434873,
+  "id": {{cvrID}},
   "result": {"success": false},
   "status": "HASH_VERIFIED",
   "size": 64925,
