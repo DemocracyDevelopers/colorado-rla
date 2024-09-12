@@ -36,8 +36,14 @@ Content-Type: text/csv
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/Demo1/1-adams-cvrexport-plusByron-1.csv.sha256sum
+225578912f620a42740b3efe076e679bb3ee3e08ce70c6982eaf19d033d819be
 
+> {%
+    client.global.set("cvrID", response.body.text);
+    console.log("Response text:"+response.body);
+%}
+
+### < ../resources/CSVs/Demo1/1-adams-cvrexport-plusByron-1.csv.sha256sum
 ### Request the CVR export to be imported
 ### TODO The ID must match the ID in the database, which gets returned in the upload to response.
 ### Timestamp doesn't seem to matter.
@@ -45,15 +51,15 @@ POST http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {
-  "approximateRecordCount":288,
-  "countyId":1,
-  "fileName":"1-adams-cvrexport-plusByron-1.csv",
-  "hash":"225578912F620A42740B3EFE076E679BB3EE3E08CE70C6982EAF19D033D819BE",
-  "id":433624,
-  "result":{"success":false},
-  "status":"HASH_VERIFIED",
-  "size":64925,
-  "timestamp":"2024-09-11T12:20:50.260106754Z"
+  "approximateRecordCount": 288,
+  "countyId": 1,
+  "fileName": "1-adams-cvrexport-plusByron-1.csv",
+  "hash": "225578912F620A42740B3EFE076E679BB3EE3E08CE70C6982EAF19D033D819BE",
+  "id": 434873,
+  "result": {"success": false},
+  "status": "HASH_VERIFIED",
+  "size": 64925,
+  "timestamp": "2024-09-07T00:24:52.892324812Z"
 }
 
 ### POST the manifest and its hash
@@ -72,19 +78,43 @@ Content-Type: text/csv
 
 < ../resources/CSVs/Demo1/1-adams-plusByron-1-manifest.csv.sha256sum
 
+> {%
+    client.global.set("postData", JSON.stringify(response.body));
+%}
+
 ### Run import on ballot manifest
 POST  http://localhost:8888/import-ballot-manifest
 Content-Type: application/json
 
 {
-  "approximateRecordCount":8,
-  "countyId":1,
-  "fileName":"1-adams-plusByron-1-manifest.csv",
-  "hash":"4EDBBC866D91D380CA83E02821056FCE49BF19F2C893C777CBFD3B17788EB366",
-  "id":434641,
-  "result":{"success":false},
-  "status":"HASH_VERIFIED",
-  "size":232,
-  "timestamp":"2024-09-11T12:36:43.127325499Z"
+"postData" : {
+"mimeType": "text/plain;charset=UTF-8",
+"params": [],
+"text": {
+"approximateRecordCount": 2,
+    "countyId": 1,
+    "fileName": "ThreeCandidatesTenVotes_Manifest.csv",
+    "hash": "5D602A0A0B2BC51A2E9F1F6EFD8650FDD748E4FDD8268104A43A633588A998C3",
+    "id": 160612,
+    "result": {"success": false},
+    "status": "HASH_VERIFIED",
+    "size": 78,
+    "timestamp": "2024-09-07T00:24:52.892324812Z"
 }
+}
+}
+
+
+### From the file upload response:
+### "text": "{\n  \"approximateRecordCount\": 2,\n  \"countyId\": 1,\n  \"fileName\": \"ThreeCandidatesTenVotes_Manifest.csv\",\n  \"hash\": \"5D602A0A0B2BC51A2E9F1F6EFD8650FDD748E4FDD8268104A43A633588A998C3\",\n  \"id\": 160612,\n  \"result\": {\n    \"success\": false\n  },\n  \"status\": \"HASH_VERIFIED\",\n  \"size\": 78,\n  \"timestamp\": \"2024-09-07T00:24:52.892324812Z\"\n}"
+### Sent back in the import-ballot-manifest:
+### "text": "{\"approximateRecordCount\":2,\"countyId\":1,\"fileName\":\"ThreeCandidatesTenVotes_Manifest.csv\",\"hash\":\"5D602A0A0B2BC51A2E9F1F6EFD8650FDD748E4FDD8268104A43A633588A998C3\",\"id\":160612,\"result\":{\"success\":false},\"status\":\"HASH_VERIFIED\",\"size\":78,\"timestamp\":\"2024-09-07T00:24:52.892324812Z\"}
+### which is identical.
+
+
+###> {%
+###    const testData = "This is a test";
+###    request.variables.set("postData", testData);
+### %}
+
 
