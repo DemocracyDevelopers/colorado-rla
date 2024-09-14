@@ -170,10 +170,10 @@ export default function root(state: AppState, action: Action.App) {
 
         const compareStatus = (a: AssertionStatus, b: AssertionStatus) => {
             if (a.succeeded && !b.succeeded) {
-                return 1;
+                return -1;
             }
             if (!a.succeeded && b.succeeded) {
-                return -1;
+                return 1;
             }
             return 0;
         };
