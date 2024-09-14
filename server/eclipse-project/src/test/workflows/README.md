@@ -1,10 +1,14 @@
-This directory contains the http file (demo1.http) for loading up the database intended to be used for demo 1.
+This directory contains the http files for loading up the database intended to be used for demo 1.
 
-Before running demo1.http, run colorado-rla by following the 
+Before running the demo, run colorado-rla by following the 
 [developer instructions](https://github.com/DemocracyDevelopers/colorado-rla/blob/main/docs/25_developer.md). 
 Then load the test credentials from colorado-rla/test/corla-test-credentials.psql.
 
-Now you should be able to run demo1.http by clicking on the double-green-arrow in IntelliJ.
+Now you should be able to run demo http files by clicking on the double-green-arrow in IntelliJ. To run the complete demo, execute the following:
+- `demo1_loadCVRs.http`
+- `demo1_loadManifests.http`
+- `Boulder_loadCVRs.http`
+- `Boulder_loadManifests.http`
 
 The NSW 2021 Byron Mayoral contest has been spread across all 64 Colorado counties 
 These are stored in src/test/resources/CSVs/split-Byron.
@@ -21,3 +25,6 @@ If you would like Boulder data too, use loadBoulder.http.
 - Boulder has the redacted real data from Boulder23, with 284 Byron Mayoral votes from Byron-7.csv appended to make 7-boulder-2023-plusByron-7.csv. loadBoulder.http uses Boulder's manifest from Boulder23/Boulder-IRV-Manifest.csv.
  
 For each other county n, the demo loads split-Byron/Byron-n.csv and uses the accompanying manifest.  
+
+Each of the .http files can be used independently if you like. For example, if you want to test whether Sample Size estimation works without manifests, run `Boulder_loadCVRs` and `demo1_loadCVRs.http`
+then hit the sample size estimation endpoint.
