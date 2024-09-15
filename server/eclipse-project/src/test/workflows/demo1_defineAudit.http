@@ -1,0 +1,94 @@
+### This defines the audit for Demo 1.
+
+### 1. Define the audit
+### POST request with basic login.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"stateadmin1",
+  "password":""
+}
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"stateadmin1",
+  "second_factor":"s d f"
+}
+
+### GET the DoS dashboard. This is just to test that the login worked.
+GET http://localhost:8888/dos-dashboard
+
+### Define the audit. This reads in from the canonical list contents hardcoded in the http-client.env file,
+### though reading in from the demo1-canonical-list.csv file would be better.
+POST http://localhost:8888/update-audit-info
+Content-Type: application/json
+
+{
+    "election_date":"2024-09-15T05:42:17.796Z",
+    "election_type":"general",
+    "public_meeting_date":"2024-09-22T05:42:22.037Z",
+    "risk_limit":0.03,
+    "upload_file": [{"contents" : "{{demo1-canonical-list}}" }]
+}
+
+
+### Canonicalize contest names. Doing nothing at the moment.
+### TODO: not sure why there's only the contest names, not the candidate names, in the .har file.
+POST http://localhost:8888/set-contest-names
+Content-Type: application/json
+
+[]
+
+### Generate assertions.
+POST http://localhost:8888/generate-assertions?timeLimitSeconds=5
+
+### Request contests, search for IDs by name.
+GET http://localhost:8888/contest
+Content-Type: application/json
+
+> {%
+    client.test("Content-Type is application/json", () => {
+        const re = new RegExp("[^0-9]+");
+        // Find all the 4-digit and longer numbers. These are the contest IDs.
+        const IDs = response.body.split(re).filter((x) => x.length > 3);
+        client.global.set("firstID", IDs[0]);
+    })
+%}
+
+### Select contests to be targeted.
+POST http://localhost:8888/select-contests
+Content-Type: application/json
+
+[
+  {"audit":"COMPARISON","contest":"{{firstID}}","reason":"COUNTY_WIDE_CONTEST"}
+]
+
+### Request sample size estimates.
+GET http://localhost:8888/estimate-sample-sizes
+
+# Save the response to a file.
+>>! estimate-sample-sizes/sample-sizes.csv
+
+### Post the random seed.
+POST http://localhost:8888/random-seed
+Content-Type: application/json
+
+{
+  "seed":"9823749812374981273489712389471238974"
+}
+
+### Start the audit round.
+POST http://localhost:8888/start-audit-round
+
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":"stateadmin1"
+}

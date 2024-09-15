@@ -1,4 +1,4 @@
-### 7. Boulder County, using 7-boulder-2023-plusByron-7.csv
+### 7. Boulder County CVRs, using 7-boulder-2023-plusByron-7.csv
 ### POST request with basic login.
 POST http://localhost:8888/auth-admin
 Content-Type: application/json
