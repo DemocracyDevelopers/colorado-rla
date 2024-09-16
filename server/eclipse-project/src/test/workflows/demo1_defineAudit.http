@@ -58,7 +58,6 @@ Content-Type: text/plain
     for(var i=0; i < jsonData.length ; i++) {
         // Note this will end up with the last one, and there are many. This seems to be how it works
         // for statewide targeted contests.
-        // TODO check that the statewide targeting is functioning correctly.
         if(jsonData[i]['name'] === "Byron Mayoral") {
             console.log("Found Byron Mayoral, id="+jsonData[i]['id']);
             client.global.set("ByronMayoralID", jsonData[i]['id']);
@@ -101,6 +100,18 @@ Content-Type: application/json
 
 ### Start the audit round.
 POST http://localhost:8888/start-audit-round
+
+### Get the DoS dashboard; log all the estimated sample sizes. Note that a few zeros are OK, but they're mostly
+### expected to be not zero.
+GET http://localhost:8888/dos-dashboard
+
+> {%
+  const countyStatus = JSON.parse(response.body)['county_status'];
+  for(var id in countyStatus) {
+      console.log("County "+countyStatus[id]['id']+". Ballots remaining in round: "+countyStatus[id]['ballots_remaining_in_round']);
+  }
+
+ %}
 
 
 ### Log out
