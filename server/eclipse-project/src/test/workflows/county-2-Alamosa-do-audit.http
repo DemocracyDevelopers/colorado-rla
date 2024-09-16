@@ -1,0 +1,145 @@
+### This does two audit CVRs for Byron Mayoral, for Alamosa County,
+### with the two ballots selected for audit given the seed in demo1_defineAudit.http.
+### These are currently just hardcoded, so will be wrong if the seed changes.
+
+### POST request with basic login.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin2",
+  "password":""
+}
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin2",
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
+### Tell corla there is only one audit board.
+POST http://localhost:8888/set-audit-board-count
+Content-Type: application/json
+
+{
+  "count": 1
+}
+
+### Audit board sign in.
+GET http://localhost:8888/audit-board-sign-in
+Content-Type: application/json
+
+{
+  "audit_board":[
+    {"first_name":"V","last_name":"T","political_party":"Unaffiliated"},
+    {"first_name":"M","last_name":"B","political_party":"Unaffiliated"}
+  ],
+  "index":0
+}
+
+### Get the list of CVRs to audit. At the moment, this is just printed and ignored. A more sophisticated test would get acvr ids from here.
+GET http://localhost:8888/cvr-to-audit-list?round=1
+
+> {%
+    const jsonData = JSON.parse(response.body);
+    for(var i=0 ; i < jsonData.length ; i++) {
+        console.log("Audit cvr request received for CVR number "+jsonData[i]['cvr_number']+", imprinted ID "+jsonData[i]['imprinted_id']);
+    }
+
+ %}
+
+### POST the first audit cvr, 1-3-27.
+POST http://localhost:8888/upload-audit-cvr
+Content-Type: application/json
+
+{
+  "auditBoardIndex":0,
+  "audit_cvr":{
+    "ballot_type":"Ballot 1 - Type 1",
+    "batch_id":"3",
+    "contest_info":[{
+      "choices":["SWIVEL Mark(1)","LYON Michael(2)","DEY Duncan(3)","COOREY Cate(4)","PUGH Asren(5)","CLARKE Bruce(6)"],
+      "comment":"",
+      "consensus":"YES",
+      "contest":"3259596"
+    }],
+    "county_id":2,
+    "cvr_number":183,
+    "id":3259959,
+    "imprinted_id":"1-3-27",
+    "record_id":27,
+    "record_type":"UPLOADED",
+    "scanner_id":1,
+    "timestamp":"2024-09-16T05:48:55.142Z"
+  },
+  "cvr_id":3259959}
+
+### Post the second audit cvr. This is the correct value.
+POST http://localhost:8888/upload-audit-cvr
+Content-Type: application/json
+
+{
+  "auditBoardIndex":0,
+  "audit_cvr":{
+    "ballot_type":"Ballot 1 - Type 1",
+    "batch_id":"3",
+    "contest_info":[{
+      "choices":["LYON Michael(1)","SWIVEL Mark(2)","CLARKE Bruce(3)","PUGH Asren(4)"],
+      "comment":"",
+      "consensus":"YES",
+      "contest":"3259596"
+    }],
+    "county_id":2,
+    "cvr_number":205,
+    "id":3259981,
+    "imprinted_id":"1-3-49",
+    "record_id":49,
+    "record_type":"UPLOADED",
+    "scanner_id":1,
+    "timestamp":"2024-09-16T05:51:52.838Z"
+  },
+  "cvr_id":3259981
+}
+
+### Request a reaudit of the second audit cvr. This is a discrepancy - comment it out if you want to finish with R1.
+POST http://localhost:8888/upload-audit-cvr
+Content-Type: application/json
+
+{
+  "auditBoardIndex":0,
+  "audit_cvr":{
+    "ballot_type":"Ballot 1 - Type 1",
+    "batch_id":"3",
+    "contest_info":[{
+      "choices":["ANDERSON John(1)","COOREY Cate(2)","HUNTER Alan(4)","CLARKE Bruce(3)","MCILRATH Christopher(5)","LYON Michael(6)"],
+      "comment":"",
+      "consensus":"YES",
+      "contest":"3259596"}],
+    "county_id":2,
+    "cvr_number":205,
+    "id":3259981,
+    "imprinted_id":"1-3-49",
+    "record_id":49,
+    "record_type":"UPLOADED",
+    "scanner_id":1,
+    "timestamp":"2024-09-16T05:52:48.901Z"
+  },
+  "cvr_id":3259981,
+  "reaudit":true,
+  "comment":"test"
+}
+
+### Sign off on the audit round.
+POST http://localhost:8888/sign-off-audit-round
+Content-Type: application/json
+
+{
+  "audit_board":[{"first_name":"V","last_name":"T"},{"first_name":"M","last_name":"B"}],
+  "index":0
+}
