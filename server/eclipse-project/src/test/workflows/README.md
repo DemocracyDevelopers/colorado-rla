@@ -15,13 +15,16 @@ Now you should be able to run demo http files by clicking on the double-green-ar
 - `Boulder_loadCVRs.http`
 - `Boulder_loadManifests.http`
 - `demo1_defineAudit.http`
+- `county-2-Alamosa-do-audit.http`
 
-The first 4 can run in any order, but they can take a while - make sure they're finished before running `demo1_defineAudit` the audit has to run last.
+The first 4 can run in any order, but they can take a while - make sure they're finished before running `demo1_defineAudit` and then `county-2-Alamosa-do-audit`.
 
 ## Examining the output.
 `demo1-defineAudit` prints into the console a list of 'ballots remaining in round' for all contests. Counties 4 and 7 should have hundreds of ballots to audit; the rest should have a range of values from 0 to about 6.
 
 It also saves the sample sizes and assertions files in the `workflows/demo1-stored-data` directory.
+
+`county-2-Alamosa-do-audit` prints the requested audit ballot IDs to the console - there should be two.
 
 ## Details of the data.
  

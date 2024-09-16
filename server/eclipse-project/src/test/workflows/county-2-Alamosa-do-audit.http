@@ -32,7 +32,7 @@ Content-Type: application/json
 }
 
 ### Audit board sign in.
-GET http://localhost:8888/audit-board-sign-in
+POST http://localhost:8888/audit-board-sign-in
 Content-Type: application/json
 
 {
@@ -51,7 +51,25 @@ GET http://localhost:8888/cvr-to-audit-list?round=1
     for(var i=0 ; i < jsonData.length ; i++) {
         console.log("Audit cvr request received for CVR number "+jsonData[i]['cvr_number']+", imprinted ID "+jsonData[i]['imprinted_id']);
     }
+    client.global.set("cvr_number1", jsonData[0]['cvr_number']);
+    client.global.set("cvr_id1", jsonData[0]['db_id']);
+    client.global.set("imprinted_id1", jsonData[0]['imprinted_id']);
+    client.global.set("record_id1", jsonData[0]['record_id']);
+    client.global.set("batch_id1", jsonData[0]['batch_id']);
+    client.global.set("scanner_id1", jsonData[0]['scanner_id']);
+ %}
 
+### Get information about the first CVR to audit. The CVR info could also be derived from this.
+< {%
+  const cvrID = client.global.get("cvr_id1");
+  request.variables.set("cvr_id", cvrID)
+%}
+GET http://localhost:8888/cvr/id/{{cvr_id}}
+
+> {%
+  const jsonData = JSON.parse(response.body);
+  client.global.set("contestID", jsonData['contest_info'][0]['contest'])
+  console.log("Auditing contest ID "+jsonData['contest_info'][0]['contest']);
  %}
 
 ### POST the first audit cvr, 1-3-27.
@@ -62,23 +80,23 @@ Content-Type: application/json
   "auditBoardIndex":0,
   "audit_cvr":{
     "ballot_type":"Ballot 1 - Type 1",
-    "batch_id":"3",
+    "batch_id":{{batch_id1}},
     "contest_info":[{
       "choices":["SWIVEL Mark(1)","LYON Michael(2)","DEY Duncan(3)","COOREY Cate(4)","PUGH Asren(5)","CLARKE Bruce(6)"],
       "comment":"",
       "consensus":"YES",
-      "contest":"3259596"
+      "contest":"{{contestID}}"
     }],
     "county_id":2,
-    "cvr_number":183,
-    "id":3259959,
-    "imprinted_id":"1-3-27",
-    "record_id":27,
+    "cvr_number":{{cvr_number1}},
+    "id":{{cvr_id1}},
+    "imprinted_id":{{imprinted_id1}},
+    "record_id":{{record_id1}},
     "record_type":"UPLOADED",
-    "scanner_id":1,
+    "scanner_id":{{scanner_id1}},
     "timestamp":"2024-09-16T05:48:55.142Z"
   },
-  "cvr_id":3259959}
+  "cvr_id":{{cvr_id1}}}
 
 ### Post the second audit cvr. This is the correct value.
 POST http://localhost:8888/upload-audit-cvr
