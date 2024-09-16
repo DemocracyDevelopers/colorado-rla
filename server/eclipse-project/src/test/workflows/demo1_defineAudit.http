@@ -21,6 +21,9 @@ Content-Type: application/json
 
 ### GET the DoS dashboard. This is just to test that the login worked.
 GET http://localhost:8888/dos-dashboard
+Content-Type: text/html
+
+
 
 ### Define the audit. This reads in from the canonical list contents hardcoded in the http-client.env file,
 ### though reading in from the demo1-canonical-list.csv file would be better.
@@ -48,23 +51,58 @@ POST http://localhost:8888/generate-assertions?timeLimitSeconds=5
 
 ### Request contests, search for IDs by name.
 GET http://localhost:8888/contest
-Content-Type: application/json
+Content-Type: text/plain
 
 > {%
-    client.test("Content-Type is application/json", () => {
-        const re = new RegExp("[^0-9]+");
+    client.test("Response content-type is text/plain", function () {
+        const type = response.contentType.mimeType;
+        client.assert(type === "text/plain", `Expected 'test/plain' but received '${type}'`);
+
+    const jsonData = JSON.parse(response.body);
+
+    console.log("jsonData: "+jsonData);
+
+    for(var i=0; i < jsonData.length ; i++) {
+        // Note this will end up with the last one, and there are many. This seems to be how it works
+        // for statewide targeted contests.
+        // TODO check that the statewide targeting is functioning correctly.
+        if(jsonData[i]['name'] === "Byron Mayoral") {
+            console.log("Found Byron Mayoral, id="+jsonData[i]['id']);
+            client.global.set("ByronMayoralID", jsonData[i]['id']);
+        }
+        if(jsonData[i]['name'] === "Kempsey Mayoral") {
+            console.log("Found Kempsey Mayoral, id="+jsonData[i]['id']);
+            client.global.set("KempseyMayoralID", jsonData[i]['id']);
+        }
+        if(jsonData[i]['name'] === "City of Longmont - Mayor") {
+            console.log("Found City of Longmont - Mayor, id="+jsonData[i]['id']);
+            client.global.set("LongmontMayoralID", jsonData[i]['id']);
+        }
+    }
+
+    //client.test("Content-Type is application/json", () => {
+    //    const re = new RegExp("[^0-9]+");
         // Find all the 4-digit and longer numbers. These are the contest IDs.
-        const IDs = response.body.split(re).filter((x) => x.length > 3);
-        client.global.set("firstID", IDs[0]);
-    })
+     //   const IDs = response.body.split(re).filter((x) => x.length > 3);
+     //   client.global.set("firstID", IDs[0]);
+        //const test = response.body.json[0];
+        //console.log("Test: "+test);
+      //  const test2 = response.body.json;
+      //  console.log("Test2: "+test2);
+
+    });
 %}
+
+### >> temp/contest.json
 
 ### Select contests to be targeted.
 POST http://localhost:8888/select-contests
 Content-Type: application/json
 
 [
-  {"audit":"COMPARISON","contest":"{{firstID}}","reason":"COUNTY_WIDE_CONTEST"}
+  {"audit":"COMPARISON","contest":{{KempseyMayoralID}},"reason":"COUNTY_WIDE_CONTEST"},
+  {"audit":"COMPARISON","contest":{{ByronMayoralID}},"reason":"STATE_WIDE_CONTEST"},
+  {"audit":"COMPARISON","contest":{{LongmontMayoralID}},"reason":"COUNTY_WIDE_CONTEST"}
 ]
 
 ### Request sample size estimates.
