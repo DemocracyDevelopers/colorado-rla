@@ -1,6 +1,7 @@
 ### This does two audit CVRs for Byron Mayoral, for Alamosa County,
 ### with the two ballots selected for audit given the seed in demo1_defineAudit.http.
 ### The total number of audit ballots is currently just hardcoded, so may be wrong if the seed changes.
+### This needs to run with the 'dev' environment, which reads http-client.env.json to retrieve the demo1-canonical-list.
 
 ### POST request with basic login.
 POST http://localhost:8888/auth-admin
