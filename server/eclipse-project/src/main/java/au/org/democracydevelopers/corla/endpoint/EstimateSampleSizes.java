@@ -146,6 +146,9 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     final List<ContestResult> countedCRs = ContestCounter.countAllContests().stream().peek(cr ->
         cr.setAuditReason(AuditReason.OPPORTUNISTIC_BENEFITS)).toList();
 
+    // FIXME Possibly all we need to do is run through the countedCRs at this point and, if any have
+    // a zero ballot count, update the ballot count and the diluted margin.
+
     // Try to get the DoS Dashboard, which may contain the risk limit for the audit.
     final BigDecimal riskLimit = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class).auditInfo().riskLimit();
     if (riskLimit == null) {
