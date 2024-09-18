@@ -9,8 +9,12 @@ Before running the demo,
 - including loading the test credentials from colorado-rla/test/corla-test-credentials.psql.
 - Run the raire-service by following its [README](https://github.com/DemocracyDevelopers/raire-service).
 
+Both the raire-service and colorado-rla need to be running while the demo is running.
+
 Now you should be able to run demo http files by clicking on the double-green-arrow in IntelliJ. 
-Run them in the `dev` environment - this loads some variables from `http-client.env.json`. To run the complete demo, execute the following:
+Run them in the `dev` environment, which appears as a drop down after 'Run with' if you open the .http
+file in the IntelliJ editor. This loads some variables from `http-client.env.json`. 
+To run the complete demo, execute the following:
 - `demo1_loadCVRs.http`
 - `demo1_loadManifests.http`
 - `Boulder_loadCVRs.http`

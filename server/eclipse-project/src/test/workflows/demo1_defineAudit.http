@@ -1,4 +1,5 @@
 ### This defines the audit for Demo 1.
+### This needs to run with the 'dev' environment, which reads http-client.env.json to retrieve the demo1-canonical-list.
 
 ### 1. Define the audit
 ### POST request with basic login.
