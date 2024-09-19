@@ -9,6 +9,13 @@ Content-Type: application/json
   "username":"countyadmin1",
   "password":""
 }
+> {%
+  client.test("First factor auth", () => {
+      const authStatus = JSON.parse(response.body)['stage'];
+      client.log("Auth status for countyadmin1: "+JSON.parse(response.body)['stage'])
+      client.assert(authStatus === 'TRADITIONALLY_AUTHENTICATED', 'Password auth failed');
+  })
+%}
 
 ### POST request for second factor.
 POST http://localhost:8888/auth-admin
@@ -18,6 +25,14 @@ Content-Type: application/json
   "username":"countyadmin1",
   "second_factor":"s d f"
 }
+
+> {%
+    client.test("Second factor auth", () => {
+        const authStatus = JSON.parse(response.body)['stage'];
+        client.log("Auth status for countyadmin1: "+JSON.parse(response.body)['stage'])
+        client.assert(authStatus === 'SECOND_FACTOR_AUTHENTICATED', 'Second factor authentication failed.');
+    })
+ %}
 
 ### GET the county dashboard. This is just to test that the login worked.
 GET http://localhost:8888/county-dashboard
