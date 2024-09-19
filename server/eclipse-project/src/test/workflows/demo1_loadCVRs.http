@@ -10,11 +10,8 @@ Content-Type: application/json
   "password":""
 }
 > {%
-  client.test("First factor auth", () => {
-      const authStatus = JSON.parse(response.body)['stage'];
-      client.log("Auth status for countyadmin1: "+JSON.parse(response.body)['stage'])
-      client.assert(authStatus === 'TRADITIONALLY_AUTHENTICATED', 'Password auth failed');
-  })
+  import {authSanityCheck} from 'testScripts/testUtils';
+  authSanityCheck("countyadmin1", 1, 'TRADITIONALLY_AUTHENTICATED');
 %}
 
 ### POST request for second factor.
@@ -27,11 +24,8 @@ Content-Type: application/json
 }
 
 > {%
-    client.test("Second factor auth", () => {
-        const authStatus = JSON.parse(response.body)['stage'];
-        client.log("Auth status for countyadmin1: "+JSON.parse(response.body)['stage'])
-        client.assert(authStatus === 'SECOND_FACTOR_AUTHENTICATED', 'Second factor authentication failed.');
-    })
+  import {authSanityCheck} from 'testScripts/testUtils';
+  authSanityCheck("countyadmin1", 2, 'SECOND_FACTOR_AUTHENTICATED');
  %}
 
 ### GET the county dashboard. This is just to test that the login worked.
