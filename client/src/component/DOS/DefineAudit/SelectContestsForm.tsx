@@ -234,7 +234,7 @@ class SelectContestsForm extends React.Component<FormProps, FormState> {
             const props = d.props;
             const { contest } = props;
 
-            const auditable = isAuditable(contest.id);
+            const auditable = isAuditable(contest);
 
             if (auditable) {
                 return <ContestRow { ...props } />;
