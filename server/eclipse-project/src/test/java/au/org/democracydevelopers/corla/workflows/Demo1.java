@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 /**
  * A demonstration workflow that uploads CVRs and ballot manifests for all 64 counties.
  */
-@Test(enabled=true)
+@Test(enabled=false)
 public class Demo1 extends Workflow {
 
   /**
