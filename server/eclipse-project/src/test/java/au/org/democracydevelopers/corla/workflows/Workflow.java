@@ -25,9 +25,9 @@ import static io.restassured.RestAssured.given;
 import static org.testng.Assert.assertEquals;
 
 import io.restassured.RestAssured;
-import io.restassured.path.json.JsonPath;
+import io.restassured.filter.session.SessionFilter;
 import io.restassured.response.Response;
-import io.restassured.specification.RequestSpecification;
+import java.util.Map;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testng.annotations.BeforeClass;
@@ -50,109 +50,84 @@ public class Workflow {
     RestAssured.port = 8888;
   }
 
+  protected JSONObject createBody(final Map<String,String> data){
+    JSONObject body = new JSONObject();
+    body.putAll(data);
+    return body;
+  }
+
   /**
-   * Authenticate the given user with the given password and check that the given status is
-   * returned in the response.
-   * @param user Username of the administrator.
-   * @param pwd Password of the administrator.
-   * @param stage Authentication stage (1 or 2).
-   * @param statusExpected Expected status to be returned after authentication.
+   * Authenticate the given user with the given password/second factor challenge answer.
+   * @param filter Session filter to maintain same session across API test.
+   * @param user Username to authenticate
+   * @param pwd Password/second factor challenge answer for user.
+   * @param stage Authentication stage.
    */
-  protected void authenticate(final String user, final String pwd, final int stage, final String statusExpected){
-    JSONObject requestParams = new JSONObject();
-    requestParams.put("username", user);
-    if(stage == 1) {
-      requestParams.put("password", pwd);
-    }
-    else{
-      requestParams.put("second_factor", pwd);
-    }
+  protected void authenticate(final SessionFilter filter, final String user, final String pwd, final int stage){
+    final JSONObject requestParams = (stage == 1) ?
+        createBody(Map.of("username", user, "password", pwd)) :
+        createBody(Map.of("username", user, "second_factor", pwd));
 
-    RequestSpecification request = given();
-    request.header("Content-Type", "application/json");
-    request.body(requestParams.toJSONString());
+    final Response response = given().filter(filter)
+        .header("Content-Type", "application/json")
+        .body(requestParams.toJSONString())
+        .post("/auth-admin");
 
-    Response response = request.post("/auth-admin");
-    JsonPath path = new JsonPath(response.getBody().asString());
+    final String authStatus = response.getBody().jsonPath().getString("stage");
 
-    final String authStatus = path.getString("stage");
-    LOGGER.debug("Auth status for login "+user+" is "+authStatus);
-    assertEquals(authStatus, statusExpected, "Stage " + stage + "auth failed.");
+    LOGGER.debug("Auth status for login "+user+" stage "+stage+" is "+authStatus);
+    assertEquals(authStatus, (stage == 1) ? "TRADITIONALLY_AUTHENTICATED" :
+        "SECOND_FACTOR_AUTHENTICATED", "Stage "+stage+" auth failed.");
   }
 
   /**
    * Unauthenticate the given user.
+   * @param filter Session filter to maintain same session across API test.
    * @param user Username to unauthenticate.
    */
-  protected void logout(final String user){
-    JSONObject requestParams = new JSONObject();
-    requestParams.put("username", user);
+  protected void logout(final SessionFilter filter, final String user){
+    JSONObject requestParams = createBody(Map.of("username", user));
 
     given()
+        .filter(filter)
         .header("Content-Type", "application/json")
         .body(requestParams.toJSONString())
         .post("/unauthenticate");
   }
 
   /**
-   * Upload a CVR file and its corresponding hash on behalf of the given county number.
+   * Upload a file and its corresponding hash on behalf of the given county number.
    * @param number Number of the county uploading the CVR/hash.
-   * @param cvrFile Path of the CVR file to be uploaded.
-   * @param hashFile Path of the corresponding hash for the CVR file.
+   * @param file Path of the file to be uploaded.
+   * @param hash Path of the corresponding hash for the CVR file.
    */
-  protected void cvrUploadCounty(final int number, final String cvrFile, final String hashFile){
+  protected void uploadCounty(final int number, final String fileType,
+      final String file, final String hash){
+
+    final SessionFilter filter = new SessionFilter();
     final String user = "countyadmin" + number;
 
     // Login as the county.
-    authenticate(user, "", 1, "TRADITIONALLY_AUTHENTICATED");
-    authenticate(user, "s d f", 2, "SECOND_FACTOR_AUTHENTICATED");
+    authenticate(filter, user, "", 1);
+    authenticate(filter, user, "s d f", 2);
 
     // GET the county dashboard. This is just to test that the login worked.
-    given().get("/county-dashboard");
+    given().filter(filter).get("/county-dashboard");
 
     // Post the CVR file and its hash.
     Response response = given()
+        .filter(filter)
         .header("Content-Type", "multipart/form-data")
-        .multiPart("file", cvrFile, "text/csv")
-        .multiPart("hash", hashFile, "test/csv")
+        .multiPart("file", file, "text/csv")
+        .multiPart("hash", hash, "test/csv")
         .when()
         .post("/upload-file");
 
     // Request the CVR export to be imported
-    given().body(response.body()).post("/import-cvr-export");
+    given().filter(filter).body(response.body()).post("/import-" + fileType + "-export");
 
     // Logout.
-    logout(user);
+    logout(filter, user);
   }
 
-  /**
-   * Upload a ballot manifest file and its corresponding hash on behalf of the given county number.
-   * @param number Number of the county uploading the ballot manifest/hash.
-   * @param manifestFile Path of the ballot manifest file to be uploaded.
-   * @param hashFile Path of the corresponding hash for the CVR file.
-   */
-  protected void manifestUploadCounty(final int number, final String manifestFile, final String hashFile){
-    final String user = "countyadmin" + number;
-
-    // Login as the county.
-    authenticate(user, "", 1, "TRADITIONALLY_AUTHENTICATED");
-    authenticate(user, "s d f", 2, "SECOND_FACTOR_AUTHENTICATED");
-
-    // GET the county dashboard. This is just to test that the login worked.
-    given().get("/county-dashboard");
-
-    // Post the CVR file and its hash.
-    Response response = given()
-        .header("Content-Type", "multipart/form-data")
-        .multiPart("file", manifestFile, "text/csv")
-        .multiPart("hash", hashFile, "test/csv")
-        .when()
-        .post("/upload-file");
-
-    // Request the CVR export to be imported
-    given().body(response.body()).post("/import-ballot-manifest");
-
-    // Logout.
-    logout(user);
-  }
 }
