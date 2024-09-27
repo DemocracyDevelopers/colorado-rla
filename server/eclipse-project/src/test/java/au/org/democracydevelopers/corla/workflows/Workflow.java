@@ -27,6 +27,7 @@ import static org.testng.Assert.assertEquals;
 import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
 import io.restassured.response.Response;
+import java.io.File;
 import java.util.Map;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -114,13 +115,14 @@ public class Workflow {
     // GET the county dashboard. This is just to test that the login worked.
     given().filter(filter).get("/county-dashboard");
 
+    // TODO: the following is not the correct code for accessing the upload-file
+    // endpoint correctly -- need to debug!
     // Post the CVR file and its hash.
     Response response = given()
         .filter(filter)
         .header("Content-Type", "multipart/form-data")
-        .multiPart("file", file, "text/csv")
-        .multiPart("hash", hash, "test/csv")
-        .when()
+        .multiPart("file", new File(file), "text/csv")
+        .multiPart("hash", new File(hash), "test/csv")
         .post("/upload-file");
 
     // Request the CVR export to be imported

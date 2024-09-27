@@ -21,7 +21,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
-import io.restassured.filter.session.SessionFilter;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.LogManager;
@@ -31,7 +30,7 @@ import org.testng.annotations.Test;
 /**
  * A demonstration workflow that uploads CVRs and ballot manifests for all 64 counties.
  */
-@Test(enabled=false)
+@Test(enabled=true)
 public class Demo1 extends Workflow {
 
   /**
@@ -55,12 +54,8 @@ public class Demo1 extends Workflow {
     CVRS.add("CSVs/split-Byron/Byron-6.csv");
     CVRS.add("CSVs/Demo1/7-boulder-2023-plusByron-7.csv");
 
-    // List of sessions for each county (we will want to perform a sequence
-    // of requests of behalf of each county, and must do so in the same session).
-    List<SessionFilter> filters = new ArrayList<>();
     for(int i = 8; i < 65; ++i){
       CVRS.add("CSVs/split-Byron/Byron-" + i + ".csv");
-      filters.add(new SessionFilter());
     }
 
     List<String> MANIFESTS = new ArrayList<>();
@@ -80,8 +75,8 @@ public class Demo1 extends Workflow {
     }
 
     for(int i = 1; i < 65; ++i){
-      uploadCounty(i, "cvr", CVRS.get(i), CVRS.get(i) + ".sha256sum");
-      uploadCounty(i, "manifest", MANIFESTS.get(i), MANIFESTS.get(i) + ".sha256sum");
+      uploadCounty(i, "cvr", CVRS.get(i-1), CVRS.get(i-1) + ".sha256sum");
+      uploadCounty(i, "manifest", MANIFESTS.get(i-1), MANIFESTS.get(i-1) + ".sha256sum");
     }
   }
 
