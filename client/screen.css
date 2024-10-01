@@ -952,3 +952,26 @@ th.rla-county-contest-info {
     float: right;
     margin-right: 175px;
 }
+
+a.text-link {
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+.skip-to-main {
+    position: absolute;
+    left: -9999px;
+    z-index: 999;
+    padding: 1em;
+    opacity: 0;
+}
+
+.skip-to-main:focus {
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 1;
+}
+
+h1.smallHeader {
+    font-size: 22px;
+}

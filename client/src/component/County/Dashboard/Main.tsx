@@ -138,7 +138,7 @@ const Main = (props: MainProps) => {
             { fileUploadContainer }
             { fileDownloadButtons }
             <div>
-                <h4 className='form-container-heading'>{ reportType } audit report (CSV)</h4>
+                <h2 className='form-container-heading'>{ reportType } audit report (CSV)</h2>
                 <button
                     className='pt-button  pt-intent-primary'
                     disabled={ !canRenderReport }
@@ -148,7 +148,7 @@ const Main = (props: MainProps) => {
                 <hr />
             </div>
             <div className='mt-default'>
-                <h4 className='form-container-heading'>List of ballots to audit (CSV)</h4>
+                <h2 className='form-container-heading'>List of ballots to audit (CSV)</h2>
                 <button
                     className='pt-button pt-intent-primary'
                     disabled={ typeof countyState.auditBoardCount !== 'number' }
