@@ -31,8 +31,7 @@ public class ExportQueriesTest extends TestClassWithDatabase {
     s.createNativeQuery(query).executeUpdate();
   }
 
-  // Note: the code this is testing is broken. JSON reports appear to be unused, so I'm ignoring it for now.
-  // @Test( enabled = false )
+  @Test()
   public void jsonRowsTest() {
     String q = "SELECT seed FROM dos_dashboard";
     ByteArrayOutputStream os = new ByteArrayOutputStream();
