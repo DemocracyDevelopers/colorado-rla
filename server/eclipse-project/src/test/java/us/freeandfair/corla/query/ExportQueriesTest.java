@@ -32,7 +32,7 @@ public class ExportQueriesTest extends TestClassWithDatabase {
   }
 
   // Note: the code this is testing is broken. JSON reports appear to be unused, so I'm ignoring it for now.
-  @Test( enabled = false )
+  // @Test( enabled = false )
   public void jsonRowsTest() {
     String q = "SELECT seed FROM dos_dashboard";
     ByteArrayOutputStream os = new ByteArrayOutputStream();
