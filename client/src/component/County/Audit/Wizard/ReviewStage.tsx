@@ -38,7 +38,7 @@ const AuditInstructions = (props: InstructionsProps) => {
     return (
         <div>
             <div className='current-ballot-info'>
-                <h3 className='sidebar-heading'>Current ballot:</h3>
+                <h2 className='sidebar-heading'>Current ballot:</h2>
                 <ul className='current-ballot-stats pt-list-unstyled'>
                     <li>
                         <span className='current-ballot-stats-label'>Storage bin</span>
@@ -217,7 +217,7 @@ const ReviewStage = (props: ReviewStageProps) => {
         <div className='rla-page'>
             <div className='audit-page-container'>
                 <div className='audit-page-header'>
-                    <h2 className='audit-page-title'>Ballot Card Verification</h2>
+                    <h1 className='audit-page-title'>Ballot Card Verification</h1>
                     <div className='audit-page-subtitle'>Review ballot</div>
                     <div className='ballot-number'>
                         Auditing ballot card { currentBallotNumber } of { totalBallotsForBoard }
@@ -248,7 +248,7 @@ const ReviewStage = (props: ReviewStageProps) => {
                         </p>
                         <BallotReview countyState={ countyState } marks={ marks } back={ prevStage } />
                         <div className='button-container button-container-left'>
-                          <Button large intent={ Intent.SUCCESS } onClick={ onClick }>
+                          <Button large className={'blackButtonText'} intent={ Intent.SUCCESS } onClick={ onClick }>
                               Submit & Next Ballot Card
                           </Button>
                         </div>

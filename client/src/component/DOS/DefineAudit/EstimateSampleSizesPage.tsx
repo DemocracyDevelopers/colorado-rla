@@ -32,7 +32,7 @@ class EstimateSampleSizesPage extends React.Component<EstimateSampleSizesPagePro
         const main =
             <div>
                 <Breadcrumbs/>
-                <h2>Estimate Sample Sizes for all Contests</h2>
+                <h1 className={'mediumHeader'}>Estimate Sample Sizes for all Contests</h1>
                 <p>
                     Clicking on the estimate button will produce a CSV file containing
                     sample sizes for all contests in the database, which will be

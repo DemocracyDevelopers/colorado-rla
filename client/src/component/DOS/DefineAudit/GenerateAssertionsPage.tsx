@@ -68,7 +68,7 @@ class GenerateAssertionsPage extends React.Component<GenerateAssertionsPageProps
         const main =
             <div>
                 <Breadcrumbs/>
-                <h2>Generate Assertions for IRV Contests</h2>
+                <h1 className={'mediumHeader'}>Generate Assertions for IRV Contests</h1>
                 <p>
                     Assertions will be generated for all IRV contests to
                     support opportunistic discrepancy computation.

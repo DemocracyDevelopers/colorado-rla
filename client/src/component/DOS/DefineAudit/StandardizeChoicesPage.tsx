@@ -141,6 +141,7 @@ const TableRow = (props: TableRowProps) => {
                 <form>
                     <select className='max-width-select'
                             onChange={ changeHandler }
+                            aria-label={ `Standardize Choice Name For ${row.choiceName}` }
                             value={_.defaultTo(_.find(formData[row.contestId],
                                 o => o.existingChoice === row.choiceName), {newChoice: ''})
                                 .newChoice}>
@@ -236,7 +237,7 @@ class Page extends React.Component<PageProps, PageState> {
             main =
                 <div>
                     <Breadcrumbs />
-                    <h2>Standardize Choice Names</h2>
+                    <h1 className={'mediumHeader'}>Standardize Choice Names</h1>
                     <Card>
                         <p>
                             Choice names for each contest must be standardized
