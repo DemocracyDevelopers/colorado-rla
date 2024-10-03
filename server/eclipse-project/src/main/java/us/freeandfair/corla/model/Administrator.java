@@ -14,6 +14,7 @@ package us.freeandfair.corla.model;
 import static us.freeandfair.corla.util.EqualsHashcodeHelper.*;
 
 import java.io.Serializable;
+import java.time.Clock;
 import java.time.Instant;
 
 import javax.persistence.Cacheable;
@@ -106,6 +107,11 @@ public class Administrator implements PersistentEntity, Serializable {
    * The last logout time.
    */
   private Instant my_last_logout_time;
+
+  /**
+   * A clock that is only used for testing
+    */
+  private Clock my_clock;
   
   /**
    * Constructs a new Administrator with default values.
@@ -133,7 +139,25 @@ public class Administrator implements PersistentEntity, Serializable {
     my_full_name = the_full_name;
     my_county = the_county;
   }
-  
+
+  /**
+   * Same as above, but injects a clock for use with testing.
+   *
+   * @param the_username
+   * @param the_type
+   * @param the_full_name
+   * @param the_county
+   * @param clock
+   */
+  public Administrator(final String the_username,
+                       final AdministratorType the_type,
+                       final String the_full_name,
+                       final County the_county,
+                       Clock clock) {
+    this(the_username, the_type, the_full_name, the_county);
+    my_clock = clock;
+  }
+
   /**
    * {@inheritDoc}
    */
@@ -197,7 +221,7 @@ public class Administrator implements PersistentEntity, Serializable {
    * Updates the last login time to the current time.
    */
   public void updateLastLoginTime() {
-    my_last_login_time = Instant.now();
+    my_last_login_time = Instant.now(my_clock);
   }
 
   /**
@@ -211,7 +235,7 @@ public class Administrator implements PersistentEntity, Serializable {
    * Updates the last logout time to the current time.
    */
   public void updateLastLogoutTime() {
-    my_last_logout_time = Instant.now();
+    my_last_logout_time = Instant.now(my_clock);
   }
   
   /**
