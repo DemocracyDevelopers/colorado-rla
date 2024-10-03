@@ -50,7 +50,12 @@ const TiedContestRow = (props: RowProps) => {
                           disabled={ true } />
             </td>
             <td>
-                Contest cannot be audited due to a reported tie.
+                Contest cannot be audited due to a reported tie
+                {
+                    (contest.description === 'IRV')
+                        ? ' or assertion generation error.'
+                        : '.'
+                }
             </td>
         </tr>
     );

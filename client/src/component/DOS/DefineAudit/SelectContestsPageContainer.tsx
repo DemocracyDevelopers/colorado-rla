@@ -65,8 +65,8 @@ function mapStateToProps(dosState: DOS.AppState) {
             const assertionSummary = dosState.generateAssertionsSummaries.find(
                 element => element.contestName === contest.name);
 
-            // Tied IRV contests are not auditable
-            if (assertionSummary && assertionSummary.error === 'TIED_WINNERS') {
+            // Tied IRV contests or contests with failed assertion generations are not auditable
+            if (assertionSummary && assertionSummary.error.length > 0) {
                 return false;
             }
         }
