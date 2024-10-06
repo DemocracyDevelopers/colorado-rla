@@ -50,7 +50,12 @@ const TiedContestRow = (props: RowProps) => {
                           disabled={ true } />
             </td>
             <td>
-                Contest cannot be audited due to a reported tie.
+                Contest cannot be audited due to a reported tie
+                {
+                    (contest.description === 'IRV')
+                        ? ' or assertion generation error.'
+                        : '.'
+                }
             </td>
         </tr>
     );
@@ -234,7 +239,7 @@ class SelectContestsForm extends React.Component<FormProps, FormState> {
             const props = d.props;
             const { contest } = props;
 
-            const auditable = isAuditable(contest.id);
+            const auditable = isAuditable(contest);
 
             if (auditable) {
                 return <ContestRow { ...props } />;
