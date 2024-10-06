@@ -952,3 +952,43 @@ th.rla-county-contest-info {
     float: right;
     margin-right: 175px;
 }
+
+a.text-link {
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+.skip-to-main {
+    position: absolute;
+    left: -9999px;
+    z-index: 999;
+    padding: 1em;
+    opacity: 0;
+}
+
+.skip-to-main:focus {
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 1;
+}
+
+h1.tinyHeader, h2.tinyHeader, h3.tinyHeader {
+    font-size: 18px;
+}
+
+h1.smallHeader, h2.smallHeader, h3.smallHeader {
+    font-size: 22px;
+}
+
+h1.mediumHeader, h2.mediumHeader, h3.mediumHeader {
+    font-size: 28px;
+}
+
+/* Improve color contrast for input placeholders */
+.pt-editable-text-placeholder > .pt-editable-text-content {
+    color: #4D4D4F;
+}
+
+button.blackButtonText {
+    color: black !important;
+}

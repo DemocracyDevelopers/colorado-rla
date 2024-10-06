@@ -63,7 +63,7 @@ const AuditInstructions = (props: AuditInstructionsProps) => {
     return (
         <div>
             <div className='current-ballot-info'>
-                <h3 className='sidebar-heading'>Current ballot:</h3>
+                <h2 className='sidebar-heading'>Current ballot:</h2>
                 <ul className='current-ballot-stats pt-list-unstyled'>
                     <li>
                         <span className='current-ballot-stats-label'>Storage bin</span>
@@ -394,9 +394,9 @@ class BallotAuditStage extends React.Component<StageProps, BallotAuditStageState
 
                 <div className='audit-page-container'>
                     <div className='audit-page-header'>
-                        <h2 className='audit-page-title'>
+                        <h1 className='audit-page-title'>
                             Audit Board {`${auditBoardIndex + 1}`}: Ballot Card Verification
-                        </h2>
+                        </h1>
                         <div className='audit-page-subtitle'>Enter ballot information</div>
                         <div className='ballot-number'>
                             Auditing ballot card {currentBallotNumber} of {totalBallotsForBoard}
@@ -514,7 +514,7 @@ class BallotAuditStage extends React.Component<StageProps, BallotAuditStageState
                     <div className='button-container'>
                         <BackButton back={prevStage} />
 
-                        <Button className='ml-default'
+                        <Button className='ml-default blackButtonText'
                             intent={Intent.SUCCESS}
                             large
                             onClick={validatingAcvr(nextStage)}>

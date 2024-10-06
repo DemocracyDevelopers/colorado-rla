@@ -114,6 +114,10 @@ const ContestRow = (props: RowProps) => {
 
     const countyName = counties[contest.countyId].name;
 
+    const htmlProps = {
+        'aria-label': `Select ${contest.name} for auditing.`,
+    };
+
     return (
         <tr>
             {/* This is a shim for future work where the ui is less
@@ -123,6 +127,7 @@ const ContestRow = (props: RowProps) => {
             <td>{ contest.name }</td>
             <td>
                 <Checkbox
+                    {...htmlProps}
                     disabled={ handCount }
                     checked={ toAudit }
                     onChange={ onAuditChange } />

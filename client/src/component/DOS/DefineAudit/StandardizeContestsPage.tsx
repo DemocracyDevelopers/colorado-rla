@@ -133,6 +133,7 @@ const ContestRow = (props: ContestRowProps) => {
                 <form>
                     <select className='max-width-select'
                             name={ String(contest.id) }
+                            aria-label={ `Standardize Contest Name For ${contest.name}` }
                             onChange={ changeHandler }
                             value={ _.get(formData, `${contest.id}.name`, '') }>
                         <option value=''>-- No change --</option>
