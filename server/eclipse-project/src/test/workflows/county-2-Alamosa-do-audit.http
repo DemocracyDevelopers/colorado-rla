@@ -49,7 +49,7 @@ GET http://localhost:8888/cvr-to-audit-list?round=1
 > {%
     const jsonData = JSON.parse(response.body);
     for(var i=0 ; i < jsonData.length ; i++) {
-        console.log("Audit cvr request received for CVR number "+jsonData[i]['cvr_number']+", imprinted ID "+jsonData[i]['imprinted_id']);
+        client.log("Audit cvr request received for CVR number "+jsonData[i]['cvr_number']+", imprinted ID "+jsonData[i]['imprinted_id']);
     }
     client.global.set("cvr_number1", jsonData[0]['cvr_number']);
     client.global.set("cvr_id1", jsonData[0]['db_id']);
@@ -75,7 +75,7 @@ GET http://localhost:8888/cvr/id/{{cvr_id}}
 > {%
   const jsonData = JSON.parse(response.body);
   client.global.set("contestID", jsonData['contest_info'][0]['contest'])
-  console.log("Auditing contest ID "+jsonData['contest_info'][0]['contest']);
+  client.log("Auditing contest ID "+jsonData['contest_info'][0]['contest']);
  %}
 
 ### POST the first audit cvr, 1-3-27.
@@ -196,6 +196,6 @@ Content-Type: application/json
 
 > {%
   const countyStatus = JSON.parse(response.body)['county_status']['2'];
-  console.log("Alamosa County optimistic ballots: "+countyStatus['optimistic_ballots_to_audit']);
+  client.log("Alamosa County optimistic ballots: "+countyStatus['optimistic_ballots_to_audit']);
   client.assert(countyStatus['ballots_remaining_in_round'] === 0);
 %}

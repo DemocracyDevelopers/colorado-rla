@@ -1,4 +1,5 @@
 ### This defines the audit for Demo 1.
+### This needs to run with the 'dev' environment, which reads http-client.env.json to retrieve the demo1-canonical-list.
 
 ### 1. Define the audit
 ### POST request with basic login.
@@ -60,15 +61,15 @@ Content-Type: text/plain
         // Note this will end up with the last one, and there are many. This seems to be how it works
         // for statewide targeted contests.
         if(jsonData[i]['name'] === "Byron Mayoral") {
-            console.log("Found Byron Mayoral, id="+jsonData[i]['id']);
+            client.log("Found Byron Mayoral, id="+jsonData[i]['id']);
             client.global.set("ByronMayoralID", jsonData[i]['id']);
         }
         if(jsonData[i]['name'] === "Kempsey Mayoral") {
-            console.log("Found Kempsey Mayoral, id="+jsonData[i]['id']);
+            client.log("Found Kempsey Mayoral, id="+jsonData[i]['id']);
             client.global.set("KempseyMayoralID", jsonData[i]['id']);
         }
         if(jsonData[i]['name'] === "City of Longmont - Mayor") {
-            console.log("Found City of Longmont - Mayor, id="+jsonData[i]['id']);
+            client.log("Found City of Longmont - Mayor, id="+jsonData[i]['id']);
             client.global.set("LongmontMayoralID", jsonData[i]['id']);
         }
     }
@@ -108,7 +109,7 @@ GET http://localhost:8888/dos-dashboard
 > {%
   const countyStatus = JSON.parse(response.body)['county_status'];
   for(var id in countyStatus) {
-      console.log("County "+countyStatus[id]['id']+". Ballots remaining in round: "+countyStatus[id]['ballots_remaining_in_round']);
+      client.log("County "+countyStatus[id]['id']+". Ballots remaining in round: "+countyStatus[id]['ballots_remaining_in_round']);
   }
 
  %}

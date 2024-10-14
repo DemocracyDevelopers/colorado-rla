@@ -9,6 +9,10 @@ Content-Type: application/json
   "username":"countyadmin1",
   "password":""
 }
+> {%
+  import {authSanityCheck} from 'testScripts/testUtils';
+  authSanityCheck("countyadmin1", 1, 'TRADITIONALLY_AUTHENTICATED');
+%}
 
 ### POST request for second factor.
 POST http://localhost:8888/auth-admin
@@ -18,6 +22,11 @@ Content-Type: application/json
   "username":"countyadmin1",
   "second_factor":"s d f"
 }
+
+> {%
+  import {authSanityCheck} from 'testScripts/testUtils';
+  authSanityCheck("countyadmin1", 2, 'SECOND_FACTOR_AUTHENTICATED');
+ %}
 
 ### GET the county dashboard. This is just to test that the login worked.
 GET http://localhost:8888/county-dashboard
