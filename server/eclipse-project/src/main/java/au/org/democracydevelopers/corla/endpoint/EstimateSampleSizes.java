@@ -143,7 +143,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     // in a ContestResult for an IRV contest will not be used. In the call to ContestCounter
     // (countAllContests), all persisted CountyContestResults will be accessed from the database,
     // grouped by contest, and accumulated into a single ContestResult.
-    final List<ContestResult> countedCRs = ContestCounter.countAllContests(true).stream().peek(cr ->
+    final List<ContestResult> countedCRs = ContestCounter.countAllContests(false).stream().peek(cr ->
         cr.setAuditReason(AuditReason.OPPORTUNISTIC_BENEFITS)).toList();
 
     // FIXME Possibly all we need to do is run through the countedCRs at this point and, if any have

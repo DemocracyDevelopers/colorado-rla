@@ -202,7 +202,7 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
 
       // Mock non-empty contest response (one IRV contest).
       List<ContestResult> mockedContestResults = List.of(tinyIRVContestResult);
-      mockedCounter.when(ContestCounter::countAllContests).thenReturn(mockedContestResults);
+      mockedCounter.when(() -> ContestCounter.countAllContests(true)).thenReturn(mockedContestResults);
 
       // We seem to need a dummy request to run before.
       final Request request = new SparkRequestStub("", Map.of(CONTEST_NAME, tinyIRV));
