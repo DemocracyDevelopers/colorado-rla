@@ -97,7 +97,7 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
         final String msg = "Inconsistent contest types:";
 
         // Find all the ContestResults with any that match IRV.
-        List<ContestResult> results = ContestCounter.countAllContests().stream()
+        List<ContestResult> results = ContestCounter.countAllContests(false).stream()
                 .filter(cr -> cr.getContests().stream().map(Contest::description)
                         .anyMatch(d -> d.equalsIgnoreCase(ContestType.IRV.toString()))).toList();
 

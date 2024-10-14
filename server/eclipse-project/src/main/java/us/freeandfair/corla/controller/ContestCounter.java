@@ -41,14 +41,14 @@ public final class ContestCounter {
    * @return List<ContestResult> A high level view of contests and their
    * participants.
    */
-  public static List<ContestResult> countAllContests() {
+  public static List<ContestResult> countAllContests(boolean useManifests) {
     return
       Persistence.getAll(CountyContestResult.class)
       .stream()
       .collect(Collectors.groupingBy(x -> x.contest().name()))
       .entrySet()
       .stream()
-      .map(ContestCounter::countContest)
+      .map((Entry<String, List<CountyContestResult>> countyContestResults) -> countContest(countyContestResults, useManifests))
       .collect(Collectors.toList());
   }
 
@@ -85,9 +85,14 @@ public final class ContestCounter {
    * Set voteTotals on CONTEST based on all counties that have that
    * Contest name in their uploaded CVRs
    * Not valid for IRV.
+   * @param countyContestResults the county-by-county contest results, which are useful for plurality.
+   * @param useManifests         whether to use manifests to compute the total number of ballots. This
+   *                             *must* be true when counting for audits - it can be false only when
+   *                             doing sample size estimation. In this case, it computes the total number
+   *                             of ballots based on the (untrusted) CVRs.
    **/
-  public static ContestResult
-    countContest(final Map.Entry<String, List<CountyContestResult>> countyContestResults) {
+  public static ContestResult countContest(final Map.Entry<String, List<CountyContestResult>> countyContestResults,
+                                                                           boolean useManifests) {
     final String contestName = countyContestResults.getKey();
     final ContestResult contestResult = ContestResultQueries.findOrCreate(contestName);
 
@@ -126,7 +131,12 @@ public final class ContestCounter {
                               .map(cr -> cr.county())
                               .collect(Collectors.toSet()));
 
-    final Long ballotCount = BallotManifestInfoQueries.totalBallots(contestResult.countyIDs());
+    Long ballotCount;
+    if(useManifests) {
+      ballotCount = BallotManifestInfoQueries.totalBallots(contestResult.countyIDs());
+    } else {
+      ballotCount = countCVRs(contestResult);
+    }
     final Set<Integer> margins = pairwiseMargins(contestResult.getWinners(),
                                                   contestResult.getLosers(),
                                                   voteTotals);
@@ -146,6 +156,16 @@ public final class ContestCounter {
     }
 
     return contestResult;
+  }
+
+  /**
+   * Count the number of ballots by counting the CVRs. Note this should *not* be used for auditing,
+   * only for sample-size estimation.
+   * @param contestResult the contestResult for this contest.
+   * @return the total number of CVRs that contain the contest.
+   */
+  private static Long countCVRs(ContestResult contestResult) {
+    return -1L;
   }
 
   /** add em up **/
