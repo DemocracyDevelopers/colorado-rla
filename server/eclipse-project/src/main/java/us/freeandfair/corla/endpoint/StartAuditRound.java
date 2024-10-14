@@ -256,7 +256,7 @@ public class StartAuditRound extends AbstractDoSDashboardEndpoint {
     LOGGER.debug(String.format("[countAndSaveContests: cta=%s]", cta));
     final Map<String, AuditReason> tcr = targetedContestReasons(cta);
 
-    return ContestCounter.countAllContests(false).stream().map(cr -> {
+    return ContestCounter.countAllContests(true).stream().map(cr -> {
       cr.setAuditReason(tcr.getOrDefault(cr.getContestName(),
                                          AuditReason.OPPORTUNISTIC_BENEFITS));
       return cr;
