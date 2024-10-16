@@ -3,24 +3,18 @@ package us.freeandfair.corla.controller;
 
 
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import au.org.democracydevelopers.corla.model.ContestType;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import us.freeandfair.corla.math.Audit;
-import us.freeandfair.corla.model.ContestResult;
-import us.freeandfair.corla.model.CountyContestResult;
+import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.BallotManifestInfoQueries;
+import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.query.ContestResultQueries;
 
 public final class ContestCounter {
@@ -151,21 +145,44 @@ public final class ContestCounter {
     contestResult.setDilutedMargin(dilutedMargin);
 
     if (ballotCount == 0L) {
-      LOGGER.error(String.format("[countContest: %s has no ballot manifests for"
-                                 + " countyIDs: %s", contestName, contestResult.countyIDs()));
+      final String dataSource = useManifests ? "ballot manifests" : "uploaded CVRs";
+      LOGGER.error(String.format("[countContest: %s has no %s for"
+                                 + " countyIDs: %s", contestName, dataSource, contestResult.countyIDs()));
     }
 
     return contestResult;
   }
 
   /**
-   * Count the number of ballots by counting the CVRs. Note this should *not* be used for auditing,
-   * only for sample-size estimation.
+   * Calculate the size of the audit universe by counting CVRs. This is the total number
+   * of CVRs in all counties that have any votes in the contest. Used for sample-size estimation.
+   * For example, if a county had 10,000 CVRs, of which only 500 contained the contest, it would
+   * contribute 10,000 to the total.
+   * Note this should *not* be used for auditing, only for sample-size estimation - the audit
+   * calculation should get this value from the manifests, not the CVRs.
    * @param contestResult the contestResult for this contest.
-   * @return the total number of CVRs that contain the contest.
+   * @return the sum, over all counties that contain the contest, of the total number of CVRs in
+   *         that county. This will be 0 if either the contestResult has no counties, or the counties
+   *         have uploaded no CVRs.
    */
   private static Long countCVRs(ContestResult contestResult) {
-    return -1L;
+    final String prefix = "[countCVRs]";
+
+    long total = 0L;
+    for(County county : contestResult.getCounties()) {
+      final OptionalLong countyCount
+          = CastVoteRecordQueries.countMatching(county.id(), CastVoteRecord.RecordType.UPLOADED);
+      if(countyCount.isPresent() && countyCount.getAsLong() != 0L)  {
+        // Add all the ballots in this county to the total.
+        total += countyCount.getAsLong();
+      } else {
+        // If there are no CVRs, we can still make an estimate based on the other counties' data,
+        // but we need to warn that it may be inaccurate.
+        LOGGER.warn(String.format("%s Found no CVRs in database for county %s. Estimate for contest "
+            + "%s may be inaccurate.", prefix, county.name(), contestResult.getContestName()));
+      }
+    }
+    return total;
   }
 
   /** add em up **/
