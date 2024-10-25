@@ -281,8 +281,8 @@ public final class Persistence {
 
       // create metadata sources and metadata
       final MetadataSources sources = new MetadataSources(service_registry);
-      try (InputStream entity_stream =
-               ClassLoader.getSystemResourceAsStream(ENTITY_CLASSES)) {
+      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+      try (InputStream entity_stream = classLoader.getResourceAsStream(ENTITY_CLASSES)) {
         if (entity_stream == null) {
           Main.LOGGER.error("could not load list of entity classes");
         } else {
