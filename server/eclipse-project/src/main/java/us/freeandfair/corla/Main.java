@@ -236,8 +236,10 @@ public final class Main {
    */
   public static Properties defaultProperties() {
     final Properties properties = new Properties();
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+
     try {
-      properties.load(ClassLoader.getSystemResourceAsStream(DEFAULT_PROPERTIES));
+      properties.load(classLoader.getResourceAsStream(DEFAULT_PROPERTIES));
     } catch (final IOException e) {
       throw new IllegalStateException
       ("Error loading default properties file, aborting.", e);
@@ -328,8 +330,10 @@ public final class Main {
    */
   private void activateEndpoints() {
     final List<Endpoint> endpoints = new ArrayList<>();
-    try (InputStream endpoint_stream = 
-        ClassLoader.getSystemResourceAsStream(ENDPOINT_CLASSES)) {
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+
+    try (InputStream endpoint_stream =
+                 classLoader.getResourceAsStream(ENDPOINT_CLASSES)) {
       if (endpoint_stream == null) {
         Main.LOGGER.error("could not load list of entity classes");          
       } else {
@@ -450,9 +454,10 @@ public final class Main {
    */
   private List<County> initializeCounties() {
     final Properties properties = new Properties();
+
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     try {
-      properties.load(ClassLoader.
-                      getSystemResourceAsStream(static_properties.getProperty(COUNTY_IDS)));
+      properties.load(classLoader.getResourceAsStream(static_properties.getProperty(COUNTY_IDS)));
     } catch (final IOException e) {
       throw new IllegalStateException("Error loading county IDs, aborting.", e);
     }
