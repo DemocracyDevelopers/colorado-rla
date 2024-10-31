@@ -27,7 +27,11 @@ import static org.testng.Assert.assertEquals;
 import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
 import io.restassured.response.Response;
-import java.io.File;
+
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -100,10 +104,10 @@ public class Workflow {
    * Upload a file and its corresponding hash on behalf of the given county number.
    * @param number Number of the county uploading the CVR/hash.
    * @param file Path of the file to be uploaded.
-   * @param hash Path of the corresponding hash for the CVR file.
+   * @param hashFile Path of the corresponding hash for the CVR file.
    */
   protected void uploadCounty(final int number, final String fileType,
-      final String file, final String hash){
+      final String file, final String hashFile){
 
     final SessionFilter filter = new SessionFilter();
     final String user = "countyadmin" + number;
@@ -115,21 +119,42 @@ public class Workflow {
     // GET the county dashboard. This is just to test that the login worked.
     given().filter(filter).get("/county-dashboard");
 
-    // TODO: the following is not the correct code for accessing the upload-file
-    // endpoint correctly -- need to debug!
-    // Post the CVR file and its hash.
+    // The hash has to be sent directly as a string, unlike the CSVs which are sent as files.
+    final String hash = readFromFile(hashFile);
+
+    // Post the CVR/manifest file and its hash.
     Response response = given()
         .filter(filter)
         .header("Content-Type", "multipart/form-data")
         .multiPart("file", new File(file), "text/csv")
-        .multiPart("hash", new File(hash), "test/csv")
+        .multiPart("hash", hash)
         .post("/upload-file");
 
-    // Request the CVR export to be imported
-    given().filter(filter).body(response.body()).post("/import-" + fileType + "-export");
+    // Request the CVR/manifest to be imported
+    given().filter(filter)
+        .header("Content-Type", "application/json")
+        .body(response.then().extract().asString())
+        .post("/import-" + fileType);
 
     // Logout.
     logout(filter, user);
+  }
+
+  /**
+   * Read a string from a file.
+   * Catches the IO exception and returns "" if file can't be opened.
+   * @param fileName the path of the file
+   * @return the file contents as a single string, with '\n' added between lines.
+   */
+  private String readFromFile(final String fileName) {
+    final String prefix = "[readFromFile]";
+    try {
+      Path path = Paths.get(fileName);
+      return String.join("\n",Files.readAllLines(path));
+      } catch (IOException ex) {
+      LOGGER.error(prefix + ex.getMessage());
+      return "";
+    }
   }
 
 }
