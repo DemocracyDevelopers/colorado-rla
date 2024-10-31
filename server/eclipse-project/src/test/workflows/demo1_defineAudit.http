@@ -1,0 +1,136 @@
+### This defines the audit for Demo 1.
+### This needs to run with the 'dev' environment, which reads http-client.env.json to retrieve the demo1-canonical-list.
+
+### 1. Define the audit
+### POST request with basic login.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"stateadmin1",
+  "password":""
+}
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"stateadmin1",
+  "second_factor":"s d f"
+}
+
+### GET the DoS dashboard. This is just to test that the login worked.
+GET http://localhost:8888/dos-dashboard
+Content-Type: text/html
+
+
+
+### Define the audit. This reads in from the canonical list contents hardcoded in the http-client.env file,
+### though reading in from the demo1-canonical-list.csv file would be better.
+POST http://localhost:8888/update-audit-info
+Content-Type: application/json
+
+{
+    "election_date":"2024-09-15T05:42:17.796Z",
+    "election_type":"general",
+    "public_meeting_date":"2024-09-22T05:42:22.037Z",
+    "risk_limit":0.03,
+    "upload_file": [{"contents" : "{{demo1-canonical-list}}" }]
+}
+
+
+### Canonicalize contest names. Doing nothing at the moment.
+### TODO: not sure why there's only the contest names, not the candidate names, in the .har file.
+POST http://localhost:8888/set-contest-names
+Content-Type: application/json
+
+[]
+
+### Generate assertions.
+GET http://localhost:8888/generate-assertions?timeLimitSeconds=1
+Content-Type: application/x-www-form-urlencoded
+
+### Request contests, search for IDs by name.
+GET http://localhost:8888/contest
+Content-Type: text/plain
+
+> {%
+    const jsonData = JSON.parse(response.body);
+    for(var i=0; i < jsonData.length ; i++) {
+        // Note this will end up with the last one, and there are many. This seems to be how it works
+        // for statewide targeted contests.
+        if(jsonData[i]['name'] === "Byron Mayoral") {
+            client.log("Found Byron Mayoral, id="+jsonData[i]['id']);
+            client.global.set("ByronMayoralID", jsonData[i]['id']);
+        }
+        if(jsonData[i]['name'] === "Kempsey Mayoral") {
+            client.log("Found Kempsey Mayoral, id="+jsonData[i]['id']);
+            client.global.set("KempseyMayoralID", jsonData[i]['id']);
+        }
+        if(jsonData[i]['name'] === "City of Longmont - Mayor") {
+            client.log("Found City of Longmont - Mayor, id="+jsonData[i]['id']);
+            client.global.set("LongmontMayoralID", jsonData[i]['id']);
+        }
+    }
+%}
+
+### Select contests to be targeted.
+POST http://localhost:8888/select-contests
+Content-Type: application/json
+
+[
+  {"audit":"COMPARISON","contest":{{KempseyMayoralID}},"reason":"COUNTY_WIDE_CONTEST"},
+  {"audit":"COMPARISON","contest":{{ByronMayoralID}},"reason":"STATE_WIDE_CONTEST"},
+  {"audit":"COMPARISON","contest":{{LongmontMayoralID}},"reason":"COUNTY_WIDE_CONTEST"}
+]
+
+### Request sample size estimates.
+GET http://localhost:8888/estimate-sample-sizes
+
+# Save the response to a file.
+>>! demo1-stored-data/sample-sizes.csv
+
+### Post the random seed.
+POST http://localhost:8888/random-seed
+Content-Type: application/json
+
+{
+  "seed":"9823749812374981273489712389471238974"
+}
+
+### Start the audit round.
+POST http://localhost:8888/start-audit-round
+
+### Get the DoS dashboard; log all the estimated sample sizes. Note that a few zeros are OK, but they're mostly
+### expected to be not zero.
+GET http://localhost:8888/dos-dashboard
+
+> {%
+  const countyStatus = JSON.parse(response.body)['county_status'];
+  for(var id in countyStatus) {
+      client.log("County "+countyStatus[id]['id']+". Ballots remaining in round: "+countyStatus[id]['ballots_remaining_in_round']);
+  }
+
+ %}
+
+### Get the assertions as json.
+GET localhost:8888/get-assertions
+
+# Save them to a file.
+>>! demo1-stored-data/demo1-assertions-json.zip
+
+### Get the assertions as csv.
+GET http://localhost:8888/get-assertions?format=csv
+Content-Type: application/x-www-form-urlencoded
+
+# Save them to a file.
+>>! demo1-stored-data/demo1-assertions-csv.zip
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":"stateadmin1"
+}
