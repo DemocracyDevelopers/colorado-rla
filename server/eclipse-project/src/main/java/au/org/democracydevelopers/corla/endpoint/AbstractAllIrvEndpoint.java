@@ -135,7 +135,8 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
             .toList();
 
         // The above should be sufficient, but just in case, check that each contest we found _all_
-        // matches IRV, and throw a RuntimeException if not.
+        // matches IRV, and throw a RuntimeException if not - one contest must not mix plurality and
+        // IRV.
         for (final ContestResult cr : results) {
             if (cr.getContests().stream().map(Contest::description)
                 .anyMatch(d -> !d.equalsIgnoreCase(ContestType.IRV.toString()))) {
