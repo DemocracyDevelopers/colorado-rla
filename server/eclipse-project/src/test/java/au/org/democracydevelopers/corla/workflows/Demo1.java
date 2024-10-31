@@ -47,7 +47,7 @@ public class Demo1 extends Workflow {
   /**
    * This "test" uploads CVRs and ballot manifests for all 64 counties.
    */
-  @Test
+  @Test(enabled = false)
   public void runDemo1(){
     List<String> CVRS = new ArrayList<>();
 
