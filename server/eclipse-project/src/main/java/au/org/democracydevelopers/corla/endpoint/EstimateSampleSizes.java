@@ -186,7 +186,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
    * @param dilutedMargin    The margin divided by the total Auditable ballots.
    * @param estimatedSamples The estimated samples to audit.
    */
-  private record EstimateData(String countyName, String contestName, String contestType,
+  public record EstimateData(String countyName, String contestName, String contestType,
                               int contestBallots, long totalBallots, BigDecimal dilutedMargin,
                               int estimatedSamples) implements Comparable<EstimateData> {
 

@@ -46,6 +46,9 @@ public class Demo1 extends Workflow {
 
   /**
    * This "test" uploads CVRs and ballot manifests for all 64 counties.
+   * The uploads match the following http files in the workflows directory:
+   * - demo1_loadCVRs, demo1_loadManifests,
+   * - Boulder_loadCVRs, Boulder_loadManifest.
    */
   @Test(enabled = false)
   public void runDemo1(){

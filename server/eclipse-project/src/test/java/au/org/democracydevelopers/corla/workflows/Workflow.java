@@ -24,6 +24,7 @@ package au.org.democracydevelopers.corla.workflows;
 import static io.restassured.RestAssured.given;
 import static org.testng.Assert.assertEquals;
 
+import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
 import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
 import io.restassured.response.Response;
@@ -32,6 +33,8 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -138,6 +141,10 @@ public class Workflow {
 
     // Logout.
     logout(filter, user);
+  }
+
+  protected List<EstimateSampleSizes.EstimateData> getSampleSizeEstimates() {
+    return new ArrayList<>();
   }
 
   /**
