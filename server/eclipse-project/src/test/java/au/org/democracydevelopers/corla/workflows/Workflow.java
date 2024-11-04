@@ -22,29 +22,31 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.workflows;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.when;
 import static org.testng.Assert.assertEquals;
 import static us.freeandfair.corla.Main.GSON;
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
+import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 
 import java.io.*;
+import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
+import java.util.*;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
 import org.testng.annotations.BeforeClass;
 import us.freeandfair.corla.json.DoSDashboardRefreshResponse;
+import us.freeandfair.corla.model.AuditInfo;
 import us.freeandfair.corla.model.AuditReason;
 import us.freeandfair.corla.model.DoSDashboard;
 import wiremock.net.minidev.json.JSONObject;
@@ -60,13 +62,19 @@ public class Workflow {
    */
   private static final Logger LOGGER = LogManager.getLogger(Workflow.class);
 
+  /**
+   * Used for deserializing responses.
+   */
+  private static final Type AUDIT_REASON_SET = new TypeToken<Set<AuditReason>>() {
+  }.getType();
+
   @BeforeClass
   public void setup() {
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
   }
 
-  protected JSONObject createBody(final Map<String,String> data){
+  protected JSONObject createBody(final Map<String, String> data) {
     JSONObject body = new JSONObject();
     body.putAll(data);
     return body;
@@ -74,12 +82,13 @@ public class Workflow {
 
   /**
    * Authenticate the given user with the given password/second factor challenge answer.
+   *
    * @param filter Session filter to maintain same session across API test.
-   * @param user Username to authenticate
-   * @param pwd Password/second factor challenge answer for user.
-   * @param stage Authentication stage.
+   * @param user   Username to authenticate
+   * @param pwd    Password/second factor challenge answer for user.
+   * @param stage  Authentication stage.
    */
-  protected void authenticate(final SessionFilter filter, final String user, final String pwd, final int stage){
+  protected void authenticate(final SessionFilter filter, final String user, final String pwd, final int stage) {
     final JSONObject requestParams = (stage == 1) ?
         createBody(Map.of("username", user, "password", pwd)) :
         createBody(Map.of("username", user, "second_factor", pwd));
@@ -91,17 +100,18 @@ public class Workflow {
 
     final String authStatus = response.getBody().jsonPath().getString("stage");
 
-    LOGGER.debug("Auth status for login "+user+" stage "+stage+" is "+authStatus);
+    LOGGER.debug("Auth status for login " + user + " stage " + stage + " is " + authStatus);
     assertEquals(authStatus, (stage == 1) ? "TRADITIONALLY_AUTHENTICATED" :
-        "SECOND_FACTOR_AUTHENTICATED", "Stage "+stage+" auth failed.");
+        "SECOND_FACTOR_AUTHENTICATED", "Stage " + stage + " auth failed.");
   }
 
   /**
    * Unauthenticate the given user.
+   *
    * @param filter Session filter to maintain same session across API test.
-   * @param user Username to unauthenticate.
+   * @param user   Username to unauthenticate.
    */
-  protected void logout(final SessionFilter filter, final String user){
+  protected void logout(final SessionFilter filter, final String user) {
     JSONObject requestParams = createBody(Map.of("username", user));
 
     given()
@@ -113,12 +123,13 @@ public class Workflow {
 
   /**
    * Upload a file and its corresponding hash on behalf of the given county number.
-   * @param number Number of the county uploading the CVR/hash.
-   * @param file Path of the file to be uploaded.
+   *
+   * @param number   Number of the county uploading the CVR/hash.
+   * @param file     Path of the file to be uploaded.
    * @param hashFile Path of the corresponding hash for the CVR file.
    */
   protected void uploadCounty(final int number, final String fileType,
-      final String file, final String hashFile){
+                              final String file, final String hashFile) {
 
     final SessionFilter filter = new SessionFilter();
     final String user = "countyadmin" + number;
@@ -151,38 +162,43 @@ public class Workflow {
     logout(filter, user);
   }
 
+  protected JsonPath getDoSDashBoardRefreshResponse() {
+  final SessionFilter filter = new SessionFilter();
+
+  // Login as state admin.
+  authenticate(filter, "stateadmin1","",1);
+
+  authenticate(filter, "stateadmin1","s d f",2);
+
+  // GET the state dashboard. This is just to test that the login worked.
+  // DoSDashboardRefreshResponse DoSDashboard
+    return
+      given()
+      .filter(filter)
+      .header("Content-Type", "application/json")
+      .get("/dos-dashboard")
+      .then()
+      .assertThat()
+      .statusCode(HttpStatus.SC_OK)
+      .extract()
+      .body()
+      .jsonPath();
+
+
+  // TODO: This would be a lot simpler if it just returned a DoSDashBoardRefreshResponse via
+  // DoSDashboardRefreshResponse DoSDasboard = GSON.fromJson(data, DoSDashboardRefreshResponse.class);
+  // but that throws errors relating to parsing of enums. Not sure exactly why.
+  // Similarly, so does getting the response and then calling
+  // .as(DoSDashboardRefreshResponse.class);
+  // So I've left it as a JsonPath, from which you can collect the fields by name.
+
+  //Response response = given()
+  //    .filter(filter)
+  //    .header("Content-Type", "text/csv")
+  //    .post("/estimate-sample-sizes");
+}
+
   protected List<EstimateSampleSizes.EstimateData> getSampleSizeEstimates() {
-    final SessionFilter filter = new SessionFilter();
-
-    // Login as state admin.
-    authenticate(filter, "stateadmin1", "", 1);
-    authenticate(filter, "stateadmin1", "s d f", 2);
-
-    // GET the state dashboard. This is just to test that the login worked.
-    // DoSDashboardRefreshResponse DoSDashboard
-    Map<Long, Integer> estimatedBallotsToAudit
-        = given()
-        .filter(filter)
-        .header("Content-Type", "application/json")
-        .get("/dos-dashboard")
-        .then()
-        .assertThat()
-        .statusCode(HttpStatus.SC_OK)
-        .extract()
-        .body()
-        .jsonPath()
-        .getMap("estimated_ballots_to_audit", Long.class, Integer.class);
-
-    // TODO: This throws errors relating to parsing of enums. Not sure exactly why.
-    // DoSDashboardRefreshResponse DoSDasboard = GSON.fromJson(data, DoSDashboardRefreshResponse.class);
-    // Similarly, so does getting the response and then calling
-    // .as(DoSDashboardRefreshResponse.class);
-
-    //Response response = given()
-    //    .filter(filter)
-    //    .header("Content-Type", "text/csv")
-    //    .post("/estimate-sample-sizes");
-
     return new ArrayList<>();
   }
 

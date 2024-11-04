@@ -22,12 +22,16 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.workflows;
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
+import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A demonstration workflow that tests sample size estimation with and without manifests, comparing
@@ -68,6 +72,33 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
       uploadCounty(i, "cvr-export", CVRS.get(i - 1), CVRS.get(i - 1) + ".sha256sum");
       uploadCounty(i, "ballot-manifest", MANIFESTS.get(i - 1), MANIFESTS.get(i - 1) + ".sha256sum");
     }
+
+    // Get the DoSDashboard refresh response; sanity check.
+    JsonPath response = getDoSDashBoardRefreshResponse();
+
+    // This should really be <Long, AuditReason> but I can't see how to tell the parser how to deal
+    // with the enum. Anyway, the string is fine for testing.
+    Map<Long, String> auditReasons = response
+        .getMap("audited_contests", Long.class, String.class);
+
+    Map<Long, Integer> estimatedBallotsToAudit = response
+        .getMap("estimated_ballots_to_audit", Long.class, Integer.class);
+
+    // For now, just check that there are some estimates.
+    assertFalse(estimatedBallotsToAudit.isEmpty());
+
+    Map<Long, Integer> optimisticBallotsToAudit = response
+        .getMap("optimistic_ballots_to_audit", Long.class, Integer.class);
+
+    // For now, just check that there are some estimates.
+    assertFalse(optimisticBallotsToAudit.isEmpty());
+
+    // This is a linked hash map describing the various kinds of audit info, including targeted
+    // contest, risk limit, etc.
+    var auditInfo = response.get("audit_info");
+
+    // Again, this should be an ASMState enum, but because of enum parsing issues we just get the string.
+    String ASMState = response.getString("asm_state");
 
     // Now do the sample size estimate
     List<EstimateSampleSizes.EstimateData> estimateData = getSampleSizeEstimates();
