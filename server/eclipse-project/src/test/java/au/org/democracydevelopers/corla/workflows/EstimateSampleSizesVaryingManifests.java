@@ -55,8 +55,8 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   /**
    * This "test" uploads CVRs and ballot manifests.
    */
-  @Test(enabled = false)
-  public void runManifestVaryingDemo(){
+  @Test(enabled = true)
+  public void runManifestVaryingDemo() {
 
     List<String> CVRS = new ArrayList<>();
     CVRS.add(dataPath + "PluralityOnly/Plurality1And2.csv");
@@ -64,13 +64,14 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     List<String> MANIFESTS = new ArrayList<>();
     MANIFESTS.add(dataPath + "PluralityOnly/ThreeCandidatesTenVotes_Manifest.csv");
 
-    for(int i = 1; i < 2; ++i){
-      uploadCounty(i, "cvr-export", CVRS.get(i-1), CVRS.get(i-1) + ".sha256sum");
-      uploadCounty(i, "ballot-manifest", MANIFESTS.get(i-1), MANIFESTS.get(i-1) + ".sha256sum");
+    for (int i = 1; i < 2; ++i) {
+      uploadCounty(i, "cvr-export", CVRS.get(i - 1), CVRS.get(i - 1) + ".sha256sum");
+      uploadCounty(i, "ballot-manifest", MANIFESTS.get(i - 1), MANIFESTS.get(i - 1) + ".sha256sum");
     }
 
     // Now do the sample size estimate
     List<EstimateSampleSizes.EstimateData> estimateData = getSampleSizeEstimates();
 
+  }
 
 }

@@ -23,8 +23,10 @@ package au.org.democracydevelopers.corla.workflows;
 
 import static io.restassured.RestAssured.given;
 import static org.testng.Assert.assertEquals;
+import static us.freeandfair.corla.Main.GSON;
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
+import com.google.gson.Gson;
 import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
 import io.restassured.response.Response;
@@ -36,9 +38,15 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.apache.http.HttpStatus;
 import org.testng.annotations.BeforeClass;
+import us.freeandfair.corla.json.DoSDashboardRefreshResponse;
+import us.freeandfair.corla.model.AuditReason;
+import us.freeandfair.corla.model.DoSDashboard;
 import wiremock.net.minidev.json.JSONObject;
 
 /**
@@ -144,6 +152,37 @@ public class Workflow {
   }
 
   protected List<EstimateSampleSizes.EstimateData> getSampleSizeEstimates() {
+    final SessionFilter filter = new SessionFilter();
+
+    // Login as state admin.
+    authenticate(filter, "stateadmin1", "", 1);
+    authenticate(filter, "stateadmin1", "s d f", 2);
+
+    // GET the state dashboard. This is just to test that the login worked.
+    // DoSDashboardRefreshResponse DoSDashboard
+    Map<Long, Integer> estimatedBallotsToAudit
+        = given()
+        .filter(filter)
+        .header("Content-Type", "application/json")
+        .get("/dos-dashboard")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK)
+        .extract()
+        .body()
+        .jsonPath()
+        .getMap("estimated_ballots_to_audit", Long.class, Integer.class);
+
+    // TODO: This throws errors relating to parsing of enums. Not sure exactly why.
+    // DoSDashboardRefreshResponse DoSDasboard = GSON.fromJson(data, DoSDashboardRefreshResponse.class);
+    // Similarly, so does getting the response and then calling
+    // .as(DoSDashboardRefreshResponse.class);
+
+    //Response response = given()
+    //    .filter(filter)
+    //    .header("Content-Type", "text/csv")
+    //    .post("/estimate-sample-sizes");
+
     return new ArrayList<>();
   }
 
