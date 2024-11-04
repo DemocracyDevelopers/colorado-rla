@@ -44,7 +44,7 @@ public abstract class TestClassWithDatabase {
   protected static final Properties blank = new Properties();
 
   /**
-   * Oroperties derived from test.properties.
+   * Properties derived from test.properties.
    */
   protected static Properties config = loadProperties();
 

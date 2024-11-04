@@ -22,20 +22,18 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.workflows;
 
 import static io.restassured.RestAssured.given;
-import static io.restassured.RestAssured.when;
 import static org.testng.Assert.assertEquals;
-import static us.freeandfair.corla.Main.GSON;
+import static us.freeandfair.corla.Main.main;
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 
 import java.io.*;
-import java.lang.reflect.Type;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,17 +43,13 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
 import org.testng.annotations.BeforeClass;
-import us.freeandfair.corla.json.DoSDashboardRefreshResponse;
-import us.freeandfair.corla.model.AuditInfo;
-import us.freeandfair.corla.model.AuditReason;
-import us.freeandfair.corla.model.DoSDashboard;
 import wiremock.net.minidev.json.JSONObject;
 
 /**
  * Base class for an API test workflow designed to run through a sequence of steps involving
  * a sequence of endpoint accesses.
  */
-public class Workflow {
+public class Workflow extends TestClassWithDatabase {
 
   /**
    * Class-wide logger
@@ -63,15 +57,33 @@ public class Workflow {
   private static final Logger LOGGER = LogManager.getLogger(Workflow.class);
 
   /**
-   * Used for deserializing responses.
+   * Path for storing temporary config files
    */
-  private static final Type AUDIT_REASON_SET = new TypeToken<Set<AuditReason>>() {
-  }.getType();
+  private static final String tempConfigPath = "src/test/workflows/temp/";
 
   @BeforeClass
   public void setup() {
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
+  }
+
+  /**
+   * Run main, using the psql container as its database. Main can take (database) properties as a
+   * CLI, but only as a file, so we need to make the file and then tell main to read it.
+   * @param testFileName the name of the test file - must be different for each test.
+   */
+  protected static void runMain(String testFileName) {
+    final String propertiesFile = tempConfigPath +testFileName+"-test.properties";
+    try {
+      FileOutputStream os = new FileOutputStream(propertiesFile);
+      StringWriter sw = new StringWriter();
+      config.store(sw, "Ephemeral database config for Demo1");
+      os.write(sw.toString().getBytes());
+      os.close();
+      main(propertiesFile);
+    } catch (Exception e) {
+      LOGGER.error("Couldn't write Demo1-test.properties", e);
+    }
   }
 
   protected JSONObject createBody(final Map<String, String> data) {
@@ -131,12 +143,8 @@ public class Workflow {
   protected void uploadCounty(final int number, final String fileType,
                               final String file, final String hashFile) {
 
-    final SessionFilter filter = new SessionFilter();
     final String user = "countyadmin" + number;
-
-    // Login as the county.
-    authenticate(filter, user, "", 1);
-    authenticate(filter, user, "s d f", 2);
+    SessionFilter filter = doLogin(user);
 
     // GET the county dashboard. This is just to test that the login worked.
     given().filter(filter).get("/county-dashboard");
@@ -162,44 +170,61 @@ public class Workflow {
     logout(filter, user);
   }
 
+  /**
+   * Get the DoSDashboardRefreshResponse, as a JSONPath object, which contains basically everything
+   * about the current status of the audit.
+   * Also tests that the http response is OK.
+   * @return the DosDashboardRefreshResponse.
+   */
   protected JsonPath getDoSDashBoardRefreshResponse() {
-  final SessionFilter filter = new SessionFilter();
+    // TODO: This would be a lot simpler if it just returned a DoSDashBoardRefreshResponse via
+    // DoSDashboardRefreshResponse DoSDasboard = GSON.fromJson(data, DoSDashboardRefreshResponse.class);
+    // but that throws errors relating to parsing of enums. Not sure exactly why.
+    // Similarly, so does getting the response and then calling
+    // .as(DoSDashboardRefreshResponse.class);
+    // So I've left it as a JsonPath, from which you can collect the fields by name.
 
-  // Login as state admin.
-  authenticate(filter, "stateadmin1","",1);
+    // Login as state admin.
+    final SessionFilter filter = doLogin("stateadmin1");
 
-  authenticate(filter, "stateadmin1","s d f",2);
-
-  // GET the state dashboard. This is just to test that the login worked.
-  // DoSDashboardRefreshResponse DoSDashboard
-    return
-      given()
-      .filter(filter)
-      .header("Content-Type", "application/json")
-      .get("/dos-dashboard")
-      .then()
-      .assertThat()
-      .statusCode(HttpStatus.SC_OK)
-      .extract()
-      .body()
-      .jsonPath();
-
-
-  // TODO: This would be a lot simpler if it just returned a DoSDashBoardRefreshResponse via
-  // DoSDashboardRefreshResponse DoSDasboard = GSON.fromJson(data, DoSDashboardRefreshResponse.class);
-  // but that throws errors relating to parsing of enums. Not sure exactly why.
-  // Similarly, so does getting the response and then calling
-  // .as(DoSDashboardRefreshResponse.class);
-  // So I've left it as a JsonPath, from which you can collect the fields by name.
-
-  //Response response = given()
-  //    .filter(filter)
-  //    .header("Content-Type", "text/csv")
-  //    .post("/estimate-sample-sizes");
-}
+    return given()
+            .filter(filter)
+            .header("Content-Type", "application/json")
+            .get("/dos-dashboard")
+            .then()
+            .assertThat()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .body()
+            .jsonPath();
+  }
 
   protected List<EstimateSampleSizes.EstimateData> getSampleSizeEstimates() {
     return new ArrayList<>();
+  }
+
+  /**
+   * Used by DoS admin to set audit info, including risk limit and canonical list.
+   * Sets the election date to today and the public meeting date to one week from today.
+   * @param canonicalListFile the path to the canonical list csv file.
+   * @param riskLimit         the risk limit.
+   */
+  protected void updateAuditInfo(String canonicalListFile, BigDecimal riskLimit) {
+
+    // Login as state admin.
+    final SessionFilter filter = doLogin("stateadmin1");
+
+    JSONObject requestParams = new JSONObject();
+    requestParams.put("risk_limit", 0.03);
+
+    given()
+        .filter(filter)
+        .header("Content-Type", "application/json")
+        .body(requestParams.toString()) // toJSONString?
+        .post("/update-audit-info")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
   }
 
   /**
@@ -217,6 +242,13 @@ public class Workflow {
       LOGGER.error(prefix + ex.getMessage());
       return "";
     }
+  }
+
+  private SessionFilter doLogin(String username) {
+    final SessionFilter filter = new SessionFilter();
+    authenticate(filter, username,"",1);
+    authenticate(filter, username,"s d f",2);
+    return filter;
   }
 
 }
