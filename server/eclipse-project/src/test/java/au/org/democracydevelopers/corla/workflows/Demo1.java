@@ -34,8 +34,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
 
-import static org.testng.Assert.assertEquals;
-import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
+import static org.testng.Assert.*;
+import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
 
 /**
  * A demonstration workflow that uploads CVRs and ballot manifests for all 64 counties.
@@ -108,27 +108,49 @@ public class Demo1 extends Workflow {
     MANIFESTS.add(dataPath + "split-Byron/Byron-6-manifest.csv");
     MANIFESTS.add(dataPath + "Boulder23/Boulder-IRV-Manifest.csv");
 
-    for(int i = 8; i < 65; ++i){
+    for(int i = 8 ; i <= numCounties ; ++i){
       CVRS.add(dataPath + "split-Byron/Byron-" + i + ".csv");
       MANIFESTS.add(dataPath + "split-Byron/Byron-" + i + "-manifest.csv");
     }
 
-    for(int i = 1; i < 65; ++i){
-      uploadCounty(i, "cvr-export", CVRS.get(i-1), CVRS.get(i-1) + ".sha256sum");
+    // First upload all the manifests
+    for(int i = 1 ; i <= numCounties ; ++i){
       uploadCounty(i, "ballot-manifest", MANIFESTS.get(i-1), MANIFESTS.get(i-1) + ".sha256sum");
     }
 
-    // Get the DoSDashboard refresh response; sanity check.
-    JsonPath response = getDoSDashBoardRefreshResponse();
-    assertEquals(response.get("asm_state"), DOS_INITIAL_STATE.toString());
+    // Then upload all the CVRs. The order is important because it's an error to try to import a manifest while the CVRs
+    // are being read.
+    for(int i = 1; i <= numCounties ; ++i){
+      uploadCounty(i, "cvr-export", CVRS.get(i-1), CVRS.get(i-1) + ".sha256sum");
+    }
 
-    // Set the audit info, including the canonical list and the risk limit.
+    // Get the DoSDashboard refresh response; sanity check for initial state.
+    final JsonPath response = getDoSDashBoardRefreshResponse();
+    assertEquals(response.get("asm_state"), DOS_INITIAL_STATE.toString());
+    assertEquals(response.getMap("audit_info.canonicalChoices").toString(), "{}");
+    assertNull(response.get("audit_info.risk_limit"));
+    assertNull(response.get("audit_info.seed"));
+
+    // Set the audit info, including the canonical list and the risk limit; check for update.
     final BigDecimal riskLimit = BigDecimal.valueOf(0.03);
     updateAuditInfo(dataPath + "Demo1/" + "demo1-canonical-list.csv", riskLimit);
-
-    JsonPath response2 = getDoSDashBoardRefreshResponse();
+    final JsonPath response2 = getDoSDashBoardRefreshResponse();
     assertEquals(0, riskLimit
-        .compareTo(new BigDecimal(response2.getMap("audit_info").get("risk_limit").toString())));
+        .compareTo(new BigDecimal(response2.get("audit_info.risk_limit").toString())));
+    // There should be canonical contests for each county.
+    assertEquals(numCounties, response2.getMap("audit_info.canonicalContests").values().size());
+    // Check that the seed is still null.
+    assertNull(response2.get("audit_info.seed"));
+    assertEquals(response2.get("asm_state"), PARTIAL_AUDIT_INFO_SET.toString());
+
+    // Set the seed.
+    final String seed = "9823749812374981273489712389471238974";
+    setSeed(seed);
+    // This should be complete audit info.
+    final JsonPath response3 = getDoSDashBoardRefreshResponse();
+    assertEquals(response3.get("audit_info.seed"), seed);
+    assertEquals(response3.get("asm_state"), COMPLETE_AUDIT_INFO_SET.toString());
+
   }
 
 }

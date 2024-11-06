@@ -52,6 +52,11 @@ import wiremock.net.minidev.json.JSONObject;
 public class Workflow extends TestClassWithDatabase {
 
   /**
+   * Number of CO counties
+   */
+  protected static final int numCounties = 64;
+
+  /**
    * Class-wide logger
    */
   private static final Logger LOGGER = LogManager.getLogger(Workflow.class);
@@ -205,7 +210,7 @@ public class Workflow extends TestClassWithDatabase {
 
   /**
    * Used by DoS admin to set audit info, including risk limit and canonical list.
-   * Sets the election date to today and the public meeting date to one week from today.
+   * Sets the election date to an arbitrary date and the public meeting for one week later.
    * @param canonicalListFile the path to the canonical list csv file.
    * @param riskLimit         the risk limit.
    */
@@ -215,13 +220,39 @@ public class Workflow extends TestClassWithDatabase {
     final SessionFilter filter = doLogin("stateadmin1");
 
     JSONObject requestParams = new JSONObject();
-    requestParams.put("risk_limit", 0.03);
+    requestParams.put("risk_limit", riskLimit);
+    requestParams.put("election_date","2024-09-15T05:42:17.796Z");
+    requestParams.put("election_type","general");
+    requestParams.put("public_meeting_date","2024-09-22T05:42:22.037Z");
+    JSONObject canonicalListContents = new JSONObject();
+    canonicalListContents.put("contents",readFromFile(canonicalListFile));
+    requestParams.put("upload_file", List.of(canonicalListContents));
 
     given()
         .filter(filter)
         .header("Content-Type", "application/json")
-        .body(requestParams.toString()) // toJSONString?
+        .body(requestParams.toString())
         .post("/update-audit-info")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
+  }
+
+  /**
+   * Set the seed for the audit.
+   */
+  protected void setSeed(String seed) {
+    // Login as state admin.
+    final SessionFilter filter = doLogin("stateadmin1");
+
+    JSONObject requestParams = new JSONObject();
+    requestParams.put("seed", seed);
+
+    given()
+        .filter(filter)
+        .header("Content-Type", "application/json")
+        .body(requestParams.toString())
+        .post("/random-seed")
         .then()
         .assertThat()
         .statusCode(HttpStatus.SC_OK);
@@ -239,7 +270,7 @@ public class Workflow extends TestClassWithDatabase {
       Path path = Paths.get(fileName);
       return String.join("\n",Files.readAllLines(path));
       } catch (IOException ex) {
-      LOGGER.error(prefix + ex.getMessage());
+        LOGGER.error(prefix + ex.getMessage());
       return "";
     }
   }

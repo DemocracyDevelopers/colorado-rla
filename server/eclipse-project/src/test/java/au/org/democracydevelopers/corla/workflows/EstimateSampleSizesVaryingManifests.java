@@ -96,6 +96,8 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     // This is a linked hash map describing the various kinds of audit info, including targeted
     // contest, risk limit, etc.
     var auditInfo = response.get("audit_info");
+    var seed = response.get("audit_info.seed");
+    var RiskLimit = response.getDouble("audit_info.risk_limit");
 
     // Again, this should be an ASMState enum, but because of enum parsing issues we just get the string.
     String ASMState = response.getString("asm_state");
