@@ -25,9 +25,16 @@ import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.ext.ScriptUtils;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import static org.testng.Assert.*;
+import us.freeandfair.corla.persistence.Persistence;
 
+import static org.testng.Assert.*;
+import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
+
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,17 +46,19 @@ import java.util.Map;
  * throughout both sample size estimation and subsequent auditing. For example, when the manifest
  * exactly matches the CVR count, the samples should be the same; extras in the manifest should
  * increase the sample size, and a smaller manifest than CVR list should throw an error.
- * All the tests here a the same plain plurality contest - we just vary the absence of presence of
+ * All the tests here are the same plain plurality contest - we just vary the absence of presence of
  * the manifest, and (if present) the number of ballots it states.
- * This assumes that main is running.
+ *
+ * Note that it does not test for correct sample sizes, only for correct _changes_ to the sample
+ * sizes as a consequence of changes to the manifest.
  */
-@Test(enabled=true)
+@Test(enabled=false)
 public class EstimateSampleSizesVaryingManifests extends Workflow {
 
   /**
    * Path for all the data files.
    */
-  private static final String dataPath = "src/test/resources/CSVs/";
+  private static final String dataPath = "src/test/resources/CSVs/PluralityOnly/";
 
   /**
    * Class-wide logger
@@ -57,54 +66,78 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   private static final Logger LOGGER = LogManager.getLogger(EstimateSampleSizesVaryingManifests.class);
 
   /**
+   * Container for the mock-up database.
+   */
+  private final static PostgreSQLContainer<?> postgres = createTestContainer();
+
+  /**
+   * Database init.
+   */
+  @BeforeClass
+  public static void beforeAll() {
+
+    final var containerDelegate = setupContainerStartPostgres(postgres);
+
+    var s = Persistence.openSession();
+    s.beginTransaction();
+
+    // Used to initialize the database, e.g. to set the ASM state to the DOS_INITIAL_STATE
+    // and to insert counties and administrator test logins.
+    ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
+
+    runMain("EstimateSampleSizesVaryingManifests");
+  }
+
+  /**
    * This "test" uploads CVRs and ballot manifests.
    */
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void runManifestVaryingDemo() {
 
     List<String> CVRS = new ArrayList<>();
-    CVRS.add(dataPath + "PluralityOnly/Plurality1And2.csv");
+    CVRS.add(dataPath + "Plurality1And2.csv");
 
-    List<String> MANIFESTS = new ArrayList<>();
-    MANIFESTS.add(dataPath + "PluralityOnly/ThreeCandidatesTenVotes_Manifest.csv");
 
-    for (int i = 1; i < 2; ++i) {
-      uploadCounty(i, "cvr-export", CVRS.get(i - 1), CVRS.get(i - 1) + ".sha256sum");
-      uploadCounty(i, "ballot-manifest", MANIFESTS.get(i - 1), MANIFESTS.get(i - 1) + ".sha256sum");
-    }
+    // Upload the CSVs but not the manifests.
+    uploadCounty(1, "cvr-export", CVRS.get(0), CVRS.get(0) + ".sha256sum");
 
     // Get the DoSDashboard refresh response; sanity check.
-    JsonPath response = getDoSDashBoardRefreshResponse();
+    JsonPath dashboard = getDoSDashBoardRefreshResponse();
+    assertEquals(dashboard.get("asm_state"), DOS_INITIAL_STATE.toString());
 
-    // This should really be <Long, AuditReason> but I can't see how to tell the parser how to deal
-    // with the enum. Anyway, the string is fine for testing.
-    Map<Long, String> auditReasons = response
-        .getMap("audited_contests", Long.class, String.class);
+    // Set the audit info, including the canonical list and the (stupidly large) risk limit; sanity check.
+    final BigDecimal riskLimit = BigDecimal.valueOf(0.5);
+    updateAuditInfo(dataPath + "Tiny_IRV_Boulder2023_Test_Canonical_List.csv", riskLimit);
+    dashboard = getDoSDashBoardRefreshResponse();
+    assertEquals(0, riskLimit
+        .compareTo(new BigDecimal(dashboard.get("audit_info.risk_limit").toString())));
 
-    Map<Long, Integer> estimatedBallotsToAudit = response
-        .getMap("estimated_ballots_to_audit", Long.class, Integer.class);
+    // 1. Estimate Sample sizes, without the manifest. This should count the CSVs.
+    List<EstimateSampleSizes.EstimateData> estimatesWithoutManifests = getSampleSizeEstimates();
+    assertEquals(estimatesWithoutManifests.size(), 2);
 
-    // For now, just check that there are some estimates.
-    assertFalse(estimatedBallotsToAudit.isEmpty());
+    // 2. Upload the manifest that matches the CSV count, then get estimates.
+    // All the estimate data should be the same.
+    String matchingManifest = dataPath + "ThreeCandidatesTenVotes_Manifest.csv";
+    uploadCounty(1, "ballot-manifest", matchingManifest, matchingManifest + ".sha256sum");
+    List<EstimateSampleSizes.EstimateData> estimatesWithMatchingManifests = getSampleSizeEstimates();
+    assertEquals(estimatesWithMatchingManifests.get(0), estimatesWithoutManifests.get(0));
+    assertEquals(estimatesWithMatchingManifests.get(1), estimatesWithoutManifests.get(1));
 
-    Map<Long, Integer> optimisticBallotsToAudit = response
-        .getMap("optimistic_ballots_to_audit", Long.class, Integer.class);
-
-    // For now, just check that there are some estimates.
-    assertFalse(optimisticBallotsToAudit.isEmpty());
-
-    // This is a linked hash map describing the various kinds of audit info, including targeted
-    // contest, risk limit, etc.
-    var auditInfo = response.get("audit_info");
-    var seed = response.get("audit_info.seed");
-    var RiskLimit = response.getDouble("audit_info.risk_limit");
-
-    // Again, this should be an ASMState enum, but because of enum parsing issues we just get the string.
-    String ASMState = response.getString("asm_state");
-
-    // Now do the sample size estimate
-    List<EstimateSampleSizes.EstimateData> estimateData = getSampleSizeEstimates();
-
+    // 3. Upload the manifest that claims double the CSV count. This should double the sample size
+    // estimate for Plurality2, but not for Plurality1 because it is already topped out at 10.
+    String doubledManifest = dataPath + "ThreeCandidatesTenVotes_DoubledManifest.csv";
+    uploadCounty(1, "ballot-manifest", doubledManifest, doubledManifest + ".sha256sum");
+    List<EstimateSampleSizes.EstimateData> estimatesWithDoubledManifests = getSampleSizeEstimates();
+    assertEquals(estimatesWithDoubledManifests.size(), 2);
+    int plurality2index = 1;
+    if(estimatesWithDoubledManifests.get(0).contestName().equals("PluralityExample2")) {
+      plurality2index = 0;
+    }
+    assertEquals(estimatesWithoutManifests.get(1-plurality2index),
+                 estimatesWithDoubledManifests.get(1-plurality2index));
+    assertEquals(estimatesWithoutManifests.get(plurality2index).estimatedSamples(),
+                 estimatesWithDoubledManifests.get(plurality2index).estimatedSamples()/2);
   }
 
 }

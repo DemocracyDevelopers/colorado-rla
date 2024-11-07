@@ -114,13 +114,14 @@ public class Demo1 extends Workflow {
       MANIFESTS.add(dataPath + "split-Byron/Byron-" + i + "-manifest.csv");
     }
 
-    // First upload all the manifests
+    // 1. First upload all the manifests
     for(int i = 1 ; i <= numCounties ; ++i){
       uploadCounty(i, "ballot-manifest", MANIFESTS.get(i-1), MANIFESTS.get(i-1) + ".sha256sum");
     }
 
-    // Then upload all the CVRs. The order is important because it's an error to try to import a manifest while the CVRs
+    // 2. Then upload all the CVRs. The order is important because it's an error to try to import a manifest while the CVRs
     // are being read.
+    // TODO Note this takes a while - we'll need to add a wait for anything that assumes all the CVRs are loaded.
     for(int i = 1; i <= numCounties ; ++i){
       uploadCounty(i, "cvr-export", CVRS.get(i-1), CVRS.get(i-1) + ".sha256sum");
     }
@@ -132,7 +133,7 @@ public class Demo1 extends Workflow {
     assertNull(dashboard.get("audit_info.risk_limit"));
     assertNull(dashboard.get("audit_info.seed"));
 
-    // Set the audit info, including the canonical list and the risk limit; check for update.
+    // 3. Set the audit info, including the canonical list and the risk limit; check for update.
     final BigDecimal riskLimit = BigDecimal.valueOf(0.03);
     updateAuditInfo(dataPath + "Demo1/" + "demo1-canonical-list.csv", riskLimit);
     dashboard = getDoSDashBoardRefreshResponse();
@@ -144,25 +145,27 @@ public class Demo1 extends Workflow {
     assertNull(dashboard.get("audit_info.seed"));
     assertEquals(dashboard.get("asm_state"), PARTIAL_AUDIT_INFO_SET.toString());
 
-    // Generate assertions; sanity check
+    // 4. Generate assertions; sanity check
     // TODO this is commented out for now while we figure out how to run the raire-service in the Docker container.
     // generateAssertions(1);
     // dashboard = getDoSDashBoardRefreshResponse();
     // There should be 4 IRV contests.
     // assertEquals(4, dashboard.getList("generate_assertions_summaries").size());
 
+    // 5. Choose targeted contests for audit.
     // For now, just target plurality contests.
     targetContests(Map.of("City of Longmont - Mayor","COUNTY_WIDE_CONTEST"));
 
-    // Set the seed.
+    // 6. Set the seed.
     final String seed = "9823749812374981273489712389471238974";
     setSeed(seed);
+
     // This should be complete audit info.
     dashboard = getDoSDashBoardRefreshResponse();
     assertEquals(dashboard.get("audit_info.seed"), seed);
     assertEquals(dashboard.get("asm_state"), COMPLETE_AUDIT_INFO_SET.toString());
 
-    // Estimate sample sizes; sanity check.
+    // 7. Estimate sample sizes; sanity check.
     List<EstimateSampleSizes.EstimateData> sampleSizes = getSampleSizeEstimates();
     assertFalse(sampleSizes.isEmpty());
 
