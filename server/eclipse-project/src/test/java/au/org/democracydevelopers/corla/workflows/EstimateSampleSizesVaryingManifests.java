@@ -52,7 +52,7 @@ import java.util.Map;
  * Note that it does not test for correct sample sizes, only for correct _changes_ to the sample
  * sizes as a consequence of changes to the manifest.
  */
-@Test(enabled=false)
+@Test(enabled=true)
 public class EstimateSampleSizesVaryingManifests extends Workflow {
 
   /**
@@ -91,11 +91,11 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   /**
    * This "test" uploads CVRs and ballot manifests.
    */
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void runManifestVaryingDemo() {
 
     List<String> CVRS = new ArrayList<>();
-    CVRS.add(dataPath + "Plurality1And2.csv");
+    CVRS.add(dataPath + "Plurality100votes2And10Margins.csv");
 
 
     // Upload the CSVs but not the manifests.
@@ -107,7 +107,7 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
 
     // Set the audit info, including the canonical list and the (stupidly large) risk limit; sanity check.
     final BigDecimal riskLimit = BigDecimal.valueOf(0.5);
-    updateAuditInfo(dataPath + "Tiny_IRV_Boulder2023_Test_Canonical_List.csv", riskLimit);
+    updateAuditInfo(dataPath + "Plurality_Only_Test_Canonical_List.csv", riskLimit);
     dashboard = getDoSDashBoardRefreshResponse();
     assertEquals(0, riskLimit
         .compareTo(new BigDecimal(dashboard.get("audit_info.risk_limit").toString())));
@@ -118,7 +118,7 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
 
     // 2. Upload the manifest that matches the CSV count, then get estimates.
     // All the estimate data should be the same.
-    String matchingManifest = dataPath + "ThreeCandidatesTenVotes_Manifest.csv";
+    String matchingManifest = dataPath + "HundredVotes_Manifest.csv";
     uploadCounty(1, "ballot-manifest", matchingManifest, matchingManifest + ".sha256sum");
     List<EstimateSampleSizes.EstimateData> estimatesWithMatchingManifests = getSampleSizeEstimates();
     assertEquals(estimatesWithMatchingManifests.get(0), estimatesWithoutManifests.get(0));
@@ -126,12 +126,12 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
 
     // 3. Upload the manifest that claims double the CSV count. This should double the sample size
     // estimate for Plurality2, but not for Plurality1 because it is already topped out at 10.
-    String doubledManifest = dataPath + "ThreeCandidatesTenVotes_DoubledManifest.csv";
+    String doubledManifest = dataPath + "HundredVotes_DoubledManifest.csv";
     uploadCounty(1, "ballot-manifest", doubledManifest, doubledManifest + ".sha256sum");
     List<EstimateSampleSizes.EstimateData> estimatesWithDoubledManifests = getSampleSizeEstimates();
     assertEquals(estimatesWithDoubledManifests.size(), 2);
     int plurality2index = 1;
-    if(estimatesWithDoubledManifests.get(0).contestName().equals("PluralityExample2")) {
+    if(estimatesWithDoubledManifests.get(0).contestName().equals("PluralitMargin2")) {
       plurality2index = 0;
     }
     assertEquals(estimatesWithoutManifests.get(1-plurality2index),

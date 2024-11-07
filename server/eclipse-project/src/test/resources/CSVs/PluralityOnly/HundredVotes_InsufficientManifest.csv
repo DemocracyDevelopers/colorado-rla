@@ -1,2 +1,2 @@
 CountyID,ScannerID,BatchID,NumBallots,StorageLocation
-TestCounty,1,1,10,Bin 1
+TestCounty,1,1,50,Bin 1
