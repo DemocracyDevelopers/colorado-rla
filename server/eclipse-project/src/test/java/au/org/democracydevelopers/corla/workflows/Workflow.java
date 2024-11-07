@@ -207,7 +207,43 @@ public class Workflow extends TestClassWithDatabase {
   }
 
   protected List<EstimateSampleSizes.EstimateData> getSampleSizeEstimates() {
-    return new ArrayList<>();
+
+    // Login as state admin.
+    final SessionFilter filter = doLogin("stateadmin1");
+
+    String data = given()
+        .filter(filter)
+        .get("/estimate-sample-sizes")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK)
+        .extract()
+        .body()
+        .asString();
+
+    List<EstimateSampleSizes.EstimateData> estimates = new ArrayList<>();
+    var lines = data.split("\n");
+    // Skip the first line (which has headrs)
+    for(int i = 1 ; i < lines.length ; i++) {
+
+      var line = lines[i].split(",");
+      if(line.length < 7) {
+        throw new RuntimeException("Invalid sample size estimate data");
+      }
+
+      EstimateSampleSizes.EstimateData estimate = new EstimateSampleSizes.EstimateData(
+          line[0],
+          line[1],
+          line[2],
+          Integer.parseInt(line[3]),
+          Long.parseLong(line[4]),
+          new BigDecimal(line[5]),
+          Integer.parseInt(line[6])
+      );
+      estimates.add(estimate);
+    }
+
+    return estimates;
   }
 
   /**

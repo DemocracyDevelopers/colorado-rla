@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -95,7 +96,6 @@ public class Demo1 extends Workflow {
     CVRS.add(dataPath + "Demo1/3-arapahoe-Byron-3-plus-tied-irv.csv");
     CVRS.add(dataPath + "Demo1/4-archuleta-kempsey-plusByron-4.csv");
     CVRS.add(dataPath + "split-Byron/Byron-5.csv");
-    CVRS.add(dataPath + "split-Byron/Byron-5.csv");
     CVRS.add(dataPath + "split-Byron/Byron-6.csv");
     CVRS.add(dataPath + "Demo1/7-boulder-2023-plusByron-7.csv");
 
@@ -162,6 +162,9 @@ public class Demo1 extends Workflow {
     assertEquals(dashboard.get("audit_info.seed"), seed);
     assertEquals(dashboard.get("asm_state"), COMPLETE_AUDIT_INFO_SET.toString());
 
+    // Estimate sample sizes; sanity check.
+    List<EstimateSampleSizes.EstimateData> test = getSampleSizeEstimates();
+    assertFalse(test.isEmpty());
   }
 
 }
