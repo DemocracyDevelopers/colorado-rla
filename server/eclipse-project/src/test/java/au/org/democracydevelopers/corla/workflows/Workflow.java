@@ -149,6 +149,7 @@ public class Workflow extends TestClassWithDatabase {
    */
   protected void uploadCounty(final int number, final String fileType,
                               final String file, final String hashFile) {
+    final String prefix = "[uploadCounty]";
 
     final String user = "countyadmin" + number;
     SessionFilter filter = doLogin(user);
@@ -172,6 +173,8 @@ public class Workflow extends TestClassWithDatabase {
         .header("Content-Type", "application/json")
         .body(response.then().extract().asString())
         .post("/import-" + fileType);
+
+    LOGGER.debug(String.format("%s %s %s %s.", prefix, "Successful file upload - ", user, fileType));
 
     // Logout.
     logout(filter, user);
@@ -206,7 +209,12 @@ public class Workflow extends TestClassWithDatabase {
             .jsonPath();
   }
 
+  /**
+   * Get the sample size estimates CSV and return the parsed data.
+   * @return The sample size estimate data as a list of EstimateData structures.
+   */
   protected List<EstimateSampleSizes.EstimateData> getSampleSizeEstimates() {
+    final String prefix = "[getSampleSizeEstimates]";
 
     // Login as state admin.
     final SessionFilter filter = doLogin("stateadmin1");
@@ -223,12 +231,14 @@ public class Workflow extends TestClassWithDatabase {
 
     List<EstimateSampleSizes.EstimateData> estimates = new ArrayList<>();
     var lines = data.split("\n");
-    // Skip the first line (which has headrs)
+    // Skip the first line (which has headers)
     for(int i = 1 ; i < lines.length ; i++) {
 
       var line = lines[i].split(",");
       if(line.length < 7) {
-        throw new RuntimeException("Invalid sample size estimate data");
+        final String msg = prefix + " Invalid sample size estimate data";
+        LOGGER.error(msg);
+        throw new RuntimeException(msg);
       }
 
       EstimateSampleSizes.EstimateData estimate = new EstimateSampleSizes.EstimateData(

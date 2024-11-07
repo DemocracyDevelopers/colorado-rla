@@ -163,8 +163,10 @@ public class Demo1 extends Workflow {
     assertEquals(dashboard.get("asm_state"), COMPLETE_AUDIT_INFO_SET.toString());
 
     // Estimate sample sizes; sanity check.
-    List<EstimateSampleSizes.EstimateData> test = getSampleSizeEstimates();
-    assertFalse(test.isEmpty());
+    List<EstimateSampleSizes.EstimateData> sampleSizes = getSampleSizeEstimates();
+    assertFalse(sampleSizes.isEmpty());
+
+    // TODO get assertions, sanity check.
   }
 
 }
