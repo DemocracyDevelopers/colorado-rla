@@ -43,6 +43,8 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
 import org.testng.annotations.BeforeClass;
+import us.freeandfair.corla.model.Contest;
+import wiremock.net.minidev.json.JSONArray;
 import wiremock.net.minidev.json.JSONObject;
 
 /**
@@ -182,7 +184,7 @@ public class Workflow extends TestClassWithDatabase {
    * @return the DosDashboardRefreshResponse.
    */
   protected JsonPath getDoSDashBoardRefreshResponse() {
-    // TODO: This would be a lot simpler if it just returned a DoSDashBoardRefreshResponse via
+    // Note: this would be a lot simpler if it just returned a DoSDashBoardRefreshResponse via
     // DoSDashboardRefreshResponse DoSDasboard = GSON.fromJson(data, DoSDashboardRefreshResponse.class);
     // but that throws errors relating to parsing of enums. Not sure exactly why.
     // Similarly, so does getting the response and then calling
@@ -236,6 +238,77 @@ public class Workflow extends TestClassWithDatabase {
         .then()
         .assertThat()
         .statusCode(HttpStatus.SC_OK);
+  }
+
+  /**
+   * Generate assertions (for IRV contests)
+   * TODO At the moment this expects the raire-service to be running.
+   * Set it up so that we run raire-service inside the Docker container and tell main where to find it.
+   */
+  protected void generateAssertions(double timeLimitSeconds) {
+      // Login as state admin.
+      final SessionFilter filter = doLogin("stateadmin1");
+
+      given()
+          .filter(filter)
+          .header("Content-Type", "application/x-www-form-urlencoded")
+          .get("/generate-assertions?timeLimitSeconds="+timeLimitSeconds)
+          .then()
+          .assertThat()
+          .statusCode(HttpStatus.SC_OK);
+  }
+
+  /**
+   * Select contests to target, by name.
+   */
+  protected void targetContests(Map<String, String> targetedContestsWithReasons) {
+    // Login as state admin.
+    final SessionFilter filter = doLogin("stateadmin1");
+
+    // First get the contests.
+    // Again, this would be a lot easier if we could use .as(Contest[].class), but serialization is a problem.
+    final JsonPath contests = given()
+            .filter(filter)
+            .header("Content-Type", "text/plain")
+            .get("/contest")
+            .then()
+            .assertThat()
+            .statusCode(HttpStatus.SC_OK)
+        .extract()
+        .body()
+        .jsonPath();
+
+    // The contests and reasons to be requested.
+    JSONArray contestSelections = new JSONArray();
+
+    // Find the IDs of the ones we want to target.
+    for(int i=0 ; i < contests.getList("").size() ; i++) {
+
+      final String contestName = contests.getString("[" + i + "].name");
+      // If this contest's name is one of the targeted ones...
+      String reason = targetedContestsWithReasons.get(contestName);
+      if(reason != null) {
+        // add it to the selections.
+        final JSONObject contestSelection = new JSONObject();
+
+        final Integer contestId = contests.getInt("[" + i + "].id");
+        contestSelection.put("audit","COMPARISON");
+        contestSelection.put("contest",contestId);
+        contestSelection.put("reason", reason);
+        contestSelections.add(contestSelection);
+      }
+    }
+
+    // Post the select-contests request
+    given()
+        .filter(filter)
+        .header("Content-Type", "application/json")
+        .body(contestSelections.toString())
+        .post("/select-contests")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
+
   }
 
   /**

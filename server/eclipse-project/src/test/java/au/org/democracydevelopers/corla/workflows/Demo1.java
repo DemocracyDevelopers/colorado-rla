@@ -24,6 +24,7 @@ package au.org.democracydevelopers.corla.workflows;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
@@ -125,31 +126,41 @@ public class Demo1 extends Workflow {
     }
 
     // Get the DoSDashboard refresh response; sanity check for initial state.
-    final JsonPath response = getDoSDashBoardRefreshResponse();
-    assertEquals(response.get("asm_state"), DOS_INITIAL_STATE.toString());
-    assertEquals(response.getMap("audit_info.canonicalChoices").toString(), "{}");
-    assertNull(response.get("audit_info.risk_limit"));
-    assertNull(response.get("audit_info.seed"));
+    JsonPath dashboard = getDoSDashBoardRefreshResponse();
+    assertEquals(dashboard.get("asm_state"), DOS_INITIAL_STATE.toString());
+    assertEquals(dashboard.getMap("audit_info.canonicalChoices").toString(), "{}");
+    assertNull(dashboard.get("audit_info.risk_limit"));
+    assertNull(dashboard.get("audit_info.seed"));
 
     // Set the audit info, including the canonical list and the risk limit; check for update.
     final BigDecimal riskLimit = BigDecimal.valueOf(0.03);
     updateAuditInfo(dataPath + "Demo1/" + "demo1-canonical-list.csv", riskLimit);
-    final JsonPath response2 = getDoSDashBoardRefreshResponse();
+    dashboard = getDoSDashBoardRefreshResponse();
     assertEquals(0, riskLimit
-        .compareTo(new BigDecimal(response2.get("audit_info.risk_limit").toString())));
+        .compareTo(new BigDecimal(dashboard.get("audit_info.risk_limit").toString())));
     // There should be canonical contests for each county.
-    assertEquals(numCounties, response2.getMap("audit_info.canonicalContests").values().size());
+    assertEquals(numCounties, dashboard.getMap("audit_info.canonicalContests").values().size());
     // Check that the seed is still null.
-    assertNull(response2.get("audit_info.seed"));
-    assertEquals(response2.get("asm_state"), PARTIAL_AUDIT_INFO_SET.toString());
+    assertNull(dashboard.get("audit_info.seed"));
+    assertEquals(dashboard.get("asm_state"), PARTIAL_AUDIT_INFO_SET.toString());
+
+    // Generate assertions; sanity check
+    // TODO this is commented out for now while we figure out how to run the raire-service in the Docker container.
+    // generateAssertions(1);
+    // dashboard = getDoSDashBoardRefreshResponse();
+    // There should be 4 IRV contests.
+    // assertEquals(4, dashboard.getList("generate_assertions_summaries").size());
+
+    // For now, just target plurality contests.
+    targetContests(Map.of("City of Longmont - Mayor","COUNTY_WIDE_CONTEST"));
 
     // Set the seed.
     final String seed = "9823749812374981273489712389471238974";
     setSeed(seed);
     // This should be complete audit info.
-    final JsonPath response3 = getDoSDashBoardRefreshResponse();
-    assertEquals(response3.get("audit_info.seed"), seed);
-    assertEquals(response3.get("asm_state"), COMPLETE_AUDIT_INFO_SET.toString());
+    dashboard = getDoSDashBoardRefreshResponse();
+    assertEquals(dashboard.get("audit_info.seed"), seed);
+    assertEquals(dashboard.get("asm_state"), COMPLETE_AUDIT_INFO_SET.toString());
 
   }
 
