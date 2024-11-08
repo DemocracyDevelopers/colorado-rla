@@ -36,7 +36,6 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_ST
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -48,7 +47,6 @@ import java.util.Map;
  * increase the sample size, and a smaller manifest than CVR list should throw an error.
  * All the tests here are the same plain plurality contest - we just vary the absence of presence of
  * the manifest, and (if present) the number of ballots it states.
- *
  * Note that it does not test for correct sample sizes, only for correct _changes_ to the sample
  * sizes as a consequence of changes to the manifest.
  */
@@ -96,6 +94,8 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
 
     List<String> CVRS = new ArrayList<>();
     CVRS.add(dataPath + "Plurality100votes2And10Margins.csv");
+    final String margin2Contest = "PluralityMargin2";
+    final String margin10Contest = "PluralityMargin10";
 
 
     // Upload the CSVs but not the manifests.
@@ -108,36 +108,45 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     // Set the audit info, including the canonical list and the (stupidly large) risk limit; sanity check.
     final BigDecimal riskLimit = BigDecimal.valueOf(0.5);
     updateAuditInfo(dataPath + "Plurality_Only_Test_Canonical_List.csv", riskLimit);
+    setSeed(defaultSeed);
     dashboard = getDoSDashBoardRefreshResponse();
     assertEquals(0, riskLimit
         .compareTo(new BigDecimal(dashboard.get("audit_info.risk_limit").toString())));
 
     // 1. Estimate Sample sizes, without the manifest. This should count the CSVs.
-    List<EstimateSampleSizes.EstimateData> estimatesWithoutManifests = getSampleSizeEstimates();
+    Map<String, EstimateSampleSizes.EstimateData> estimatesWithoutManifests = getSampleSizeEstimates();
     assertEquals(estimatesWithoutManifests.size(), 2);
 
     // 2. Upload the manifest that matches the CSV count, then get estimates.
-    // All the estimate data should be the same.
+    // All the estimate data should be the same, because EstimateSampleSizes doesn't use manifests.
+    // TODO do this with doubled manifests too.
     String matchingManifest = dataPath + "HundredVotes_Manifest.csv";
     uploadCounty(1, "ballot-manifest", matchingManifest, matchingManifest + ".sha256sum");
-    List<EstimateSampleSizes.EstimateData> estimatesWithMatchingManifests = getSampleSizeEstimates();
-    assertEquals(estimatesWithMatchingManifests.get(0), estimatesWithoutManifests.get(0));
-    assertEquals(estimatesWithMatchingManifests.get(1), estimatesWithoutManifests.get(1));
+    // TODO targetContests doesn't work without manifests (which is good) but also doesn't seem to throw an error (though it should).
+    targetContests(Map.of(margin2Contest, "COUNTY_WIDE_CONTEST", margin10Contest,"COUNTY_WIDE_CONTEST"));
+    Map<String, EstimateSampleSizes.EstimateData> estimatesWithMatchingManifests = getSampleSizeEstimates();
+    dashboard = getDoSDashBoardRefreshResponse();
+    assertEquals(estimatesWithMatchingManifests.get(margin2Contest), estimatesWithoutManifests.get(margin2Contest));
+    assertEquals(estimatesWithMatchingManifests.get(margin10Contest), estimatesWithoutManifests.get(margin10Contest));
+
+    // Check that the estimatedSampleSizes inside corla also match the pre-audit estimates.
+    // They should, because the manifests and CVR files have equal counts.
+    startAuditRound();
+    dashboard = getDoSDashBoardRefreshResponse();
+    int margin2Estimate = dashboard.getInt("county_status.1.estimated_ballots_to_audit");
+    int margin10Estimate = dashboard.getInt("county_status.1.estimated_ballots_to_audit");
 
     // 3. Upload the manifest that claims double the CSV count. This should double the sample size
-    // estimate for Plurality2, but not for Plurality1 because it is already topped out at 10.
+    // estimates.
     String doubledManifest = dataPath + "HundredVotes_DoubledManifest.csv";
     uploadCounty(1, "ballot-manifest", doubledManifest, doubledManifest + ".sha256sum");
-    List<EstimateSampleSizes.EstimateData> estimatesWithDoubledManifests = getSampleSizeEstimates();
+    Map<String, EstimateSampleSizes.EstimateData> estimatesWithDoubledManifests = getSampleSizeEstimates();
+    dashboard = getDoSDashBoardRefreshResponse();
     assertEquals(estimatesWithDoubledManifests.size(), 2);
-    int plurality2index = 1;
-    if(estimatesWithDoubledManifests.get(0).contestName().equals("PluralitMargin2")) {
-      plurality2index = 0;
-    }
-    assertEquals(estimatesWithoutManifests.get(1-plurality2index),
-                 estimatesWithDoubledManifests.get(1-plurality2index));
-    assertEquals(estimatesWithoutManifests.get(plurality2index).estimatedSamples(),
-                 estimatesWithDoubledManifests.get(plurality2index).estimatedSamples()/2);
+    assertEquals(estimatesWithoutManifests.get(margin2Contest).estimatedSamples(),
+        estimatesWithDoubledManifests.get(margin2Contest).estimatedSamples()/2);
+    assertEquals(estimatesWithoutManifests.get(margin10Contest).estimatedSamples(),
+                 estimatesWithDoubledManifests.get(margin10Contest).estimatedSamples()/2);
   }
 
 }

@@ -157,16 +157,15 @@ public class Demo1 extends Workflow {
     targetContests(Map.of("City of Longmont - Mayor","COUNTY_WIDE_CONTEST"));
 
     // 6. Set the seed.
-    final String seed = "9823749812374981273489712389471238974";
-    setSeed(seed);
+    setSeed(defaultSeed);
 
     // This should be complete audit info.
     dashboard = getDoSDashBoardRefreshResponse();
-    assertEquals(dashboard.get("audit_info.seed"), seed);
+    assertEquals(dashboard.get("audit_info.seed"), defaultSeed);
     assertEquals(dashboard.get("asm_state"), COMPLETE_AUDIT_INFO_SET.toString());
 
     // 7. Estimate sample sizes; sanity check.
-    List<EstimateSampleSizes.EstimateData> sampleSizes = getSampleSizeEstimates();
+    Map<String, EstimateSampleSizes.EstimateData> sampleSizes = getSampleSizeEstimates();
     assertFalse(sampleSizes.isEmpty());
 
     // TODO get assertions, sanity check.

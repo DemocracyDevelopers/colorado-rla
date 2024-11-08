@@ -43,7 +43,6 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
 import org.testng.annotations.BeforeClass;
-import us.freeandfair.corla.model.Contest;
 import wiremock.net.minidev.json.JSONArray;
 import wiremock.net.minidev.json.JSONObject;
 
@@ -57,6 +56,11 @@ public class Workflow extends TestClassWithDatabase {
    * Number of CO counties
    */
   protected static final int numCounties = 64;
+
+  /**
+   * Default PRNG seed.
+   */
+  protected static final String defaultSeed = "24098249082409821390482049098";
 
   /**
    * Class-wide logger
@@ -213,7 +217,7 @@ public class Workflow extends TestClassWithDatabase {
    * Get the sample size estimates CSV and return the parsed data.
    * @return The sample size estimate data as a list of EstimateData structures.
    */
-  protected List<EstimateSampleSizes.EstimateData> getSampleSizeEstimates() {
+  protected Map<String,EstimateSampleSizes.EstimateData> getSampleSizeEstimates() {
     final String prefix = "[getSampleSizeEstimates]";
 
     // Login as state admin.
@@ -229,7 +233,7 @@ public class Workflow extends TestClassWithDatabase {
         .body()
         .asString();
 
-    List<EstimateSampleSizes.EstimateData> estimates = new ArrayList<>();
+    Map<String,EstimateSampleSizes.EstimateData> estimates = new HashMap<>();
     var lines = data.split("\n");
     // Skip the first line (which has headers)
     for(int i = 1 ; i < lines.length ; i++) {
@@ -250,7 +254,7 @@ public class Workflow extends TestClassWithDatabase {
           new BigDecimal(line[5]),
           Integer.parseInt(line[6])
       );
-      estimates.add(estimate);
+      estimates.put(estimate.contestName(), estimate);
     }
 
     return estimates;
@@ -288,7 +292,8 @@ public class Workflow extends TestClassWithDatabase {
 
   /**
    * Generate assertions (for IRV contests)
-   * TODO At the moment this expects the raire-service to be running.
+   * TODO At the moment this expects the raire-service to be running, which is a problem because it will be reading the
+   * wrong database.
    * Set it up so that we run raire-service inside the Docker container and tell main where to find it.
    */
   protected void generateAssertions(double timeLimitSeconds) {
@@ -304,6 +309,17 @@ public class Workflow extends TestClassWithDatabase {
           .statusCode(HttpStatus.SC_OK);
   }
 
+  protected void startAuditRound() {
+    // Login as state admin.
+    final SessionFilter filter = doLogin("stateadmin1");
+
+    given()
+        .filter(filter)
+        .post("/start-audit-round")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
+  }
   /**
    * Select contests to target, by name.
    */
