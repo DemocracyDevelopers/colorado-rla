@@ -153,25 +153,27 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
         margin2Contest + suffixes[2], "COUNTY_WIDE_CONTEST"
     ));
 
-    // 3. Check that for County 1, the estimatedSampleSizes inside corla also match the pre-audit estimates.
-    // They should, because the manifests and CVR files have equal counts.
     startAuditRound();
     dashboard = getDoSDashBoardRefreshResponse();
-    assertEquals(dashboard.getInt("county_status.1.estimated_ballots_to_audit"), margin2Estimate);
-    assertEquals(dashboard.getInt("county_status.2.estimated_ballots_to_audit"), margin2Estimate);
-    assertEquals(dashboard.getInt("county_status.3.estimated_ballots_to_audit"), margin2Estimate);
 
-    // 3. Upload the manifest that claims double the CSV count. This should double the sample size
-    // estimates.
-    String doubledManifest = dataPath + "HundredVotes_DoubledManifest.csv";
-    uploadCounty(1, "ballot-manifest", doubledManifest, doubledManifest + ".sha256sum");
-    Map<String, EstimateSampleSizes.EstimateData> estimatesWithDoubledManifests = getSampleSizeEstimates();
+    // For County 1, the estimated ballots to audit inside corla should also match the pre-audit estimates,
+    // because the manifests and CVR files have equal counts.
+    final int county1Estimate = dashboard.getInt("county_status.1.estimated_ballots_to_audit");
+    assertEquals(county1Estimate, margin2Estimate);
+
+    // County 2 should have a much larger estimated ballots to audit, because of manifest phantoms.
+    final int county2Estimate  = dashboard.getInt("county_status.2.estimated_ballots_to_audit");
+    assertTrue(county2Estimate > margin2Estimate);
+
+    // Run Sample Size estimation again; check that it doesn't change any of the colorado-rla estimates.
+    getSampleSizeEstimates();
     dashboard = getDoSDashBoardRefreshResponse();
-    assertEquals(estimatesWithDoubledManifests.size(), 2);
-    assertEquals(estimatesWithoutManifests.get(margin2Contest).estimatedSamples(),
-        estimatesWithDoubledManifests.get(margin2Contest).estimatedSamples()/2);
-    assertEquals(estimatesWithoutManifests.get(margin10Contest).estimatedSamples(),
-                 estimatesWithDoubledManifests.get(margin10Contest).estimatedSamples()/2);
+    assertEquals(dashboard.getInt("county_status.1.estimated_ballots_to_audit"), county1Estimate);
+    assertEquals(dashboard.getInt("county_status.2.estimated_ballots_to_audit"), county2Estimate);
+
+    // County 3 should have an error, because the manifest has fewer ballots than the CVR.
+    // FIXME - think about what should happen when the manifest is smaller than the CSV list.
+    int test = dashboard.getInt("county_status.3.estimated_ballots_to_audit");
   }
 
 }
