@@ -92,14 +92,19 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   @Test(enabled = true)
   public void runManifestVaryingDemo() {
 
-    List<String> CVRS = new ArrayList<>();
-    CVRS.add(dataPath + "Plurality100votes2And10Margins.csv");
     final String margin2Contest = "PluralityMargin2";
     final String margin10Contest = "PluralityMargin10";
 
-
     // Upload the CSVs but not the manifests.
-    uploadCounty(1, "cvr-export", CVRS.get(0), CVRS.get(0) + ".sha256sum");
+    final String CVRFile = dataPath + "Plurality100votes2And10Margins";
+    final String[] suffixes = {"", "Copy2", "Copy3"};
+
+    for(int i = 1 ; i <= 3 ; i++) {
+      uploadCounty(i, "cvr-export", CVRFile + suffixes[i-1] + ".csv",
+                                        CVRFile + suffixes[i-1] + ".csv.sha256sum");
+    }
+
+    //TODO figure out how to wait.
 
     // Get the DoSDashboard refresh response; sanity check.
     JsonPath dashboard = getDoSDashBoardRefreshResponse();
@@ -113,28 +118,48 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     assertEquals(0, riskLimit
         .compareTo(new BigDecimal(dashboard.get("audit_info.risk_limit").toString())));
 
-    // 1. Estimate Sample sizes, without the manifest. This should count the CSVs.
+    // Estimate Sample sizes, without the manifest. This should count the CSVs. Sanity check.
     Map<String, EstimateSampleSizes.EstimateData> estimatesWithoutManifests = getSampleSizeEstimates();
-    assertEquals(estimatesWithoutManifests.size(), 2);
+    assertEquals(estimatesWithoutManifests.size(), 6);
+
+    // Upload the manifests.
+    // County 1 gets a manifest that matches the CSV count
+    // County 2 gets a manifest with double the CSV count.
+    // County 3 gets a manifest with inadequate count (should cause an error).
+    List<String> MANIFESTS = new ArrayList<>();
+    MANIFESTS.add(dataPath + "HundredVotes_Manifest.csv");
+    MANIFESTS.add(dataPath + "HundredVotes_DoubledManifest.csv");
+    MANIFESTS.add(dataPath + "HundredVotes_InsufficientManifest.csv");
+    for(int i=1 ; i <= 3 ; i++) {
+      uploadCounty(i, "ballot-manifest", MANIFESTS.get(i-1), MANIFESTS.get(i-1) + ".sha256sum");
+    }
 
     // 2. Upload the manifest that matches the CSV count, then get estimates.
     // All the estimate data should be the same, because EstimateSampleSizes doesn't use manifests.
-    // TODO do this with doubled manifests too.
-    String matchingManifest = dataPath + "HundredVotes_Manifest.csv";
-    uploadCounty(1, "ballot-manifest", matchingManifest, matchingManifest + ".sha256sum");
-    // TODO targetContests doesn't work without manifests (which is good) but also doesn't seem to throw an error (though it should).
-    targetContests(Map.of(margin2Contest, "COUNTY_WIDE_CONTEST", margin10Contest,"COUNTY_WIDE_CONTEST"));
-    Map<String, EstimateSampleSizes.EstimateData> estimatesWithMatchingManifests = getSampleSizeEstimates();
+    Map<String, EstimateSampleSizes.EstimateData> estimatesWithManifests = getSampleSizeEstimates();
     dashboard = getDoSDashBoardRefreshResponse();
-    assertEquals(estimatesWithMatchingManifests.get(margin2Contest), estimatesWithoutManifests.get(margin2Contest));
-    assertEquals(estimatesWithMatchingManifests.get(margin10Contest), estimatesWithoutManifests.get(margin10Contest));
+    for(String s : suffixes) {
+      assertEquals(estimatesWithManifests.get(margin2Contest+s), estimatesWithoutManifests.get(margin2Contest+s));
+      assertEquals(estimatesWithManifests.get(margin10Contest+s), estimatesWithoutManifests.get(margin10Contest+s));
+    }
 
-    // Check that the estimatedSampleSizes inside corla also match the pre-audit estimates.
+    final int margin2Estimate =  estimatesWithManifests.get(margin2Contest).estimatedSamples();
+
+    // Target the margin-2 contests in every county.
+    // TODO targetContests doesn't work without manifests (which is good) but also doesn't seem to throw an error (though it should).
+    targetContests(Map.of(
+        margin2Contest, "COUNTY_WIDE_CONTEST",
+        margin2Contest + suffixes[1], "COUNTY_WIDE_CONTEST",
+        margin2Contest + suffixes[2], "COUNTY_WIDE_CONTEST"
+    ));
+
+    // 3. Check that for County 1, the estimatedSampleSizes inside corla also match the pre-audit estimates.
     // They should, because the manifests and CVR files have equal counts.
     startAuditRound();
     dashboard = getDoSDashBoardRefreshResponse();
-    int margin2Estimate = dashboard.getInt("county_status.1.estimated_ballots_to_audit");
-    int margin10Estimate = dashboard.getInt("county_status.1.estimated_ballots_to_audit");
+    assertEquals(dashboard.getInt("county_status.1.estimated_ballots_to_audit"), margin2Estimate);
+    assertEquals(dashboard.getInt("county_status.2.estimated_ballots_to_audit"), margin2Estimate);
+    assertEquals(dashboard.getInt("county_status.3.estimated_ballots_to_audit"), margin2Estimate);
 
     // 3. Upload the manifest that claims double the CSV count. This should double the sample size
     // estimates.
