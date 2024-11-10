@@ -38,6 +38,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A demonstration workflow that tests sample size estimation with and without manifests, comparing
@@ -90,7 +91,7 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
    * This "test" uploads CVRs and ballot manifests.
    */
   @Test(enabled = true)
-  public void runManifestVaryingDemo() {
+  public void runManifestVaryingDemo() throws InterruptedException {
 
     final String margin2Contest = "PluralityMargin2";
     final String margin10Contest = "PluralityMargin10";
@@ -104,7 +105,8 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
                                         CVRFile + suffixes[i-1] + ".csv.sha256sum");
     }
 
-    //TODO figure out how to wait.
+    assertTrue(uploadSuccessfulWithin(5, Set.of(1,2,3), "cvr_export_file"));
+    assertFalse(uploadSuccessfulWithin(5, Set.of(1,2,3), "ballot_manifest_file"));
 
     // Get the DoSDashboard refresh response; sanity check.
     JsonPath dashboard = getDoSDashBoardRefreshResponse();
@@ -137,7 +139,6 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     // 2. Upload the manifest that matches the CSV count, then get estimates.
     // All the estimate data should be the same, because EstimateSampleSizes doesn't use manifests.
     Map<String, EstimateSampleSizes.EstimateData> estimatesWithManifests = getSampleSizeEstimates();
-    dashboard = getDoSDashBoardRefreshResponse();
     for(String s : suffixes) {
       assertEquals(estimatesWithManifests.get(margin2Contest+s), estimatesWithoutManifests.get(margin2Contest+s));
       assertEquals(estimatesWithManifests.get(margin10Contest+s), estimatesWithoutManifests.get(margin10Contest+s));
@@ -146,7 +147,6 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     final int margin2Estimate =  estimatesWithManifests.get(margin2Contest).estimatedSamples();
 
     // Target the margin-2 contests in every county.
-    // TODO targetContests doesn't work without manifests (which is good) but also doesn't seem to throw an error (though it should).
     targetContests(Map.of(
         margin2Contest, "COUNTY_WIDE_CONTEST",
         margin2Contest + suffixes[1], "COUNTY_WIDE_CONTEST",
@@ -172,8 +172,9 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     assertEquals(dashboard.getInt("county_status.2.estimated_ballots_to_audit"), county2Estimate);
 
     // County 3 should have an error, because the manifest has fewer ballots than the CVR.
-    // FIXME - think about what should happen when the manifest is smaller than the CSV list.
-    int test = dashboard.getInt("county_status.3.estimated_ballots_to_audit");
+    // TODO - Verify how colorado-rla deals with the case where the manifest has fewer votes than the
+    // CVR export - see <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/217">...</a>
+    // int test = dashboard.getInt("county_status.3.estimated_ballots_to_audit");
   }
 
 }

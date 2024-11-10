@@ -43,6 +43,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
 import org.testng.annotations.BeforeClass;
+import us.freeandfair.corla.model.UploadedFile;
 import wiremock.net.minidev.json.JSONArray;
 import wiremock.net.minidev.json.JSONObject;
 
@@ -83,11 +84,11 @@ public class Workflow extends TestClassWithDatabase {
    * CLI, but only as a file, so we need to make the file and then tell main to read it.
    * @param testFileName the name of the test file - must be different for each test.
    */
-  protected static void runMain(String testFileName) {
+  protected static void runMain(final String testFileName) {
     final String propertiesFile = tempConfigPath +testFileName+"-test.properties";
     try {
       FileOutputStream os = new FileOutputStream(propertiesFile);
-      StringWriter sw = new StringWriter();
+      final StringWriter sw = new StringWriter();
       config.store(sw, "Ephemeral database config for Demo1");
       os.write(sw.toString().getBytes());
       os.close();
@@ -98,7 +99,7 @@ public class Workflow extends TestClassWithDatabase {
   }
 
   protected JSONObject createBody(final Map<String, String> data) {
-    JSONObject body = new JSONObject();
+    final JSONObject body = new JSONObject();
     body.putAll(data);
     return body;
   }
@@ -135,7 +136,7 @@ public class Workflow extends TestClassWithDatabase {
    * @param user   Username to unauthenticate.
    */
   protected void logout(final SessionFilter filter, final String user) {
-    JSONObject requestParams = createBody(Map.of("username", user));
+    final JSONObject requestParams = createBody(Map.of("username", user));
 
     given()
         .filter(filter)
@@ -156,7 +157,7 @@ public class Workflow extends TestClassWithDatabase {
     final String prefix = "[uploadCounty]";
 
     final String user = "countyadmin" + number;
-    SessionFilter filter = doLogin(user);
+    final SessionFilter filter = doLogin(user);
 
     // GET the county dashboard. This is just to test that the login worked.
     given().filter(filter).get("/county-dashboard");
@@ -223,7 +224,7 @@ public class Workflow extends TestClassWithDatabase {
     // Login as state admin.
     final SessionFilter filter = doLogin("stateadmin1");
 
-    String data = given()
+    final String data = given()
         .filter(filter)
         .get("/estimate-sample-sizes")
         .then()
@@ -233,19 +234,19 @@ public class Workflow extends TestClassWithDatabase {
         .body()
         .asString();
 
-    Map<String,EstimateSampleSizes.EstimateData> estimates = new HashMap<>();
-    var lines = data.split("\n");
+    final Map<String,EstimateSampleSizes.EstimateData> estimates = new HashMap<>();
+    final String[] lines = data.split("\n");
     // Skip the first line (which has headers)
     for(int i = 1 ; i < lines.length ; i++) {
 
-      var line = lines[i].split(",");
+      final String[] line = lines[i].split(",");
       if(line.length < 7) {
         final String msg = prefix + " Invalid sample size estimate data";
         LOGGER.error(msg);
         throw new RuntimeException(msg);
       }
 
-      EstimateSampleSizes.EstimateData estimate = new EstimateSampleSizes.EstimateData(
+      final EstimateSampleSizes.EstimateData estimate = new EstimateSampleSizes.EstimateData(
           line[0],
           line[1],
           line[2],
@@ -266,17 +267,17 @@ public class Workflow extends TestClassWithDatabase {
    * @param canonicalListFile the path to the canonical list csv file.
    * @param riskLimit         the risk limit.
    */
-  protected void updateAuditInfo(String canonicalListFile, BigDecimal riskLimit) {
+  protected void updateAuditInfo(final String canonicalListFile, final BigDecimal riskLimit) {
 
     // Login as state admin.
     final SessionFilter filter = doLogin("stateadmin1");
 
-    JSONObject requestParams = new JSONObject();
+    final JSONObject requestParams = new JSONObject();
     requestParams.put("risk_limit", riskLimit);
     requestParams.put("election_date","2024-09-15T05:42:17.796Z");
     requestParams.put("election_type","general");
     requestParams.put("public_meeting_date","2024-09-22T05:42:22.037Z");
-    JSONObject canonicalListContents = new JSONObject();
+    final JSONObject canonicalListContents = new JSONObject();
     canonicalListContents.put("contents",readFromFile(canonicalListFile));
     requestParams.put("upload_file", List.of(canonicalListContents));
 
@@ -291,12 +292,49 @@ public class Workflow extends TestClassWithDatabase {
   }
 
   /**
+   * Checks that all the given counties have completed their CVR upload within the timeout.
+   * @param counties       the counties to wait for, by county ID.
+   * @param timeAllowedSeconds the maximum time, in seconds, to wait for.
+   * @return true if all uploads were successful within timeoutSeconds, false if any failed or the timeout was reached.
+   * Timing is imprecise and assumes all the calls take no time.
+   */
+  protected boolean uploadSuccessfulWithin(int timeAllowedSeconds, final Set<Integer> counties, final String fileType) throws InterruptedException {
+
+    JsonPath dashboard = getDoSDashBoardRefreshResponse();
+      while (timeAllowedSeconds-- > 0) {
+        List<Integer> succeededCounties = new ArrayList<>();
+        for (int c : counties) {
+          final String status = dashboard.getString("county_status." + c + "." + fileType + ".status");
+            // Upload failed (e.g. a hash mismatch).
+          if (status != null && status.equals(UploadedFile.FileStatus.FAILED.toString())) {
+            return false;
+            // This county succeeded.
+          } else if (status != null && status.equals(UploadedFile.FileStatus.IMPORTED.toString())) {
+            succeededCounties.add(c);
+          }
+        }
+        if (succeededCounties.size() == counties.size()) {
+          return true;
+        } else {
+          Thread.sleep(1000);
+          dashboard = getDoSDashBoardRefreshResponse();
+        }
+    }
+
+    // Timeout.
+    return false;
+
+
+  }
+
+  /**
    * Generate assertions (for IRV contests)
    * TODO At the moment this expects the raire-service to be running, which is a problem because it will be reading the
+   * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/218">...</a>
    * wrong database.
    * Set it up so that we run raire-service inside the Docker container and tell main where to find it.
    */
-  protected void generateAssertions(double timeLimitSeconds) {
+  protected void generateAssertions(final double timeLimitSeconds) {
       // Login as state admin.
       final SessionFilter filter = doLogin("stateadmin1");
 
@@ -323,7 +361,7 @@ public class Workflow extends TestClassWithDatabase {
   /**
    * Select contests to target, by name.
    */
-  protected void targetContests(Map<String, String> targetedContestsWithReasons) {
+  protected void targetContests(final Map<String, String> targetedContestsWithReasons) {
     // Login as state admin.
     final SessionFilter filter = doLogin("stateadmin1");
 
@@ -341,14 +379,14 @@ public class Workflow extends TestClassWithDatabase {
         .jsonPath();
 
     // The contests and reasons to be requested.
-    JSONArray contestSelections = new JSONArray();
+    final JSONArray contestSelections = new JSONArray();
 
     // Find the IDs of the ones we want to target.
     for(int i=0 ; i < contests.getList("").size() ; i++) {
 
       final String contestName = contests.getString("[" + i + "].name");
       // If this contest's name is one of the targeted ones...
-      String reason = targetedContestsWithReasons.get(contestName);
+      final String reason = targetedContestsWithReasons.get(contestName);
       if(reason != null) {
         // add it to the selections.
         final JSONObject contestSelection = new JSONObject();
@@ -376,11 +414,11 @@ public class Workflow extends TestClassWithDatabase {
   /**
    * Set the seed for the audit.
    */
-  protected void setSeed(String seed) {
+  protected void setSeed(final String seed) {
     // Login as state admin.
     final SessionFilter filter = doLogin("stateadmin1");
 
-    JSONObject requestParams = new JSONObject();
+    final JSONObject requestParams = new JSONObject();
     requestParams.put("seed", seed);
 
     given()
@@ -402,15 +440,15 @@ public class Workflow extends TestClassWithDatabase {
   private String readFromFile(final String fileName) {
     final String prefix = "[readFromFile]";
     try {
-      Path path = Paths.get(fileName);
+      final Path path = Paths.get(fileName);
       return String.join("\n",Files.readAllLines(path));
-      } catch (IOException ex) {
+      } catch (final IOException ex) {
         LOGGER.error(prefix + ex.getMessage());
       return "";
     }
   }
 
-  private SessionFilter doLogin(String username) {
+  private SessionFilter doLogin(final String username) {
     final SessionFilter filter = new SessionFilter();
     authenticate(filter, username,"",1);
     authenticate(filter, username,"s d f",2);
