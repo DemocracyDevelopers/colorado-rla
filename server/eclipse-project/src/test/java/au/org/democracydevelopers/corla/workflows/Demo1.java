@@ -22,12 +22,11 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.workflows;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
 import io.restassured.path.json.JsonPath;
+import org.apache.commons.lang.math.Range;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -43,7 +42,7 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
  * A demonstration workflow that uploads CVRs and ballot manifests for all 64 counties.
  * This assumes that main is running.
  */
-@Test(enabled=false)
+@Test(enabled=true)
 public class Demo1 extends Workflow {
 
   /**
@@ -85,8 +84,8 @@ public class Demo1 extends Workflow {
    * - demo1_loadCVRs, demo1_loadManifests,
    * - Boulder_loadCVRs, Boulder_loadManifest.
    */
-  @Test(enabled = false)
-  public void runDemo1(){
+  @Test(enabled = true)
+  public void runDemo1() throws InterruptedException {
 
 
     List<String> CVRS = new ArrayList<>();
@@ -121,10 +120,13 @@ public class Demo1 extends Workflow {
 
     // 2. Then upload all the CVRs. The order is important because it's an error to try to import a manifest while the CVRs
     // are being read.
-    // TODO Note this takes a while - we'll need to add a wait for anything that assumes all the CVRs are loaded.
     for(int i = 1; i <= numCounties ; ++i){
       uploadCounty(i, "cvr-export", CVRS.get(i-1), CVRS.get(i-1) + ".sha256sum");
     }
+
+    // Wait while the CVRs (and manifests) are uploaded. This can take a while, especially Boulder(7).
+    assertTrue(uploadSuccessfulWithin(600, allCounties, "cvr_export_file"));
+    assertTrue(uploadSuccessfulWithin(20, allCounties, "ballot_manifest_file"));
 
     // Get the DoSDashboard refresh response; sanity check for initial state.
     JsonPath dashboard = getDoSDashBoardRefreshResponse();

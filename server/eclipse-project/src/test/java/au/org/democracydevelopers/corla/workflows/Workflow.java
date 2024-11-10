@@ -38,6 +38,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -57,6 +59,13 @@ public class Workflow extends TestClassWithDatabase {
    * Number of CO counties
    */
   protected static final int numCounties = 64;
+
+  /**
+   * Set of all CO counties, by number.
+   */
+  protected static final Set<Integer> allCounties
+      = IntStream.rangeClosed(1,numCounties).boxed().collect(Collectors.toSet());
+
 
   /**
    * Default PRNG seed.
