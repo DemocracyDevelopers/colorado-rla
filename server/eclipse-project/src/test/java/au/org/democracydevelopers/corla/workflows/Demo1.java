@@ -43,7 +43,7 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
  * A demonstration workflow that uploads CVRs and ballot manifests for all 64 counties.
  * This assumes that main is running.
  */
-@Test(enabled=true)
+@Test(enabled=false)
 public class Demo1 extends Workflow {
 
   /**
@@ -85,7 +85,7 @@ public class Demo1 extends Workflow {
    * - demo1_loadCVRs, demo1_loadManifests,
    * - Boulder_loadCVRs, Boulder_loadManifest.
    */
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void runDemo1(){
 
 
