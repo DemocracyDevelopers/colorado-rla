@@ -24,6 +24,10 @@ package au.org.democracydevelopers.corla.workflows;
 import static io.restassured.RestAssured.given;
 import static org.testng.Assert.assertEquals;
 import static us.freeandfair.corla.Main.main;
+import static us.freeandfair.corla.auth.AuthenticationInterface.USERNAME;
+import static us.freeandfair.corla.auth.AuthenticationStage.SECOND_FACTOR_AUTHENTICATED;
+import static us.freeandfair.corla.auth.AuthenticationStage.TRADITIONALLY_AUTHENTICATED;
+import static us.freeandfair.corla.model.AuditType.COMPARISON;
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
@@ -66,7 +70,6 @@ public class Workflow extends TestClassWithDatabase {
   protected static final Set<Integer> allCounties
       = IntStream.rangeClosed(1,numCounties).boxed().collect(Collectors.toSet());
 
-
   /**
    * Default PRNG seed.
    */
@@ -81,6 +84,31 @@ public class Workflow extends TestClassWithDatabase {
    * Path for storing temporary config files
    */
   private static final String tempConfigPath = "src/test/workflows/temp/";
+
+  /**
+   * Strings for colorado-rla JSON structures.
+   */
+  protected static final String CVR_FILETYPE = "cvr-export";
+  protected static final String MANIFEST_FILETYPE = "ballot-manifest";
+  protected static final String CVR_JSON = "cvr_export_file";
+  protected static final String MANIFEST_JSON = "ballot_manifest_file";
+  protected static final String ASM_STATE = "asm_state";
+  protected static final String AUDIT_INFO = "audit_info";
+  protected static final String RISK_LIMIT_JSON = "risk_limit";
+  protected static final String SEED = "seed";
+  protected static final String CANONICAL_CONTESTS = "canonicalContests";
+  protected static final String CANONICAL_CHOICES = "canonicalChoices";
+  protected static final String COUNTY_STATUS = "county_status";
+  protected static final String ESTIMATED_BALLOTS = "estimated_ballots_to_audit";
+  protected static final String ELECTION_DATE = "election_date";
+  protected static final String ELECTION_TYPE = "election_type";
+  protected static final String PUBLIC_MEETING_DATE = "public_meeting_date";
+  protected static final String STATUS = "status";
+  protected static final String AUDIT = "audit";
+  protected static final String CONTEST = "contest";
+  protected static final String REASON = "reason";
+  protected static final String NAME = "name";
+  protected static final String ID = "id";
 
   @BeforeClass
   public void setup() {
@@ -134,8 +162,8 @@ public class Workflow extends TestClassWithDatabase {
     final String authStatus = response.getBody().jsonPath().getString("stage");
 
     LOGGER.debug("Auth status for login " + user + " stage " + stage + " is " + authStatus);
-    assertEquals(authStatus, (stage == 1) ? "TRADITIONALLY_AUTHENTICATED" :
-        "SECOND_FACTOR_AUTHENTICATED", "Stage " + stage + " auth failed.");
+    assertEquals(authStatus, (stage == 1) ? TRADITIONALLY_AUTHENTICATED.toString()
+        : SECOND_FACTOR_AUTHENTICATED.toString(), "Stage " + stage + " auth failed.");
   }
 
   /**
@@ -145,7 +173,7 @@ public class Workflow extends TestClassWithDatabase {
    * @param user   Username to unauthenticate.
    */
   protected void logout(final SessionFilter filter, final String user) {
-    final JSONObject requestParams = createBody(Map.of("username", user));
+    final JSONObject requestParams = createBody(Map.of(USERNAME, user));
 
     given()
         .filter(filter)
@@ -282,10 +310,10 @@ public class Workflow extends TestClassWithDatabase {
     final SessionFilter filter = doLogin("stateadmin1");
 
     final JSONObject requestParams = new JSONObject();
-    requestParams.put("risk_limit", riskLimit);
-    requestParams.put("election_date","2024-09-15T05:42:17.796Z");
-    requestParams.put("election_type","general");
-    requestParams.put("public_meeting_date","2024-09-22T05:42:22.037Z");
+    requestParams.put(RISK_LIMIT_JSON, riskLimit);
+    requestParams.put(ELECTION_DATE,"2024-09-15T05:42:17.796Z");
+    requestParams.put(ELECTION_TYPE,"general");
+    requestParams.put(PUBLIC_MEETING_DATE,"2024-09-22T05:42:22.037Z");
     final JSONObject canonicalListContents = new JSONObject();
     canonicalListContents.put("contents",readFromFile(canonicalListFile));
     requestParams.put("upload_file", List.of(canonicalListContents));
@@ -313,7 +341,8 @@ public class Workflow extends TestClassWithDatabase {
       while (timeAllowedSeconds-- > 0) {
         List<Integer> succeededCounties = new ArrayList<>();
         for (int c : counties) {
-          final String status = dashboard.getString("county_status." + c + "." + fileType + ".status");
+          final String status = dashboard.getString(COUNTY_STATUS + "." + c + "." + fileType + "."
+              + STATUS);
             // Upload failed (e.g. a hash mismatch).
           if (status != null && status.equals(UploadedFile.FileStatus.FAILED.toString())) {
             return false;
@@ -393,17 +422,17 @@ public class Workflow extends TestClassWithDatabase {
     // Find the IDs of the ones we want to target.
     for(int i=0 ; i < contests.getList("").size() ; i++) {
 
-      final String contestName = contests.getString("[" + i + "].name");
+      final String contestName = contests.getString("[" + i + "]." + NAME);
       // If this contest's name is one of the targeted ones...
       final String reason = targetedContestsWithReasons.get(contestName);
       if(reason != null) {
         // add it to the selections.
         final JSONObject contestSelection = new JSONObject();
 
-        final Integer contestId = contests.getInt("[" + i + "].id");
-        contestSelection.put("audit","COMPARISON");
-        contestSelection.put("contest",contestId);
-        contestSelection.put("reason", reason);
+        final Integer contestId = contests.getInt("[" + i + "]." + ID);
+        contestSelection.put(AUDIT, COMPARISON.toString());
+        contestSelection.put(CONTEST, contestId);
+        contestSelection.put(REASON, reason);
         contestSelections.add(contestSelection);
       }
     }
@@ -428,7 +457,7 @@ public class Workflow extends TestClassWithDatabase {
     final SessionFilter filter = doLogin("stateadmin1");
 
     final JSONObject requestParams = new JSONObject();
-    requestParams.put("seed", seed);
+    requestParams.put(SEED, seed);
 
     given()
         .filter(filter)

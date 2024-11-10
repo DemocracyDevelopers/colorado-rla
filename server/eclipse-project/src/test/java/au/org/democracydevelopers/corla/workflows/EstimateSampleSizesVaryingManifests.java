@@ -22,6 +22,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.workflows;
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
+import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -33,6 +34,7 @@ import us.freeandfair.corla.persistence.Persistence;
 
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
+import static us.freeandfair.corla.model.AuditReason.COUNTY_WIDE_CONTEST;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -50,6 +52,8 @@ import java.util.Set;
  * the manifest, and (if present) the number of ballots it states.
  * Note that it does not test for correct sample sizes, only for correct _changes_ to the sample
  * sizes as a consequence of changes to the manifest.
+ * At the moment, this seems to run fine if run alone, but not to run in parallel with Demo1 or in
+ * github actions. Hence currently disabled.
  */
 @Test(enabled=true)
 public class EstimateSampleSizesVaryingManifests extends Workflow {
@@ -92,6 +96,7 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
    */
   @Test(enabled = true)
   public void runManifestVaryingDemo() throws InterruptedException {
+    testUtils.log(LOGGER, "runManifestVaryingDemo");
 
     final String margin2Contest = "PluralityMargin2";
     final String margin10Contest = "PluralityMargin10";
@@ -101,16 +106,16 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     final String[] suffixes = {"", "Copy2", "Copy3"};
 
     for(int i = 1 ; i <= 3 ; i++) {
-      uploadCounty(i, "cvr-export", CVRFile + suffixes[i-1] + ".csv",
+      uploadCounty(i, CVR_FILETYPE, CVRFile + suffixes[i-1] + ".csv",
                                         CVRFile + suffixes[i-1] + ".csv.sha256sum");
     }
 
-    assertTrue(uploadSuccessfulWithin(5, Set.of(1,2,3), "cvr_export_file"));
-    assertFalse(uploadSuccessfulWithin(5, Set.of(1,2,3), "ballot_manifest_file"));
+    assertTrue(uploadSuccessfulWithin(5, Set.of(1,2,3), CVR_JSON));
+    assertFalse(uploadSuccessfulWithin(5, Set.of(1,2,3), MANIFEST_JSON));
 
     // Get the DoSDashboard refresh response; sanity check.
     JsonPath dashboard = getDoSDashBoardRefreshResponse();
-    assertEquals(dashboard.get("asm_state"), DOS_INITIAL_STATE.toString());
+    assertEquals(dashboard.get(ASM_STATE), DOS_INITIAL_STATE.toString());
 
     // Set the audit info, including the canonical list and the (stupidly large) risk limit; sanity check.
     final BigDecimal riskLimit = BigDecimal.valueOf(0.5);
@@ -118,7 +123,7 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     setSeed(defaultSeed);
     dashboard = getDoSDashBoardRefreshResponse();
     assertEquals(0, riskLimit
-        .compareTo(new BigDecimal(dashboard.get("audit_info.risk_limit").toString())));
+        .compareTo(new BigDecimal(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON).toString())));
 
     // Estimate Sample sizes, without the manifest. This should count the CSVs. Sanity check.
     Map<String, EstimateSampleSizes.EstimateData> estimatesWithoutManifests = getSampleSizeEstimates();
@@ -133,7 +138,7 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     MANIFESTS.add(dataPath + "HundredVotes_DoubledManifest.csv");
     MANIFESTS.add(dataPath + "HundredVotes_InsufficientManifest.csv");
     for(int i=1 ; i <= 3 ; i++) {
-      uploadCounty(i, "ballot-manifest", MANIFESTS.get(i-1), MANIFESTS.get(i-1) + ".sha256sum");
+      uploadCounty(i, MANIFEST_FILETYPE, MANIFESTS.get(i-1), MANIFESTS.get(i-1) + ".sha256sum");
     }
 
     // 2. Upload the manifest that matches the CSV count, then get estimates.
@@ -148,9 +153,9 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
 
     // Target the margin-2 contests in every county.
     targetContests(Map.of(
-        margin2Contest, "COUNTY_WIDE_CONTEST",
-        margin2Contest + suffixes[1], "COUNTY_WIDE_CONTEST",
-        margin2Contest + suffixes[2], "COUNTY_WIDE_CONTEST"
+        margin2Contest, COUNTY_WIDE_CONTEST.toString(),
+        margin2Contest + suffixes[1], COUNTY_WIDE_CONTEST.toString(),
+        margin2Contest + suffixes[2], COUNTY_WIDE_CONTEST.toString()
     ));
 
     startAuditRound();
@@ -158,18 +163,18 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
 
     // For County 1, the estimated ballots to audit inside corla should also match the pre-audit estimates,
     // because the manifests and CVR files have equal counts.
-    final int county1Estimate = dashboard.getInt("county_status.1.estimated_ballots_to_audit");
+    final int county1Estimate = dashboard.getInt(COUNTY_STATUS + ".1." + ESTIMATED_BALLOTS);
     assertEquals(county1Estimate, margin2Estimate);
 
     // County 2 should have a much larger estimated ballots to audit, because of manifest phantoms.
-    final int county2Estimate  = dashboard.getInt("county_status.2.estimated_ballots_to_audit");
+    final int county2Estimate  = dashboard.getInt(COUNTY_STATUS + ".2." + ESTIMATED_BALLOTS);
     assertTrue(county2Estimate > margin2Estimate);
 
     // Run Sample Size estimation again; check that it doesn't change any of the colorado-rla estimates.
     getSampleSizeEstimates();
     dashboard = getDoSDashBoardRefreshResponse();
-    assertEquals(dashboard.getInt("county_status.1.estimated_ballots_to_audit"), county1Estimate);
-    assertEquals(dashboard.getInt("county_status.2.estimated_ballots_to_audit"), county2Estimate);
+    assertEquals(dashboard.getInt(COUNTY_STATUS + ".1." + ESTIMATED_BALLOTS), county1Estimate);
+    assertEquals(dashboard.getInt(COUNTY_STATUS + ".2." + ESTIMATED_BALLOTS), county2Estimate);
 
     // County 3 should have an error, because the manifest has fewer ballots than the CVR.
     // TODO - Verify how colorado-rla deals with the case where the manifest has fewer votes than the

@@ -25,8 +25,8 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
+import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.path.json.JsonPath;
-import org.apache.commons.lang.math.Range;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -40,7 +40,8 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
 
 /**
  * A demonstration workflow that uploads CVRs and ballot manifests for all 64 counties.
- * This assumes that main is running.
+ * At the moment, this seems to run fine if run alone, but not to run in parallel with
+ * EstimateSamplesVaryingManifests, or in * github actions. Hence currently disabled.
  */
 @Test(enabled=true)
 public class Demo1 extends Workflow {
@@ -86,7 +87,7 @@ public class Demo1 extends Workflow {
    */
   @Test(enabled = true)
   public void runDemo1() throws InterruptedException {
-
+    testUtils.log(LOGGER, "Demo1");
 
     List<String> CVRS = new ArrayList<>();
 
@@ -115,37 +116,37 @@ public class Demo1 extends Workflow {
 
     // 1. First upload all the manifests
     for(int i = 1 ; i <= numCounties ; ++i){
-      uploadCounty(i, "ballot-manifest", MANIFESTS.get(i-1), MANIFESTS.get(i-1) + ".sha256sum");
+      uploadCounty(i, MANIFEST_FILETYPE, MANIFESTS.get(i-1), MANIFESTS.get(i-1) + ".sha256sum");
     }
 
     // 2. Then upload all the CVRs. The order is important because it's an error to try to import a manifest while the CVRs
     // are being read.
     for(int i = 1; i <= numCounties ; ++i){
-      uploadCounty(i, "cvr-export", CVRS.get(i-1), CVRS.get(i-1) + ".sha256sum");
+      uploadCounty(i, CVR_FILETYPE, CVRS.get(i-1), CVRS.get(i-1) + ".sha256sum");
     }
 
     // Wait while the CVRs (and manifests) are uploaded. This can take a while, especially Boulder(7).
-    assertTrue(uploadSuccessfulWithin(600, allCounties, "cvr_export_file"));
-    assertTrue(uploadSuccessfulWithin(20, allCounties, "ballot_manifest_file"));
+    assertTrue(uploadSuccessfulWithin(600, allCounties, CVR_JSON));
+    assertTrue(uploadSuccessfulWithin(20, allCounties, MANIFEST_JSON));
 
     // Get the DoSDashboard refresh response; sanity check for initial state.
     JsonPath dashboard = getDoSDashBoardRefreshResponse();
-    assertEquals(dashboard.get("asm_state"), DOS_INITIAL_STATE.toString());
-    assertEquals(dashboard.getMap("audit_info.canonicalChoices").toString(), "{}");
-    assertNull(dashboard.get("audit_info.risk_limit"));
-    assertNull(dashboard.get("audit_info.seed"));
+    assertEquals(dashboard.get(ASM_STATE), DOS_INITIAL_STATE.toString());
+    assertEquals(dashboard.getMap(AUDIT_INFO + "." + CANONICAL_CHOICES).toString(), "{}");
+    assertNull(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON));
+    assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
 
     // 3. Set the audit info, including the canonical list and the risk limit; check for update.
     final BigDecimal riskLimit = BigDecimal.valueOf(0.03);
     updateAuditInfo(dataPath + "Demo1/" + "demo1-canonical-list.csv", riskLimit);
     dashboard = getDoSDashBoardRefreshResponse();
     assertEquals(0, riskLimit
-        .compareTo(new BigDecimal(dashboard.get("audit_info.risk_limit").toString())));
+        .compareTo(new BigDecimal(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON).toString())));
     // There should be canonical contests for each county.
-    assertEquals(numCounties, dashboard.getMap("audit_info.canonicalContests").values().size());
+    assertEquals(numCounties, dashboard.getMap(AUDIT_INFO + "." + CANONICAL_CONTESTS).values().size());
     // Check that the seed is still null.
-    assertNull(dashboard.get("audit_info.seed"));
-    assertEquals(dashboard.get("asm_state"), PARTIAL_AUDIT_INFO_SET.toString());
+    assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
+    assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
     // 4. Generate assertions; sanity check
     // TODO this is commented out for now while we figure out how to run the raire-service in the Docker container.
@@ -163,14 +164,14 @@ public class Demo1 extends Workflow {
 
     // This should be complete audit info.
     dashboard = getDoSDashBoardRefreshResponse();
-    assertEquals(dashboard.get("audit_info.seed"), defaultSeed);
-    assertEquals(dashboard.get("asm_state"), COMPLETE_AUDIT_INFO_SET.toString());
+    assertEquals(dashboard.get(AUDIT_INFO + "." + SEED), defaultSeed);
+    assertEquals(dashboard.get(ASM_STATE), COMPLETE_AUDIT_INFO_SET.toString());
 
     // 7. Estimate sample sizes; sanity check.
     Map<String, EstimateSampleSizes.EstimateData> sampleSizes = getSampleSizeEstimates();
     assertFalse(sampleSizes.isEmpty());
 
-    // TODO get assertions, sanity check.
+    // TODO get assertions, sanity check, but first get the raire-service working (see above).
   }
 
 }
