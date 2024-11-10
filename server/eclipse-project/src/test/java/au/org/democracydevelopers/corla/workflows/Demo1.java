@@ -43,7 +43,7 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
  * At the moment, this seems to run fine if run alone, but not to run in parallel with
  * EstimateSamplesVaryingManifests, or in * github actions. Hence currently disabled.
  */
-@Test(enabled=false)
+@Test(enabled=true)
 public class Demo1 extends Workflow {
 
   /**
@@ -85,7 +85,7 @@ public class Demo1 extends Workflow {
    * - demo1_loadCVRs, demo1_loadManifests,
    * - Boulder_loadCVRs, Boulder_loadManifest.
    */
-  @Test
+  @Test(enabled=false)
   public void runDemo1() throws InterruptedException {
     testUtils.log(LOGGER, "Demo1");
 

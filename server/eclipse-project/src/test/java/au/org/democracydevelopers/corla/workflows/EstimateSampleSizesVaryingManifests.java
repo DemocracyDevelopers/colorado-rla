@@ -55,7 +55,7 @@ import java.util.Set;
  * At the moment, this seems to run fine if run alone, but not to run in parallel with Demo1 or in
  * github actions. Hence currently disabled.
  */
-@Test(enabled=false)
+@Test(enabled=true)
 public class EstimateSampleSizesVaryingManifests extends Workflow {
 
   /**
