@@ -88,27 +88,27 @@ public class Workflow extends TestClassWithDatabase {
   /**
    * Strings for colorado-rla JSON structures.
    */
-  protected static final String CVR_FILETYPE = "cvr-export";
-  protected static final String MANIFEST_FILETYPE = "ballot-manifest";
-  protected static final String CVR_JSON = "cvr_export_file";
-  protected static final String MANIFEST_JSON = "ballot_manifest_file";
   protected static final String ASM_STATE = "asm_state";
+  protected static final String AUDIT = "audit";
   protected static final String AUDIT_INFO = "audit_info";
-  protected static final String RISK_LIMIT_JSON = "risk_limit";
-  protected static final String SEED = "seed";
-  protected static final String CANONICAL_CONTESTS = "canonicalContests";
+  protected static final String CONTEST = "contest";
   protected static final String CANONICAL_CHOICES = "canonicalChoices";
+  protected static final String CANONICAL_CONTESTS = "canonicalContests";
   protected static final String COUNTY_STATUS = "county_status";
+  protected static final String CVR_FILETYPE = "cvr-export";
+  protected static final String CVR_JSON = "cvr_export_file";
   protected static final String ESTIMATED_BALLOTS = "estimated_ballots_to_audit";
   protected static final String ELECTION_DATE = "election_date";
   protected static final String ELECTION_TYPE = "election_type";
-  protected static final String PUBLIC_MEETING_DATE = "public_meeting_date";
-  protected static final String STATUS = "status";
-  protected static final String AUDIT = "audit";
-  protected static final String CONTEST = "contest";
-  protected static final String REASON = "reason";
-  protected static final String NAME = "name";
   protected static final String ID = "id";
+  protected static final String MANIFEST_FILETYPE = "ballot-manifest";
+  protected static final String MANIFEST_JSON = "ballot_manifest_file";
+  protected static final String NAME = "name";
+  protected static final String PUBLIC_MEETING_DATE = "public_meeting_date";
+  protected static final String REASON = "reason";
+  protected static final String RISK_LIMIT_JSON = "risk_limit";
+  protected static final String SEED = "seed";
+  protected static final String STATUS = "status";
 
   @BeforeClass
   public void setup() {

@@ -55,7 +55,7 @@ import java.util.Set;
  * At the moment, this seems to run fine if run alone, but not to run in parallel with Demo1 or in
  * github actions. Hence currently disabled.
  */
-@Test(enabled=true)
+@Test(enabled=false)
 public class EstimateSampleSizesVaryingManifests extends Workflow {
 
   /**
@@ -94,7 +94,7 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   /**
    * This "test" uploads CVRs and ballot manifests.
    */
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void runManifestVaryingDemo() throws InterruptedException {
     testUtils.log(LOGGER, "runManifestVaryingDemo");
 
