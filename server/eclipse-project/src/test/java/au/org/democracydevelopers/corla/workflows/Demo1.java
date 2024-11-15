@@ -85,7 +85,7 @@ public class Demo1 extends Workflow {
    * - demo1_loadCVRs, demo1_loadManifests,
    * - Boulder_loadCVRs, Boulder_loadManifest.
    */
-  @Test(enabled=false)
+  @Test(enabled=true)
   public void runDemo1() throws InterruptedException {
     testUtils.log(LOGGER, "Demo1");
 
