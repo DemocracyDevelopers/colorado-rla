@@ -38,4 +38,4 @@ jobs:
     
     - name: IRV Tests
       working-directory: server/eclipse-project 
-      run: cd server/eclipse-project; mvn -Dtest='au.org.democracydevelopers.corla.**' test
+      run: mvn -Dtest='au.org.democracydevelopers.corla.**' test
