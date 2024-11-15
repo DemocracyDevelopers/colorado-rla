@@ -129,10 +129,10 @@ public class Workflow extends TestClassWithDatabase {
       config.store(sw, "Ephemeral database config for Demo1");
       os.write(sw.toString().getBytes());
       os.close();
-      main(propertiesFile);
     } catch (Exception e) {
-      LOGGER.error("Couldn't write Demo1-test.properties", e);
+      LOGGER.error("Couldn't write Demo1-test.properties. "+e.getMessage(), e);
     }
+    main(propertiesFile);
   }
 
   protected JSONObject createBody(final Map<String, String> data) {
