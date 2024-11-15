@@ -172,6 +172,8 @@ public class Demo1 extends Workflow {
     assertFalse(sampleSizes.isEmpty());
 
     // TODO get assertions, sanity check, but first get the raire-service working (see above).
+
+    LOGGER.debug("Successfully completed Demo1.");
   }
 
 }

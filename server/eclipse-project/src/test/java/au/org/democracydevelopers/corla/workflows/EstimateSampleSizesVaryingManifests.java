@@ -94,7 +94,7 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   /**
    * This "test" uploads CVRs and ballot manifests.
    */
-  @Test(enabled = false)
+  @Test(enabled=true)
   public void runManifestVaryingDemo() throws InterruptedException {
     testUtils.log(LOGGER, "runManifestVaryingDemo");
 
