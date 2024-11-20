@@ -122,15 +122,15 @@ public class Workflow extends TestClassWithDatabase {
    * @param testFileName the name of the test file - must be different for each test.
    */
   protected static void runMain(final String testFileName) {
-    final String propertiesFile = tempConfigPath +testFileName+"-test.properties";
+    final String propertiesFile = tempConfigPath + testFileName + "-test.properties";
     try {
       FileOutputStream os = new FileOutputStream(propertiesFile);
       final StringWriter sw = new StringWriter();
-      config.store(sw, "Ephemeral database config for Demo1");
+      config.store(sw, "Ephemeral database config for "+testFileName);
       os.write(sw.toString().getBytes());
       os.close();
     } catch (Exception e) {
-      LOGGER.error("Couldn't write Demo1-test.properties. "+e.getMessage(), e);
+      LOGGER.error("Couldn't write " + testFileName + "-test.properties. "+e.getMessage(), e);
     }
     main(propertiesFile);
   }

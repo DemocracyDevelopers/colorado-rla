@@ -101,9 +101,9 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
      * to the IRV ones. Although the countContest function isn't really useful or meaningful for IRV,
      * it is called here because it actually does a lot of other useful things, such as setting the
      * number of allowed winners and gathering all the results across counties.
+     * Assumption: Contest names are unique.
      * @return A list of all ContestResults for IRV contests.
      * @throws RuntimeException if it encounters contests with a mix of IRV and any other contest type.
-     * Assumption: Contest names are unique.
      */
     protected static List<ContestResult> getIRVContestResults() {
         final String prefix = "[getIRVContestResults]";

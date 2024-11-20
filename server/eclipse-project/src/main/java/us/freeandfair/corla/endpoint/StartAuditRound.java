@@ -256,6 +256,7 @@ public class StartAuditRound extends AbstractDoSDashboardEndpoint {
     LOGGER.debug(String.format("[countAndSaveContests: cta=%s]", cta));
     final Map<String, AuditReason> tcr = targetedContestReasons(cta);
 
+    // Count the contests, using the trusted Manifests to get the universe sizes.
     return ContestCounter.countAllContests(true).stream().map(cr -> {
       cr.setAuditReason(tcr.getOrDefault(cr.getContestName(),
                                          AuditReason.OPPORTUNISTIC_BENEFITS));

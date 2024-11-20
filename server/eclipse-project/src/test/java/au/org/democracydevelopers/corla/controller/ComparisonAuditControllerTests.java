@@ -99,7 +99,8 @@ public class ComparisonAuditControllerTests extends TestClassWithDatabase {
   public void IRVContestMakesIRVAudit() {
     testUtils.log(LOGGER, "IRVContestMakesIRVAudit");
 
-    // Set up the contest results from the stored data.
+    // Set up the contest results from the stored data. Use manifests for this test (though it
+    // shouldn't matter because for this sample data, the manifests and CVRs have the same totals).
     List<ContestResult> results = ContestCounter.countAllContests(true);
 
     // Find all the ContestResults for TinyIRV - there should be one.

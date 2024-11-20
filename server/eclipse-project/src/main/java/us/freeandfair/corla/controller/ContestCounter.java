@@ -30,10 +30,14 @@ public final class ContestCounter {
   /**
    * Group all CountyContestResults by contest name and tally the votes
    * across all counties that have reported results.
-   * This only works for plurality - not valid, and not needed, for IRV.
-   *
-   * @return List<ContestResult> A high level view of contests and their
-   * participants.
+   * If 'useManifests' is true, it calculates the total universe size from the uploaded manifests -
+   * this is important for the validity of the audit step. useManifests can be false for sample-size
+   * estimation, where we expect that counties may not have uploaded valid manifests - in this case,
+   * universe size is calculated by counting the CVRs.
+   * The actual tallying is valid only for plurality - it is not valid, and not needed, for IRV.
+   * However, this function may still be useful for IRV, e.g. for gathering contests together by
+   * name and calculating their universes.
+   * @return List<ContestResult> A high level view of contests and their participants.
    */
   public static List<ContestResult> countAllContests(boolean useManifests) {
     return
@@ -82,8 +86,8 @@ public final class ContestCounter {
    * @param countyContestResults the county-by-county contest results, which are useful for plurality.
    * @param useManifests         whether to use manifests to compute the total number of ballots. This
    *                             *must* be true when counting for audits - it can be false only when
-   *                             doing sample size estimation. In this case, it computes the total number
-   *                             of ballots based on the (untrusted) CVRs.
+   *                             doing pre-audit sample size estimation. In this case, it computes
+   *                             the total number of ballots based on the (untrusted) CVRs.
    **/
   public static ContestResult countContest(final Map.Entry<String, List<CountyContestResult>> countyContestResults,
                                                                            boolean useManifests) {
@@ -125,12 +129,13 @@ public final class ContestCounter {
                               .map(cr -> cr.county())
                               .collect(Collectors.toSet()));
 
-    Long ballotCount;
-    if(useManifests) {
-      ballotCount = BallotManifestInfoQueries.totalBallots(contestResult.countyIDs());
-    } else {
-      ballotCount = countCVRs(contestResult);
-    }
+    // If we are supposed to use manifests, set the ballotCount to their indicated total, otherwise
+    // count the CVRs.
+    final Long ballotCount = useManifests ?
+      BallotManifestInfoQueries.totalBallots(contestResult.countyIDs()) : countCVRs(contestResult);
+    LOGGER.debug(String.format("%s Contest %s counted %s manifests.", "[countContest]", contestName,
+        useManifests ? "with" : "without"));
+
     final Set<Integer> margins = pairwiseMargins(contestResult.getWinners(),
                                                   contestResult.getLosers(),
                                                   voteTotals);
@@ -154,12 +159,14 @@ public final class ContestCounter {
   }
 
   /**
-   * Calculate the size of the audit universe by counting CVRs. This is the total number
-   * of CVRs in all counties that have any votes in the contest. Used for sample-size estimation.
+   * Calculate the size of the audit universe for a given contest by counting CVRs. This is the
+   * total, over all counties that have any votes in the contest, of the total number of CVRs in the
+   * county. Used for preliminary sample-size estimation before the audit.
    * For example, if a county had 10,000 CVRs, of which only 500 contained the contest, it would
    * contribute 10,000 to the total.
-   * Note this should *not* be used for auditing, only for sample-size estimation - the audit
-   * calculation should get this value from the manifests, not the CVRs.
+   * Note this should *not* be used during auditing, only for preliminary sample-size estimation in
+   * advance of the audit. During auditing, the sample-size estimate calculation should get this
+   * value from the manifests, not the CVRs.
    * @param contestResult the contestResult for this contest.
    * @return the sum, over all counties that contain the contest, of the total number of CVRs in
    *         that county. This will be 0 if either the contestResult has no counties, or the counties
