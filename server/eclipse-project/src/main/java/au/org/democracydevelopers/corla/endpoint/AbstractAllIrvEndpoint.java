@@ -26,12 +26,18 @@ import com.google.gson.Gson;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import us.freeandfair.corla.asm.ASMEvent;
-import us.freeandfair.corla.controller.ContestCounter;
 import us.freeandfair.corla.endpoint.AbstractDoSDashboardEndpoint;
 import us.freeandfair.corla.model.*;
+import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.query.BallotManifestInfoQueries;
 
 import java.net.http.HttpClient;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static us.freeandfair.corla.controller.ContestCounter.countContest;
 
 /**
  * An abstract endpoint for communicating with raire. Includes all the information for collecting IRV contests
@@ -88,7 +94,14 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
     }
 
     /**
-     * Get all the ContestResults whose contests are consistently IRV.
+     * Get (or make) all the ContestResults whose contests are consistently IRV.
+     * Used for assertion generation and retrieval.
+     * Uses manifests if they are there, but just counts the CSVs if not.
+     * This is analogous to (and mostly copied from) ContestCounter::countAllContests, but restricted
+     * to the IRV ones. Although the countContest function isn't really useful or meaningful for IRV,
+     * it is called here because it actually does a lot of other useful things, such as setting the
+     * number of allowed winners and gathering all the results across counties.
+     * Assumption: Contest names are unique.
      * @return A list of all ContestResults for IRV contests.
      * @throws RuntimeException if it encounters contests with a mix of IRV and any other contest type.
      */
@@ -96,13 +109,34 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
         final String prefix = "[getIRVContestResults]";
         final String msg = "Inconsistent contest types:";
 
-        // Find all the ContestResults with any that match IRV.
-        List<ContestResult> results = ContestCounter.countAllContests().stream()
-                .filter(cr -> cr.getContests().stream().map(Contest::description)
-                        .anyMatch(d -> d.equalsIgnoreCase(ContestType.IRV.toString()))).toList();
+
+        List<ContestResult> results = Persistence.getAll(CountyContestResult.class)
+            .stream()
+            // Collect contests by name across counties.
+            .collect(Collectors.groupingBy(x -> x.contest().name()))
+            .entrySet()
+            .stream()
+            .filter(
+               // Filter for those with any IRV descriptions (which should be all)
+               ((Map.Entry<String, List<CountyContestResult>> countyContestResults) ->
+                countyContestResults.getValue().stream().map(ccr -> ccr.contest().description())
+                    .anyMatch(d -> d.equalsIgnoreCase(ContestType.IRV.toString())))
+            )
+            // 'Count' them (which actually does plurality counting and sets various useful values
+            // such as number of winners).
+            .map((Map.Entry<String, List<CountyContestResult>> countyContestResults) ->  {
+                // Use manifests (for the denominator of the diluted margin) if _all_ counties have
+                // uploaded one.
+                boolean useManifests = countyContestResults.getValue().stream().
+                    allMatch(ccr -> BallotManifestInfoQueries.totalBallots(Set.of(ccr.county().id())) > 0);
+                return countContest(countyContestResults, useManifests);
+                }
+            )
+            .toList();
 
         // The above should be sufficient, but just in case, check that each contest we found _all_
-        // matches IRV, and throw a RuntimeException if not.
+        // matches IRV, and throw a RuntimeException if not - one contest must not mix plurality and
+        // IRV.
         for (final ContestResult cr : results) {
             if (cr.getContests().stream().map(Contest::description)
                 .anyMatch(d -> !d.equalsIgnoreCase(ContestType.IRV.toString()))) {

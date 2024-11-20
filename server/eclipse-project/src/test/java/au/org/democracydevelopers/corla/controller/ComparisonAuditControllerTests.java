@@ -99,8 +99,9 @@ public class ComparisonAuditControllerTests extends TestClassWithDatabase {
   public void IRVContestMakesIRVAudit() {
     testUtils.log(LOGGER, "IRVContestMakesIRVAudit");
 
-    // Set up the contest results from the stored data.
-    List<ContestResult> results = ContestCounter.countAllContests();
+    // Set up the contest results from the stored data. Use manifests for this test (though it
+    // shouldn't matter because for this sample data, the manifests and CVRs have the same totals).
+    List<ContestResult> results = ContestCounter.countAllContests(true);
 
     // Find all the ContestResults for TinyIRV - there should be one.
     List<ContestResult> tinyIRVResults = results.stream().filter(
@@ -121,7 +122,7 @@ public class ComparisonAuditControllerTests extends TestClassWithDatabase {
     testUtils.log(LOGGER, "pluralityContestMakesPluralityAudit");
 
     // Set up the contest results from the stored data.
-    List<ContestResult> results = ContestCounter.countAllContests();
+    List<ContestResult> results = ContestCounter.countAllContests(true);
 
     // Find all the ContestResults for TinyPlurality - there should be one.
     List<ContestResult> tinyPluralityResults = results.stream().filter(
@@ -142,7 +143,7 @@ public class ComparisonAuditControllerTests extends TestClassWithDatabase {
     testUtils.log(LOGGER, "inconsistentContestThrowsException");
 
     // Set up the contest results from the stored data.
-    List<ContestResult> results = ContestCounter.countAllContests();
+    List<ContestResult> results = ContestCounter.countAllContests(true);
 
     // Find all the contestResults for TinyMixed - there should be one.
     List<ContestResult> tinyMixedResults = results.stream().filter(

@@ -23,31 +23,92 @@ package au.org.democracydevelopers.corla.workflows;
 
 import static io.restassured.RestAssured.given;
 import static org.testng.Assert.assertEquals;
+import static us.freeandfair.corla.Main.main;
+import static us.freeandfair.corla.auth.AuthenticationInterface.USERNAME;
+import static us.freeandfair.corla.auth.AuthenticationStage.SECOND_FACTOR_AUTHENTICATED;
+import static us.freeandfair.corla.auth.AuthenticationStage.TRADITIONALLY_AUTHENTICATED;
+import static us.freeandfair.corla.model.AuditType.COMPARISON;
 
+import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
+import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.apache.http.HttpStatus;
 import org.testng.annotations.BeforeClass;
+import us.freeandfair.corla.model.UploadedFile;
+import wiremock.net.minidev.json.JSONArray;
 import wiremock.net.minidev.json.JSONObject;
 
 /**
  * Base class for an API test workflow designed to run through a sequence of steps involving
  * a sequence of endpoint accesses.
  */
-public class Workflow {
+public class Workflow extends TestClassWithDatabase {
+
+  /**
+   * Number of CO counties
+   */
+  protected static final int numCounties = 64;
+
+  /**
+   * Set of all CO counties, by number.
+   */
+  protected static final Set<Integer> allCounties
+      = IntStream.rangeClosed(1,numCounties).boxed().collect(Collectors.toSet());
+
+  /**
+   * Default PRNG seed.
+   */
+  protected static final String defaultSeed = "24098249082409821390482049098";
 
   /**
    * Class-wide logger
    */
   private static final Logger LOGGER = LogManager.getLogger(Workflow.class);
+
+  /**
+   * Path for storing temporary config files
+   */
+  private static final String tempConfigPath = "src/test/workflows/temp/";
+
+  /**
+   * Strings for colorado-rla JSON structures.
+   */
+  protected static final String ASM_STATE = "asm_state";
+  protected static final String AUDIT = "audit";
+  protected static final String AUDIT_INFO = "audit_info";
+  protected static final String CONTEST = "contest";
+  protected static final String CANONICAL_CHOICES = "canonicalChoices";
+  protected static final String CANONICAL_CONTESTS = "canonicalContests";
+  protected static final String COUNTY_STATUS = "county_status";
+  protected static final String CVR_FILETYPE = "cvr-export";
+  protected static final String CVR_JSON = "cvr_export_file";
+  protected static final String ESTIMATED_BALLOTS = "estimated_ballots_to_audit";
+  protected static final String ELECTION_DATE = "election_date";
+  protected static final String ELECTION_TYPE = "election_type";
+  protected static final String ID = "id";
+  protected static final String MANIFEST_FILETYPE = "ballot-manifest";
+  protected static final String MANIFEST_JSON = "ballot_manifest_file";
+  protected static final String NAME = "name";
+  protected static final String PUBLIC_MEETING_DATE = "public_meeting_date";
+  protected static final String REASON = "reason";
+  protected static final String RISK_LIMIT_JSON = "risk_limit";
+  protected static final String SEED = "seed";
+  protected static final String STATUS = "status";
 
   @BeforeClass
   public void setup() {
@@ -55,20 +116,40 @@ public class Workflow {
     RestAssured.port = 8888;
   }
 
-  protected JSONObject createBody(final Map<String,String> data){
-    JSONObject body = new JSONObject();
+  /**
+   * Run main, using the psql container as its database. Main can take (database) properties as a
+   * CLI, but only as a file, so we need to make the file and then tell main to read it.
+   * @param testFileName the name of the test file - must be different for each test.
+   */
+  protected static void runMain(final String testFileName) {
+    final String propertiesFile = tempConfigPath + testFileName + "-test.properties";
+    try {
+      FileOutputStream os = new FileOutputStream(propertiesFile);
+      final StringWriter sw = new StringWriter();
+      config.store(sw, "Ephemeral database config for "+testFileName);
+      os.write(sw.toString().getBytes());
+      os.close();
+    } catch (Exception e) {
+      LOGGER.error("Couldn't write " + testFileName + "-test.properties. "+e.getMessage(), e);
+    }
+    main(propertiesFile);
+  }
+
+  protected JSONObject createBody(final Map<String, String> data) {
+    final JSONObject body = new JSONObject();
     body.putAll(data);
     return body;
   }
 
   /**
    * Authenticate the given user with the given password/second factor challenge answer.
+   *
    * @param filter Session filter to maintain same session across API test.
-   * @param user Username to authenticate
-   * @param pwd Password/second factor challenge answer for user.
-   * @param stage Authentication stage.
+   * @param user   Username to authenticate
+   * @param pwd    Password/second factor challenge answer for user.
+   * @param stage  Authentication stage.
    */
-  protected void authenticate(final SessionFilter filter, final String user, final String pwd, final int stage){
+  protected void authenticate(final SessionFilter filter, final String user, final String pwd, final int stage) {
     final JSONObject requestParams = (stage == 1) ?
         createBody(Map.of("username", user, "password", pwd)) :
         createBody(Map.of("username", user, "second_factor", pwd));
@@ -80,18 +161,19 @@ public class Workflow {
 
     final String authStatus = response.getBody().jsonPath().getString("stage");
 
-    LOGGER.debug("Auth status for login "+user+" stage "+stage+" is "+authStatus);
-    assertEquals(authStatus, (stage == 1) ? "TRADITIONALLY_AUTHENTICATED" :
-        "SECOND_FACTOR_AUTHENTICATED", "Stage "+stage+" auth failed.");
+    LOGGER.debug("Auth status for login " + user + " stage " + stage + " is " + authStatus);
+    assertEquals(authStatus, (stage == 1) ? TRADITIONALLY_AUTHENTICATED.toString()
+        : SECOND_FACTOR_AUTHENTICATED.toString(), "Stage " + stage + " auth failed.");
   }
 
   /**
    * Unauthenticate the given user.
+   *
    * @param filter Session filter to maintain same session across API test.
-   * @param user Username to unauthenticate.
+   * @param user   Username to unauthenticate.
    */
-  protected void logout(final SessionFilter filter, final String user){
-    JSONObject requestParams = createBody(Map.of("username", user));
+  protected void logout(final SessionFilter filter, final String user) {
+    final JSONObject requestParams = createBody(Map.of(USERNAME, user));
 
     given()
         .filter(filter)
@@ -102,19 +184,17 @@ public class Workflow {
 
   /**
    * Upload a file and its corresponding hash on behalf of the given county number.
-   * @param number Number of the county uploading the CVR/hash.
-   * @param file Path of the file to be uploaded.
+   *
+   * @param number   Number of the county uploading the CVR/hash.
+   * @param file     Path of the file to be uploaded.
    * @param hashFile Path of the corresponding hash for the CVR file.
    */
   protected void uploadCounty(final int number, final String fileType,
-      final String file, final String hashFile){
+                              final String file, final String hashFile) {
+    final String prefix = "[uploadCounty]";
 
-    final SessionFilter filter = new SessionFilter();
     final String user = "countyadmin" + number;
-
-    // Login as the county.
-    authenticate(filter, user, "", 1);
-    authenticate(filter, user, "s d f", 2);
+    final SessionFilter filter = doLogin(user);
 
     // GET the county dashboard. This is just to test that the login worked.
     given().filter(filter).get("/county-dashboard");
@@ -136,8 +216,257 @@ public class Workflow {
         .body(response.then().extract().asString())
         .post("/import-" + fileType);
 
+    LOGGER.debug(String.format("%s %s %s %s.", prefix, "Successful file upload - ", user, fileType));
+
     // Logout.
     logout(filter, user);
+  }
+
+  /**
+   * Get the DoSDashboardRefreshResponse, as a JSONPath object, which contains basically everything
+   * about the current status of the audit.
+   * Also tests that the http response is OK.
+   * @return the DosDashboardRefreshResponse.
+   */
+  protected JsonPath getDoSDashBoardRefreshResponse() {
+    // Note: this would be a lot simpler if it just returned a DoSDashBoardRefreshResponse via
+    // DoSDashboardRefreshResponse DoSDasboard = GSON.fromJson(data, DoSDashboardRefreshResponse.class);
+    // but that throws errors relating to parsing of enums. Not sure exactly why.
+    // Similarly, so does getting the response and then calling
+    // .as(DoSDashboardRefreshResponse.class);
+    // So I've left it as a JsonPath, from which you can collect the fields by name.
+
+    // Login as state admin.
+    final SessionFilter filter = doLogin("stateadmin1");
+
+    return given()
+            .filter(filter)
+            .header("Content-Type", "application/json")
+            .get("/dos-dashboard")
+            .then()
+            .assertThat()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .body()
+            .jsonPath();
+  }
+
+  /**
+   * Get the sample size estimates CSV and return the parsed data.
+   * @return The sample size estimate data as a list of EstimateData structures.
+   */
+  protected Map<String,EstimateSampleSizes.EstimateData> getSampleSizeEstimates() {
+    final String prefix = "[getSampleSizeEstimates]";
+
+    // Login as state admin.
+    final SessionFilter filter = doLogin("stateadmin1");
+
+    final String data = given()
+        .filter(filter)
+        .get("/estimate-sample-sizes")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK)
+        .extract()
+        .body()
+        .asString();
+
+    final Map<String,EstimateSampleSizes.EstimateData> estimates = new HashMap<>();
+    final String[] lines = data.split("\n");
+    // Skip the first line (which has headers)
+    for(int i = 1 ; i < lines.length ; i++) {
+
+      final String[] line = lines[i].split(",");
+      if(line.length < 7) {
+        final String msg = prefix + " Invalid sample size estimate data";
+        LOGGER.error(msg);
+        throw new RuntimeException(msg);
+      }
+
+      final EstimateSampleSizes.EstimateData estimate = new EstimateSampleSizes.EstimateData(
+          line[0],
+          line[1],
+          line[2],
+          Integer.parseInt(line[3]),
+          Long.parseLong(line[4]),
+          new BigDecimal(line[5]),
+          Integer.parseInt(line[6])
+      );
+      estimates.put(estimate.contestName(), estimate);
+    }
+
+    return estimates;
+  }
+
+  /**
+   * Used by DoS admin to set audit info, including risk limit and canonical list.
+   * Sets the election date to an arbitrary date and the public meeting for one week later.
+   * @param canonicalListFile the path to the canonical list csv file.
+   * @param riskLimit         the risk limit.
+   */
+  protected void updateAuditInfo(final String canonicalListFile, final BigDecimal riskLimit) {
+
+    // Login as state admin.
+    final SessionFilter filter = doLogin("stateadmin1");
+
+    final JSONObject requestParams = new JSONObject();
+    requestParams.put(RISK_LIMIT_JSON, riskLimit);
+    requestParams.put(ELECTION_DATE,"2024-09-15T05:42:17.796Z");
+    requestParams.put(ELECTION_TYPE,"general");
+    requestParams.put(PUBLIC_MEETING_DATE,"2024-09-22T05:42:22.037Z");
+    final JSONObject canonicalListContents = new JSONObject();
+    canonicalListContents.put("contents",readFromFile(canonicalListFile));
+    requestParams.put("upload_file", List.of(canonicalListContents));
+
+    given()
+        .filter(filter)
+        .header("Content-Type", "application/json")
+        .body(requestParams.toString())
+        .post("/update-audit-info")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
+  }
+
+  /**
+   * Checks that all the given counties have completed their CVR upload within the timeout.
+   * @param counties       the counties to wait for, by county ID.
+   * @param timeAllowedSeconds the maximum time, in seconds, to wait for.
+   * @return true if all uploads were successful within timeoutSeconds, false if any failed or the timeout was reached.
+   * Timing is imprecise and assumes all the calls take no time.
+   */
+  protected boolean uploadSuccessfulWithin(int timeAllowedSeconds, final Set<Integer> counties, final String fileType) throws InterruptedException {
+
+    JsonPath dashboard = getDoSDashBoardRefreshResponse();
+      while (timeAllowedSeconds-- > 0) {
+        List<Integer> succeededCounties = new ArrayList<>();
+        for (int c : counties) {
+          final String status = dashboard.getString(COUNTY_STATUS + "." + c + "." + fileType + "."
+              + STATUS);
+            // Upload failed (e.g. a hash mismatch).
+          if (status != null && status.equals(UploadedFile.FileStatus.FAILED.toString())) {
+            return false;
+            // This county succeeded.
+          } else if (status != null && status.equals(UploadedFile.FileStatus.IMPORTED.toString())) {
+            succeededCounties.add(c);
+          }
+        }
+        if (succeededCounties.size() == counties.size()) {
+          return true;
+        } else {
+          Thread.sleep(1000);
+          dashboard = getDoSDashBoardRefreshResponse();
+        }
+    }
+
+    // Timeout.
+    return false;
+
+
+  }
+
+  /**
+   * Generate assertions (for IRV contests)
+   * TODO At the moment this expects the raire-service to be running, which is a problem because it will be reading the
+   * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/218">...</a>
+   * wrong database.
+   * Set it up so that we run raire-service inside the Docker container and tell main where to find it.
+   */
+  protected void generateAssertions(final double timeLimitSeconds) {
+      // Login as state admin.
+      final SessionFilter filter = doLogin("stateadmin1");
+
+      given()
+          .filter(filter)
+          .header("Content-Type", "application/x-www-form-urlencoded")
+          .get("/generate-assertions?timeLimitSeconds="+timeLimitSeconds)
+          .then()
+          .assertThat()
+          .statusCode(HttpStatus.SC_OK);
+  }
+
+  protected void startAuditRound() {
+    // Login as state admin.
+    final SessionFilter filter = doLogin("stateadmin1");
+
+    given()
+        .filter(filter)
+        .post("/start-audit-round")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
+  }
+  /**
+   * Select contests to target, by name.
+   */
+  protected void targetContests(final Map<String, String> targetedContestsWithReasons) {
+    // Login as state admin.
+    final SessionFilter filter = doLogin("stateadmin1");
+
+    // First get the contests.
+    // Again, this would be a lot easier if we could use .as(Contest[].class), but serialization is a problem.
+    final JsonPath contests = given()
+            .filter(filter)
+            .header("Content-Type", "text/plain")
+            .get("/contest")
+            .then()
+            .assertThat()
+            .statusCode(HttpStatus.SC_OK)
+        .extract()
+        .body()
+        .jsonPath();
+
+    // The contests and reasons to be requested.
+    final JSONArray contestSelections = new JSONArray();
+
+    // Find the IDs of the ones we want to target.
+    for(int i=0 ; i < contests.getList("").size() ; i++) {
+
+      final String contestName = contests.getString("[" + i + "]." + NAME);
+      // If this contest's name is one of the targeted ones...
+      final String reason = targetedContestsWithReasons.get(contestName);
+      if(reason != null) {
+        // add it to the selections.
+        final JSONObject contestSelection = new JSONObject();
+
+        final Integer contestId = contests.getInt("[" + i + "]." + ID);
+        contestSelection.put(AUDIT, COMPARISON.toString());
+        contestSelection.put(CONTEST, contestId);
+        contestSelection.put(REASON, reason);
+        contestSelections.add(contestSelection);
+      }
+    }
+
+    // Post the select-contests request
+    given()
+        .filter(filter)
+        .header("Content-Type", "application/json")
+        .body(contestSelections.toString())
+        .post("/select-contests")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
+
+  }
+
+  /**
+   * Set the seed for the audit.
+   */
+  protected void setSeed(final String seed) {
+    // Login as state admin.
+    final SessionFilter filter = doLogin("stateadmin1");
+
+    final JSONObject requestParams = new JSONObject();
+    requestParams.put(SEED, seed);
+
+    given()
+        .filter(filter)
+        .header("Content-Type", "application/json")
+        .body(requestParams.toString())
+        .post("/random-seed")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
   }
 
   /**
@@ -149,12 +478,19 @@ public class Workflow {
   private String readFromFile(final String fileName) {
     final String prefix = "[readFromFile]";
     try {
-      Path path = Paths.get(fileName);
+      final Path path = Paths.get(fileName);
       return String.join("\n",Files.readAllLines(path));
-      } catch (IOException ex) {
-      LOGGER.error(prefix + ex.getMessage());
+      } catch (final IOException ex) {
+        LOGGER.error(prefix + ex.getMessage());
       return "";
     }
+  }
+
+  private SessionFilter doLogin(final String username) {
+    final SessionFilter filter = new SessionFilter();
+    authenticate(filter, username,"",1);
+    authenticate(filter, username,"s d f",2);
+    return filter;
   }
 
 }

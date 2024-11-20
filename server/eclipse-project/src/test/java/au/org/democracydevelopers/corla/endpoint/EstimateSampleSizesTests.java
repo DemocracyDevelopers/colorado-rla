@@ -154,7 +154,7 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
       doSD.updateAuditInfo(new AuditInfo(null, null, null,null, BigDecimal.valueOf(0.04)));
 
       // Mock return of empty contest list.
-      mockedCounter.when(ContestCounter::countAllContests).thenReturn(List.of());
+      mockedCounter.when(() -> ContestCounter.countAllContests(false)).thenReturn(List.of());
 
       // Check for error response.
       errorBody = "";
@@ -169,7 +169,7 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
 
       // Mock non-empty contest response (one plurality and one IRV contest).
       List<ContestResult> mockedContestResults = List.of(pluralityContestResult, irvContestResult);
-      mockedCounter.when(ContestCounter::countAllContests).thenReturn(mockedContestResults);
+      mockedCounter.when(() -> ContestCounter.countAllContests(false)).thenReturn(mockedContestResults);
 
       endpoint.endpointBody(request, response);
 

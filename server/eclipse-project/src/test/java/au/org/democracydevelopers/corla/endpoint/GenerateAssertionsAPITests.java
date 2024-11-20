@@ -43,7 +43,6 @@ import spark.HaltException;
 import spark.Request;
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.*;
-import us.freeandfair.corla.controller.ContestCounter;
 import us.freeandfair.corla.model.AuditReason;
 import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.model.ContestResult;
@@ -192,7 +191,7 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
 
     // Mock the main class; mock its auth as the mocked state admin auth.
     try (MockedStatic<Main> mockedMain = Mockito.mockStatic(Main.class);
-         MockedStatic<ContestCounter> mockedCounter = Mockito.mockStatic(ContestCounter.class)) {
+         MockedStatic<AbstractAllIrvEndpoint> mockedIRVEndpoint = Mockito.mockStatic(AbstractAllIrvEndpoint.class)) {
 
       // Mock auth.
       mockedMain.when(Main::authentication).thenReturn(auth);
@@ -202,7 +201,7 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
 
       // Mock non-empty contest response (one IRV contest).
       List<ContestResult> mockedContestResults = List.of(tinyIRVContestResult);
-      mockedCounter.when(ContestCounter::countAllContests).thenReturn(mockedContestResults);
+      mockedIRVEndpoint.when(AbstractAllIrvEndpoint::getIRVContestResults).thenReturn(mockedContestResults);
 
       // We seem to need a dummy request to run before.
       final Request request = new SparkRequestStub("", Map.of(CONTEST_NAME, tinyIRV));

@@ -128,6 +128,9 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
 
   /**
    * Compute sample sizes for all contests for which CountyContestResults exist in the database.
+   * This method ignores manifests, instead using the count of uploaded CSVs. This means that the
+   * estimate may differ from the estimate computed by estimatedSampleSize() during the audit, if
+   * the manifest has more votes than the CVR file.
    * @return A list of string arrays containing rows with the following data: county name,
    * contest name, contest type, single or multi-jurisdictional, ballots cast, diluted margin,
    * and estimated sample size.
@@ -143,7 +146,8 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
     // in a ContestResult for an IRV contest will not be used. In the call to ContestCounter
     // (countAllContests), all persisted CountyContestResults will be accessed from the database,
     // grouped by contest, and accumulated into a single ContestResult.
-    final List<ContestResult> countedCRs = ContestCounter.countAllContests().stream().peek(cr ->
+    // Set the useManifests flag to false, to tell contest counter to use CVR count instead.
+    final List<ContestResult> countedCRs = ContestCounter.countAllContests(false).stream().peek(cr ->
         cr.setAuditReason(AuditReason.OPPORTUNISTIC_BENEFITS)).toList();
 
     // Try to get the DoS Dashboard, which may contain the risk limit for the audit.
@@ -186,7 +190,7 @@ public class EstimateSampleSizes extends AbstractDoSDashboardEndpoint {
    * @param dilutedMargin    The margin divided by the total Auditable ballots.
    * @param estimatedSamples The estimated samples to audit.
    */
-  private record EstimateData(String countyName, String contestName, String contestType,
+  public record EstimateData(String countyName, String contestName, String contestType,
                               int contestBallots, long totalBallots, BigDecimal dilutedMargin,
                               int estimatedSamples) implements Comparable<EstimateData> {
 
