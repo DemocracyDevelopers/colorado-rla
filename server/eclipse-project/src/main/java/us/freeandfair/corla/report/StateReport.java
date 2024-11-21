@@ -483,10 +483,11 @@ public class StateReport {
 
         // County-level results really don't make sense for IRV. Therefore print a
         // very brief summary and a reference to the assertions csv.
+        // At this stage, we don't want to print IRV choices.
         for (final CountyContestResult ccr : e.getValue().drivingContestResults()) {
 
           final CellStatus status = makeContestSummary(row_number, max_cell_number, ccr, summary_sheet,
-              bold_style, integer_style, bold_right_style, decimal_style,
+              false, bold_style, integer_style, bold_right_style, decimal_style,
               standard_style, standard_right_style);
 
             row_number = status.row_number;
@@ -686,13 +687,17 @@ public class StateReport {
    * Make the cells for one contest's worth of summary data. For IRV, this just prints the
    * contest name, choices, and the fact that it's IRV. For plurality, it outputs much more
    * detailed data.
-   * @param row_number           Number of the current row, which is incremented as we progress and
-   *                             included in Cell Status on return.
-   * @param max_cell_number      The maximum cell number used, which is included in Cell Status on return.
-   * @param ccr                  The County Contest Result to be summarized.
-   * @param summary_sheet        The sheet to be added to.
-   * @param bold_style           All these styles are included (though they could be class-level finals)
-   *                             in case a caller from another class wants different styles.
+   * @param row_number            Number of the current row, which is incremented as we progress and
+   *                              included in Cell Status on return.
+   * @param max_cell_number       The maximum cell number used, which is included in Cell Status on return.
+   * @param ccr                   The County Contest Result to be summarized.
+   * @param summary_sheet         The sheet to be added to.
+   * @param IRVChoicesSummaryOnly If true, it makes a summary *only for IRV contests*, which includes
+   *                              the choices. This is meant for the end of the .xls file.
+   *                              If false, it makes a row that mentions the IRV contest by name,
+   *                              and just adds "See below, or assertions csv."
+   * @param bold_style            All these styles are included (though they could be class-level finals)
+   *                              in case a caller from another class wants different styles.
    * @param integer_style        "
    * @param bold_right_style     "
    * @param decimal_style        "
@@ -702,52 +707,58 @@ public class StateReport {
    *         and what maximum cell number has been used.
    */
   protected static CellStatus makeContestSummary(int row_number, int max_cell_number, final CountyContestResult ccr,
-            final Sheet summary_sheet, final CellStyle bold_style, final CellStyle integer_style, final CellStyle bold_right_style,
+            final Sheet summary_sheet, final boolean IRVChoicesSummaryOnly, final CellStyle bold_style, final CellStyle integer_style, final CellStyle bold_right_style,
             final CellStyle decimal_style, final CellStyle standard_style, final CellStyle standard_right_style) {
-      row_number++;
-      Row row = summary_sheet.createRow(row_number++);
-      int cell_number = 0;
+    row_number++;
+    Row row = summary_sheet.createRow(row_number++);
+    int cell_number = 0;
 
-      Cell cell = row.createCell(cell_number++);
-      cell.setCellStyle(bold_style);
+    Cell cell = row.createCell(cell_number++);
+    cell.setCellStyle(bold_style);
 
-      final boolean isIRV = ccr.contest().description().equals(ContestType.IRV.toString());
+    final boolean isIRV = ccr.contest().description().equals(ContestType.IRV.toString());
+    final String contestname = ccr.contest().name() + (isIRV ? " - IRV" : " - Vote For " + ccr.contest().votesAllowed());
 
-      if (isIRV) {
-        cell.setCellValue(ccr.contest().name() + " - IRV");
-      } else {
-        cell.setCellValue(ccr.contest().name() + " - Vote For " + ccr.contest().votesAllowed());
-      }
+    // Print the contest name, unless it's plurality and we're doing IRVChoicesSummaryOnly.
+    if (isIRV || !IRVChoicesSummaryOnly) {
+      cell.setCellValue(contestname);
+    }
 
-      // Keep the choices column, for both IRV and plurality.
+    if (isIRV && !IRVChoicesSummaryOnly) {
+      // If it's IRV and we're told not to print the choices here, the summary data is in the
+      // assertions csv. Add a message.
+      cell = row.createCell(cell_number++);
+      cell.setCellStyle(standard_style);
+      cell.setCellValue("See below, or assertions csv");
+    } else {
+      // Keep the choices column, for both IRV-with-choices-printing and plurality.
       cell = row.createCell(cell_number++);
       cell.setCellStyle(bold_style);
       cell.setCellValue("Choice");
 
-      if (isIRV) {
-        // If it's IRV, the summary data is in the assertions csv. Add a message.
-        cell = row.createCell(cell_number++);
-        cell.setCellStyle(standard_style);
-        cell.setCellValue("See assertions csv");
-      } else {
-        // Plurality. Print the other data - winners, vote tallies, margins.
-        cell = row.createCell(cell_number++);
-        cell.setCellStyle(bold_right_style);
-        cell.setCellValue("W/L");
+    }
 
-        cell = row.createCell(cell_number++);
-        cell.setCellStyle(bold_right_style);
-        cell.setCellValue("Votes");
+    if (!isIRV && !IRVChoicesSummaryOnly) {
+      // Plurality. Print the other data - winners, vote tallies, margins.
+      cell = row.createCell(cell_number++);
+      cell.setCellStyle(bold_right_style);
+      cell.setCellValue("W/L");
 
-        cell = row.createCell(cell_number++);
-        cell.setCellStyle(bold_right_style);
-        cell.setCellValue("Margin");
+      cell = row.createCell(cell_number++);
+      cell.setCellStyle(bold_right_style);
+      cell.setCellValue("Votes");
 
-        cell = row.createCell(cell_number++);
-        cell.setCellStyle(bold_right_style);
-        cell.setCellValue("Diluted Margin %");
-      }
+      cell = row.createCell(cell_number++);
+      cell.setCellStyle(bold_right_style);
+      cell.setCellValue("Margin");
 
+      cell = row.createCell(cell_number++);
+      cell.setCellStyle(bold_right_style);
+      cell.setCellValue("Diluted Margin %");
+    }
+
+    // Print the choices, if required.
+    if (!isIRV || IRVChoicesSummaryOnly) {
       for (final String choice : ccr.rankedChoices()) {
         // List all the choices, for both IRV and plurality.
         row = summary_sheet.createRow(row_number++);
@@ -792,6 +803,7 @@ public class StateReport {
           }
         }
       }
+    }
     return new CellStatus(row_number, max_cell_number);
   }
 
