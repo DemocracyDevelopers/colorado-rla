@@ -31,6 +31,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
+import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
@@ -47,27 +48,15 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
 public class Demo1 extends Workflow {
 
   /**
-   * Path for all the data files.
-   */
-  private static final String dataPath = "src/test/resources/CSVs/";
-
-  /**
    * Class-wide logger
    */
   private static final Logger LOGGER = LogManager.getLogger(Demo1.class);
-
-  /**
-   * Container for the mock-up database.
-   */
-  private final static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
    * Database init.
    */
   @BeforeClass
   public static void beforeAll() {
-
-    final var containerDelegate = setupContainerStartPostgres(postgres);
 
     var s = Persistence.openSession();
     s.beginTransaction();
@@ -156,8 +145,9 @@ public class Demo1 extends Workflow {
     // assertEquals(4, dashboard.getList("generate_assertions_summaries").size());
 
     // 5. Choose targeted contests for audit.
-    // For now, just target plurality contests.
-    targetContests(Map.of("City of Longmont - Mayor","COUNTY_WIDE_CONTEST"));
+    targetContests(Map.of("City of Longmont - Mayor","COUNTY_WIDE_CONTEST",
+        "Byron Mayoral", "STATE_WIDE_CONTEST",
+        "Kempsey Mayoral", "COUNTY_WIDE_CONTEST"));
 
     // 6. Set the seed.
     setSeed(defaultSeed);

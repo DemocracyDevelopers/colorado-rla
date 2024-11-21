@@ -48,6 +48,8 @@ import java.util.stream.IntStream;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.BeforeClass;
 import us.freeandfair.corla.model.UploadedFile;
 import wiremock.net.minidev.json.JSONArray;
@@ -84,6 +86,21 @@ public class Workflow extends TestClassWithDatabase {
    * Path for storing temporary config files
    */
   private static final String tempConfigPath = "src/test/workflows/temp/";
+
+  /**
+   * Path for all the data files.
+   */
+  protected static final String dataPath = "src/test/resources/CSVs/";
+
+  /**
+   * Container for the mock-up database.
+   */
+  protected final static PostgreSQLContainer<?> postgres = createTestContainer();
+
+  /**
+   * Container delegate for initialising mock-up database.
+   */
+  protected final static JdbcDatabaseDelegate containerDelegate = setupContainerStartPostgres(postgres);
 
   /**
    * Strings for colorado-rla JSON structures.
