@@ -59,16 +59,12 @@ public class Demo1 extends Workflow {
   private final static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
-   * Container delegate for initialising mock-up database.
-   */
-  private final static JdbcDatabaseDelegate containerDelegate = setupContainerStartPostgres(postgres);
-
-
-  /**
    * Database init.
    */
   @BeforeClass
   public static void beforeAll() {
+
+    final var containerDelegate = setupContainerStartPostgres(postgres);
 
     var s = Persistence.openSession();
     s.beginTransaction();
@@ -150,6 +146,7 @@ public class Demo1 extends Workflow {
     assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
     // 4. Generate assertions; sanity check
+    final var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
     generateAssertions("SQL/demo1-assertions.sql", containerDelegate,1);
     dashboard = getDoSDashBoardRefreshResponse();
 

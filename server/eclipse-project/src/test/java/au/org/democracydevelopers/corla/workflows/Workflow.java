@@ -94,16 +94,6 @@ public class Workflow extends TestClassWithDatabase {
   protected static final String dataPath = "src/test/resources/CSVs/";
 
   /**
-   * Container for the mock-up database.
-   */
-  //protected final static PostgreSQLContainer<?> postgres = createTestContainer();
-
-  /**
-   * Container delegate for initialising mock-up database.
-   */
-  //protected final static JdbcDatabaseDelegate containerDelegate = setupContainerStartPostgres(postgres);
-
-  /**
    * Strings for colorado-rla JSON structures.
    */
   protected static final String ASM_STATE = "asm_state";
