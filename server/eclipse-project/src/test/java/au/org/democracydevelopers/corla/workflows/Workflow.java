@@ -48,6 +48,9 @@ import java.util.stream.IntStream;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.ext.ScriptUtils;
+import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.BeforeClass;
 import us.freeandfair.corla.model.UploadedFile;
 import wiremock.net.minidev.json.JSONArray;
@@ -81,9 +84,19 @@ public class Workflow extends TestClassWithDatabase {
   private static final Logger LOGGER = LogManager.getLogger(Workflow.class);
 
   /**
+   * Container for the mock-up database.
+   */
+  protected final static PostgreSQLContainer<?> postgres = createTestContainer();
+
+  /**
    * Path for storing temporary config files
    */
   private static final String tempConfigPath = "src/test/workflows/temp/";
+
+  /**
+   * Path for all the data files.
+   */
+  protected static final String dataPath = "src/test/resources/CSVs/";
 
   /**
    * Strings for colorado-rla JSON structures.
@@ -366,23 +379,31 @@ public class Workflow extends TestClassWithDatabase {
   }
 
   /**
-   * Generate assertions (for IRV contests)
-   * TODO At the moment this expects the raire-service to be running, which is a problem because it will be reading the
+   * Generate assertions (for IRV contests). At the moment, rather than call raire-service, we
+   * are mocking that functionality. To do so, we take the path to a file containing SQL insert
+   * statements for all assertion related content that would have been created by the raire-service,
+   * and inserted into the database, and insert it into the database here.
+   * TODO Replace this with a call to the raire-service. Currently problematic because it will be
+   * reading the wrong database.
    * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/218">...</a>
-   * wrong database.
    * Set it up so that we run raire-service inside the Docker container and tell main where to find it.
    */
-  protected void generateAssertions(final double timeLimitSeconds) {
-      // Login as state admin.
-      final SessionFilter filter = doLogin("stateadmin1");
+  protected void generateAssertions(final String sqlPath, final double timeLimitSeconds)
+  {
+      final var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+      ScriptUtils.runInitScript(containerDelegate, sqlPath);
 
-      given()
-          .filter(filter)
-          .header("Content-Type", "application/x-www-form-urlencoded")
-          .get("/generate-assertions?timeLimitSeconds="+timeLimitSeconds)
-          .then()
-          .assertThat()
-          .statusCode(HttpStatus.SC_OK);
+      // Version that connects to raire-service below:
+      // Login as state admin.
+      //final SessionFilter filter = doLogin("stateadmin1");
+
+      //given()
+      //    .filter(filter)
+      //    .header("Content-Type", "application/x-www-form-urlencoded")
+      //    .get("/generate-assertions?timeLimitSeconds="+timeLimitSeconds)
+      //    .then()
+      //    .assertThat()
+      //    .statusCode(HttpStatus.SC_OK);
   }
 
   protected void startAuditRound() {

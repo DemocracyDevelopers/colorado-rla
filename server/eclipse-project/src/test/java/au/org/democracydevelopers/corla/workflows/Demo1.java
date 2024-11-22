@@ -29,7 +29,6 @@ import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -41,25 +40,15 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
 /**
  * A demonstration workflow that uploads CVRs and ballot manifests for all 64 counties.
  * At the moment, this seems to run fine if run alone, but not to run in parallel with
- * EstimateSamplesVaryingManifests, or in * github actions. Hence currently disabled.
+ * EstimateSamplesVaryingManifests.
  */
 @Test(enabled=true)
 public class Demo1 extends Workflow {
 
   /**
-   * Path for all the data files.
-   */
-  private static final String dataPath = "src/test/resources/CSVs/";
-
-  /**
    * Class-wide logger
    */
   private static final Logger LOGGER = LogManager.getLogger(Demo1.class);
-
-  /**
-   * Container for the mock-up database.
-   */
-  private final static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
    * Database init.
@@ -149,15 +138,16 @@ public class Demo1 extends Workflow {
     assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
     // 4. Generate assertions; sanity check
-    // TODO this is commented out for now while we figure out how to run the raire-service in the Docker container.
-    // generateAssertions(1);
-    // dashboard = getDoSDashBoardRefreshResponse();
+    generateAssertions("SQL/demo1-assertions.sql", 1);
+    dashboard = getDoSDashBoardRefreshResponse();
+
     // There should be 4 IRV contests.
-    // assertEquals(4, dashboard.getList("generate_assertions_summaries").size());
+    assertEquals(4, dashboard.getList("generate_assertions_summaries").size());
 
     // 5. Choose targeted contests for audit.
-    // For now, just target plurality contests.
-    targetContests(Map.of("City of Longmont - Mayor","COUNTY_WIDE_CONTEST"));
+    targetContests(Map.of("City of Longmont - Mayor","COUNTY_WIDE_CONTEST",
+        "Byron Mayoral", "STATE_WIDE_CONTEST",
+        "Kempsey Mayoral", "COUNTY_WIDE_CONTEST"));
 
     // 6. Set the seed.
     setSeed(defaultSeed);
@@ -171,7 +161,7 @@ public class Demo1 extends Workflow {
     Map<String, EstimateSampleSizes.EstimateData> sampleSizes = getSampleSizeEstimates();
     assertFalse(sampleSizes.isEmpty());
 
-    // TODO get assertions, sanity check, but first get the raire-service working (see above).
+    // TODO Sanity check of assertions and sample size estimates.
 
     LOGGER.debug("Successfully completed Demo1.");
   }
