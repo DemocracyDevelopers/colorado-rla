@@ -4,6 +4,7 @@ import * as _ from 'lodash';
 
 import { Button, Icon, Intent } from '@blueprintjs/core';
 
+import IrvChoiceForm from 'corla/component/County/Audit/Wizard/IrvChoiceForm';
 import SubmittingACVR from './SubmittingACVR';
 
 interface EditButtonProps {
@@ -75,7 +76,7 @@ interface BallotContestReviewProps {
 const BallotContestReview = (props: BallotContestReviewProps) => {
     const { back, contest, marks } = props;
     const { comments, noConsensus } = marks;
-    const { votesAllowed } = contest;
+    const { votesAllowed, description } = contest;
 
     const markedChoices: County.ACVRChoices = _.pickBy(marks.choices);
     const votesMarked = _.size(markedChoices);
@@ -117,6 +118,22 @@ const BallotContestReview = (props: BallotContestReviewProps) => {
                         { markedChoiceDivs.length ? markedChoiceDivs : noMarksDiv }
                     </div>
                     <strong>Overvote</strong> for this contest.
+                </div>
+            );
+        }
+
+        if (description === 'IRV') {
+            const irvChoicesProps: ChoicesProps = {
+                choices: contest.choices,
+                description,
+                marks,
+                noConsensus,
+                updateBallotMarks: () => null,
+            };
+
+            return (
+                <div className='contest-choice-selection'>
+                    { IrvChoiceForm(irvChoicesProps) }
                 </div>
             );
         }
