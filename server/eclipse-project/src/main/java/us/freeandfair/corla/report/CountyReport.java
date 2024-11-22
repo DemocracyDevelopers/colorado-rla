@@ -547,7 +547,7 @@ public class CountyReport {
     for (final CountyContestResult ccr : my_driving_contest_results) {
 
       StateReport.CellStatus status = StateReport.makeContestSummary(row_number, max_cell_number, ccr, summary_sheet,
-          false, bold_style, integer_style, bold_right_style, decimal_style,
+          bold_style, integer_style, bold_right_style, decimal_style,
           standard_style, standard_right_style);
 
       row_number = status.row_number();
