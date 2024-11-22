@@ -695,7 +695,7 @@ public class StateReport {
    * @param IRVChoicesSummaryOnly If true, it makes a summary *only for IRV contests*, which includes
    *                              the choices. This is meant for the end of the .xls file.
    *                              If false, it makes a row that mentions the IRV contest by name,
-   *                              and just adds "See below, or assertions csv."
+   *                              and just adds "See assertions csv."
    * @param bold_style            All these styles are included (though they could be class-level finals)
    *                              in case a caller from another class wants different styles.
    * @param integer_style        "
@@ -729,7 +729,7 @@ public class StateReport {
       // assertions csv. Add a message.
       cell = row.createCell(cell_number++);
       cell.setCellStyle(standard_style);
-      cell.setCellValue("See below, or assertions csv");
+      cell.setCellValue("See assertions csv");
     } else {
       // Keep the choices column, for both IRV-with-choices-printing and plurality.
       cell = row.createCell(cell_number++);
