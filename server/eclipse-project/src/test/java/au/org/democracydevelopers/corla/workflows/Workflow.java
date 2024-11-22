@@ -96,12 +96,12 @@ public class Workflow extends TestClassWithDatabase {
   /**
    * Container for the mock-up database.
    */
-  protected final static PostgreSQLContainer<?> postgres = createTestContainer();
+  //protected final static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
    * Container delegate for initialising mock-up database.
    */
-  protected final static JdbcDatabaseDelegate containerDelegate = setupContainerStartPostgres(postgres);
+  //protected final static JdbcDatabaseDelegate containerDelegate = setupContainerStartPostgres(postgres);
 
   /**
    * Strings for colorado-rla JSON structures.
@@ -393,8 +393,10 @@ public class Workflow extends TestClassWithDatabase {
    * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/218">...</a>
    * Set it up so that we run raire-service inside the Docker container and tell main where to find it.
    */
-  protected void generateAssertions(final String sqlPath, final double timeLimitSeconds) {
-      ScriptUtils.runInitScript(containerDelegate, sqlPath);
+  protected void generateAssertions(final String sqlPath, final JdbcDatabaseDelegate delegate,
+      final double timeLimitSeconds)
+  {
+      ScriptUtils.runInitScript(delegate, sqlPath);
 
       // Version that connects to raire-service below:
       // Login as state admin.
