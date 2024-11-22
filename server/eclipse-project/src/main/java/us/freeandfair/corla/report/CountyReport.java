@@ -543,6 +543,7 @@ public class CountyReport {
 
     max_cell_number = Math.max(max_cell_number, cell_number);
     row_number = row_number - 1; // don't skip a line for the first contest
+    // Print the county contest results. These do not need IRV summaries.
     for (final CountyContestResult ccr : my_driving_contest_results) {
 
       StateReport.CellStatus status = StateReport.makeContestSummary(row_number, max_cell_number, ccr, summary_sheet,

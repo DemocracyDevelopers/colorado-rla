@@ -182,7 +182,7 @@ public class ExportQueries {
     final String folder = "sql";
     final String[] fileNames = {"batch_count_comparison.sql", "contest.sql",
         "contest_comparison.sql", "contest_selection.sql", "contests_by_county.sql",
-        "tabulate.sql", "tabulate_county.sql", "upload_status.sql", "seed.sql",
+        "tabulate_plurality.sql", "tabulate_county_plurality.sql", "upload_status.sql", "seed.sql",
         "summarize_IRV.sql", "ranked_ballot_interpretation.sql"};
     for (final String f : fileNames) {
       paths.add(String.format("%s/%s", folder, f));
