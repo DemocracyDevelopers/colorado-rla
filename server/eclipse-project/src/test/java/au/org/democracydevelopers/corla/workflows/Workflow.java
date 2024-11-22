@@ -48,6 +48,7 @@ import java.util.stream.IntStream;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
+import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.BeforeClass;
@@ -81,6 +82,11 @@ public class Workflow extends TestClassWithDatabase {
    * Class-wide logger
    */
   private static final Logger LOGGER = LogManager.getLogger(Workflow.class);
+
+  /**
+   * Container for the mock-up database.
+   */
+  protected final static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
    * Path for storing temporary config files
@@ -382,10 +388,10 @@ public class Workflow extends TestClassWithDatabase {
    * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/218">...</a>
    * Set it up so that we run raire-service inside the Docker container and tell main where to find it.
    */
-  protected void generateAssertions(final String sqlPath, final JdbcDatabaseDelegate delegate,
-      final double timeLimitSeconds)
+  protected void generateAssertions(final String sqlPath, final double timeLimitSeconds)
   {
-      ScriptUtils.runInitScript(delegate, sqlPath);
+      final var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+      ScriptUtils.runInitScript(containerDelegate, sqlPath);
 
       // Version that connects to raire-service below:
       // Login as state admin.

@@ -29,9 +29,7 @@ import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
-import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
@@ -51,12 +49,6 @@ public class Demo1 extends Workflow {
    * Class-wide logger
    */
   private static final Logger LOGGER = LogManager.getLogger(Demo1.class);
-
-
-  /**
-   * Container for the mock-up database.
-   */
-  private final static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
    * Database init.
@@ -146,8 +138,7 @@ public class Demo1 extends Workflow {
     assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
     // 4. Generate assertions; sanity check
-    final var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
-    generateAssertions("SQL/demo1-assertions.sql", containerDelegate,1);
+    generateAssertions("SQL/demo1-assertions.sql", 1);
     dashboard = getDoSDashBoardRefreshResponse();
 
     // There should be 4 IRV contests.
