@@ -123,11 +123,13 @@ const BallotContestReview = (props: BallotContestReviewProps) => {
         }
 
         if (description === 'IRV') {
+            // convert props to ChoicesProps for IRV Display
             const irvChoicesProps: ChoicesProps = {
                 choices: contest.choices,
                 description,
                 marks,
                 noConsensus,
+                // null OnClick for review stage since clicking should not change markings
                 updateBallotMarks: () => null,
             };
 
@@ -151,7 +153,7 @@ const BallotContestReview = (props: BallotContestReviewProps) => {
           <strong><div className='contest-name'>{ contest.name }</div></strong>
           <strong><div>{ contest.description }</div></strong>
         </div>
-        <div className='contest-choice-review-grid'>
+        <div className={'contest-choice-review-grid' + (description === 'IRV' ? '-irv' : '')}>
           { noConsensus ? noConsensusDiv : renderMarkedChoices() }
           <div className='edit-button'>
             <EditButton back={ back } />
