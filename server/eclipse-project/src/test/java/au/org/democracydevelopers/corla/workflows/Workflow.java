@@ -52,7 +52,10 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.BeforeClass;
+import us.freeandfair.corla.model.CVRContestInfo;
+import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.UploadedFile;
+import us.freeandfair.corla.query.CastVoteRecordQueries;
 import wiremock.net.minidev.json.JSONArray;
 import wiremock.net.minidev.json.JSONObject;
 
@@ -241,19 +244,35 @@ public class Workflow extends TestClassWithDatabase {
   }
 
   /**
-   * Sign in a single audit board for a given county.
-   * @param filter Session filter returned when the relevant county admin logged in.
+   * Sign in the given audit board for a given county.
+   * @param filter Session filter returned when the relevant user logged in.
+   * @param auditBoard List of names of the auditors on the audit board.
+   * @param index Index of the audit board (starting at 0).
    */
-  private void auditBoardSignIn(final SessionFilter filter){
-    final List<Map<String,String>> auditBoard = List.of(
-        Map.of("first_name","V", "last_name","T",
-            "political_party","Unaffiliated"),
-        Map.of("first_name","M", "last_name","B",
-            "political_party","Unaffiliated")
-    );
+  private void auditBoardSignIn(final SessionFilter filter,
+      final List<Map<String,String>> auditBoard, final int index){
 
     final JSONObject params = createBody(Map.of("audit_board", auditBoard,
-        "index", 0));
+        "index", index));
+
+    given().filter(filter)
+        .header("Content-Type", "application/json")
+        .body(params.toJSONString())
+        .post("/audit-board-sign-in");
+  }
+
+  /**
+   * The given audit board signs off on their current audit round.
+   * @param filter Session filter returned when the relevant county user logged in.
+   * @param auditBoard List of names of the auditors on the audit board.
+   * @param index Index of the audit board (starting at 0).
+   *
+   */
+  private void auditBoardSignOff(final SessionFilter filter,
+      final List<Map<String,String>> auditBoard, final int index){
+
+    final JSONObject params = createBody(Map.of("audit_board", auditBoard,
+        "index", index));
 
     given().filter(filter)
         .header("Content-Type", "application/json")
@@ -263,10 +282,13 @@ public class Workflow extends TestClassWithDatabase {
 
   /**
    * For the given county number, authenticate, tell corla there is one audit board, and
-   * sign in as the audit board. Then collect the set of CVRs to audit, and upload the audit CVRs.
+   * sign in as the audit board. Then collect the set of CVRs to audit for the given round, and
+   * upload the audit CVRs.
+   * TODO: break up this method further, create smaller methods.
    * @param number  Number of the county performing their audit.
+   * @param round   Audit round.
    */
-  protected void auditCounty(final int number){
+  protected void auditCounty(final int number, final int round){
     final String user = "countyadmin" + number;
     final SessionFilter filter = doLogin(user);
 
@@ -279,13 +301,124 @@ public class Workflow extends TestClassWithDatabase {
         .body(createBody(Map.of("count", 1)).toJSONString())
         .post("/set-audit-board-count");
 
-    auditBoardSignIn(filter);
+    final List<Map<String,String>> auditBoard = List.of(
+        Map.of("first_name","V", "last_name","T",
+            "political_party","Unaffiliated"),
+        Map.of("first_name","M", "last_name","B",
+            "political_party","Unaffiliated")
+    );
 
-    // Collect CVRs to audit TODO
+    // Sign in the audit board
+    auditBoardSignIn(filter,  auditBoard, 0 );
 
-    // Upload audit CVRs TODO
+    // Collect CVRs to audit
+    final JsonPath cvrs = given()
+        .filter(filter)
+        .header("Content-Type", "application/json")
+        .get("cvr-to-audit-list?round=" + round)
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK)
+        .extract()
+        .body()
+        .jsonPath();
 
-    // Sign off audit round TODO
+    // Each CVR in the returned JSON structure will look something like this:
+    //{
+    //  "audit_sequence_number": 1996,
+    //    "scanner_id": 102,
+    //    "batch_id": "151",
+    //    "record_id": 11,
+    //    "imprinted_id": "102-151-11",
+    //    "cvr_number": 78992,
+    //    "db_id": 161428,
+    //    "ballot_type": "DS-07",
+    //    "storage_location": "",
+    //    "audit_board_index": 0,
+    //    "audited": false,
+    //    "previously_audited": false
+    //}
+    final List<HashMap<String,Object>> cvrData = cvrs.getList("");
+
+    // In each HashMap, the "db_id" field will be an Integer, which we will need to convert
+    // to Long to create the CVR id list to pass to CastVoteRecordQueries::get.
+    final List<Long> cvrIds = cvrData.stream().map(m -> Long.valueOf((int) m.get("db_id"))).toList();
+
+    // Get CastVoteRecords for each of the CVRs to audit.
+    final List<CastVoteRecord> cvrsToAudit = CastVoteRecordQueries.get(cvrIds);
+
+    // Upload audit CVRs
+    for(final CastVoteRecord rec : cvrsToAudit){
+      // We need to post a JSON structure of the following form:
+      //{
+      //  "auditBoardIndex":0,
+      //  "audit_cvr":{
+      //      "ballot_type": ###,
+      //      "batch_id": ###,
+      //      "contest_info":[{
+      //          "choices":["ANDERSON John(1)","COOREY Cate(2)","HUNTER Alan(4)", ...],
+      //          "comment":"",
+      //          "consensus":"YES",
+      //          "contest": ###
+      //      }],
+      //      "county_id": ###,
+      //      "cvr_number": ###,
+      //      "id": ###,
+      //      "imprinted_id": ###,
+      //      "record_id": ###,
+      //      "record_type":"UPLOADED",
+      //      "scanner_id": ###,
+      //      "timestamp": ###
+      //   },
+      //  "cvr_id": ###
+      //}
+
+      // Create contest_info for audited cvr
+      // TODO: info.choices() has to be converted into "Name(Rank)" form, however
+      // info.choices() gives the already interpreted form, and we want to provide
+      // the raw choices (which is not stored in the database in the table for CVR contest
+      // info). Raw choices for IRV votes that contained errors *are* stored in the
+      // irv_ballot_interpretation table. So, we can, for any IRV vote, check whether
+      // there is an entry for it in the interpretations table. If so, we take the raw choices
+      // from there. Otherwise, we recreate the raw choices from info.choices().
+      final List<Map<String,Object>> contest_info = rec.contestInfo().stream().map(info ->
+        Map.of("choices", info.choices(),
+            "comment", "", "consensus", "YES",
+            "contest", info.contest().id())).toList();
+
+      // Create audited cvr as a map
+      Map<String, Object> audited_cvr = new HashMap<>();
+      audited_cvr.put("ballot_type", rec.ballotType());
+      audited_cvr.put("batch_id", rec.batchID());
+      audited_cvr.put("contest_info", contest_info);
+      audited_cvr.put("county_id", rec.countyID());
+      audited_cvr.put("cvr_number", rec.cvrNumber());
+      audited_cvr.put("id", rec.id());
+      audited_cvr.put("imprinted_id", rec.imprintedID());
+      audited_cvr.put("record_id", rec.recordID());
+      audited_cvr.put("record_type", "UPLOADED");
+      audited_cvr.put("scanner_id", rec.scannerID());
+      audited_cvr.put("timestamp", rec.timestamp());
+
+      // Create JSON data structure to supply to upload-audit-cvr endpoint
+      final JSONObject params = createBody(Map.of(
+          "auditBoardIndex", 0,
+          "audit_cvr", audited_cvr,
+          "cvr_id", rec.id()
+      ));
+
+      // Upload discrepancy-free audited CVR
+      // Error at present: ERROR CVRContestInfoJsonAdapter:246 - [read] uploaded IRV vote could not
+      // be parsed. Could not parse candidate-preference: LYON Michael.
+      // TODO: Need to recreate the original "Candidate(Rank)" style of choice list.
+      given().filter(filter)
+          .header("Content-Type", "application/json")
+          .body(params.toJSONString())
+          .post("/upload-audit-cvr");
+    }
+
+    // Sign off audit round
+    auditBoardSignOff(filter, auditBoard, 0 );
 
     // Logout.
     logout(filter, user);

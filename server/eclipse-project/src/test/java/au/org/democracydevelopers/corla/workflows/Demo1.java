@@ -170,7 +170,7 @@ public class Demo1 extends Workflow {
     // 9. Log in as each county, and audit all ballots in sample. In this demo workflow,
     // no ballots are reaudited, and no discrepancies arise.
     for(final Integer cty : allCounties){
-      auditCounty(cty);
+      auditCounty(cty, 1);
     }
 
     LOGGER.debug("Successfully completed Demo1.");
