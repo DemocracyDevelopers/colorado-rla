@@ -148,7 +148,12 @@ public class Workflow extends TestClassWithDatabase {
     main(propertiesFile);
   }
 
-  protected JSONObject createBody(final Map<String, String> data) {
+  /**
+   * Transform a simple map of strings into a JSONObject.
+   * @param data Data to be transformed into JSONObject.
+   * @return The given data as a JSONObject.
+   */
+  protected JSONObject createBody(final Map<String, Object> data) {
     final JSONObject body = new JSONObject();
     body.putAll(data);
     return body;
@@ -230,6 +235,57 @@ public class Workflow extends TestClassWithDatabase {
         .post("/import-" + fileType);
 
     LOGGER.debug(String.format("%s %s %s %s.", prefix, "Successful file upload - ", user, fileType));
+
+    // Logout.
+    logout(filter, user);
+  }
+
+  /**
+   * Sign in a single audit board for a given county.
+   * @param filter Session filter returned when the relevant county admin logged in.
+   */
+  private void auditBoardSignIn(final SessionFilter filter){
+    final List<Map<String,String>> auditBoard = List.of(
+        Map.of("first_name","V", "last_name","T",
+            "political_party","Unaffiliated"),
+        Map.of("first_name","M", "last_name","B",
+            "political_party","Unaffiliated")
+    );
+
+    final JSONObject params = createBody(Map.of("audit_board", auditBoard,
+        "index", 0));
+
+    given().filter(filter)
+        .header("Content-Type", "application/json")
+        .body(params.toJSONString())
+        .post("/audit-board-sign-in");
+  }
+
+  /**
+   * For the given county number, authenticate, tell corla there is one audit board, and
+   * sign in as the audit board. Then collect the set of CVRs to audit, and upload the audit CVRs.
+   * @param number  Number of the county performing their audit.
+   */
+  protected void auditCounty(final int number){
+    final String user = "countyadmin" + number;
+    final SessionFilter filter = doLogin(user);
+
+    // GET the county dashboard. This is just to test that the login worked.
+    given().filter(filter).get("/county-dashboard");
+
+    // Tell corla there is only one audit board
+    given().filter(filter)
+        .header("Content-Type", "application/json")
+        .body(createBody(Map.of("count", 1)).toJSONString())
+        .post("/set-audit-board-count");
+
+    auditBoardSignIn(filter);
+
+    // Collect CVRs to audit TODO
+
+    // Upload audit CVRs TODO
+
+    // Sign off audit round TODO
 
     // Logout.
     logout(filter, user);
@@ -348,7 +404,8 @@ public class Workflow extends TestClassWithDatabase {
    * @return true if all uploads were successful within timeoutSeconds, false if any failed or the timeout was reached.
    * Timing is imprecise and assumes all the calls take no time.
    */
-  protected boolean uploadSuccessfulWithin(int timeAllowedSeconds, final Set<Integer> counties, final String fileType) throws InterruptedException {
+  protected boolean uploadSuccessfulWithin(int timeAllowedSeconds, final Set<Integer> counties,
+      final String fileType) throws InterruptedException {
 
     JsonPath dashboard = getDoSDashBoardRefreshResponse();
       while (timeAllowedSeconds-- > 0) {

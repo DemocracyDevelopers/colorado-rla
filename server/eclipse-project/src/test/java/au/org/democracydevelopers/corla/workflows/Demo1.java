@@ -21,6 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
+import io.restassured.filter.session.SessionFilter;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -162,6 +163,15 @@ public class Demo1 extends Workflow {
     assertFalse(sampleSizes.isEmpty());
 
     // TODO Sanity check of assertions and sample size estimates.
+
+    // 8. Start Audit Round
+    startAuditRound();
+
+    // 9. Log in as each county, and audit all ballots in sample. In this demo workflow,
+    // no ballots are reaudited, and no discrepancies arise.
+    for(final Integer cty : allCounties){
+      auditCounty(cty);
+    }
 
     LOGGER.debug("Successfully completed Demo1.");
   }
