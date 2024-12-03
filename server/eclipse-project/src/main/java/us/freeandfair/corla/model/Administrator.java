@@ -17,21 +17,7 @@ import java.io.Serializable;
 import java.time.Clock;
 import java.time.Instant;
 
-import javax.persistence.Cacheable;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Index;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
-import javax.persistence.Version;
+import javax.persistence.*;
 
 import us.freeandfair.corla.persistence.PersistentEntity;
 
@@ -111,6 +97,7 @@ public class Administrator implements PersistentEntity, Serializable {
   /**
    * A clock that is only used for testing
     */
+  @Transient
   private Clock my_clock;
   
   /**
@@ -153,7 +140,7 @@ public class Administrator implements PersistentEntity, Serializable {
                        final AdministratorType the_type,
                        final String the_full_name,
                        final County the_county,
-                       Clock clock) {
+                       final Clock clock) {
     this(the_username, the_type, the_full_name, the_county);
     my_clock = clock;
   }

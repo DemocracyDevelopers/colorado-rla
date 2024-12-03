@@ -1,5 +1,7 @@
 package us.freeandfair.corla.model;
 
+import com.github.tomakehurst.wiremock.core.Admin;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.AdministratorQueries;
@@ -8,7 +10,9 @@ import us.freeandfair.corla.util.TestClassWithDatabase;
 import java.time.Clock;
 import java.time.Instant;
 
+import static org.testng.Assert.assertNotEquals;
 import static org.testng.AssertJUnit.*;
+import static us.freeandfair.corla.util.EqualsHashcodeHelper.nullableHashCode;
 
 @Test
 public class AdministratorTest extends TestClassWithDatabase {
@@ -27,7 +31,9 @@ public class AdministratorTest extends TestClassWithDatabase {
                 null,
                 testClock);
 
+
         assertNull(admin.id());
+        assertNull(admin.version());
         Persistence.saveOrUpdate(admin);
 
         // this is a database constraint
@@ -40,7 +46,6 @@ public class AdministratorTest extends TestClassWithDatabase {
         assertEquals(expectedUsername, admin.username());
         assertEquals(expectedFullname, admin.fullName());
         assertEquals(expectedType, admin.type());
-        assertNull(admin.version());
         assertNull(admin.county());
 
         // Because we're using a stopped clock, this time will be the same for both
@@ -57,6 +62,39 @@ public class AdministratorTest extends TestClassWithDatabase {
                 expectedType+ ", full_name=" + expectedFullname+ ", county=" +
                 null + ", last_login_time=" + expectedTime +
                 ", last_logout_time=" + expectedTime + "]";
+
+        assertEquals(expected_string, admin.toString());
+    }
+
+    @Test
+    public static void testEquality() {
+        String firstAdminUsername = "first";
+        String secondAdminUsername = "second";
+        Administrator.AdministratorType expectedType = Administrator.AdministratorType.STATE;
+        String expectedFullname = "fulltestname";
+
+        Administrator firstAdmin = new Administrator(firstAdminUsername, expectedType, expectedFullname, null);
+        Administrator secondAdmin = new Administrator(secondAdminUsername, expectedType, expectedFullname, null);
+
+        assertTrue(firstAdmin.equals(firstAdmin));
+        assertFalse(firstAdmin.equals(secondAdmin));
+
+        // Now test that non-admin objects result in false
+        assertFalse(firstAdmin.equals(firstAdminUsername));
+    }
+
+    @Test
+    public static void testHash() {
+        String expectedUsername = "testname";
+        Administrator.AdministratorType expectedType = Administrator.AdministratorType.STATE;
+        String expectedFullname = "fulltestname";
+
+        Administrator admin = new Administrator(expectedUsername,
+                expectedType,
+                expectedFullname,
+                null);
+
+        assertEquals(admin.hashCode(), nullableHashCode(expectedUsername));
 
     }
 }
