@@ -11,10 +11,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint;
 import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.model.GenerateAssertionsSummary;
 import au.org.democracydevelopers.corla.model.IRVComparisonAudit;

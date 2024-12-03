@@ -1,16 +1,12 @@
 package us.freeandfair.corla.model;
 
-import com.github.tomakehurst.wiremock.core.Admin;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
-import us.freeandfair.corla.query.AdministratorQueries;
 import us.freeandfair.corla.util.TestClassWithDatabase;
 
 import java.time.Clock;
 import java.time.Instant;
 
-import static org.testng.Assert.assertNotEquals;
 import static org.testng.AssertJUnit.*;
 import static us.freeandfair.corla.util.EqualsHashcodeHelper.nullableHashCode;
 
