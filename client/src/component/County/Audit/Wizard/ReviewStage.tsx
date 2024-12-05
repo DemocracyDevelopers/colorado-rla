@@ -4,6 +4,7 @@ import * as _ from 'lodash';
 
 import { Button, Icon, Intent } from '@blueprintjs/core';
 
+import IrvChoiceForm from 'corla/component/County/Audit/Wizard/IrvChoiceForm';
 import SubmittingACVR from './SubmittingACVR';
 
 interface EditButtonProps {
@@ -75,7 +76,7 @@ interface BallotContestReviewProps {
 const BallotContestReview = (props: BallotContestReviewProps) => {
     const { back, contest, marks } = props;
     const { comments, noConsensus } = marks;
-    const { votesAllowed } = contest;
+    const { votesAllowed, description } = contest;
 
     const markedChoices: County.ACVRChoices = _.pickBy(marks.choices);
     const votesMarked = _.size(markedChoices);
@@ -121,6 +122,24 @@ const BallotContestReview = (props: BallotContestReviewProps) => {
             );
         }
 
+        if (description === 'IRV') {
+            // convert props to ChoicesProps for IRV Display
+            const irvChoicesProps: ChoicesProps = {
+                choices: contest.choices,
+                description,
+                marks,
+                noConsensus,
+                // null OnClick for review stage since clicking should not change markings
+                updateBallotMarks: () => null,
+            };
+
+            return (
+                <div className='contest-choice-selection'>
+                    { IrvChoiceForm(irvChoicesProps) }
+                </div>
+            );
+        }
+
         return (
             <div className='contest-choice-selection contest-choice-review'>
                 { markedChoiceDivs.length ? markedChoiceDivs : noMarksDiv }
@@ -134,7 +153,7 @@ const BallotContestReview = (props: BallotContestReviewProps) => {
           <strong><div className='contest-name'>{ contest.name }</div></strong>
           <strong><div>{ contest.description }</div></strong>
         </div>
-        <div className='contest-choice-review-grid'>
+        <div className={'contest-choice-review-grid' + (description === 'IRV' ? '-irv' : '')}>
           { noConsensus ? noConsensusDiv : renderMarkedChoices() }
           <div className='edit-button'>
             <EditButton back={ back } />
