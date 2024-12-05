@@ -7,6 +7,7 @@ import us.freeandfair.corla.util.TestClassWithDatabase;
 import java.time.Clock;
 import java.time.Instant;
 
+import static org.testng.Assert.assertNotEquals;
 import static org.testng.AssertJUnit.*;
 import static us.freeandfair.corla.util.EqualsHashcodeHelper.nullableHashCode;
 
@@ -60,6 +61,24 @@ public class AdministratorTest extends TestClassWithDatabase {
                 ", last_logout_time=" + expectedTime + "]";
 
         assertEquals(expected_string, admin.toString());
+
+        /**
+         * Now test an admin without a clock set. This means we can't test timing-specific things,
+         * but we can at least test that the code paths behave the way we expect.
+         */
+        admin = new Administrator(expectedUsername,
+                expectedType,
+                expectedFullname,
+                null);
+
+        assertNull(admin.lastLoginTime());
+        assertNull(admin.lastLogoutTime());
+
+        admin.updateLastLoginTime();
+        assertNotNull(admin.lastLoginTime());
+        admin.updateLastLogoutTime();
+        assertNotNull(admin.lastLogoutTime());
+        assert(admin.lastLoginTime() != admin.lastLogoutTime());
     }
 
     @Test

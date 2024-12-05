@@ -227,9 +227,9 @@ public class Administrator implements PersistentEntity, Serializable {
    */
   public void updateLastLogoutTime() {
     if (my_clock == null) {
-      my_last_login_time = Instant.now();
+      my_last_logout_time = Instant.now();
     } else {
-      my_last_login_time = Instant.now(my_clock);
+      my_last_logout_time = Instant.now(my_clock);
     }
   }
   
