@@ -569,7 +569,8 @@ public abstract class Assertion implements PersistentEntity {
     LOGGER.debug(String.format("%s Computing score for audited ballot for CVR ID %d, Assertion ID %d, " +
         "contest %s.", prefix, cvrID, id, contestName));
 
-    if(auditedCVR.recordType() == RecordType.PHANTOM_BALLOT){
+    if(auditedCVR.recordType() == RecordType.PHANTOM_BALLOT ||
+      auditedCVR.recordType() == RecordType.PHANTOM_RECORD_ACVR){
       // The audited ballot is missing entirely. Return a worst case audited ballot score of -1.
       LOGGER.debug(String.format("%s audited ballot for CVR ID %d is a Phantom Record, " +
           "audited ballot score is -1 for Assertion ID %d.",

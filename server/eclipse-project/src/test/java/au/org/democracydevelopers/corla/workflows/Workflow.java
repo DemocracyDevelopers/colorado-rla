@@ -30,7 +30,10 @@ import static us.freeandfair.corla.auth.AuthenticationStage.TRADITIONALLY_AUTHEN
 import static us.freeandfair.corla.model.AuditType.COMPARISON;
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
+import au.org.democracydevelopers.corla.model.ContestType;
+import au.org.democracydevelopers.corla.model.vote.IRVBallotInterpretation;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
+import au.org.democracydevelopers.corla.util.TestOnlyQueries;
 import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
 import io.restassured.path.json.JsonPath;
@@ -54,6 +57,7 @@ import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.BeforeClass;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
+import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.model.UploadedFile;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 import wiremock.net.minidev.json.JSONArray;
@@ -281,10 +285,52 @@ public class Workflow extends TestClassWithDatabase {
   }
 
   /**
+   * Given a vote in a specific contest, translate the choices on that vote (if an IRV contest)
+   * into the form "Candidate(Rank),...,Candidate(Rank)". If the contest is a Plurality contest,
+   * return the choices from info.choices(). Otherwise, check whether the vote's original choices
+   * were interpreted to remove errors. If so, return the original raw choices from the
+   * irv_ballot_interpretation table. Otherwise, add ranks to each choice name and return.
+   * @param info Details of the vote for the relevant contest.
+   * @param imprintedId Imprinted identifier of the CVR containing the given vote.
+   * @return The list of original choices on the pre-interpreted CVR with the given imprinted ID.
+   */
+  private List<String> translateToRawChoices(final CVRContestInfo info, final String imprintedId){
+    final String prefix = "[translateToRawChoices]";
+
+    if(info.contest().description().equals(ContestType.IRV.toString())){
+      // The contest is an IRV contest.
+      final List<IRVBallotInterpretation> interpretations = TestOnlyQueries.matching(
+          info.contest().name(), imprintedId, RecordType.UPLOADED);
+
+      if(interpretations.isEmpty()){
+        List<String> rawChoices = new ArrayList<>();
+        for(int i = 0; i < info.choices().size(); ++i){
+          rawChoices.add(info.choices().get(i) + "("+ (i+1) + ")");
+        }
+        return rawChoices;
+      }
+      else{
+        if(interpretations.size() > 1){
+          final String msg = prefix + " there are multiple interpretations of the CVR " +
+              imprintedId + " with record type UPLOADED.";
+          LOGGER.error(msg);
+          throw new RuntimeException(msg);
+        }
+        return interpretations.get(0).getRawChoices();
+      }
+    }
+    else{
+      return info.choices();
+    }
+  }
+
+  /**
    * For the given county number, authenticate, tell corla there is one audit board, and
    * sign in as the audit board. Then collect the set of CVRs to audit for the given round, and
    * upload the audit CVRs.
    * TODO: break up this method further, create smaller methods.
+   * TODO: generalise this method so that it can take a specification of desired discrepancies
+   * to inject.
    * @param number  Number of the county performing their audit.
    * @param round   Audit round.
    */
@@ -373,8 +419,8 @@ public class Workflow extends TestClassWithDatabase {
       //  "cvr_id": ###
       //}
 
-      // Create contest_info for audited cvr
-      // TODO: info.choices() has to be converted into "Name(Rank)" form, however
+      // Create contest_info for audited cvr.
+      // Note that info.choices() has to be converted into "Name(Rank)" form, however
       // info.choices() gives the already interpreted form, and we want to provide
       // the raw choices (which is not stored in the database in the table for CVR contest
       // info). Raw choices for IRV votes that contained errors *are* stored in the
@@ -382,7 +428,7 @@ public class Workflow extends TestClassWithDatabase {
       // there is an entry for it in the interpretations table. If so, we take the raw choices
       // from there. Otherwise, we recreate the raw choices from info.choices().
       final List<Map<String,Object>> contest_info = rec.contestInfo().stream().map(info ->
-        Map.of("choices", info.choices(),
+        Map.of("choices", translateToRawChoices(info, rec.imprintedID()),
             "comment", "", "consensus", "YES",
             "contest", info.contest().id())).toList();
 
@@ -396,7 +442,7 @@ public class Workflow extends TestClassWithDatabase {
       audited_cvr.put("id", rec.id());
       audited_cvr.put("imprinted_id", rec.imprintedID());
       audited_cvr.put("record_id", rec.recordID());
-      audited_cvr.put("record_type", "UPLOADED");
+      audited_cvr.put("record_type", rec.recordType());
       audited_cvr.put("scanner_id", rec.scannerID());
       audited_cvr.put("timestamp", rec.timestamp());
 
@@ -607,6 +653,7 @@ public class Workflow extends TestClassWithDatabase {
         .assertThat()
         .statusCode(HttpStatus.SC_OK);
   }
+
   /**
    * Select contests to target, by name.
    */
@@ -697,6 +744,11 @@ public class Workflow extends TestClassWithDatabase {
     }
   }
 
+  /**
+   * For the given user, perform first and second round authentication.
+   * @param username Username for the user to authenticate
+   * @return The user's session, to be interacted with in later testing.
+   */
   private SessionFilter doLogin(final String username) {
     final SessionFilter filter = new SessionFilter();
     authenticate(filter, username,"",1);

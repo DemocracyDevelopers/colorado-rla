@@ -162,7 +162,9 @@ public class Demo1 extends Workflow {
     Map<String, EstimateSampleSizes.EstimateData> sampleSizes = getSampleSizeEstimates();
     assertFalse(sampleSizes.isEmpty());
 
-    // TODO Sanity check of assertions and sample size estimates.
+    // For each targeted contest, check that the set of assertions: (i) is not empty; (ii) has
+    // the correct maximum difficulty; and (ii) has resulted in the correct sample size estimate.
+    // TODO
 
     // 8. Start Audit Round
     startAuditRound();

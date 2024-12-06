@@ -360,12 +360,12 @@ public class IRVComparisonAudit extends ComparisonAudit {
       // If we've found no discrepancies across the assertion set, then none exists for this contest
       // and this CVR/ACVR pair. Otherwise, return the maximum discrepancy found across all assertions.
       if (discrepancies.isEmpty()) {
-        LOGGER.debug(String.format("%s Contest %s: No discrepancies found for CVR ID %d.", prefix,
+        LOGGER.info(String.format("%s Contest %s: No discrepancies found for CVR ID %d.", prefix,
             contestName, cvr.id()));
         return OptionalInt.empty();
       } else {
         final Integer maxDiscrepancy = max(discrepancies);
-        LOGGER.debug(String.format("%s Contest %s: Maximum discrepancy of %d found for CVR ID %d.",
+        LOGGER.info(String.format("%s Contest %s: Maximum discrepancy of %d found for CVR ID %d.",
             prefix, contestName, maxDiscrepancy, cvr.id()));
         return OptionalInt.of(maxDiscrepancy);
       }
@@ -417,7 +417,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
       }
     }
 
-    LOGGER.debug(String.format("%s IRVComparisonAudit ID %d for contest %s, risk %f.", prefix,
+    LOGGER.info(String.format("%s IRVComparisonAudit ID %d for contest %s, risk %f.", prefix,
         id(), contestName, risk));
     return risk;
   }
@@ -451,7 +451,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
     recordTypeCheck(prefix, theRecord, theType);
 
     try {
-      LOGGER.debug(String.format("%s removing discrepancy associated with CVR %d (maximum type %d).",
+      LOGGER.info(String.format("%s removing discrepancy associated with CVR %d (maximum type %d).",
               prefix, theRecord.cvr().id(), theType));
       // Remove the discrepancy associated with the given CVRAuditInfo (CVR/ACVR pair), if one
       // exists, in each of the audit's assertions.
@@ -474,7 +474,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
         LOGGER.warn(String.format("%s no discrepancies removed.", prefix));
       }
 
-      LOGGER.debug(String.format("%s total number of overstatements (%f), optimistic sample " +
+      LOGGER.info(String.format("%s total number of overstatements (%f), optimistic sample " +
               "recalculate needed (%s), estimated sample recalculate needed (%s),", prefix,
           getOverstatements(), my_optimistic_recalculate_needed, my_estimated_recalculate_needed));
 
@@ -516,7 +516,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
     // IllegalArgumentException if they are not.
     recordTypeCheck(prefix, theRecord, theType);
 
-    LOGGER.debug(String.format("%s recording discrepancies for CVR ID %d, max type %d.", prefix,
+    LOGGER.info(String.format("%s recording discrepancies for CVR ID %d, max type %d.", prefix,
         theRecord.id(), theType));
 
     // Check that 'theType' is indeed the maximum discrepancy associated with an assertion in
@@ -567,7 +567,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
       // and the flag for indicating that a sample size recalculation is needed.
       super.recordDiscrepancy(theRecord, theType);
 
-      LOGGER.debug(String.format("%s total number of overstatements (%f), optimistic sample " +
+      LOGGER.info(String.format("%s total number of overstatements (%f), optimistic sample " +
               "recalculate needed (%s), estimated sample recalculate needed (%s),", prefix,
           getOverstatements(), my_optimistic_recalculate_needed, my_estimated_recalculate_needed));
 
