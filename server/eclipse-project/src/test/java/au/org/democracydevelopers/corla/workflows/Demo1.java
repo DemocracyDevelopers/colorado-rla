@@ -21,8 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
-import au.org.democracydevelopers.corla.model.assertion.Assertion;
-import au.org.democracydevelopers.corla.query.AssertionQueries;
+
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -36,7 +35,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
 
-import static java.util.Collections.max;
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
 
