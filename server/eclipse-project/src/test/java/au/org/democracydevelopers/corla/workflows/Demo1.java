@@ -168,8 +168,7 @@ public class Demo1 extends Workflow {
     // 8. Start Audit Round
     startAuditRound();
 
-    // 9. Log in as each county, and audit all ballots in sample. In this demo workflow,
-    // no ballots are reaudited, and no discrepancies arise.
+    // 9. Log in as each county, and audit all ballots in sample.
     List<TestAuditSession> sessions = new ArrayList<>();
     for(final int cty : allCounties){
       sessions.add(countyAuditInitialise(cty));
@@ -182,16 +181,19 @@ public class Demo1 extends Workflow {
     }
 
     // Audit board sign off for each county.
-    for(final TestAuditSession  entry : sessions){
+    for(final TestAuditSession entry : sessions){
       countySignOffLogout(entry);
     }
 
-    // Check that there are no more ballots to sample across all counties.
+    // Check that there are no more ballots to sample across all counties in first round.
     dashboard = getDoSDashBoardRefreshResponse();
+    final Map<String,Map<String,Object>> status = dashboard.get(COUNTY_STATUS);
 
-    // Figure out how to get sample information. TODO
+    for(final Map.Entry<String,Map<String,Object>> entry : status.entrySet()){
+      assertEquals(entry.getValue().get(BALLOTS_REMAINING).toString(), "0");
+    }
 
-    LOGGER.info("Successfully completed Demo1.");
+    LOGGER.info("Successfully completed Demo1 (First round audit).");
   }
 
 }

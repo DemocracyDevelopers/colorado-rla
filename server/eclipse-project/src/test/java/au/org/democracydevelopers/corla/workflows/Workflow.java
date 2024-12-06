@@ -133,6 +133,8 @@ public class Workflow extends TestClassWithDatabase {
   protected static final String ID = "id";
   protected static final String MANIFEST_FILETYPE = "ballot-manifest";
   protected static final String MANIFEST_JSON = "ballot_manifest_file";
+  protected static final String BALLOTS_REMAINING = "ballots_remaining_in_round";
+  protected static final String OPTIMISTIC_BALLOTS = "optimistic_ballots_to_audit";
   protected static final String NAME = "name";
   protected static final String PUBLIC_MEETING_DATE = "public_meeting_date";
   protected static final String REASON = "reason";
