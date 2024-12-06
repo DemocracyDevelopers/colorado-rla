@@ -22,7 +22,10 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.workflows;
 
 import static io.restassured.RestAssured.given;
+import static java.util.Collections.max;
+import static java.util.Collections.min;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static us.freeandfair.corla.Main.main;
 import static us.freeandfair.corla.auth.AuthenticationInterface.USERNAME;
 import static us.freeandfair.corla.auth.AuthenticationStage.SECOND_FACTOR_AUTHENTICATED;
@@ -31,7 +34,10 @@ import static us.freeandfair.corla.model.AuditType.COMPARISON;
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
 import au.org.democracydevelopers.corla.model.ContestType;
+import au.org.democracydevelopers.corla.model.assertion.Assertion;
 import au.org.democracydevelopers.corla.model.vote.IRVBallotInterpretation;
+import au.org.democracydevelopers.corla.query.AssertionQueries;
+import au.org.democracydevelopers.corla.util.DoubleComparator;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.TestOnlyQueries;
 import io.restassured.RestAssured;
@@ -48,6 +54,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import net.sf.saxon.sort.DoubleSortComparer;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
@@ -55,6 +62,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.BeforeClass;
+import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
@@ -673,6 +681,33 @@ public class Workflow extends TestClassWithDatabase {
       //    .assertThat()
       //    .statusCode(HttpStatus.SC_OK);
   }
+
+  /**
+   * Verify that some assertions are present for the given contest, that the minimum diluted
+   * margin across these assertions is correct, and that the estimated sample size for the contest
+   * is correct.
+   * @param contest                   Name of the contest.
+   * @param expectedDilutedMargin     Expected diluted margin of the contest.
+   * @param actualEstimatedSamples    Actual sample size computation for the contest.
+   * @param riskLimit                 Risk limit for the audit.
+   */
+  protected void verifyAssertions(final String contest, final double expectedDilutedMargin,
+      final int actualEstimatedSamples, final BigDecimal riskLimit){
+    final List<Assertion> assertions = AssertionQueries.matching(contest);
+    assertFalse(assertions.isEmpty());
+
+    final BigDecimal actualDilutedMargin = min(assertions.stream().map(
+        Assertion::getDilutedMargin).toList());
+
+    final DoubleComparator comp = new DoubleComparator();
+    assertEquals(comp.compare(actualDilutedMargin.doubleValue(), expectedDilutedMargin), 0);
+
+    // Sample size formula is (-2 * gamma * log(risk_limit))/dilutedMargin
+    final int samples = (int)(Math.ceil(-2.0 * Audit.GAMMA.doubleValue() *
+        Math.log(riskLimit.doubleValue()))/expectedDilutedMargin);
+    assertEquals(actualEstimatedSamples, samples);
+  }
+
 
   protected void startAuditRound() {
     // Login as state admin.

@@ -21,6 +21,8 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
+import au.org.democracydevelopers.corla.model.assertion.Assertion;
+import au.org.democracydevelopers.corla.query.AssertionQueries;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -34,6 +36,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
 
+import static java.util.Collections.max;
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
 
@@ -145,9 +148,10 @@ public class Demo1 extends Workflow {
     assertEquals(4, dashboard.getList("generate_assertions_summaries").size());
 
     // 5. Choose targeted contests for audit.
-    targetContests(Map.of("City of Longmont - Mayor","COUNTY_WIDE_CONTEST",
+    final Map<String,String> targets = Map.of("City of Longmont - Mayor","COUNTY_WIDE_CONTEST",
         "Byron Mayoral", "STATE_WIDE_CONTEST",
-        "Kempsey Mayoral", "COUNTY_WIDE_CONTEST"));
+        "Kempsey Mayoral", "COUNTY_WIDE_CONTEST");
+    targetContests(targets);
 
     // 6. Set the seed.
     setSeed(defaultSeed);
@@ -162,8 +166,10 @@ public class Demo1 extends Workflow {
     assertFalse(sampleSizes.isEmpty());
 
     // For each targeted contest, check that the set of assertions: (i) is not empty; (ii) has
-    // the correct maximum difficulty; and (ii) has resulted in the correct sample size estimate.
-    // TODO
+    // the correct minimum diluted margin; and (ii) has resulted in the correct sample size estimate.
+    //for(final String c : targets.keySet()) {
+    //  verifyAssertions(c, dilutedMargin, sampleSizes.get(c).estimatedSamples());
+    //}
 
     // 8. Start Audit Round
     startAuditRound();
