@@ -21,7 +21,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
-import io.restassured.filter.session.SessionFilter;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -171,11 +170,28 @@ public class Demo1 extends Workflow {
 
     // 9. Log in as each county, and audit all ballots in sample. In this demo workflow,
     // no ballots are reaudited, and no discrepancies arise.
-    for(final Integer cty : allCounties){
-      auditCounty(cty, 1);
+    List<TestAuditSession> sessions = new ArrayList<>();
+    for(final int cty : allCounties){
+      sessions.add(countyAuditInitialise(cty));
     }
 
-    LOGGER.debug("Successfully completed Demo1.");
+    // ACVR uploads for each county. Cannot run in parallel as corla does not like
+    // simultaneous database accesses.
+    for(final TestAuditSession  entry : sessions){
+      auditCounty(1, entry);
+    }
+
+    // Audit board sign off for each county.
+    for(final TestAuditSession  entry : sessions){
+      countySignOffLogout(entry);
+    }
+
+    // Check that there are no more ballots to sample across all counties.
+    dashboard = getDoSDashBoardRefreshResponse();
+
+    // Figure out how to get sample information. TODO
+
+    LOGGER.info("Successfully completed Demo1.");
   }
 
 }

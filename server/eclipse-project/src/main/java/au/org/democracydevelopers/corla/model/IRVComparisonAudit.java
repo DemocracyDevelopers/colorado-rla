@@ -360,7 +360,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
       // If we've found no discrepancies across the assertion set, then none exists for this contest
       // and this CVR/ACVR pair. Otherwise, return the maximum discrepancy found across all assertions.
       if (discrepancies.isEmpty()) {
-        LOGGER.info(String.format("%s Contest %s: No discrepancies found for CVR ID %d.", prefix,
+        LOGGER.debug(String.format("%s Contest %s: No discrepancies found for CVR ID %d.", prefix,
             contestName, cvr.id()));
         return OptionalInt.empty();
       } else {

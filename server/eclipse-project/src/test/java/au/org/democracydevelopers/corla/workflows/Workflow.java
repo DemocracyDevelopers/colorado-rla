@@ -70,6 +70,16 @@ import wiremock.net.minidev.json.JSONObject;
 public class Workflow extends TestClassWithDatabase {
 
   /**
+   * A collection of data representing an audit session for a county.
+   * @param filter        SessionFilter used to keep track of the session.
+   * @param auditBoard    Identities of the auditors on the index'th audit board.
+   * @param index         Index of the audit board.
+   * @param county        County number.
+   */
+  public record TestAuditSession(SessionFilter filter, List<Map<String,String>> auditBoard,
+                                 int index, int county){}
+
+  /**
    * Number of CO counties
    */
   protected static final int numCounties = 64;
@@ -249,17 +259,14 @@ public class Workflow extends TestClassWithDatabase {
 
   /**
    * Sign in the given audit board for a given county.
-   * @param filter Session filter returned when the relevant user logged in.
-   * @param auditBoard List of names of the auditors on the audit board.
-   * @param index Index of the audit board (starting at 0).
+   * @param session TestAuditSession capturing an audit session for a given county.
    */
-  private void auditBoardSignIn(final SessionFilter filter,
-      final List<Map<String,String>> auditBoard, final int index){
+  private void auditBoardSignIn(final TestAuditSession session){
 
-    final JSONObject params = createBody(Map.of("audit_board", auditBoard,
-        "index", index));
+    final JSONObject params = createBody(Map.of("audit_board",
+        session.auditBoard, "index", session.index()));
 
-    given().filter(filter)
+    given().filter(session.filter())
         .header("Content-Type", "application/json")
         .body(params.toJSONString())
         .post("/audit-board-sign-in");
@@ -267,21 +274,32 @@ public class Workflow extends TestClassWithDatabase {
 
   /**
    * The given audit board signs off on their current audit round.
-   * @param filter Session filter returned when the relevant county user logged in.
-   * @param auditBoard List of names of the auditors on the audit board.
-   * @param index Index of the audit board (starting at 0).
+   * @param session TestAuditSession capturing an audit session for a given county.
    *
    */
-  private void auditBoardSignOff(final SessionFilter filter,
-      final List<Map<String,String>> auditBoard, final int index){
+  private void auditBoardSignOff(final TestAuditSession session){
 
-    final JSONObject params = createBody(Map.of("audit_board", auditBoard,
-        "index", index));
+    final JSONObject params = createBody(Map.of("audit_board",
+        session.auditBoard(), "index", session.index()));
 
-    given().filter(filter)
+    given().filter(session.filter())
         .header("Content-Type", "application/json")
         .body(params.toJSONString())
-        .post("/audit-board-sign-in");
+        .post("/sign-off-audit-round");
+  }
+
+  /**
+   * Sign off the current audit round for the given county, and logout of the session.
+   * @param session TestAuditSession capturing an audit session for a given county.
+   */
+  protected void countySignOffLogout(final TestAuditSession session){
+    final String user = "countyadmin" + session.county();
+
+    // Sign off audit round
+    auditBoardSignOff(session);
+
+    // Logout.
+    logout(session.filter(), user);
   }
 
   /**
@@ -326,15 +344,11 @@ public class Workflow extends TestClassWithDatabase {
 
   /**
    * For the given county number, authenticate, tell corla there is one audit board, and
-   * sign in as the audit board. Then collect the set of CVRs to audit for the given round, and
-   * upload the audit CVRs.
-   * TODO: break up this method further, create smaller methods.
-   * TODO: generalise this method so that it can take a specification of desired discrepancies
-   * to inject.
-   * @param number  Number of the county performing their audit.
-   * @param round   Audit round.
+   * sign in as the audit board.
+   * @param number County number
+   * @return Session to use for this county in later testing.
    */
-  protected void auditCounty(final int number, final int round){
+  protected TestAuditSession countyAuditInitialise(final int number){
     final String user = "countyadmin" + number;
     final SessionFilter filter = doLogin(user);
 
@@ -355,7 +369,21 @@ public class Workflow extends TestClassWithDatabase {
     );
 
     // Sign in the audit board
-    auditBoardSignIn(filter,  auditBoard, 0 );
+    final TestAuditSession session = new TestAuditSession(filter, auditBoard, 0, number);
+    auditBoardSignIn(session);
+
+    return session;
+  }
+
+  /**
+   * Return list of CVRs to audit for the given round and the given county (identified by
+   * their TestAuditSession).
+   * @param round      Audit round.
+   * @param session    TestAuditSession capturing the audit session for the relevant county.
+   * @return List of CVRs to audit for the county and round.
+   */
+  protected List<CastVoteRecord> getCvrsToAudit(int round, final TestAuditSession session){
+    final SessionFilter filter = session.filter();
 
     // Collect CVRs to audit
     final JsonPath cvrs = given()
@@ -391,7 +419,18 @@ public class Workflow extends TestClassWithDatabase {
     final List<Long> cvrIds = cvrData.stream().map(m -> Long.valueOf((int) m.get("db_id"))).toList();
 
     // Get CastVoteRecords for each of the CVRs to audit.
-    final List<CastVoteRecord> cvrsToAudit = CastVoteRecordQueries.get(cvrIds);
+    return CastVoteRecordQueries.get(cvrIds);
+  }
+
+  /**
+   * For the given county number, collect the set of CVRs to audit for the given round, and
+   * upload the audit CVRs.
+   * @param round   Audit round.
+   * @param session  TestAuditSession capturing the audit session for a county.
+   */
+  protected void auditCounty(final int round, final TestAuditSession session){
+    final List<CastVoteRecord> cvrsToAudit = getCvrsToAudit(round, session);
+    final SessionFilter filter = session.filter();
 
     // Upload audit CVRs
     for(final CastVoteRecord rec : cvrsToAudit){
@@ -454,20 +493,11 @@ public class Workflow extends TestClassWithDatabase {
       ));
 
       // Upload discrepancy-free audited CVR
-      // Error at present: ERROR CVRContestInfoJsonAdapter:246 - [read] uploaded IRV vote could not
-      // be parsed. Could not parse candidate-preference: LYON Michael.
-      // TODO: Need to recreate the original "Candidate(Rank)" style of choice list.
       given().filter(filter)
           .header("Content-Type", "application/json")
           .body(params.toJSONString())
           .post("/upload-audit-cvr");
     }
-
-    // Sign off audit round
-    auditBoardSignOff(filter, auditBoard, 0 );
-
-    // Logout.
-    logout(filter, user);
   }
 
   /**
@@ -749,7 +779,7 @@ public class Workflow extends TestClassWithDatabase {
    * @param username Username for the user to authenticate
    * @return The user's session, to be interacted with in later testing.
    */
-  private SessionFilter doLogin(final String username) {
+  protected SessionFilter doLogin(final String username) {
     final SessionFilter filter = new SessionFilter();
     authenticate(filter, username,"",1);
     authenticate(filter, username,"s d f",2);
