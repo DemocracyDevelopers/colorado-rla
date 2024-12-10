@@ -208,6 +208,7 @@ public class Administrator implements PersistentEntity, Serializable {
    * Updates the last login time to the current time.
    */
   public void updateLastLoginTime() {
+    // If we're not testing, there will be no clock
     if (my_clock == null) {
       my_last_login_time = Instant.now();
     } else {
@@ -226,6 +227,7 @@ public class Administrator implements PersistentEntity, Serializable {
    * Updates the last logout time to the current time.
    */
   public void updateLastLogoutTime() {
+    // If we're not testing, there will be no clock
     if (my_clock == null) {
       my_last_logout_time = Instant.now();
     } else {
