@@ -543,21 +543,6 @@ public class IRVComparisonAuditTests extends AssertionTests {
   }
 
   /**
-   * If we call removeDiscrepancy() on an audit that does not contain any discrepancies, no
-   * discrepancies will be removed.
-   */
-  @Test
-  public void testRemoveInvalidDiscrepancy3(){
-    log(LOGGER, "testRemoveInvalidDiscrepancy3");
-    IRVComparisonAudit ca = new IRVComparisonAudit(mixedContest2,
-        AssertionTests.riskLimit3, AuditReason.OPPORTUNISTIC_BENEFITS);
-
-    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
-    ca.removeDiscrepancy(auditInfo, 1);
-    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
-  }
-
-  /**
    * If we call removeDiscrepancy() with a null audit info, an IllegalArgumentException will be
    * thrown.
    */
@@ -780,10 +765,9 @@ public class IRVComparisonAuditTests extends AssertionTests {
   /**
    * Discrepancy computation for 'Mixed Contest' with CVR "A","B","C","D" and audited ballot
    * "B","A","C","D" and recording of the resulting maximum discrepancy of type 2 in the context
-   * where the base ComparisonAudit does not "cover" the CVR. An exception should be thrown.
+   * where the base ComparisonAudit does not "cover" the CVR.
    */
-  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class,
-      expectedExceptions = RuntimeException.class)
+  @Test(dataProvider = "AuditedRecordTypes", dataProviderClass = AssertionTests.class)
   public void testComputeRecordDiscrepancyNoCover(final RecordType auditedType){
     log(LOGGER, String.format("testComputeRecordDiscrepancyNoCover[%s]", auditedType));
     resetMocks(ABCD, BACD, RecordType.UPLOADED, ConsensusValue.YES, auditedType, "Mixed Contest");
@@ -797,8 +781,11 @@ public class IRVComparisonAuditTests extends AssertionTests {
     // recordDiscrepancy() and removeDiscrepancy() do.
     checkDiscrepancies(ca, 0, 0, 0, 0, 0);
 
-    // This call should throw an exception as the CVR ID (1L) is not 'covered' by the audit.
+    // The CVR ID (1L) is not 'covered' by the audit.
     ca.recordDiscrepancy(auditInfo, 2);
+
+    // Discrepancy counts should not have been changed.
+    checkDiscrepancies(ca, 0, 0, 0, 0, 0);
   }
 
   /**
