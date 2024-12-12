@@ -246,21 +246,22 @@ public class DoSDashboardRefreshResponse {
     // Find out which county each contest is in; fill in 'Multiple' if there is more than one.
     for (GenerateAssertionsSummary summary : generate_assertions_list) {
       final Optional<ContestResult> cr = ContestResultQueries.find(summary.getContestName());
+      String countyName = "";
       if (cr.isEmpty() || cr.get().getCounties().isEmpty()) {
-        // ERROR
+        // This isn't supposed to happen. Keep the summary, with a blank county name, and continue but warn.
+        LOGGER.warn(String.format("%s %s %s.", "[addCountiesToSummaries] ", "Empty ContestResult or County Name for County ",
+            summary.getContestName()));
       } else {
         Set<County> counties = cr.get().getCounties();
         if (counties.size() == 1) {
-          generateAssertionsSummaries.add(
-              new GenerateAssertionsSummaryWithCounty(summary, counties.stream().findFirst().get().name())
-          );
+          countyName = counties.stream().findFirst().get().name();
         } else {
           // Must be >1 because we already checked for zero.
-          generateAssertionsSummaries.add(
-              new GenerateAssertionsSummaryWithCounty(summary, MULTIPLE_COUNTIES)
-          );
+          countyName = MULTIPLE_COUNTIES;
         }
       }
+      // Add the summary in, whether we found a county or not.
+      generateAssertionsSummaries.add(new GenerateAssertionsSummaryWithCounty(summary, countyName));
     }
     return generateAssertionsSummaries;
   }
