@@ -51,6 +51,17 @@ Content-Type: application/json
 GET http://localhost:8888/generate-assertions?timeLimitSeconds=1
 Content-Type: application/x-www-form-urlencoded
 
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+
+client.test("Response content-type is json", function() {
+    var type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+    });
+%}
+
 ### Request contests, search for IDs by name.
 GET http://localhost:8888/contest
 Content-Type: text/plain
