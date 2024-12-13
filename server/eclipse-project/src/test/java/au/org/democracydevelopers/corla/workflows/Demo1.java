@@ -33,9 +33,7 @@ import org.apache.log4j.Logger;
 import org.testcontainers.ext.ScriptUtils;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.persistence.Persistence;
-import us.freeandfair.corla.query.CastVoteRecordQueries;
 
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
@@ -206,7 +204,7 @@ public class Demo1 extends Workflow {
     //  assertEquals(entry.getValue().get(ESTIMATED_BALLOTS).toString(), "0");
     }
 
-    LOGGER.info("Successfully completed Demo1 (First round audit: No Discrepancies).");
+    LOGGER.info("Successfully completed Demo1 (First round audit).");
   }
 
 }
