@@ -64,6 +64,7 @@ import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
+import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.model.UploadedFile;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 import wiremock.net.minidev.json.JSONArray;
@@ -134,6 +135,7 @@ public class Workflow extends TestClassWithDatabase {
   protected static final String COUNTY_STATUS = "county_status";
   protected static final String CVR_FILETYPE = "cvr-export";
   protected static final String CVR_JSON = "cvr_export_file";
+  protected static final String DISCREPANCY_COUNT = "discrepancy_count";
   protected static final String ESTIMATED_BALLOTS = "estimated_ballots_to_audit";
   protected static final String ELECTION_DATE = "election_date";
   protected static final String ELECTION_TYPE = "election_type";
@@ -433,16 +435,45 @@ public class Workflow extends TestClassWithDatabase {
 
   /**
    * For the given county number, collect the set of CVRs to audit for the given round, and
-   * upload the audit CVRs.
+   * upload the audit CVRs, assuming they all match the initial CVRs.
    * @param round   Audit round.
    * @param session  TestAuditSession capturing the audit session for a county.
    */
   protected void auditCounty(final int round, final TestAuditSession session){
     final List<CastVoteRecord> cvrsToAudit = getCvrsToAudit(round, session);
-    final SessionFilter filter = session.filter();
 
     // Upload audit CVRs
     for(final CastVoteRecord rec : cvrsToAudit){
+
+
+      // Create contest_info for audited cvr.
+      // Note that info.choices() has to be converted into "Name(Rank)" form, however
+      // info.choices() gives the already interpreted form, and we want to provide
+      // the raw choices (which is not stored in the database in the table for CVR contest
+      // info). Raw choices for IRV votes that contained errors *are* stored in the
+      // irv_ballot_interpretation table. So, we can, for any IRV vote, check whether
+      // there is an entry for it in the interpretations table. If so, we take the raw choices
+      // from there. Otherwise, we recreate the raw choices from info.choices().
+      final List<Map<String,Object>> contestInfo = rec.contestInfo().stream().map(info ->
+        Map.of("choices", translateToRawChoices(info, rec.imprintedID()),
+            "comment", "", "consensus", "YES",
+            "contest", info.contest().id())).toList();
+
+      uploadAuditCVR(rec, session, contestInfo, false);
+    }
+  }
+
+  /**
+   * Uploads an audit CVR that corresponds to rec, but has different contest_info as specified by the
+   * third argument
+   * @param rec The Cast Vote Record
+   * @param session the Audit login session
+   * @param contestInfo the audit contest info, which may be different from what is in rec.
+   * @param isReaudit true if this is a reaudit.
+   */
+  protected void uploadAuditCVR(final CastVoteRecord rec, final TestAuditSession session,
+                                final List<Map<String,Object>> contestInfo, boolean isReaudit) {
+
       // We need to post a JSON structure of the following form:
       //{
       //  "auditBoardIndex":0,
@@ -464,27 +495,15 @@ public class Workflow extends TestClassWithDatabase {
       //      "scanner_id": ###,
       //      "timestamp": ###
       //   },
-      //  "cvr_id": ###
+      //  "cvr_id": ###,
+      //  "reaudit":true   // Only needed if true (omit if false).
       //}
-
-      // Create contest_info for audited cvr.
-      // Note that info.choices() has to be converted into "Name(Rank)" form, however
-      // info.choices() gives the already interpreted form, and we want to provide
-      // the raw choices (which is not stored in the database in the table for CVR contest
-      // info). Raw choices for IRV votes that contained errors *are* stored in the
-      // irv_ballot_interpretation table. So, we can, for any IRV vote, check whether
-      // there is an entry for it in the interpretations table. If so, we take the raw choices
-      // from there. Otherwise, we recreate the raw choices from info.choices().
-      final List<Map<String,Object>> contest_info = rec.contestInfo().stream().map(info ->
-        Map.of("choices", translateToRawChoices(info, rec.imprintedID()),
-            "comment", "", "consensus", "YES",
-            "contest", info.contest().id())).toList();
 
       // Create audited cvr as a map
       Map<String, Object> audited_cvr = new HashMap<>();
       audited_cvr.put("ballot_type", rec.ballotType());
       audited_cvr.put("batch_id", rec.batchID());
-      audited_cvr.put("contest_info", contest_info);
+      audited_cvr.put("contest_info", contestInfo);
       audited_cvr.put("county_id", rec.countyID());
       audited_cvr.put("cvr_number", rec.cvrNumber());
       audited_cvr.put("id", rec.id());
@@ -493,6 +512,9 @@ public class Workflow extends TestClassWithDatabase {
       audited_cvr.put("record_type", rec.recordType());
       audited_cvr.put("scanner_id", rec.scannerID());
       audited_cvr.put("timestamp", rec.timestamp());
+      if(isReaudit) {
+        audited_cvr.put("reaudit", true);
+      }
 
       // Create JSON data structure to supply to upload-audit-cvr endpoint
       final JSONObject params = createBody(Map.of(
@@ -501,12 +523,55 @@ public class Workflow extends TestClassWithDatabase {
           "cvr_id", rec.id()
       ));
 
-      // Upload discrepancy-free audited CVR
+      // Upload audited CVR
+      final SessionFilter filter = session.filter();
       given().filter(filter)
           .header("Content-Type", "application/json")
           .body(params.toJSONString())
           .post("/upload-audit-cvr");
-    }
+  }
+
+  /**
+   * Uploads an audit CVR that exactly matches rec, i.e. no discrepancy.
+   * @param rec The Cast Vote Record
+   * @param session the Audit login session
+   */
+  protected void uploadAuditCVR(final CastVoteRecord rec, final TestAuditSession session, boolean isReaudit) {
+    final List<Map<String,Object>> contestInfo = rec.contestInfo().stream().map(info ->
+      Map.of("choices", info.choices(),
+            "comment", "", "consensus", "YES",
+            "contest", info.contest().id())).toList();
+    uploadAuditCVR(rec, session, contestInfo, isReaudit);
+  }
+
+
+  /**
+   * Make the Map that describes this CVR and its choices, but substitute 'otherChoices' for the
+   * choices of the specified contestName.
+   * @param rec the cast vote record.
+   * @param contestName the name of the contest whose choices we want to change.
+   * @param otherChoices the choices to insert instead.
+   * @return a list describing the CVR, with the choices updated as requested in the contest specified.
+   */
+  protected List<Map<String,Object>> setOtherCVRChoices(CastVoteRecord rec, String contestName,
+                                                        List<String> otherChoices) {
+    return rec.contestInfo().stream().map(info ->
+          Map.of("choices", info.contest().name().equals(contestName) ? otherChoices : info.choices(),
+              "comment", "", "consensus", "YES",
+              "contest", info.contest().id())).toList();
+  }
+
+  /**
+   * Get the choices for a specified contest from a CastVoteRecord
+   * @param rec the cast vote record
+   * @param contestName the contest name
+   * @return the choices for the requested contest, or empty if there are none.
+   * Note that an empty list may be a present option - that means that the contest was on the CVR,
+   * but the voter made no choices.
+   */
+  protected Optional<List<Choice>> getChoices(CastVoteRecord rec, String contestName) {
+    return rec.contestInfo().stream().filter(info -> info.contest().name().equals(contestName))
+        .map(info -> info.contest().choices()).findFirst();
   }
 
   /**
@@ -791,6 +856,41 @@ public class Workflow extends TestClassWithDatabase {
         .then()
         .assertThat()
         .statusCode(HttpStatus.SC_OK);
+  }
+
+  /**
+   * Gets the contestID, as a String, for the requested contest name, out of DosDashboard.
+   * @param dosDashboard the dashboard.
+   * @param contestName  the name of the contest.
+   * @return             the contest's ID, or an empty string if the contest is not present - note
+   * this happens for non-audited contests, even if they are present in the database.
+   */
+  protected String getContestID(JsonPath dosDashboard, String contestName) {
+    // Login as state admin.
+    final SessionFilter filter = doLogin("stateadmin1");
+
+    // First get the contests.
+    // Again, this would be a lot easier if we could use .as(Contest[].class), but serialization is a problem.
+    final JsonPath contests = given()
+        .filter(filter)
+        .header("Content-Type", "text/plain")
+        .get("/contest")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK)
+        .extract()
+        .body()
+        .jsonPath();
+
+    List<Map<String,Object>> contestList = contests.getList("");
+
+    // Map<String,String> contestMap = dosDashboard.getMap(AUDITED_CONTESTS);
+    for(Map<String, Object> entry : contestList) {
+      if(entry.get("name").equals(contestName)) {
+        return Integer.toString((Integer) entry.get("id"));
+      }
+    }
+    return "";
   }
 
   /**

@@ -21,7 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
-import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
+import static io.restassured.RestAssured.given;
 import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
@@ -29,14 +29,15 @@ import org.apache.log4j.Logger;
 import org.testcontainers.ext.ScriptUtils;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.model.CastVoteRecord;
+import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.persistence.Persistence;
+import wiremock.net.minidev.json.JSONObject;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+import static java.util.stream.Collectors.toList;
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
 
@@ -62,6 +63,13 @@ public class ContestsNotTargetedOrNotOnCVR extends Workflow {
    */
   private static final int NUM_COUNTIES_THIS_TEST = 1;
 
+  /**
+   * Names relevant to Adams county contests and candidates.
+   */
+  private static final String ADAMS_COMMISSIONER = "Adams COUNTY COMMISSIONER DISTRICT 3";
+  private static final String U_CO_REGENT = "Regent of the University of Colorado - At Large";
+  private static final String CLEAR_WINNER = "Clear Winner";
+  private static final String DISTANT_LOSER = "Distant Loser";
   /**
    * Database init.
    */
@@ -125,8 +133,9 @@ public class ContestsNotTargetedOrNotOnCVR extends Workflow {
     // No need to generate assertions - these are all plurality.
 
     // 5. Choose targeted contests for audit.
-    targetContests(Map.of("Adams COUNTY COMMISSIONER DISTRICT 3","COUNTY_WIDE_CONTEST",
-        "Regent of the University of Colorado - At Large", "COUNTY_WIDE_CONTEST"));
+
+    targetContests(Map.of(ADAMS_COMMISSIONER ,"COUNTY_WIDE_CONTEST",
+                          U_CO_REGENT, "COUNTY_WIDE_CONTEST"));
 
     // 6. Set the seed.
     setSeed(defaultSeed);
@@ -140,8 +149,58 @@ public class ContestsNotTargetedOrNotOnCVR extends Workflow {
     startAuditRound();
     dashboard = getDoSDashBoardRefreshResponse();
     TestAuditSession session = countyAuditInitialise(1);
+    final String UCORegentID = getContestID(dashboard, U_CO_REGENT);
+    final String adamsCommissionerID = getContestID(dashboard, ADAMS_COMMISSIONER);
 
-    auditCounty(1, session);
+    final List<CastVoteRecord> cvrsToAudit = getCvrsToAudit(1, session);
+
+    for(final CastVoteRecord rec : cvrsToAudit) {
+
+      // Make the main map from things that won't change.
+      // This is the default that gets used if the CVR isn't on the ballot, which
+      // should never happen.
+      List<Map<String,Object>> contestInfo = rec.contestInfo().stream().map(info ->
+          Map.of("choices", info.choices(),
+              "comment", "", "consensus", "YES",
+              "contest", info.contest().id())).toList();
+
+        // We want to introduce some discrepancies.
+        // Find the CVR choices for the contest with the smaller sample size
+        Optional<List<Choice>> correctChoicesOpt = getChoices(rec, U_CO_REGENT);
+        if(correctChoicesOpt.isPresent()) {
+          List<Choice> correctChoices = correctChoicesOpt.get();
+          // If it's empty or for the winner, make it for the loser.
+          if(correctChoices.isEmpty() || correctChoices.get(0).name().equals(CLEAR_WINNER)) {
+            contestInfo = setOtherCVRChoices(rec, U_CO_REGENT, List.of(DISTANT_LOSER));
+          // If it's for the loser, make it for the winner.
+          } else if (correctChoices.get(0).name().equals(DISTANT_LOSER)) {
+            contestInfo = setOtherCVRChoices(rec, U_CO_REGENT, List.of(CLEAR_WINNER));
+          }
+        }
+
+      // Upload the CVR into which we introduced a discrepancy.
+      uploadAuditCVR(rec, session, contestInfo, false);
+      dashboard = getDoSDashBoardRefreshResponse();
+      Map<String,Integer> uCORegentDiscrepancies = dashboard.getMap(DISCREPANCY_COUNT + "." + UCORegentID);
+      // We should have introduced at least one discrepancy.
+      assertTrue(uCORegentDiscrepancies.get("-2") > 0
+                  || uCORegentDiscrepancies.get("-1") > 0
+                  || uCORegentDiscrepancies.get("0") > 0
+                  || uCORegentDiscrepancies.get("1") > 0
+                  || uCORegentDiscrepancies.get("2") > 0);
+
+      // Do a reaudit replacing it with the correct (0-discrepancy) value.
+      uploadAuditCVR(rec, session, true);
+      dashboard = getDoSDashBoardRefreshResponse();
+      uCORegentDiscrepancies = dashboard.getMap(DISCREPANCY_COUNT + "." + UCORegentID);
+      // Now there should be no discrepancies
+      assertTrue(uCORegentDiscrepancies.get("-2") == 0
+          && uCORegentDiscrepancies.get("-1") == 0
+          && uCORegentDiscrepancies.get("0") == 0
+          && uCORegentDiscrepancies.get("1") == 0
+          && uCORegentDiscrepancies.get("2") == 0);
+
+    }
 
     // Audit board sign off for each county.
     countySignOffLogout(session);
