@@ -33,7 +33,9 @@ import org.apache.log4j.Logger;
 import org.testcontainers.ext.ScriptUtils;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.query.CastVoteRecordQueries;
 
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
@@ -149,6 +151,7 @@ public class Demo1 extends Workflow {
     final Map<String,String> targets = Map.of("City of Longmont - Mayor","COUNTY_WIDE_CONTEST",
         "Byron Mayoral", "STATE_WIDE_CONTEST",
         "Kempsey Mayoral", "COUNTY_WIDE_CONTEST");
+    final List<String> irvContests = List.of("Byron Mayoral", "Kempsey Mayoral");
     targetContests(targets);
 
     // 6. Set the seed.
@@ -163,22 +166,16 @@ public class Demo1 extends Workflow {
     Map<String, EstimateSampleSizes.EstimateData> sampleSizes = getSampleSizeEstimates();
     assertFalse(sampleSizes.isEmpty());
 
+    // Byron should be 3820. Kempsey 332.
     // For each targeted contest, check that the set of assertions: (i) is not empty; (ii) has
     // the correct minimum diluted margin; and (ii) has resulted in the correct sample size estimate.
+    Map<String,Double> expectedDilutedMargins = Map.of("City of Longmont - Mayor", 0.09078192,
+        "Byron Mayoral", 0.00684644, "Kempsey Mayoral", 0.02200739);
 
-    // Auditing universe for Longmont: total number of ballots cast in Boulder; margin 10773
-    // Auditing universe for Kempsey: total number of ballots cast in Archuleta; DM 0.02200739
-    // Auditing universe for Byron: total number of ballots cast across all counties; DM 0.007976747941223963
-
-    // Expected sample sizes: Byron 7368; Kempsey 332; Longmont
-
-    Map<String,Double> expectedDilutedMargins = Map.of("City of Longmont - Mayor", 0.00,
-        "Byron Mayoral", 0.007976, "Kempsey Mayoral", 0.022);
-
-    //for(final String c : targets.keySet()) {
-    //  verifyAssertions(c, expectedDilutedMargins.get(c),
-    //      sampleSizes.get(c).estimatedSamples(), riskLimit);
-    //}
+    for(final String c : targets.keySet()) {
+      verifySampleSize(c, expectedDilutedMargins.get(c),
+          sampleSizes.get(c).estimatedSamples(), riskLimit, irvContests.contains(c));
+    }
 
     // 8. Start Audit Round
     startAuditRound();

@@ -21,7 +21,11 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
+import static ch.obermuhlner.math.big.BigDecimalMath.log;
 import static io.restassured.RestAssured.given;
+import static java.math.BigDecimal.ONE;
+import static java.math.BigDecimal.valueOf;
+import static java.math.MathContext.DECIMAL128;
 import static java.util.Collections.min;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -46,6 +50,7 @@ import io.restassured.response.Response;
 
 import java.io.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -689,20 +694,24 @@ public class Workflow extends TestClassWithDatabase {
    * @param actualEstimatedSamples    Actual sample size computation for the contest.
    * @param riskLimit                 Risk limit for the audit.
    */
-  protected void verifyAssertions(final String contest, final double expectedDilutedMargin,
-      final int actualEstimatedSamples, final BigDecimal riskLimit){
-    final List<Assertion> assertions = AssertionQueries.matching(contest);
-    assertFalse(assertions.isEmpty());
+  protected void verifySampleSize(final String contest, final double expectedDilutedMargin,
+      final int actualEstimatedSamples, final BigDecimal riskLimit, final boolean isIRV){
 
-    final BigDecimal actualDilutedMargin = min(assertions.stream().map(
-        Assertion::getDilutedMargin).toList());
+    if(isIRV) {
+      final List<Assertion> assertions = AssertionQueries.matching(contest);
+      assertFalse(assertions.isEmpty());
 
-    final DoubleComparator comp = new DoubleComparator();
-    assertEquals(comp.compare(actualDilutedMargin.doubleValue(), expectedDilutedMargin), 0);
+      final BigDecimal actualDilutedMargin = min(assertions.stream().map(
+          Assertion::getDilutedMargin).toList());
+
+      final DoubleComparator comp = new DoubleComparator();
+      assertEquals(comp.compare(actualDilutedMargin.doubleValue(), expectedDilutedMargin), 0);
+    }
 
     // Sample size formula is (-2 * gamma * log(risk_limit))/dilutedMargin
     final int samples = (int)(Math.ceil(-2.0 * Audit.GAMMA.doubleValue() *
-        Math.log(riskLimit.doubleValue()))/expectedDilutedMargin);
+        Math.log(riskLimit.doubleValue())/expectedDilutedMargin));
+
     assertEquals(actualEstimatedSamples, samples);
   }
 

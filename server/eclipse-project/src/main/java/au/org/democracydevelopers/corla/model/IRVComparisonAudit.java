@@ -148,6 +148,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
         // As the super class invokes sample size estimation methods in its constructor,
         // we need to invoke them here after the audit's assertions have been populated. Otherwise,
         // they will not have been computed correctly for IRV.
+        my_optimistic_recalculate_needed = true;
         optimisticSamplesToAudit();
         estimatedSamplesToAudit();
 
