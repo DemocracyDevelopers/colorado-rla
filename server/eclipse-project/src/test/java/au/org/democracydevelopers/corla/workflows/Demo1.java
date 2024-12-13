@@ -165,8 +165,19 @@ public class Demo1 extends Workflow {
 
     // For each targeted contest, check that the set of assertions: (i) is not empty; (ii) has
     // the correct minimum diluted margin; and (ii) has resulted in the correct sample size estimate.
+
+    // Auditing universe for Longmont: total number of ballots cast in Boulder; margin 10773
+    // Auditing universe for Kempsey: total number of ballots cast in Archuleta; DM 0.02200739
+    // Auditing universe for Byron: total number of ballots cast across all counties; DM 0.007976747941223963
+
+    // Expected sample sizes: Byron 7368; Kempsey 332; Longmont
+
+    Map<String,Double> expectedDilutedMargins = Map.of("City of Longmont - Mayor", 0.00,
+        "Byron Mayoral", 0.007976, "Kempsey Mayoral", 0.022);
+
     //for(final String c : targets.keySet()) {
-    //  verifyAssertions(c, dilutedMargin, sampleSizes.get(c).estimatedSamples());
+    //  verifyAssertions(c, expectedDilutedMargins.get(c),
+    //      sampleSizes.get(c).estimatedSamples(), riskLimit);
     //}
 
     // 8. Start Audit Round
@@ -195,9 +206,10 @@ public class Demo1 extends Workflow {
 
     for(final Map.Entry<String,Map<String,Object>> entry : status.entrySet()){
       assertEquals(entry.getValue().get(BALLOTS_REMAINING).toString(), "0");
+    //  assertEquals(entry.getValue().get(ESTIMATED_BALLOTS).toString(), "0");
     }
 
-    LOGGER.info("Successfully completed Demo1 (First round audit).");
+    LOGGER.info("Successfully completed Demo1 (First round audit: No Discrepancies).");
   }
 
 }
