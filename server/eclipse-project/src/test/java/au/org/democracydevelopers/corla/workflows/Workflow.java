@@ -126,6 +126,7 @@ public class Workflow extends TestClassWithDatabase {
    */
   protected static final String ASM_STATE = "asm_state";
   protected static final String AUDIT = "audit";
+  protected static final String AUDITED_CONTESTS = "audited_contests";
   protected static final String AUDIT_INFO = "audit_info";
   protected static final String CONTEST = "contest";
   protected static final String CANONICAL_CHOICES = "canonicalChoices";
