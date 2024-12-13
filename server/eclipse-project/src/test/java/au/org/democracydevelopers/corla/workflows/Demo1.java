@@ -97,7 +97,7 @@ public class Demo1 extends Workflow {
     MANIFESTS.add(dataPath + "NewSouthWales21/Kempsey_Mayoral.manifest.csv");
     MANIFESTS.add(dataPath + "split-Byron/Byron-5-manifest.csv");
     MANIFESTS.add(dataPath + "split-Byron/Byron-6-manifest.csv");
-    MANIFESTS.add(dataPath + "Boulder23/Boulder-IRV-Manifest.csv");
+    MANIFESTS.add(dataPath + "Demo1/7-redacted_Boulder_IRV_Manifest.csv");
 
     for(int i = 8 ; i <= numCounties ; ++i){
       CVRS.add(dataPath + "split-Byron/Byron-" + i + ".csv");
