@@ -236,6 +236,12 @@ public class DoSDashboardRefreshResponse {
   }
 
 
+  /**
+   * Gets the GenerateAssertionsSummary list from the database, and makes a corresponding list
+   * with the applicable Counties included in each item.
+   * @return a list of GenerateAssertionsSummaryWithCounty, which includes the County name if there's
+   * a unique on for this contest, or "Multiple" if there is more than one.
+   */
   private static List<GenerateAssertionsSummaryWithCounty> addCountiesToSummaries() {
     List<GenerateAssertionsSummaryWithCounty> generateAssertionsSummaries = new ArrayList<>();
 
