@@ -17,7 +17,7 @@ declare namespace DOS {
         standardizingContests?: boolean;
         generatingAssertions?: boolean;
         assertionsGenerated?: boolean;
-        generateAssertionsSummaries: DOS.GenerateAssertionsSummary[];
+        generateAssertionsSummaries: DOS.GenerateAssertionsSummaryWithCounty[];
         assertionGenerationStatuses?: DOS.AssertionGenerationStatuses;
         type: 'DOS';
     }
@@ -50,6 +50,7 @@ declare namespace DOS {
         [type: string]: number;
     }
 
+    // Exactly matches the structure of the same name in the server.
     interface GenerateAssertionsSummary {
         id: number;
         contestName: string;
@@ -57,6 +58,12 @@ declare namespace DOS {
         error: string;
         warning: string;
         message: string;
+    }
+
+    // Exactly matches the record of the same name in the server.
+    interface GenerateAssertionsSummaryWithCounty {
+        summary: GenerateAssertionsSummary;
+        countyName: string;
     }
 
     interface CanonicalContests {

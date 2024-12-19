@@ -63,10 +63,10 @@ function mapStateToProps(dosState: DOS.AppState) {
 
         if (contest.description === 'IRV') {
             const assertionSummary = dosState.generateAssertionsSummaries.find(
-                element => element.contestName === contest.name);
+                element => element.summary.contestName === contest.name);
 
             // Tied IRV contests or contests with failed assertion generations are not auditable
-            if (assertionSummary && assertionSummary.error.length > 0) {
+            if (assertionSummary && assertionSummary.summary.error.length > 0) {
                 return false;
             }
         }
