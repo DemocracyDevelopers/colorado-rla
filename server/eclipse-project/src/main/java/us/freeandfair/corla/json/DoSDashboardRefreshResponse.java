@@ -255,7 +255,7 @@ public class DoSDashboardRefreshResponse {
       String countyName = "";
       if (cr.isEmpty() || cr.get().getCounties().isEmpty()) {
         // This isn't supposed to happen. Keep the summary, with a blank county name, and continue but warn.
-        LOGGER.warn(String.format("%s %s %s.", "[addCountiesToSummaries] ", "Empty ContestResult or County Name for County ",
+        LOGGER.warn(String.format("%s %s %s.", "[addCountiesToSummaries] ", "Empty ContestResult or County Name for Contest ",
             summary.getContestName()));
       } else {
         Set<County> counties = cr.get().getCounties();
