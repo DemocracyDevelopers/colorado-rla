@@ -87,7 +87,7 @@ public class Demo1 extends Workflow {
     CVRS.add(dataPath + "Demo1/4-archuleta-kempsey-plusByron-4.csv");
     CVRS.add(dataPath + "split-Byron/Byron-5.csv");
     CVRS.add(dataPath + "split-Byron/Byron-6.csv");
-    CVRS.add(dataPath + "Demo1/7-boulder-2023-plusByron-7.csv");
+    CVRS.add(dataPath + "Demo1/7-unredacted-boulder-2023-plusByron-7.csv");
 
     List<String> MANIFESTS = new ArrayList<>();
 
@@ -97,7 +97,7 @@ public class Demo1 extends Workflow {
     MANIFESTS.add(dataPath + "NewSouthWales21/Kempsey_Mayoral.manifest.csv");
     MANIFESTS.add(dataPath + "split-Byron/Byron-5-manifest.csv");
     MANIFESTS.add(dataPath + "split-Byron/Byron-6-manifest.csv");
-    MANIFESTS.add(dataPath + "Demo1/7-redacted_Boulder_IRV_Manifest.csv");
+    MANIFESTS.add(dataPath + "Demo1/7-unredacted-Boulder-IRV-Manifest.csv");
 
     for(int i = 8 ; i <= numCounties ; ++i){
       CVRS.add(dataPath + "split-Byron/Byron-" + i + ".csv");
@@ -195,16 +195,18 @@ public class Demo1 extends Workflow {
       countySignOffLogout(entry);
     }
 
-    // Check that there are no more ballots to sample across all counties in first round.
+    // Check that there are no more ballots to sample across all counties in first round,
+    // and as this demo involved no discprepancies, that all audits are complete.
     dashboard = getDoSDashBoardRefreshResponse();
     final Map<String,Map<String,Object>> status = dashboard.get(COUNTY_STATUS);
 
     for(final Map.Entry<String,Map<String,Object>> entry : status.entrySet()){
       assertEquals(entry.getValue().get(BALLOTS_REMAINING).toString(), "0");
-    //  assertEquals(entry.getValue().get(ESTIMATED_BALLOTS).toString(), "0");
+      assertEquals(entry.getValue().get(ESTIMATED_BALLOTS).toString(), "0");
+      assertEquals(entry.getValue().get(DISCREPANCY_COUNT).toString(), "{}");
     }
 
-    LOGGER.info("Successfully completed Demo1 (First round audit).");
+    LOGGER.info("Successfully completed Demo1 (First round audit; No Discrepancies).");
   }
 
 }

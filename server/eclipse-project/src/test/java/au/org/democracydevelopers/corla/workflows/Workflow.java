@@ -21,11 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
-import static ch.obermuhlner.math.big.BigDecimalMath.log;
 import static io.restassured.RestAssured.given;
-import static java.math.BigDecimal.ONE;
-import static java.math.BigDecimal.valueOf;
-import static java.math.MathContext.DECIMAL128;
 import static java.util.Collections.min;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -50,7 +46,6 @@ import io.restassured.response.Response;
 
 import java.io.*;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -139,13 +134,14 @@ public class Workflow extends TestClassWithDatabase {
   protected static final String CVR_FILETYPE = "cvr-export";
   protected static final String CVR_JSON = "cvr_export_file";
   protected static final String ESTIMATED_BALLOTS = "estimated_ballots_to_audit";
+  protected static final String DISCREPANCY_COUNT = "discrepancy_count";
+  protected static final String AUDIT_BOARD_ASM_STATE = "audit_board_asm_state";
   protected static final String ELECTION_DATE = "election_date";
   protected static final String ELECTION_TYPE = "election_type";
   protected static final String ID = "id";
   protected static final String MANIFEST_FILETYPE = "ballot-manifest";
   protected static final String MANIFEST_JSON = "ballot_manifest_file";
   protected static final String BALLOTS_REMAINING = "ballots_remaining_in_round";
-  protected static final String OPTIMISTIC_BALLOTS = "optimistic_ballots_to_audit";
   protected static final String NAME = "name";
   protected static final String PUBLIC_MEETING_DATE = "public_meeting_date";
   protected static final String REASON = "reason";
@@ -715,7 +711,10 @@ public class Workflow extends TestClassWithDatabase {
     assertEquals(actualEstimatedSamples, samples);
   }
 
-
+  /**
+   * Login as the state admin and hit the start audit round endpoint. Check that an
+   * appropriate HTTP status is returned.
+   */
   protected void startAuditRound() {
     // Login as state admin.
     final SessionFilter filter = doLogin("stateadmin1");
