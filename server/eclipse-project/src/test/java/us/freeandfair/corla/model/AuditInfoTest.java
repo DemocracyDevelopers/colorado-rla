@@ -23,8 +23,9 @@ import static org.testng.Assert.*;
 
 import us.freeandfair.corla.csv.ContestNameParser;
 import us.freeandfair.corla.json.VersionExclusionStrategy;
+import us.freeandfair.corla.util.TestClassWithDatabase;
 
-public class AuditInfoTest {
+public class AuditInfoTest extends TestClassWithDatabase {
   public Gson gson;
 
   @BeforeClass
@@ -33,7 +34,7 @@ public class AuditInfoTest {
   }
 
   @Test()
-  private void canonicalContestsTest() {
+  private void testCanonicalContests() {
     Map<String, Set<String>> contestMap = new TreeMap<String, Set<String>>();
 
     Set<String> contests = new HashSet<String>();
@@ -79,7 +80,7 @@ public class AuditInfoTest {
   // @SuppressWarnings("PMD.DoNotUseThreads")
   // @SuppressFBWarnings(value = {"URF_UNREAD_FIELD"},
   //                   justification = "JSON blobs are big")
-  public void parsingTest() {
+  public void testParsing() {
     final String json = "{\"election_date\":\"2018-07-31T06:00:00.000Z\",\"election_type\":\"coordinated\",\"public_meeting_date\":\"2018-08-07T06:00:00.000Z\",\"risk_limit\":0.05,\"upload_file\":[{\"preview\":\"blob:http://localhost:3000/54a4f865-9d2a-b442-881a-8630050977dc\",\"contents\":'\"CountyName\",\"ContestName\"\n\"Boulder\",\"Kombucha - DEM\"\n\"Boulder\",\"Kale - DEM\"\n\"Denver\",\"IPA - DEM\"\n\"Denver\",\"Porter - REP\"\n\"Chaffee\",\"Hooligan Race - DEM\"\n\"Chaffee\",\"Pole Pedal Paddle - DEM\"\n\"Chaffee\",\"Gunbarrel Challenge - REP\"\n'}]}";
 
     String contests = contestsFromJSON(json);

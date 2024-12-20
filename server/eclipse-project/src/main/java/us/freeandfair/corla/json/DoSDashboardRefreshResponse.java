@@ -16,13 +16,7 @@
 
 package us.freeandfair.corla.json;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 
 import javax.persistence.PersistenceException;
 
@@ -33,16 +27,10 @@ import org.apache.log4j.Logger;
 import us.freeandfair.corla.asm.ASMState;
 import us.freeandfair.corla.asm.ASMUtilities;
 import us.freeandfair.corla.asm.DoSDashboardASM;
-import us.freeandfair.corla.model.AuditInfo;
-import us.freeandfair.corla.model.AuditReason;
-import us.freeandfair.corla.model.AuditType;
-import us.freeandfair.corla.model.ContestToAudit;
-import us.freeandfair.corla.model.County;
-import us.freeandfair.corla.model.ComparisonAudit;
-import us.freeandfair.corla.model.CountyDashboard;
-import us.freeandfair.corla.model.DoSDashboard;
+import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.ComparisonAuditQueries;
+import us.freeandfair.corla.query.ContestResultQueries;
 import us.freeandfair.corla.util.SuppressFBWarnings;
 
 /**
@@ -116,7 +104,13 @@ public class DoSDashboardRefreshResponse {
    * The generate assertions summaries, for IRV contests. Keyed by contest name (which is repeated
    * in the GenerateAssertionsSummary).
    */
-  private final List<GenerateAssertionsSummary> my_generate_assertions_summaries;
+  private final List<GenerateAssertionsSummaryWithCounty> my_generate_assertions_summaries;
+
+  /**
+   * Placeholder string for when a contest crosses multiple counties. Used for IRV assertion-generation
+   * summaries.
+   */
+  private final static String MULTIPLE_COUNTIES = "Multiple";
 
   /**
    * Constructs a new DosDashboardRefreshResponse.
@@ -132,7 +126,7 @@ public class DoSDashboardRefreshResponse {
    * @param the_audit_info                    The election info.
    * @param the_audit_reasons                 The reasons for auditing each contest.
    * @param the_audit_types                   The audit type (usually either COMPARISON or NOT_AUDITABLE)
-   * @param the_generate_assertions_summaries The GenerateAssertionsSummaries, for IRV contests.
+   * @param the_generate_assertions_summaries The GenerateAssertionsSummaries, for IRV contests, with contest names added.
    */
   @SuppressWarnings("PMD.ExcessiveParameterList")
   protected DoSDashboardRefreshResponse(final ASMState the_asm_state,
@@ -145,7 +139,7 @@ public class DoSDashboardRefreshResponse {
                                         final AuditInfo the_audit_info,
                                         final SortedMap<Long, AuditReason> the_audit_reasons,
                                         final SortedMap<Long, AuditType> the_audit_types,
-                                        final List<GenerateAssertionsSummary> the_generate_assertions_summaries) {
+                                        final List<GenerateAssertionsSummaryWithCounty> the_generate_assertions_summaries) {
     my_asm_state = the_asm_state;
     my_audited_contests = the_audited_contests;
     my_estimated_ballots_to_audit = the_estimated_ballots_to_audit;
@@ -233,17 +227,49 @@ public class DoSDashboardRefreshResponse {
     final DoSDashboardASM asm =
         ASMUtilities.asmFor(DoSDashboardASM.class, DoSDashboardASM.IDENTITY);
 
-    // Load all the Generate Assertions Summaries from the database into the generate_assertions_list.
-    final List<GenerateAssertionsSummary> generate_assertions_list
-        = Persistence.getAll(GenerateAssertionsSummary.class);
-
-
     return new DoSDashboardRefreshResponse(asm.currentState(), audited_contests,
                                            estimated_ballots_to_audit,
                                            optimistic_ballots_to_audit, discrepancy_count,
                                            countyStatusMap(), hand_count_contests,
                                            dashboard.auditInfo(), audit_reasons, audit_types,
-                                           generate_assertions_list);
+                                           addCountiesToSummaries());
+  }
+
+
+  /**
+   * Gets the GenerateAssertionsSummary list from the database, and makes a corresponding list
+   * with the applicable Counties included in each item.
+   * @return a list of GenerateAssertionsSummaryWithCounty, which includes the County name if there's
+   * a unique on for this contest, or "Multiple" if there is more than one.
+   */
+  private static List<GenerateAssertionsSummaryWithCounty> addCountiesToSummaries() {
+    List<GenerateAssertionsSummaryWithCounty> generateAssertionsSummaries = new ArrayList<>();
+
+    // Load all the Generate Assertions Summaries from the database into the generate_assertions_list.
+    final List<GenerateAssertionsSummary> generate_assertions_list
+        = Persistence.getAll(GenerateAssertionsSummary.class);
+
+    // Find out which county each contest is in; fill in 'Multiple' if there is more than one.
+    for (GenerateAssertionsSummary summary : generate_assertions_list) {
+      final Optional<ContestResult> cr = ContestResultQueries.find(summary.getContestName());
+      String countyName = "";
+      if (cr.isEmpty() || cr.get().getCounties().isEmpty()) {
+        // This isn't supposed to happen. Keep the summary, with a blank county name, and continue but warn.
+        LOGGER.warn(String.format("%s %s %s.", "[addCountiesToSummaries] ", "Empty ContestResult or County Name for Contest ",
+            summary.getContestName()));
+      } else {
+        Set<County> counties = cr.get().getCounties();
+        if (counties.size() == 1) {
+          countyName = counties.stream().findFirst().get().name();
+        } else {
+          // Must be >1 because we already checked for zero.
+          countyName = MULTIPLE_COUNTIES;
+        }
+      }
+      // Add the summary in, whether we found a county or not.
+      generateAssertionsSummaries.add(new GenerateAssertionsSummaryWithCounty(summary, countyName));
+    }
+    return generateAssertionsSummaries;
   }
 
   /**
@@ -267,4 +293,12 @@ public class DoSDashboardRefreshResponse {
 
     return status_map;
   }
+
+  /**
+   * The same as a GenerateAssertionsSummary, but with the county name attached, or "multiple" if more than one.
+   */
+  protected record GenerateAssertionsSummaryWithCounty(
+      GenerateAssertionsSummary summary,
+      String countyName
+  ){};
 }
