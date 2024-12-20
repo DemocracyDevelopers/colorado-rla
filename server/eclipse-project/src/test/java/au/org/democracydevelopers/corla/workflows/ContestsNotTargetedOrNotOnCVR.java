@@ -34,8 +34,10 @@ import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.persistence.Persistence;
 import wiremock.net.minidev.json.JSONObject;
 
+import java.io.Console;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static org.testng.Assert.*;
@@ -70,6 +72,8 @@ public class ContestsNotTargetedOrNotOnCVR extends Workflow {
   private static final String U_CO_REGENT = "Regent of the University of Colorado - At Large";
   private static final String CLEAR_WINNER = "Clear Winner";
   private static final String DISTANT_LOSER = "Distant Loser";
+  private static final String JEFF_BAKER = "Jeff Baker";
+  private static final String JANET_LEE_COOK = "Janet Lee Cook";
   /**
    * Database init.
    */
@@ -164,31 +168,58 @@ public class ContestsNotTargetedOrNotOnCVR extends Workflow {
               "comment", "", "consensus", "YES",
               "contest", info.contest().id())).toList();
 
-        // We want to introduce some discrepancies.
-        // Find the CVR choices for the contest with the smaller sample size
-        Optional<List<Choice>> correctChoicesOpt = getChoices(rec, U_CO_REGENT);
-        if(correctChoicesOpt.isPresent()) {
-          List<Choice> correctChoices = correctChoicesOpt.get();
-          // If it's empty or for the winner, make it for the loser.
-          if(correctChoices.isEmpty() || correctChoices.get(0).name().equals(CLEAR_WINNER)) {
-            contestInfo = setOtherCVRChoices(rec, U_CO_REGENT, List.of(DISTANT_LOSER));
-          // If it's for the loser, make it for the winner.
-          } else if (correctChoices.get(0).name().equals(DISTANT_LOSER)) {
-            contestInfo = setOtherCVRChoices(rec, U_CO_REGENT, List.of(CLEAR_WINNER));
-          }
+      // We want to introduce some discrepancies.
+      // Find the CVR choices for the U CO Regent contest.
+      Optional<List<Choice>> correctChoicesOpt = getChoices(rec, U_CO_REGENT);
+      if (correctChoicesOpt.isPresent()) {
+        List<String> correctChoices = correctChoicesOpt.get().stream().map(Choice::name).toList();
+        LOGGER.info(String.format("Correct values: %s - %s", U_CO_REGENT, String.join(",", correctChoices)));
+        // If it's empty or mentions the winner, make it for the loser.
+        if (correctChoices.isEmpty() || correctChoices.contains(CLEAR_WINNER)) {
+          contestInfo = setOtherCVRChoices(rec, U_CO_REGENT, List.of(DISTANT_LOSER));
+          LOGGER.info(String.format("Update: %s - %s", U_CO_REGENT, DISTANT_LOSER));
+          // If it doesn't mention the winner, make it for the winner.
+        } else {
+          contestInfo = setOtherCVRChoices(rec, U_CO_REGENT, List.of(CLEAR_WINNER));
+          LOGGER.info(String.format("Update: %s - %s", U_CO_REGENT, CLEAR_WINNER));
         }
+      }
+
+      // We want to introduce some discrepancies.
+      // Find the CVR choices for the County Commissioner District 3 contest.
+      Optional<List<Choice>> correctChoicesCCD3Opt = getChoices(rec, ADAMS_COMMISSIONER);
+      if (correctChoicesCCD3Opt.isPresent()) {
+        List<String> correctChoicesCCD3 = correctChoicesCCD3Opt.get().stream().map(Choice::name).toList();
+        LOGGER.info(String.format("Correct values: %s - %s", ADAMS_COMMISSIONER, String.join(",", correctChoicesCCD3)));
+        // If it's empty or mentions the winner, make it for the loser.
+        if (correctChoicesCCD3.isEmpty() || correctChoicesCCD3.contains(JEFF_BAKER)) {
+          contestInfo = setOtherCVRChoices(rec, ADAMS_COMMISSIONER, List.of(JANET_LEE_COOK));
+          LOGGER.info(String.format("Update: %s - %s", ADAMS_COMMISSIONER, JANET_LEE_COOK));
+          // If it doesn't mention the winner, make it for the winner.
+        } else {
+          contestInfo = setOtherCVRChoices(rec, ADAMS_COMMISSIONER, List.of(JEFF_BAKER));
+          LOGGER.info(String.format("Update: %s - %s", ADAMS_COMMISSIONER, JEFF_BAKER));
+        }
+      }
+
 
       // Upload the CVR into which we introduced a discrepancy.
       uploadAuditCVR(rec, session, contestInfo, false);
       dashboard = getDoSDashBoardRefreshResponse();
       Map<String,Integer> uCORegentDiscrepancies = dashboard.getMap(DISCREPANCY_COUNT + "." + UCORegentID);
+      Map<String,Integer> adamsCommissionerDiscrepancies = dashboard.getMap(DISCREPANCY_COUNT + "." + adamsCommissionerID);
+
       // We should have introduced at least one discrepancy.
-      // FIXME introduce discrepancies into both contests, check that there's a discrepancy for at least one of them.
-      //assertTrue(uCORegentDiscrepancies.get("-2") > 0
-      //            || uCORegentDiscrepancies.get("-1") > 0
-      //            || uCORegentDiscrepancies.get("0") > 0
-      //            || uCORegentDiscrepancies.get("1") > 0
-      //            || uCORegentDiscrepancies.get("2") > 0);
+      assertTrue(uCORegentDiscrepancies.get("-2") > 0
+                  || uCORegentDiscrepancies.get("-1") > 0
+                  || uCORegentDiscrepancies.get("0") > 0
+                  || uCORegentDiscrepancies.get("1") > 0
+                  || uCORegentDiscrepancies.get("2") > 0
+                  || adamsCommissionerDiscrepancies.get("-2") > 0
+                  || adamsCommissionerDiscrepancies.get("-1") > 0
+                  || adamsCommissionerDiscrepancies.get("0") > 0
+                  || adamsCommissionerDiscrepancies.get("1") > 0
+                  || adamsCommissionerDiscrepancies.get("2") > 0);
 
       // Do a reaudit replacing it with the correct (0-discrepancy) value.
       uploadAuditCVR(rec, session, true);
