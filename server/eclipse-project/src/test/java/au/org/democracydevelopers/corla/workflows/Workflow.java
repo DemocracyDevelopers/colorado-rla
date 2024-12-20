@@ -148,6 +148,7 @@ public class Workflow extends TestClassWithDatabase {
   protected static final String PUBLIC_MEETING_DATE = "public_meeting_date";
   protected static final String REASON = "reason";
   protected static final String RISK_LIMIT_JSON = "risk_limit";
+  protected static final String RISK_LIMIT_ACHIEVED = "RISK_LIMIT_ACHIEVED";
   protected static final String SEED = "seed";
   protected static final String STATUS = "status";
 

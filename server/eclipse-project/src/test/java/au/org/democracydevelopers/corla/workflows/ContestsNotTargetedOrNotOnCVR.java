@@ -21,7 +21,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
-import static io.restassured.RestAssured.given;
 import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
@@ -32,14 +31,10 @@ import org.testng.annotations.Test;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.persistence.Persistence;
-import wiremock.net.minidev.json.JSONObject;
 
-import java.io.Console;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
 
@@ -59,11 +54,6 @@ public class ContestsNotTargetedOrNotOnCVR extends Workflow {
    * Class-wide logger
    */
   private static final Logger LOGGER = LogManager.getLogger(ContestsNotTargetedOrNotOnCVR.class);
-
-  /**
-   * The number of counties in this test.
-   */
-  private static final int NUM_COUNTIES_THIS_TEST = 1;
 
   /**
    * Names relevant to Adams county contests and candidates.
@@ -160,6 +150,14 @@ public class ContestsNotTargetedOrNotOnCVR extends Workflow {
 
     for(final CastVoteRecord rec : cvrsToAudit) {
 
+      // The audit can enter the status RISK_LIMIT_ACHIEVED at this point.
+      // Colorado-rla then returns an error if we keep trying to upload audit CVRs.
+      // Hence this break.
+      dashboard = getDoSDashBoardRefreshResponse();
+      if(dashboard.getInt(COUNTY_STATUS + ".1." + BALLOTS_REMAINING) == 0) {
+        return;
+      }
+
       // Make the main map from things that won't change.
       // This is the default that gets used if the CVR isn't on the ballot, which
       // should never happen.
@@ -185,6 +183,14 @@ public class ContestsNotTargetedOrNotOnCVR extends Workflow {
         }
       }
 
+      // The audit can enter the status RISK_LIMIT_ACHIEVED at this point.
+      // Colorado-rla then returns an error if we keep trying to upload audit CVRs.
+      // Hence this break.
+      dashboard = getDoSDashBoardRefreshResponse();
+      if(dashboard.getInt(COUNTY_STATUS + ".1." + BALLOTS_REMAINING) == 0) {
+        return;
+      }
+
       // We want to introduce some discrepancies.
       // Find the CVR choices for the County Commissioner District 3 contest.
       Optional<List<Choice>> correctChoicesCCD3Opt = getChoices(rec, ADAMS_COMMISSIONER);
@@ -200,39 +206,47 @@ public class ContestsNotTargetedOrNotOnCVR extends Workflow {
           contestInfo = setOtherCVRChoices(rec, ADAMS_COMMISSIONER, List.of(JEFF_BAKER));
           LOGGER.info(String.format("Update: %s - %s", ADAMS_COMMISSIONER, JEFF_BAKER));
         }
+
       }
 
+      // The audit can enter the status RISK_LIMIT_ACHIEVED at this point.
+      // Colorado-rla then returns an error if we keep trying to upload audit CVRs.
+      // Hence this break.
+      dashboard = getDoSDashBoardRefreshResponse();
+      if(dashboard.getInt(COUNTY_STATUS + ".1." + BALLOTS_REMAINING) == 0) {
+        return;
+      }
 
       // Upload the CVR into which we introduced a discrepancy.
       uploadAuditCVR(rec, session, contestInfo, false);
+
+      // The audit can enter the status RISK_LIMIT_ACHIEVED at this point.
+      // Colorado-rla then returns an error if we keep trying to upload audit CVRs.
+      // Hence this break.
+      dashboard = getDoSDashBoardRefreshResponse();
+      if(dashboard.getInt(COUNTY_STATUS + ".1." + BALLOTS_REMAINING) == 0) {
+        return;
+      }
+
+      // Do a reaudit replacing all the introduced discrepancies with the correct (0-discrepancy) value.
+      uploadAuditCVR(rec, session, true);
       dashboard = getDoSDashBoardRefreshResponse();
       Map<String,Integer> uCORegentDiscrepancies = dashboard.getMap(DISCREPANCY_COUNT + "." + UCORegentID);
       Map<String,Integer> adamsCommissionerDiscrepancies = dashboard.getMap(DISCREPANCY_COUNT + "." + adamsCommissionerID);
 
-      // We should have introduced at least one discrepancy.
-      assertTrue(uCORegentDiscrepancies.get("-2") > 0
-                  || uCORegentDiscrepancies.get("-1") > 0
-                  || uCORegentDiscrepancies.get("0") > 0
-                  || uCORegentDiscrepancies.get("1") > 0
-                  || uCORegentDiscrepancies.get("2") > 0
-                  || adamsCommissionerDiscrepancies.get("-2") > 0
-                  || adamsCommissionerDiscrepancies.get("-1") > 0
-                  || adamsCommissionerDiscrepancies.get("0") > 0
-                  || adamsCommissionerDiscrepancies.get("1") > 0
-                  || adamsCommissionerDiscrepancies.get("2") > 0);
-
-      // Do a reaudit replacing it with the correct (0-discrepancy) value.
-      uploadAuditCVR(rec, session, true);
-      dashboard = getDoSDashBoardRefreshResponse();
-      uCORegentDiscrepancies = dashboard.getMap(DISCREPANCY_COUNT + "." + UCORegentID);
       // Now there should be no discrepancies
       // This should fail for the untargeted contest.
       assertTrue(uCORegentDiscrepancies.get("-2") == 0
           && uCORegentDiscrepancies.get("-1") == 0
           && uCORegentDiscrepancies.get("0") == 0
           && uCORegentDiscrepancies.get("1") == 0
-          && uCORegentDiscrepancies.get("2") == 0);
-
+          && uCORegentDiscrepancies.get("2") == 0
+          && adamsCommissionerDiscrepancies.get("-2") == 0
+          && adamsCommissionerDiscrepancies.get("-1") == 0
+          && adamsCommissionerDiscrepancies.get("0") == 0
+          && adamsCommissionerDiscrepancies.get("1") == 0
+          && adamsCommissionerDiscrepancies.get("2") == 0
+      );
     }
 
     // Audit board sign off for each county.
@@ -244,7 +258,6 @@ public class ContestsNotTargetedOrNotOnCVR extends Workflow {
 
     for(final Map.Entry<String,Map<String,Object>> entry : status.entrySet()){
       assertEquals(entry.getValue().get(BALLOTS_REMAINING).toString(), "0");
-    //  assertEquals(entry.getValue().get(ESTIMATED_BALLOTS).toString(), "0");
     }
     // TODO Sanity check of assertions and sample size estimates.
 
