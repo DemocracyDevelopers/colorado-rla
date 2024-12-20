@@ -20,6 +20,7 @@ import com.google.gson.JsonParser;
 
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
+import static us.freeandfair.corla.util.EqualsHashcodeHelper.nullableHashCode;
 
 import us.freeandfair.corla.csv.ContestNameParser;
 import us.freeandfair.corla.json.VersionExclusionStrategy;
@@ -33,8 +34,8 @@ public class AuditInfoTest extends TestClassWithDatabase {
     gson = new GsonBuilder().setPrettyPrinting().create();
   }
 
-  @Test()
-  private void testCanonicalContests() {
+  @Test
+  public void testCanonicalContests() {
     Map<String, Set<String>> contestMap = new TreeMap<String, Set<String>>();
 
     Set<String> contests = new HashSet<String>();
@@ -76,7 +77,7 @@ public class AuditInfoTest extends TestClassWithDatabase {
     }
   }
 
-  @Test()
+  @Test
   // @SuppressWarnings("PMD.DoNotUseThreads")
   // @SuppressFBWarnings(value = {"URF_UNREAD_FIELD"},
   //                   justification = "JSON blobs are big")
@@ -109,5 +110,32 @@ public class AuditInfoTest extends TestClassWithDatabase {
     private String contents = "";
     public String contents() { return contents; }
     public RequestJSON(String contents) { this.contents = contents; }
+  }
+
+  @Test
+  public void testEmptyAuditInfo() {
+    // Test an empty AuditInfo object
+    AuditInfo ai = new AuditInfo();
+    assertNull(ai.electionDate());
+    assertNull(ai.electionType());
+    assertNull(ai.seed());
+    assertNull(ai.publicMeetingDate());
+    assertNull(ai.riskLimit());
+
+    Map<String, Set<String>> map = new TreeMap<>();
+    assertEquals(ai.canonicalContests(), map);
+    assertEquals(ai.getCanonicalChoices(), map);
+    assertEquals(ai.hashCode(), nullableHashCode(null));
+
+    assert(ai.equals(ai));
+    assertFalse(ai.equals(""));
+
+    assertEquals(ai.toString(),"AuditInfo[canonicalContests=" + map +
+            ", electionType=null" +
+            ", electionDate=null" +
+            ", publicMeetingDate=null" +
+            ", seed=null" +
+            ", riskLimitnull");
+
   }
 }
