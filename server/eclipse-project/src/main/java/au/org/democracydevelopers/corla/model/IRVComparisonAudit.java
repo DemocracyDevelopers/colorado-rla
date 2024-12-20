@@ -148,6 +148,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
         // As the super class invokes sample size estimation methods in its constructor,
         // we need to invoke them here after the audit's assertions have been populated. Otherwise,
         // they will not have been computed correctly for IRV.
+        my_optimistic_recalculate_needed = true;
         optimisticSamplesToAudit();
         estimatedSamplesToAudit();
 
@@ -365,7 +366,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
         return OptionalInt.empty();
       } else {
         final Integer maxDiscrepancy = max(discrepancies);
-        LOGGER.debug(String.format("%s Contest %s: Maximum discrepancy of %d found for CVR ID %d.",
+        LOGGER.info(String.format("%s Contest %s: Maximum discrepancy of %d found for CVR ID %d.",
             prefix, contestName, maxDiscrepancy, cvr.id()));
         return OptionalInt.of(maxDiscrepancy);
       }
@@ -417,7 +418,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
       }
     }
 
-    LOGGER.debug(String.format("%s IRVComparisonAudit ID %d for contest %s, risk %f.", prefix,
+    LOGGER.info(String.format("%s IRVComparisonAudit ID %d for contest %s, risk %f.", prefix,
         id(), contestName, risk));
     return risk;
   }
@@ -451,30 +452,44 @@ public class IRVComparisonAudit extends ComparisonAudit {
     recordTypeCheck(prefix, theRecord, theType);
 
     try {
-      LOGGER.debug(String.format("%s removing discrepancy associated with CVR %d (maximum type %d).",
+      LOGGER.info(String.format("%s removing discrepancy associated with CVR %d (maximum type %d).",
               prefix, theRecord.cvr().id(), theType));
-      // Remove the discrepancy associated with the given CVRAuditInfo (CVR/ACVR pair), if one
-      // exists, in each of the audit's assertions.
-      boolean removed = false;
-      for (Assertion a : assertions) {
-        boolean removed_a = a.removeDiscrepancy(theRecord);
-        removed = removed || removed_a;
-      }
 
-      // Update the discrepancy tallies in the base ComparisonAudit class, for reporting purposes,
-      // and the flag for indicating that a sample size recalculation is needed, *if* we did
-      // indeed remove a discrepancy from at least one of this audit's assertions.
-      if(removed) {
+      // The next check is whether the base classes isCovering(theRecord.id()) method holds.
+      // In this case, we just want to call the base classes removeDiscrepancy() method so that
+      // the discrepancy, which would be part of the my_discrepancies list, is removed from
+      // that list. Note that in this case, the base classes overall discrepancy counts will not
+      // have included the discrepancy.
+      if(!isCovering(theRecord.id())){
+        // Ensure that the base class' record method is called (note that the audit's discrepancy
+        // counts *should not be changed*, but the discrepancy should be removed from its list of
+        // discrepancies for reporting purposes).
         super.removeDiscrepancy(theRecord, theType);
       }
-      else{
-        // There is an argument that this should actually be a case where an exception should be
-        // thrown -- where the audit logic is telling the audit to remove discrepancies that have
-        // not been prior computed and recorded.
-        LOGGER.warn(String.format("%s no discrepancies removed.", prefix));
+      else {
+        // Remove the discrepancy associated with the given CVRAuditInfo (CVR/ACVR pair), if one
+        // exists, in each of the audit's assertions.
+        boolean removed = false;
+        for (Assertion a : assertions) {
+          boolean removed_a = a.removeDiscrepancy(theRecord);
+          removed = removed || removed_a;
+        }
+
+        // Update the discrepancy tallies in the base ComparisonAudit class, for reporting purposes,
+        // and the flag for indicating that a sample size recalculation is needed, *if* we did
+        // indeed remove a discrepancy from at least one of this audit's assertions.
+        if (removed) {
+          super.removeDiscrepancy(theRecord, theType);
+        } else {
+          // There is an argument that this should actually be a case where an exception should be
+          // thrown -- where the audit logic is telling the audit to remove discrepancies that have
+          // not been prior computed and recorded. However, the logic of ComparisonAudit does not
+          // include these defensive checks.
+          LOGGER.warn(String.format("%s no discrepancies removed.", prefix));
+        }
       }
 
-      LOGGER.debug(String.format("%s total number of overstatements (%f), optimistic sample " +
+      LOGGER.info(String.format("%s total number of overstatements (%f), optimistic sample " +
               "recalculate needed (%s), estimated sample recalculate needed (%s),", prefix,
           getOverstatements(), my_optimistic_recalculate_needed, my_estimated_recalculate_needed));
 
@@ -516,7 +531,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
     // IllegalArgumentException if they are not.
     recordTypeCheck(prefix, theRecord, theType);
 
-    LOGGER.debug(String.format("%s recording discrepancies for CVR ID %d, max type %d.", prefix,
+    LOGGER.info(String.format("%s recording discrepancies for CVR ID %d, max type %d.", prefix,
         theRecord.id(), theType));
 
     // Check that 'theType' is indeed the maximum discrepancy associated with an assertion in
@@ -538,13 +553,18 @@ public class IRVComparisonAudit extends ComparisonAudit {
     }
 
     // The next check is whether the base classes isCovering(theRecord.id()) method holds. If it
-    // doesn't, throw an exception. This valid discrepancy is not going to be counted in the
+    // doesn't, display a warning. This valid discrepancy is not going to be counted in the
     // base class counts (as isCovering()) does not hold, yet there is a discrepancy.
     if(!isCovering(theRecord.id())){
       final String msg = String.format("%s We have computed a discrepancy for contest %s, CVR %d, " +
-          "but that CVR is not meant to cover the contest.", prefix, contestName, theRecord.id());
-      LOGGER.error(msg);
-      throw new RuntimeException(msg);
+          "but that CVR does not cover the contest.", prefix, contestName, theRecord.id());
+      LOGGER.warn(msg);
+
+      // Ensure that the base class' record method is called (note that the audit's discrepancy
+      // counts will not be changed, but the discrepancy will be stored in its list of
+      // discrepancies for reporting purposes).
+      super.recordDiscrepancy(theRecord, theType);
+      return;
     }
 
     try {
@@ -567,7 +587,7 @@ public class IRVComparisonAudit extends ComparisonAudit {
       // and the flag for indicating that a sample size recalculation is needed.
       super.recordDiscrepancy(theRecord, theType);
 
-      LOGGER.debug(String.format("%s total number of overstatements (%f), optimistic sample " +
+      LOGGER.info(String.format("%s total number of overstatements (%f), optimistic sample " +
               "recalculate needed (%s), estimated sample recalculate needed (%s),", prefix,
           getOverstatements(), my_optimistic_recalculate_needed, my_estimated_recalculate_needed));
 

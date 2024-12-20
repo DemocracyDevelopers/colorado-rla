@@ -21,6 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
+
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -86,7 +87,7 @@ public class Demo1 extends Workflow {
     CVRS.add(dataPath + "Demo1/4-archuleta-kempsey-plusByron-4.csv");
     CVRS.add(dataPath + "split-Byron/Byron-5.csv");
     CVRS.add(dataPath + "split-Byron/Byron-6.csv");
-    CVRS.add(dataPath + "Demo1/7-boulder-2023-plusByron-7.csv");
+    CVRS.add(dataPath + "Demo1/7-unredacted-boulder-2023-plusByron-7.csv");
 
     List<String> MANIFESTS = new ArrayList<>();
 
@@ -96,7 +97,7 @@ public class Demo1 extends Workflow {
     MANIFESTS.add(dataPath + "NewSouthWales21/Kempsey_Mayoral.manifest.csv");
     MANIFESTS.add(dataPath + "split-Byron/Byron-5-manifest.csv");
     MANIFESTS.add(dataPath + "split-Byron/Byron-6-manifest.csv");
-    MANIFESTS.add(dataPath + "Boulder23/Boulder-IRV-Manifest.csv");
+    MANIFESTS.add(dataPath + "Demo1/7-unredacted-Boulder-IRV-Manifest.csv");
 
     for(int i = 8 ; i <= numCounties ; ++i){
       CVRS.add(dataPath + "split-Byron/Byron-" + i + ".csv");
@@ -145,9 +146,11 @@ public class Demo1 extends Workflow {
     assertEquals(4, dashboard.getList("generate_assertions_summaries").size());
 
     // 5. Choose targeted contests for audit.
-    targetContests(Map.of("City of Longmont - Mayor","COUNTY_WIDE_CONTEST",
+    final Map<String,String> targets = Map.of("City of Longmont - Mayor","COUNTY_WIDE_CONTEST",
         "Byron Mayoral", "STATE_WIDE_CONTEST",
-        "Kempsey Mayoral", "COUNTY_WIDE_CONTEST"));
+        "Kempsey Mayoral", "COUNTY_WIDE_CONTEST");
+    final List<String> irvContests = List.of("Byron Mayoral", "Kempsey Mayoral");
+    targetContests(targets);
 
     // 6. Set the seed.
     setSeed(defaultSeed);
@@ -161,9 +164,49 @@ public class Demo1 extends Workflow {
     Map<String, EstimateSampleSizes.EstimateData> sampleSizes = getSampleSizeEstimates();
     assertFalse(sampleSizes.isEmpty());
 
-    // TODO Sanity check of assertions and sample size estimates.
+    // Byron should be 3820. Kempsey 332.
+    // For each targeted contest, check that the set of assertions: (i) is not empty; (ii) has
+    // the correct minimum diluted margin; and (ii) has resulted in the correct sample size estimate.
+    Map<String,Double> expectedDilutedMargins = Map.of("City of Longmont - Mayor", 0.09078192,
+        "Byron Mayoral", 0.00684644, "Kempsey Mayoral", 0.02200739);
 
-    LOGGER.debug("Successfully completed Demo1.");
+    for(final String c : targets.keySet()) {
+      verifySampleSize(c, expectedDilutedMargins.get(c),
+          sampleSizes.get(c).estimatedSamples(), riskLimit, irvContests.contains(c));
+    }
+
+    // 8. Start Audit Round
+    startAuditRound();
+
+    // 9. Log in as each county, and audit all ballots in sample.
+    List<TestAuditSession> sessions = new ArrayList<>();
+    for(final int cty : allCounties){
+      sessions.add(countyAuditInitialise(cty));
+    }
+
+    // ACVR uploads for each county. Cannot run in parallel as corla does not like
+    // simultaneous database accesses.
+    for(final TestAuditSession  entry : sessions){
+      auditCounty(1, entry);
+    }
+
+    // Audit board sign off for each county.
+    for(final TestAuditSession entry : sessions){
+      countySignOffLogout(entry);
+    }
+
+    // Check that there are no more ballots to sample across all counties in first round,
+    // and as this demo involved no discprepancies, that all audits are complete.
+    dashboard = getDoSDashBoardRefreshResponse();
+    final Map<String,Map<String,Object>> status = dashboard.get(COUNTY_STATUS);
+
+    for(final Map.Entry<String,Map<String,Object>> entry : status.entrySet()){
+      assertEquals(entry.getValue().get(BALLOTS_REMAINING).toString(), "0");
+      assertEquals(entry.getValue().get(ESTIMATED_BALLOTS).toString(), "0");
+      assertEquals(entry.getValue().get(DISCREPANCY_COUNT).toString(), "{}");
+    }
+
+    LOGGER.info("Successfully completed Demo1 (First round audit; No Discrepancies).");
   }
 
 }

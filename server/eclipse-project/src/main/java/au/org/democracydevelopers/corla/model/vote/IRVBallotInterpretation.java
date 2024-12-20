@@ -1,5 +1,6 @@
 package au.org.democracydevelopers.corla.model.vote;
 
+import java.util.Collections;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.Contest;
 import us.freeandfair.corla.persistence.PersistentEntity;
@@ -102,6 +103,14 @@ public class IRVBallotInterpretation implements PersistentEntity {
     this.imprintedID = imprintedId;
     this.rawChoices = rawChoices;
     this.interpretation = orderedChoices;
+  }
+
+  /**
+   * Returns the raw choices, prior to interpretation, as an immutable list.
+   * @return The raw choices of this vote, prior to interpretation, as an immutable list.
+   */
+  public List<String> getRawChoices(){
+    return Collections.unmodifiableList(rawChoices);
   }
 
   /**
