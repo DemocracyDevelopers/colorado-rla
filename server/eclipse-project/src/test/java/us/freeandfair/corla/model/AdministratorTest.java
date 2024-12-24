@@ -2,7 +2,7 @@ package us.freeandfair.corla.model;
 
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
-import us.freeandfair.corla.util.TestClassWithDatabase;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 
 import java.time.Clock;
 import java.time.Instant;

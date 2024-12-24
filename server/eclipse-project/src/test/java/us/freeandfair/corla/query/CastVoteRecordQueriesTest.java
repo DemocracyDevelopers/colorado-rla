@@ -23,7 +23,7 @@ import us.freeandfair.corla.asm.PersistentASMState;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.Setup;
-import us.freeandfair.corla.util.TestClassWithDatabase;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 
 @Test(groups = {"integration"})
 public class CastVoteRecordQueriesTest extends TestClassWithDatabase {

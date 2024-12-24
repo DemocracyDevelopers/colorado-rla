@@ -10,7 +10,7 @@ import us.freeandfair.corla.model.County;
 import us.freeandfair.corla.model.CountyDashboard;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.Setup;
-import us.freeandfair.corla.util.TestClassWithDatabase;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 
 import java.util.Properties;
 

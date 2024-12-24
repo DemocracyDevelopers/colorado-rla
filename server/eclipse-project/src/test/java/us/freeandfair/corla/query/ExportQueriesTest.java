@@ -14,7 +14,7 @@ import us.freeandfair.corla.persistence.Persistence;
 
 
 import org.hibernate.Session;
-import us.freeandfair.corla.util.TestClassWithDatabase;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 
 
 @Test(groups = {"integration"})

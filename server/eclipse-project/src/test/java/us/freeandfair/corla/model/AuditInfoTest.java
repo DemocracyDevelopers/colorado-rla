@@ -23,7 +23,7 @@ import static org.testng.Assert.*;
 
 import us.freeandfair.corla.csv.ContestNameParser;
 import us.freeandfair.corla.json.VersionExclusionStrategy;
-import us.freeandfair.corla.util.TestClassWithDatabase;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 
 public class AuditInfoTest extends TestClassWithDatabase {
   public Gson gson;

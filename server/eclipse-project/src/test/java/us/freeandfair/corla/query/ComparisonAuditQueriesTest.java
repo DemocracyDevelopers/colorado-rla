@@ -6,7 +6,7 @@ import us.freeandfair.corla.model.AuditReason;
 import us.freeandfair.corla.model.ComparisonAudit;
 import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.persistence.Persistence;
-import us.freeandfair.corla.util.TestClassWithDatabase;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

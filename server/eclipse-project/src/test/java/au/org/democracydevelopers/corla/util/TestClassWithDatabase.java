@@ -38,6 +38,11 @@ import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadPropert
  * This class is designed to be extended by any test class that needs to interact with a test
  * instantiation of the colorado-rla database. It provides convenience methods for instantiating
  * a postgres container (initialised with one a given SQL script) and hibernate properties.
+ * Database configuration properties are loaded from test.properties, except that the Hibernate URL
+ * is overridden with the test container's URL.
+ * Important gotcha: although you can extend this class and write a new @BeforeClass method, which
+ * will be executed after any @BeforeClass methods in this class, you *must* give the method a new
+ * name - otherwise it seems to silently not run.
  */
 public abstract class TestClassWithDatabase {
 
