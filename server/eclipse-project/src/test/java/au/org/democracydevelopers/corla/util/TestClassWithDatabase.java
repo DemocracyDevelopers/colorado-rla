@@ -70,7 +70,10 @@ public abstract class TestClassWithDatabase {
   @BeforeClass
   public static void beforeAll() {
     postgres.start();
-    Persistence.setProperties(createHibernateProperties(postgres));
+    // Each class that inherits from TestClassWithDatabase gets a different url for the mocked DB.
+    // Everything else is the same.
+    config.setProperty("hibernate.url", postgres.getJdbcUrl());
+    Persistence.setProperties(config);
   }
 
   @AfterClass
@@ -118,7 +121,8 @@ public abstract class TestClassWithDatabase {
    * generated at init.
    * @param postgres the database container.
    * @return the database delegate.
-   * FIXME possibly no longer needed.
+   * FIXME possibly no longer needed, though actually the opportunity to configure the setup may be needed for
+   * some DD tests.
    */
   protected static JdbcDatabaseDelegate setupContainerStartPostgres(PostgreSQLContainer<?> postgres) {
     postgres.start();

@@ -36,9 +36,6 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.ext.ScriptUtils;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import us.freeandfair.corla.model.CVRContestInfo;
@@ -57,11 +54,6 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
  * reduce the likelihood of future programming errors if this eventuates.
  */
 public class AssertionTests extends TestClassWithDatabase {
-
-  /**
-   * Container for the mock-up database.
-   */
-  protected static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
    * Establish a mocked CVRContestInfo for use in testing Assertion scoring.
@@ -177,24 +169,11 @@ public class AssertionTests extends TestClassWithDatabase {
    * Start the test container and establish persistence properties before the first test.
    */
   @BeforeClass
-  public static void beforeAll() {
-
-    var containerDelegate = setupContainerStartPostgres(postgres);
-    ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
-    ScriptUtils.runInitScript(containerDelegate, "SQL/simple-assertions.sql");
+  public static void beforeAllThisClass() {
+    runSQLSetupScript("SQL/co-counties.sql");
+    runSQLSetupScript("SQL/simple-assertions.sql");
   }
 
-  /**
-   * After all test have run, stop the test container.
-   */
-  @AfterClass
-  public static void afterAll() {
-    postgres.stop();
-  }
-
-  /**
-   * Initialise mocked objects prior to the first test.
-   */
   @BeforeClass
   public void initMocks() {
     MockitoAnnotations.openMocks(this);

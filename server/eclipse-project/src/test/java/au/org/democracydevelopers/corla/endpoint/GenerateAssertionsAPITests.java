@@ -34,8 +34,6 @@ import org.apache.log4j.Logger;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.ext.ScriptUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -72,11 +70,6 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
    * Class-wide logger.
    */
   private static final Logger LOGGER = LogManager.getLogger(GenerateAssertionsAPITests.class);
-
-  /**
-   * Container for the mock-up database.
-   */
-  private final static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
    * The Generate Assertions endpoint.
@@ -127,15 +120,13 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
    * Database init.
    */
   @BeforeClass
-  public static void beforeAll() {
-
-    final var containerDelegate = setupContainerStartPostgres(postgres);
+  public static void beforeAllThisClass() {
 
     var s = Persistence.openSession();
     s.beginTransaction();
 
     // Used to initialize the database, particularly to set the ASM state to the DOS_INITIAL_STATE.
-    ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
+    runSQLSetupScript("SQL/co-counties.sql");
   }
 
   /**

@@ -3,8 +3,6 @@ package au.org.democracydevelopers.corla.endpoint;
 import au.org.democracydevelopers.corla.model.vote.IRVBallotInterpretation;
 import au.org.democracydevelopers.corla.util.*;
 import org.mockito.*;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.ext.ScriptUtils;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import spark.HaltException;
@@ -42,11 +40,6 @@ import static us.freeandfair.corla.model.CastVoteRecord.RecordType.REAUDITED;
 public class ACVRUploadTests extends TestClassWithAuth {
 
   private final static Logger LOGGER = LogManager.getLogger(ACVRUploadTests.class);
-
-  /**
-   * Container for the mock-up database.
-   */
-  private final static PostgreSQLContainer<?> postgres = createTestContainer();
 
   /**
    * An Audit CVR Upload endpoint to test.
@@ -375,13 +368,10 @@ public class ACVRUploadTests extends TestClassWithAuth {
    * Database init.
    */
   @BeforeClass
-  public static void beforeAll() {
-
-    final var containerDelegate = setupContainerStartPostgres(postgres);
-
-    ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
-    ScriptUtils.runInitScript(containerDelegate, "SQL/corla-three-candidates-ten-votes-inconsistent-types.sql");
-    ScriptUtils.runInitScript(containerDelegate, "SQL/adams-partway-through-audit.sql");
+  public static void beforeAllThisClass() {
+    runSQLSetupScript("SQL/co-counties.sql");
+    runSQLSetupScript("SQL/corla-three-candidates-ten-votes-inconsistent-types.sql");
+    runSQLSetupScript("SQL/adams-partway-through-audit.sql");
   }
 
   /**
