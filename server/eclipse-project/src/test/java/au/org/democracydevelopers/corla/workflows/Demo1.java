@@ -55,7 +55,6 @@ public class Demo1 extends Workflow {
   @BeforeClass
   public static void beforeAllThisClass() {
 
-    Persistence.beginTransaction();
     // Used to initialize the database, e.g. to set the ASM state to the DOS_INITIAL_STATE
     // and to insert counties and administrator test logins.
     runSQLSetupScript("SQL/co-counties.sql");
