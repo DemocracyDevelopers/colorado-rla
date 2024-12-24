@@ -24,8 +24,11 @@ package au.org.democracydevelopers.corla.util;
 import java.util.Properties;
 
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.jdbc.JdbcDatabaseDelegate;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import us.freeandfair.corla.persistence.Persistence;
 
@@ -59,6 +62,23 @@ public abstract class TestClassWithDatabase {
   protected final static String getAssertionsPortNumberString = "get_assertions_mock_port";
 
   /**
+   * Container for the mock-up database.
+   */
+  static PostgreSQLContainer<?> postgres = createTestContainer();
+
+
+  @BeforeClass
+  public static void beforeAll() {
+    postgres.start();
+    Persistence.setProperties(createHibernateProperties(postgres));
+  }
+
+  @AfterClass
+  public static void afterAll() {
+    postgres.stop();
+  }
+
+  /**
    * Begin a new transaction before each test method in the class is run.
    */
   @BeforeMethod
@@ -81,6 +101,7 @@ public abstract class TestClassWithDatabase {
    * Create and return a postgres test container for the purposes of testing functionality that
    * interacts with the database.
    * @return a postgres test container representing a test database.
+   * FIXME This is more general than Matt's edits - suggest retaining this version.
    */
   public static PostgreSQLContainer<?> createTestContainer() {
     return new PostgreSQLContainer<>("postgres:15-alpine")
@@ -97,6 +118,7 @@ public abstract class TestClassWithDatabase {
    * generated at init.
    * @param postgres the database container.
    * @return the database delegate.
+   * FIXME possibly no longer needed.
    */
   protected static JdbcDatabaseDelegate setupContainerStartPostgres(PostgreSQLContainer<?> postgres) {
     postgres.start();
@@ -107,5 +129,27 @@ public abstract class TestClassWithDatabase {
     Persistence.setProperties(config);
 
     return new JdbcDatabaseDelegate(postgres, "");
+  }
+
+  /**
+   * Create and return a hibernate properties object for use in testing functionality that
+   * interacts with the database.
+   * @param postgres Postgres test container representing a test version of the database.
+   * @return Hibernate persistence properties.
+   */
+  public static Properties createHibernateProperties(PostgreSQLContainer<?> postgres) {
+    Properties hibernateProperties = new Properties();
+    hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
+    hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
+    hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
+    hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
+    hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
+
+    return hibernateProperties;
+  }
+
+  protected static void runSQLSetupScript(String initScriptPath) {
+    var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    ScriptUtils.runInitScript(containerDelegate, initScriptPath);
   }
 }

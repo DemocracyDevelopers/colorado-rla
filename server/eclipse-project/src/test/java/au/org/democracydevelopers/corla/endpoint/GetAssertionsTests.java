@@ -29,8 +29,6 @@ import org.apache.log4j.Logger;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.ext.ScriptUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -73,11 +71,6 @@ public class GetAssertionsTests extends TestClassWithDatabase {
   private static final Logger LOGGER = LogManager.getLogger(GetAssertionsTests.class);
 
   /**
-   * Container for the mock-up database.
-   */
-  private final static PostgreSQLContainer<?> postgres = createTestContainer();
-
-  /**
    * Endpoint for getting assertions.
    */
   private final static String raireGetAssertionsEndpoint = "/raire/get-assertions";
@@ -103,12 +96,10 @@ public class GetAssertionsTests extends TestClassWithDatabase {
    * Database init.
    */
   @BeforeClass
-  public static void beforeAll() throws IOException {
-
-    var containerDelegate = setupContainerStartPostgres(postgres);
+  public static void beforeAllThisClass() {
 
     // Load in the counties data, actually just for basic setup such as DoSDashboard.
-    ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
+    runSQLSetupScript("SQL/co-counties.sql");
   }
 
   /**
