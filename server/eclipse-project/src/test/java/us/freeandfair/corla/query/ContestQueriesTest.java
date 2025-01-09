@@ -8,7 +8,7 @@ import org.testng.annotations.*;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.persistence.Persistence;
-import us.freeandfair.corla.util.TestClassWithDatabase;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 
 import java.awt.*;
 import java.util.*;

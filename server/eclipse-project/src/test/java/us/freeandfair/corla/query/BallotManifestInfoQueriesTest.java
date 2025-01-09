@@ -6,7 +6,7 @@ import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
 import org.testng.annotations.*;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
-import us.freeandfair.corla.util.TestClassWithDatabase;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 
 import javax.swing.text.html.Option;
 import java.util.*;

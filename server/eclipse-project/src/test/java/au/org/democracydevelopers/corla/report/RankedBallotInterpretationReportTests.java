@@ -26,8 +26,6 @@ import au.org.democracydevelopers.corla.util.testUtils;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 import us.freeandfair.corla.csv.DominionCVRExportParser;
 
@@ -64,21 +62,9 @@ public class RankedBallotInterpretationReportTests extends TestClassWithDatabase
   private static final Logger LOGGER
       = LogManager.getLogger(RankedBallotInterpretationReportTests.class);
 
-  /**
-   * Container for the mock-up database.
-   */
-  static PostgreSQLContainer<?> postgres = createTestContainer();
-
   @BeforeClass
-  public static void beforeAll() {
-
-    final var containerDelegate = setupContainerStartPostgres(postgres);
-    ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
-  }
-
-  @AfterClass
-  public static void afterAll() {
-    postgres.stop();
+  public static void beforeAllThisClass() {
+    runSQLSetupScript("SQL/co-counties.sql");
   }
 
   /**

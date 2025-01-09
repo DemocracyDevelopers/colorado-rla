@@ -154,7 +154,7 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
    * Database init.
    */
   @BeforeClass
-  public static void beforeAll() {
+  public static void beforeAllThisClass() {
     Persistence.setProperties(config);
   }
 

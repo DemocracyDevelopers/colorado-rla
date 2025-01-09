@@ -32,9 +32,6 @@ import au.org.democracydevelopers.corla.util.testUtils;
 import java.util.List;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.ext.ScriptUtils;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -48,27 +45,12 @@ public class AssertionQueriesTests extends TestClassWithDatabase {
   private static final Logger LOGGER = LogManager.getLogger(AssertionQueriesTests.class);
 
   /**
-   * Container for the mock-up database.
-   */
-  protected static PostgreSQLContainer<?> postgres = createTestContainer();
-
-  /**
    * Start the test container and establish persistence properties before the first test.
    */
   @BeforeClass
-  public static void beforeAll() {
-
-    var containerDelegate = setupContainerStartPostgres(postgres);
-    ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
-    ScriptUtils.runInitScript(containerDelegate, "SQL/simple-assertions.sql");
-  }
-
-  /**
-   * After all test have run, stop the test container.
-   */
-  @AfterClass
-  public static void afterAll() {
-    postgres.stop();
+  public static void beforeAllThisClass() {
+    runSQLSetupScript("SQL/co-counties.sql");
+    runSQLSetupScript("SQL/simple-assertions.sql");
   }
 
   /**

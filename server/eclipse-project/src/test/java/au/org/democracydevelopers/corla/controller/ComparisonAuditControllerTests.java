@@ -26,9 +26,6 @@ import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.ext.ScriptUtils;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.controller.ComparisonAuditController;
@@ -56,11 +53,6 @@ public class ComparisonAuditControllerTests extends TestClassWithDatabase {
   private static final Logger LOGGER = LogManager.getLogger(ComparisonAuditControllerTests.class);
 
   /**
-   * Container for the mock-up database.
-   */
-  static PostgreSQLContainer<?> postgres = createTestContainer();
-
-  /**
    * IRV contest name.
    */
   private static final String tinyIRV = "TinyExample1";
@@ -76,20 +68,11 @@ public class ComparisonAuditControllerTests extends TestClassWithDatabase {
   private static final String tinyMixed = "PluralityExample2";
 
   @BeforeClass
-  public static void beforeAll() {
+  public static void beforeAllThisClass() {
 
-    var containerDelegate = setupContainerStartPostgres(postgres);
+    runSQLSetupScript("SQL/co-counties.sql");
+    runSQLSetupScript("SQL/corla-three-candidates-ten-votes-inconsistent-types.sql");
 
-    ScriptUtils.runInitScript(containerDelegate,
-            "SQL/co-counties.sql");
-    ScriptUtils.runInitScript(containerDelegate,
-            "SQL/corla-three-candidates-ten-votes-inconsistent-types.sql");
-
-  }
-
-  @AfterClass
-  public static void afterAll() {
-    postgres.stop();
   }
 
   /**

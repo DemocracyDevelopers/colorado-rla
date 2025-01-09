@@ -7,8 +7,6 @@ import org.apache.log4j.Logger;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.ext.ScriptUtils;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import spark.HaltException;
@@ -40,11 +38,6 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
   private final static Logger LOGGER = LogManager.getLogger(EstimateSampleSizesTests.class);
 
   /**
-   * Container for the mock-up database.
-   */
-  private final static PostgreSQLContainer<?> postgres = createTestContainer();
-
-  /**
    * The estimate sample sizes endpoint.
    */
   private final EstimateSampleSizes endpoint = new EstimateSampleSizes();
@@ -68,12 +61,10 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
    * Database init.
    */
   @BeforeClass
-  public static void beforeAll() {
+  public static void beforeAllThisClass() {
 
-    final var containerDelegate = setupContainerStartPostgres(postgres);
-
-    ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
-    ScriptUtils.runInitScript(containerDelegate, "SQL/simple-assertions.sql");
+    runSQLSetupScript("SQL/co-counties.sql");
+    runSQLSetupScript("SQL/simple-assertions.sql");
 
     var s = Persistence.openSession();
     s.beginTransaction();

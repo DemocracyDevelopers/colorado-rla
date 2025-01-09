@@ -77,16 +77,11 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
    * Database init.
    */
   @BeforeClass
-  public static void beforeAll() {
-
-    final var containerDelegate = setupContainerStartPostgres(postgres);
-
-    var s = Persistence.openSession();
-    s.beginTransaction();
+  public static void beforeAllThisClass() {
 
     // Used to initialize the database, e.g. to set the ASM state to the DOS_INITIAL_STATE
     // and to insert counties and administrator test logins.
-    ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
+    runSQLSetupScript("SQL/co-counties.sql");
 
     runMain("EstimateSampleSizesVaryingManifests");
   }

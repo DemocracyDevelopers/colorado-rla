@@ -1,7 +1,7 @@
 package us.freeandfair.corla.model;
 
 import org.testng.annotations.Test;
-import us.freeandfair.corla.util.TestClassWithDatabase;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 
 import java.lang.reflect.Array;
 import java.time.Instant;

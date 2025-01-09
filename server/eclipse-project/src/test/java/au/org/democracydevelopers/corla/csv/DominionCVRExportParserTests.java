@@ -27,8 +27,6 @@ import au.org.democracydevelopers.corla.util.testUtils;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 import us.freeandfair.corla.csv.DominionCVRExportParser;
 import us.freeandfair.corla.model.*;
@@ -79,11 +77,6 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
   private static final Logger LOGGER = LogManager.getLogger(DominionCVRExportParserTests.class);
 
   /**
-   * Container for the mock-up database.
-   */
-  static PostgreSQLContainer<?> postgres = createTestContainer();
-
-  /**
    * Error message to match.
    */
   private static final String badNumsRegexp = "Unexpected or uninterpretable numbers in header:.*";
@@ -116,15 +109,8 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
       CAB, CAB, CAB);
 
   @BeforeClass
-  public static void beforeAll() {
-
-    var containerDelegate = setupContainerStartPostgres(postgres);
-    ScriptUtils.runInitScript(containerDelegate, "SQL/co-counties.sql");
-  }
-
-  @AfterClass
-  public static void afterAll() {
-    postgres.stop();
+  public static void beforeAllThisClass() {
+    runSQLSetupScript("SQL/co-counties.sql");
   }
 
   /**

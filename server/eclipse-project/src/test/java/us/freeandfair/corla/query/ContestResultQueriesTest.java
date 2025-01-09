@@ -14,7 +14,7 @@ import us.freeandfair.corla.model.CountyContestResult;
 import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.model.Contest;
 import us.freeandfair.corla.model.County;
-import us.freeandfair.corla.util.TestClassWithDatabase;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 
 @Test(groups = {"integration"})
 public class ContestResultQueriesTest extends TestClassWithDatabase {

@@ -31,7 +31,7 @@ import static org.testng.Assert.*;
 import org.hibernate.Session;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.query.Setup;
-import us.freeandfair.corla.util.TestClassWithDatabase;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 
 @Test(groups = {"integration"})
 public class BallotSelectionTest extends TestClassWithDatabase {
