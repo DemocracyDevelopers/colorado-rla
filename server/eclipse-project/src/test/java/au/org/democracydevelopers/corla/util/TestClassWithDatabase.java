@@ -69,7 +69,7 @@ public abstract class TestClassWithDatabase {
   /**
    * Container for the mock-up database.
    */
-  static PostgreSQLContainer<?> postgres = createTestContainer();
+  protected static PostgreSQLContainer<?> postgres = createTestContainer();
 
 
   @BeforeClass
