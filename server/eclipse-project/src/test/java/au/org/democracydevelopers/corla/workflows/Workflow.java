@@ -22,7 +22,9 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.workflows;
 
 import static io.restassured.RestAssured.given;
+import static java.util.Collections.min;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static us.freeandfair.corla.Main.main;
 import static us.freeandfair.corla.auth.AuthenticationInterface.USERNAME;
 import static us.freeandfair.corla.auth.AuthenticationStage.SECOND_FACTOR_AUTHENTICATED;
@@ -30,7 +32,13 @@ import static us.freeandfair.corla.auth.AuthenticationStage.TRADITIONALLY_AUTHEN
 import static us.freeandfair.corla.model.AuditType.COMPARISON;
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
+import au.org.democracydevelopers.corla.model.ContestType;
+import au.org.democracydevelopers.corla.model.assertion.Assertion;
+import au.org.democracydevelopers.corla.model.vote.IRVBallotInterpretation;
+import au.org.democracydevelopers.corla.query.AssertionQueries;
+import au.org.democracydevelopers.corla.util.DoubleComparator;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
+import au.org.democracydevelopers.corla.util.TestOnlyQueries;
 import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
 import io.restassured.path.json.JsonPath;
@@ -48,8 +56,16 @@ import java.util.stream.IntStream;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.ext.ScriptUtils;
+import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.BeforeClass;
+import us.freeandfair.corla.math.Audit;
+import us.freeandfair.corla.model.CVRContestInfo;
+import us.freeandfair.corla.model.CastVoteRecord;
+import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.model.UploadedFile;
+import us.freeandfair.corla.query.CastVoteRecordQueries;
 import wiremock.net.minidev.json.JSONArray;
 import wiremock.net.minidev.json.JSONObject;
 
@@ -58,6 +74,16 @@ import wiremock.net.minidev.json.JSONObject;
  * a sequence of endpoint accesses.
  */
 public class Workflow extends TestClassWithDatabase {
+
+  /**
+   * A collection of data representing an audit session for a county.
+   * @param filter        SessionFilter used to keep track of the session.
+   * @param auditBoard    Identities of the auditors on the index'th audit board.
+   * @param index         Index of the audit board.
+   * @param county        County number.
+   */
+  public record TestAuditSession(SessionFilter filter, List<Map<String,String>> auditBoard,
+                                 int index, int county){}
 
   /**
    * Number of CO counties
@@ -114,6 +140,8 @@ public class Workflow extends TestClassWithDatabase {
   protected static final String RISK_LIMIT_JSON = "risk_limit";
   protected static final String SEED = "seed";
   protected static final String STATUS = "status";
+  protected static final String BALLOTS_REMAINING = "ballots_remaining_in_round";
+  protected static final String DISCREPANCY_COUNT = "discrepancy_count";
 
   @BeforeClass
   public void setup() {
@@ -140,7 +168,12 @@ public class Workflow extends TestClassWithDatabase {
     main(propertiesFile);
   }
 
-  protected JSONObject createBody(final Map<String, String> data) {
+  /**
+   * Transform a simple map of strings into a JSONObject.
+   * @param data Data to be transformed into JSONObject.
+   * @return The given data as a JSONObject.
+   */
+  protected JSONObject createBody(final Map<String, Object> data) {
     final JSONObject body = new JSONObject();
     body.putAll(data);
     return body;
@@ -225,6 +258,249 @@ public class Workflow extends TestClassWithDatabase {
 
     // Logout.
     logout(filter, user);
+  }
+
+  /**
+   * Sign in the given audit board for a given county.
+   * @param session TestAuditSession capturing an audit session for a given county.
+   */
+  private void auditBoardSignIn(final TestAuditSession session){
+
+    final JSONObject params = createBody(Map.of("audit_board",
+        session.auditBoard, "index", session.index()));
+
+    given().filter(session.filter())
+        .header("Content-Type", "application/json")
+        .body(params.toJSONString())
+        .post("/audit-board-sign-in");
+  }
+
+  /**
+   * The given audit board signs off on their current audit round.
+   * @param session TestAuditSession capturing an audit session for a given county.
+   *
+   */
+  private void auditBoardSignOff(final TestAuditSession session){
+
+    final JSONObject params = createBody(Map.of("audit_board",
+        session.auditBoard(), "index", session.index()));
+
+    given().filter(session.filter())
+        .header("Content-Type", "application/json")
+        .body(params.toJSONString())
+        .post("/sign-off-audit-round");
+  }
+
+  /**
+   * Sign off the current audit round for the given county, and logout of the session.
+   * @param session TestAuditSession capturing an audit session for a given county.
+   */
+  protected void countySignOffLogout(final TestAuditSession session){
+    final String user = "countyadmin" + session.county();
+
+    // Sign off audit round
+    auditBoardSignOff(session);
+
+    // Logout.
+    logout(session.filter(), user);
+  }
+
+  /**
+   * Given a vote in a specific contest, translate the choices on that vote (if an IRV contest)
+   * into the form "Candidate(Rank),...,Candidate(Rank)". If the contest is a Plurality contest,
+   * return the choices from info.choices(). Otherwise, check whether the vote's original choices
+   * were interpreted to remove errors. If so, return the original raw choices from the
+   * irv_ballot_interpretation table. Otherwise, add ranks to each choice name and return.
+   * @param info Details of the vote for the relevant contest.
+   * @param imprintedId Imprinted identifier of the CVR containing the given vote.
+   * @return The list of original choices on the pre-interpreted CVR with the given imprinted ID.
+   */
+  private List<String> translateToRawChoices(final CVRContestInfo info, final String imprintedId){
+    final String prefix = "[translateToRawChoices]";
+
+    if(info.contest().description().equals(ContestType.IRV.toString())){
+      // The contest is an IRV contest.
+      final List<IRVBallotInterpretation> interpretations = TestOnlyQueries.matching(
+          info.contest().name(), imprintedId, RecordType.UPLOADED);
+
+      if(interpretations.isEmpty()){
+        List<String> rawChoices = new ArrayList<>();
+        for(int i = 0; i < info.choices().size(); ++i){
+          rawChoices.add(info.choices().get(i) + "("+ (i+1) + ")");
+        }
+        return rawChoices;
+      }
+      else{
+        if(interpretations.size() > 1){
+          final String msg = prefix + " there are multiple interpretations of the CVR " +
+              imprintedId + " with record type UPLOADED.";
+          LOGGER.error(msg);
+          throw new RuntimeException(msg);
+        }
+        return interpretations.get(0).getRawChoices();
+      }
+    }
+    else{
+      return info.choices();
+    }
+  }
+
+  /**
+   * For the given county number, authenticate, tell corla there is one audit board, and
+   * sign in as the audit board.
+   * @param number County number
+   * @return Session to use for this county in later testing.
+   */
+  protected TestAuditSession countyAuditInitialise(final int number){
+    final String user = "countyadmin" + number;
+    final SessionFilter filter = doLogin(user);
+
+    // GET the county dashboard. This is just to test that the login worked.
+    given().filter(filter).get("/county-dashboard");
+
+    // Tell corla there is only one audit board
+    given().filter(filter)
+        .header("Content-Type", "application/json")
+        .body(createBody(Map.of("count", 1)).toJSONString())
+        .post("/set-audit-board-count");
+
+    final List<Map<String,String>> auditBoard = List.of(
+        Map.of("first_name","V", "last_name","T",
+            "political_party","Unaffiliated"),
+        Map.of("first_name","M", "last_name","B",
+            "political_party","Unaffiliated")
+    );
+
+    // Sign in the audit board
+    final TestAuditSession session = new TestAuditSession(filter, auditBoard, 0, number);
+    auditBoardSignIn(session);
+
+    return session;
+  }
+
+  /**
+   * Return list of CVRs to audit for the given round and the given county (identified by
+   * their TestAuditSession).
+   * @param round      Audit round.
+   * @param session    TestAuditSession capturing the audit session for the relevant county.
+   * @return List of CVRs to audit for the county and round.
+   */
+  protected List<CastVoteRecord> getCvrsToAudit(int round, final TestAuditSession session){
+    final SessionFilter filter = session.filter();
+
+    // Collect CVRs to audit
+    final JsonPath cvrs = given()
+        .filter(filter)
+        .header("Content-Type", "application/json")
+        .get("cvr-to-audit-list?round=" + round)
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK)
+        .extract()
+        .body()
+        .jsonPath();
+
+    // Each CVR in the returned JSON structure will look something like this:
+    //{
+    //  "audit_sequence_number": 1996,
+    //    "scanner_id": 102,
+    //    "batch_id": "151",
+    //    "record_id": 11,
+    //    "imprinted_id": "102-151-11",
+    //    "cvr_number": 78992,
+    //    "db_id": 161428,
+    //    "ballot_type": "DS-07",
+    //    "storage_location": "",
+    //    "audit_board_index": 0,
+    //    "audited": false,
+    //    "previously_audited": false
+    //}
+    final List<HashMap<String,Object>> cvrData = cvrs.getList("");
+
+    // In each HashMap, the "db_id" field will be an Integer, which we will need to convert
+    // to Long to create the CVR id list to pass to CastVoteRecordQueries::get.
+    final List<Long> cvrIds = cvrData.stream().map(m -> Long.valueOf((int) m.get("db_id"))).toList();
+
+    // Get CastVoteRecords for each of the CVRs to audit.
+    return CastVoteRecordQueries.get(cvrIds);
+  }
+
+  /**
+   * For the given county number, collect the set of CVRs to audit for the given round, and
+   * upload the audit CVRs.
+   * @param round   Audit round.
+   * @param session  TestAuditSession capturing the audit session for a county.
+   */
+  protected void auditCounty(final int round, final TestAuditSession session){
+    final List<CastVoteRecord> cvrsToAudit = getCvrsToAudit(round, session);
+    final SessionFilter filter = session.filter();
+
+    // Upload audit CVRs
+    for(final CastVoteRecord rec : cvrsToAudit){
+      // We need to post a JSON structure of the following form:
+      //{
+      //  "auditBoardIndex":0,
+      //  "audit_cvr":{
+      //      "ballot_type": ###,
+      //      "batch_id": ###,
+      //      "contest_info":[{
+      //          "choices":["ANDERSON John(1)","COOREY Cate(2)","HUNTER Alan(4)", ...],
+      //          "comment":"",
+      //          "consensus":"YES",
+      //          "contest": ###
+      //      }],
+      //      "county_id": ###,
+      //      "cvr_number": ###,
+      //      "id": ###,
+      //      "imprinted_id": ###,
+      //      "record_id": ###,
+      //      "record_type":"UPLOADED",
+      //      "scanner_id": ###,
+      //      "timestamp": ###
+      //   },
+      //  "cvr_id": ###
+      //}
+
+      // Create contest_info for audited cvr.
+      // Note that info.choices() has to be converted into "Name(Rank)" form, however
+      // info.choices() gives the already interpreted form, and we want to provide
+      // the raw choices (which is not stored in the database in the table for CVR contest
+      // info). Raw choices for IRV votes that contained errors *are* stored in the
+      // irv_ballot_interpretation table. So, we can, for any IRV vote, check whether
+      // there is an entry for it in the interpretations table. If so, we take the raw choices
+      // from there. Otherwise, we recreate the raw choices from info.choices().
+      final List<Map<String,Object>> contest_info = rec.contestInfo().stream().map(info ->
+          Map.of("choices", translateToRawChoices(info, rec.imprintedID()),
+              "comment", "", "consensus", "YES",
+              "contest", info.contest().id())).toList();
+
+      // Create audited cvr as a map
+      Map<String, Object> audited_cvr = new HashMap<>();
+      audited_cvr.put("ballot_type", rec.ballotType());
+      audited_cvr.put("batch_id", rec.batchID());
+      audited_cvr.put("contest_info", contest_info);
+      audited_cvr.put("county_id", rec.countyID());
+      audited_cvr.put("cvr_number", rec.cvrNumber());
+      audited_cvr.put("id", rec.id());
+      audited_cvr.put("imprinted_id", rec.imprintedID());
+      audited_cvr.put("record_id", rec.recordID());
+      audited_cvr.put("record_type", rec.recordType());
+      audited_cvr.put("scanner_id", rec.scannerID());
+      audited_cvr.put("timestamp", rec.timestamp());
+
+      // Create JSON data structure to supply to upload-audit-cvr endpoint
+      final JSONObject params = createBody(Map.of(
+          "auditBoardIndex", 0,
+          "audit_cvr", audited_cvr,
+          "cvr_id", rec.id()
+      ));
+
+      // Upload discrepancy-free audited CVR
+      given().filter(filter)
+          .header("Content-Type", "application/json")
+          .body(params.toJSONString())
+          .post("/upload-audit-cvr");
+    }
   }
 
   /**
@@ -366,10 +642,70 @@ public class Workflow extends TestClassWithDatabase {
 
     // Timeout.
     return false;
-
-
   }
 
+  /**
+   * Generate assertions (for IRV contests). At the moment, rather than call raire-service, we
+   * are mocking that functionality. To do so, we take the path to a file containing SQL insert
+   * statements for all assertion related content that would have been created by the raire-service,
+   * and inserted into the database, and insert it into the database here.
+   * TODO Replace this with a call to the raire-service. Currently problematic because it will be
+   * reading the wrong database.
+   * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/218">...</a>
+   * Set it up so that we run raire-service inside the Docker container and tell main where to find it.
+   */
+  protected void generateAssertions(final String sqlPath, final double timeLimitSeconds)
+  {
+    final var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
+    ScriptUtils.runInitScript(containerDelegate, sqlPath);
+
+    // Version that connects to raire-service below:
+    // Login as state admin.
+    //final SessionFilter filter = doLogin("stateadmin1");
+
+    //given()
+    //    .filter(filter)
+    //    .header("Content-Type", "application/x-www-form-urlencoded")
+    //    .get("/generate-assertions?timeLimitSeconds="+timeLimitSeconds)
+    //    .then()
+    //    .assertThat()
+    //    .statusCode(HttpStatus.SC_OK);
+  }
+
+  /**
+   * Verify that some assertions are present for the given contest, that the minimum diluted
+   * margin across these assertions is correct, and that the estimated sample size for the contest
+   * is correct.
+   * @param contest                   Name of the contest.
+   * @param expectedDilutedMargin     Expected diluted margin of the contest.
+   * @param actualEstimatedSamples    Actual sample size computation for the contest.
+   * @param riskLimit                 Risk limit for the audit.
+   */
+  protected void verifySampleSize(final String contest, final double expectedDilutedMargin,
+      final int actualEstimatedSamples, final BigDecimal riskLimit, final boolean isIRV){
+
+    if(isIRV) {
+      final List<Assertion> assertions = AssertionQueries.matching(contest);
+      assertFalse(assertions.isEmpty());
+
+      final BigDecimal actualDilutedMargin = min(assertions.stream().map(
+          Assertion::getDilutedMargin).toList());
+
+      final DoubleComparator comp = new DoubleComparator();
+      assertEquals(comp.compare(actualDilutedMargin.doubleValue(), expectedDilutedMargin), 0);
+    }
+
+    // Sample size formula is (-2 * gamma * log(risk_limit))/dilutedMargin
+    final int samples = (int)(Math.ceil(-2.0 * Audit.GAMMA.doubleValue() *
+        Math.log(riskLimit.doubleValue())/expectedDilutedMargin));
+
+    assertEquals(actualEstimatedSamples, samples);
+  }
+
+  /**
+   * Login as the state admin and hit the start audit round endpoint. Check that an
+   * appropriate HTTP status is returned.
+   */
   protected void startAuditRound() {
     // Login as state admin.
     final SessionFilter filter = doLogin("stateadmin1");
@@ -471,6 +807,11 @@ public class Workflow extends TestClassWithDatabase {
     }
   }
 
+  /**
+   * For the given user, perform first and second round authentication.
+   * @param username Username for the user to authenticate
+   * @return The user's session, to be interacted with in later testing.
+   */
   private SessionFilter doLogin(final String username) {
     final SessionFilter filter = new SessionFilter();
     authenticate(filter, username,"",1);
