@@ -179,7 +179,7 @@ public class Demo1 extends Workflow {
     // ACVR uploads for each county. Cannot run in parallel as corla does not like
     // simultaneous database accesses.
     for(final TestAuditSession  entry : sessions){
-      auditCounty(1, entry);
+      auditCounty(1, entry, Optional.empty());
     }
 
     // Audit board sign off for each county.

@@ -1,10 +1,10 @@
 {
   "NAME" : "Demo1",
 
-  "RISKLIMIT" : 0.03,
+  "RISK_LIMIT" : 0.03,
 
-  "SQL" : [
-    "src/test/resources/SQL/demo1-assertions.sql"
+  "SQLS" : [
+    "SQL/demo1-assertions.sql"
   ],
 
   "CVRS" : [
@@ -14,7 +14,7 @@
     "src/test/resources/CSVs/Demo1/4-archuleta-kempsey-plusByron-4.csv",
     "src/test/resources/CSVs/split-Byron/Byron-5.csv",
     "src/test/resources/CSVs/split-Byron/Byron-6.csv",
-    "src/test/resources/CSVs/Demo1/7-boulder-2023-plusByron-7.csv",
+    "src/test/resources/CSVs/Demo1/7-unredacted-boulder-2023-plusByron-7.csv",
     "src/test/resources/CSVs/split-Byron/Byron-8.csv",
     "src/test/resources/CSVs/split-Byron/Byron-9.csv",
     "src/test/resources/CSVs/split-Byron/Byron-10.csv",
@@ -81,7 +81,7 @@
     "src/test/resources/CSVs/NewSouthWales21/Kempsey_Mayoral.manifest.csv",
     "src/test/resources/CSVs/split-Byron/Byron-5-manifest.csv",
     "src/test/resources/CSVs/split-Byron/Byron-6-manifest.csv",
-    "src/test/resources/CSVs/Boulder23/Boulder-IRV-Manifest.csv",
+    "src/test/resources/CSVs/Demo1/7-unredacted-Boulder-IRV-Manifest.csv",
     "src/test/resources/CSVs/split-Byron/Byron-8-manifest.csv",
     "src/test/resources/CSVs/split-Byron/Byron-9-manifest.csv",
     "src/test/resources/CSVs/split-Byron/Byron-10-manifest.csv",
@@ -141,5 +141,50 @@
     "src/test/resources/CSVs/split-Byron/Byron-64-manifest.csv"
   ],
 
-  "CANONICALLIST" : "src/test/resources/CSVs/Demo1/demo1-canonical-list.csv"
+  "CANONICAL_LIST" : "src/test/resources/CSVs/Demo1/demo1-canonical-list.csv",
+
+  "TARGETS" : {
+    "City of Longmont - Mayor" : "COUNTY_WIDE_CONTEST",
+    "Byron Mayoral" : "STATE_WIDE_CONTEST",
+    "Kempsey Mayoral" : "COUNTY_WIDE_CONTEST"
+  },
+
+  "DILUTED_MARGINS" : {
+    "City of Longmont - Mayor" : 0.09078192,
+    "Byron Mayoral" : 0.00684644,
+    "Kempsey Mayoral" : 0.02200739
+  },
+
+  "IRV_CONTESTS" : [
+    "Byron Mayoral",
+    "Kempsey Mayoral",
+    "Tied_IRV",
+    "City of Boulder Mayoral"
+  ],
+
+  "EXPECTED_ROUNDS" : 1,
+
+  "PHANTOM_BALLOTS" : [
+
+  ],
+
+  "CHOICES" : {
+    "NonExistentImprintedId" : {
+      "Byron Mayoral" : [
+        "Bobby(1)",
+        "Daryl(2)",
+        "Candice(3)"
+      ]
+    }
+  },
+
+  "RESULTS" : {
+    "1" : {
+      "City of Longmont - Mayor" : {
+        "estimated_ballots_to_audit" : 0,
+        "ballots_remaining_in_round" : 0,
+        "discrepancy_count" : 0
+      }
+    }
+  }
 }

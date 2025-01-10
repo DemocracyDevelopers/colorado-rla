@@ -22,11 +22,14 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.workflows;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
+import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.COMPLETE_AUDIT_INFO_SET;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.PARTIAL_AUDIT_INFO_SET;
 
+import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import io.restassured.path.json.JsonPath;
 import java.io.IOException;
@@ -34,7 +37,10 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.log4j.LogManager;
@@ -71,7 +77,7 @@ public class WorkflowRunner extends Workflow {
 
 
   @Test(enabled=true)
-  public void runWorkflows() throws InterruptedException {
+  public void runWorkflows()  {
     final String prefix = "[runWorkflows]";
 
     // Run every workflow instance present in the pathToInstances directory.
@@ -90,7 +96,15 @@ public class WorkflowRunner extends Workflow {
       throw new RuntimeException(msg);
     }
 
-    pathList.forEach(p -> runInstance(p));
+    pathList.forEach(p -> {
+      try {
+        runInstance(p);
+      } catch (InterruptedException e) {
+        final String msg = prefix + " " + e.getMessage();
+        LOGGER.error(msg);
+        throw new RuntimeException(msg);
+      }
+    });
   }
 
   private void runInstance(final Path pathToInstance) throws InterruptedException {
@@ -114,7 +128,7 @@ public class WorkflowRunner extends Workflow {
       // Upload all the CVRs. The order is important because it's an error to try to import a
       // manifest while the CVRs are being read.
       for(int i = 0; i < cvrs.size()  ; ++i){
-        uploadCounty(i+1, CVR_FILETYPE, cvrs.get(i), cvrs.get(i-1) + ".sha256sum");
+        uploadCounty(i+1, CVR_FILETYPE, cvrs.get(i), cvrs.get(i) + ".sha256sum");
       }
 
       // Wait while the CVRs (and manifests) are uploaded.
@@ -145,7 +159,99 @@ public class WorkflowRunner extends Workflow {
       // CVRs, manifests, etc loaded for each county).
       instance.getSQLs().forEach(TestClassWithDatabase::runSQLSetupScript);
 
+      dashboard = getDoSDashBoardRefreshResponse();
 
+      // Check that the right number of IRV contests are present
+      final List<String> irvContests = instance.getIRVContests();
+      final Map<String,String> targets = instance.getTargetedContests();
+      assertEquals(irvContests.size(), dashboard.getList("generate_assertions_summaries").size());
+
+      // Choose targeted contests for audit.
+      targetContests(targets);
+
+      // Set the seed.
+      setSeed(defaultSeed);
+
+      // This should be complete audit info.
+      dashboard = getDoSDashBoardRefreshResponse();
+      assertEquals(dashboard.get(AUDIT_INFO + "." + SEED), defaultSeed);
+      assertEquals(dashboard.get(ASM_STATE), COMPLETE_AUDIT_INFO_SET.toString());
+
+      // Estimate sample sizes; sanity check.
+      Map<String, EstimateSampleSizes.EstimateData> sampleSizes = getSampleSizeEstimates();
+      assertFalse(sampleSizes.isEmpty());
+
+      // For each targeted contest, check that the set of assertions: (i) is not empty; (ii) has
+      // the correct minimum diluted margin; and (ii) has resulted in the correct sample size estimate.
+      final Map<String,Double> expectedDilutedMargins = instance.getDilutedMargins();
+
+      for(final String c : targets.keySet()) {
+        verifySampleSize(c, expectedDilutedMargins.get(c),
+            sampleSizes.get(c).estimatedSamples(), instance.getRiskLimit(), irvContests.contains(c));
+      }
+
+      boolean auditNotFinished = true;
+      int rounds = 0;
+
+      while(auditNotFinished) {
+
+        // Start Audit Round
+        startAuditRound();
+
+        // 9. Log in as each county, and audit all ballots in sample.
+        List<TestAuditSession> sessions = new ArrayList<>();
+        for (final int cty : allCounties) {
+          sessions.add(countyAuditInitialise(cty));
+        }
+
+        // ACVR uploads for each county. Cannot run in parallel as corla does not like
+        // simultaneous database accesses.
+        for (final TestAuditSession entry : sessions) {
+          auditCounty(1, entry, Optional.of(instance));
+        }
+
+        // Audit board sign off for each county.
+        for (final TestAuditSession entry : sessions) {
+          countySignOffLogout(entry);
+        }
+
+        // Check that there are no more ballots to sample across all counties in first round,
+        // and as this demo involved no discrepancies, that all audits are complete.
+        dashboard = getDoSDashBoardRefreshResponse();
+        final Map<String, Map<String, Object>> status = dashboard.get(COUNTY_STATUS);
+
+        auditNotFinished = false;
+
+        // Verify that the result of this round is what we expected in terms of number of
+        // ballots remaining and estimated ballots to be audited for each county.
+        for (final Map.Entry<String, Map<String, Object>> entry : status.entrySet()) {
+          final int ballotsRemaining = Integer.parseInt(entry.getValue().get(BALLOTS_REMAINING).toString());
+          final int estimatedBallots = Integer.parseInt(entry.getValue().get(ESTIMATED_BALLOTS).toString());
+
+          final String contest = entry.getKey();
+          final Optional<Map<String,Integer>> results =
+              instance.getRoundContestResult(rounds+1, contest);
+
+          if(results.isPresent()) {
+            final Map<String,Integer> roundResults = results.get();
+            assertEquals(ballotsRemaining, roundResults.get(BALLOTS_REMAINING).intValue());
+            assertEquals(estimatedBallots, roundResults.get(ESTIMATED_BALLOTS).intValue());
+          }
+          else {
+            assertEquals(ballotsRemaining, 0);
+            assertEquals(estimatedBallots, 0);
+            assertEquals(entry.getValue().get(DISCREPANCY_COUNT).toString(), "{}");
+          }
+
+          if(ballotsRemaining > 0|| estimatedBallots > 0){
+            auditNotFinished = true;
+          }
+        }
+
+        rounds += 1;
+      }
+
+      assertEquals(rounds, instance.getExpectedRounds());
     }
     catch(IOException e){
       final String msg = prefix + " " + e.getMessage();

@@ -315,8 +315,19 @@ public class Workflow extends TestClassWithDatabase {
    * @param imprintedId Imprinted identifier of the CVR containing the given vote.
    * @return The list of original choices on the pre-interpreted CVR with the given imprinted ID.
    */
-  private List<String> translateToRawChoices(final CVRContestInfo info, final String imprintedId){
+  private List<String> translateToRawChoices(final CVRContestInfo info, final String imprintedId,
+      final Optional<Instance> instance){
     final String prefix = "[translateToRawChoices]";
+
+    if(instance.isPresent()){
+      // Check if the CVR's imprinted Id is present in the workflow instance
+      final Optional<List<String>> choices = instance.get().getActualChoices(imprintedId,
+          info.contest().name());
+
+      if(choices.isPresent()){
+        return choices.get();
+      }
+    }
 
     if(info.contest().description().equals(ContestType.IRV.toString())){
       // The contest is an IRV contest.
@@ -431,7 +442,9 @@ public class Workflow extends TestClassWithDatabase {
    * @param round   Audit round.
    * @param session  TestAuditSession capturing the audit session for a county.
    */
-  protected void auditCounty(final int round, final TestAuditSession session){
+  protected void auditCounty(final int round, final TestAuditSession session,
+      final Optional<Instance> instance){
+
     final List<CastVoteRecord> cvrsToAudit = getCvrsToAudit(round, session);
     final SessionFilter filter = session.filter();
 
@@ -460,25 +473,10 @@ public class Workflow extends TestClassWithDatabase {
       //   },
       //  "cvr_id": ###
       //}
-
-      // Create contest_info for audited cvr.
-      // Note that info.choices() has to be converted into "Name(Rank)" form, however
-      // info.choices() gives the already interpreted form, and we want to provide
-      // the raw choices (which is not stored in the database in the table for CVR contest
-      // info). Raw choices for IRV votes that contained errors *are* stored in the
-      // irv_ballot_interpretation table. So, we can, for any IRV vote, check whether
-      // there is an entry for it in the interpretations table. If so, we take the raw choices
-      // from there. Otherwise, we recreate the raw choices from info.choices().
-      final List<Map<String,Object>> contest_info = rec.contestInfo().stream().map(info ->
-          Map.of("choices", translateToRawChoices(info, rec.imprintedID()),
-              "comment", "", "consensus", "YES",
-              "contest", info.contest().id())).toList();
-
       // Create audited cvr as a map
       Map<String, Object> audited_cvr = new HashMap<>();
       audited_cvr.put("ballot_type", rec.ballotType());
       audited_cvr.put("batch_id", rec.batchID());
-      audited_cvr.put("contest_info", contest_info);
       audited_cvr.put("county_id", rec.countyID());
       audited_cvr.put("cvr_number", rec.cvrNumber());
       audited_cvr.put("id", rec.id());
@@ -487,6 +485,27 @@ public class Workflow extends TestClassWithDatabase {
       audited_cvr.put("record_type", rec.recordType());
       audited_cvr.put("scanner_id", rec.scannerID());
       audited_cvr.put("timestamp", rec.timestamp());
+
+      // Check if this CVR should map to a phantom ballot for the purposes of this workflow
+      if(instance.isPresent() && instance.get().isPhantomBallot(rec.imprintedID())){
+          audited_cvr.put("ballot_type", RecordType.PHANTOM_RECORD_ACVR);
+      }
+      else {
+        // Create contest_info for audited cvr.
+        // Note that info.choices() has to be converted into "Name(Rank)" form, however
+        // info.choices() gives the already interpreted form, and we want to provide
+        // the raw choices (which is not stored in the database in the table for CVR contest
+        // info). Raw choices for IRV votes that contained errors *are* stored in the
+        // irv_ballot_interpretation table. So, we can, for any IRV vote, check whether
+        // there is an entry for it in the interpretations table. If so, we take the raw choices
+        // from there. Otherwise, we recreate the raw choices from info.choices().
+        final List<Map<String, Object>> contest_info = rec.contestInfo().stream().map(info ->
+            Map.of("choices", translateToRawChoices(info, rec.imprintedID(), instance),
+                "comment", "", "consensus", "YES",
+                "contest", info.contest().id())).toList();
+
+        audited_cvr.put("contest_info", contest_info);
+      }
 
       // Create JSON data structure to supply to upload-audit-cvr endpoint
       final JSONObject params = createBody(Map.of(
