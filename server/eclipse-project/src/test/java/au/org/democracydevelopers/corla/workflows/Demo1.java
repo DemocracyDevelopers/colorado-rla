@@ -71,6 +71,9 @@ public class Demo1 extends Workflow {
   public void runDemo1() throws InterruptedException {
     testUtils.log(LOGGER, "Demo1");
 
+    // Empty workflow instance
+    final Instance instance = new Instance();
+
     List<String> CVRS = new ArrayList<>();
 
     CVRS.add(dataPath + "Demo1/1-adams-cvrexport-plusByron-1.csv");
@@ -179,7 +182,7 @@ public class Demo1 extends Workflow {
     // ACVR uploads for each county. Cannot run in parallel as corla does not like
     // simultaneous database accesses.
     for(final TestAuditSession  entry : sessions){
-      auditCounty(1, entry, Optional.empty());
+      auditCounty(1, entry, instance);
     }
 
     // Audit board sign off for each county.

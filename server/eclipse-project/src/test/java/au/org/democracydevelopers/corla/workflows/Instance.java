@@ -23,7 +23,9 @@ package au.org.democracydevelopers.corla.workflows;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -115,6 +117,24 @@ public class Instance {
   @JsonProperty("CHOICES")
   private Map<String,Map<String,List<String>>> actualChoices;
 
+  /**
+   * Constructs an empty workflow instance.
+   */
+  public Instance(){
+    name = "";
+    riskLimit = BigDecimal.ONE;
+    targets = new HashMap<>();
+    canonicalList = "";
+    manifests = new ArrayList<>();
+    cvrs = new ArrayList<>();
+    sqls = new ArrayList<>();
+    dilutedMargins = new HashMap<>();
+    irvContests = new ArrayList<>();
+    expectedRounds = 0;
+    results = new HashMap<>();
+    phantomBallots = new ArrayList<>();
+    actualChoices = new HashMap<>();
+  }
   /**
    * @return SQL files (as path strings) representing additional data to load
    * into the database for the given workflow instance. Returned as an

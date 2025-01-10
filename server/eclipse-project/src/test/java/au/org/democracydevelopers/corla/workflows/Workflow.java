@@ -305,6 +305,25 @@ public class Workflow extends TestClassWithDatabase {
   }
 
   /**
+   * Given a vote in a specific contest, return the raw choices to be used in creating the
+   * ACVR containing the vote.
+   * @param info Details of the vote for the relevant contest.
+   * @param imprintedId Imprinted identifier of the CVR containing the given vote.
+   * @param instance Details of the workflow instance being run.
+   * @return The list of original choices on the pre-interpreted CVR with the given imprinted ID.
+   */
+  private List<String> translateToRawChoices(final CVRContestInfo info, final String imprintedId,
+      final Instance instance){
+    final String prefix = "[translateToRawChoices]";
+
+    // Check if the CVR's imprinted Id is present in the workflow instance
+    final Optional<List<String>> choices = instance.getActualChoices(imprintedId,
+        info.contest().name());
+
+    return choices.orElseGet(() -> translateToRawChoices(info, imprintedId));
+  }
+
+  /**
    * Given a vote in a specific contest, translate the choices on that vote (if an IRV contest)
    * into the form "Candidate(Rank),...,Candidate(Rank)". If the contest is a Plurality contest,
    * return the choices from info.choices(). Otherwise, check whether the vote's original choices
@@ -314,19 +333,8 @@ public class Workflow extends TestClassWithDatabase {
    * @param imprintedId Imprinted identifier of the CVR containing the given vote.
    * @return The list of original choices on the pre-interpreted CVR with the given imprinted ID.
    */
-  private List<String> translateToRawChoices(final CVRContestInfo info, final String imprintedId,
-      final Optional<Instance> instance){
+  private List<String> translateToRawChoices(final CVRContestInfo info, final String imprintedId){
     final String prefix = "[translateToRawChoices]";
-
-    if(instance.isPresent()){
-      // Check if the CVR's imprinted Id is present in the workflow instance
-      final Optional<List<String>> choices = instance.get().getActualChoices(imprintedId,
-          info.contest().name());
-
-      if(choices.isPresent()){
-        return choices.get();
-      }
-    }
 
     if(info.contest().description().equals(ContestType.IRV.toString())){
       // The contest is an IRV contest.
@@ -435,14 +443,14 @@ public class Workflow extends TestClassWithDatabase {
     return CastVoteRecordQueries.get(cvrIds);
   }
 
+
   /**
    * For the given county number, collect the set of CVRs to audit for the given round, and
    * upload the audit CVRs.
    * @param round   Audit round.
    * @param session  TestAuditSession capturing the audit session for a county.
    */
-  protected void auditCounty(final int round, final TestAuditSession session,
-      final Optional<Instance> instance){
+  protected void auditCounty(final int round, final TestAuditSession session, final Instance instance){
 
     final List<CastVoteRecord> cvrsToAudit = getCvrsToAudit(round, session);
     final SessionFilter filter = session.filter();
@@ -486,8 +494,8 @@ public class Workflow extends TestClassWithDatabase {
       audited_cvr.put("timestamp", rec.timestamp());
 
       // Check if this CVR should map to a phantom ballot for the purposes of this workflow
-      if(instance.isPresent() && instance.get().isPhantomBallot(rec.imprintedID())){
-          audited_cvr.put("ballot_type", RecordType.PHANTOM_RECORD_ACVR);
+      if(instance.isPhantomBallot(rec.imprintedID())){
+        audited_cvr.put("ballot_type", RecordType.PHANTOM_RECORD_ACVR);
       }
       else {
         // Create contest_info for audited cvr.

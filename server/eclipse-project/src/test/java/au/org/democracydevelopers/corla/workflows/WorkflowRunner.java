@@ -207,7 +207,7 @@ public class WorkflowRunner extends Workflow {
         // ACVR uploads for each county. Cannot run in parallel as corla does not like
         // simultaneous database accesses.
         for (final TestAuditSession entry : sessions) {
-          auditCounty(1, entry, Optional.of(instance));
+          auditCounty(1, entry, instance);
         }
 
         // Audit board sign off for each county.
