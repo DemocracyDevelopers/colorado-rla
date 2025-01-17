@@ -49,6 +49,12 @@ public class Instance {
   private BigDecimal riskLimit;
 
   /**
+   * Random seed for the test audit.
+   */
+  @JsonProperty("SEED")
+  private String seed;
+
+  /**
    * List of additional SQL files (as path strings) containing extra data with which to
    * initialise the database. County data is automatically added to the database when
    * running workflows.
@@ -81,10 +87,16 @@ public class Instance {
   private Map<String,String> targets;
 
   /**
-   * Diluted margins for targeted contests.
+   * Expected diluted margins for targeted contests.
    */
   @JsonProperty("DILUTED_MARGINS")
   private Map<String,Double> dilutedMargins;
+
+  /**
+   * Expected sample sizes for targeted contests.
+   */
+  @JsonProperty("EXPECTED_SAMPLES")
+  private Map<String,Integer> expectedSamples;
 
   /**
    * Subset of contests targeted for audit that are IRV contests.
@@ -108,7 +120,13 @@ public class Instance {
    * Imprinted CVR ids that should map to phantom ballots.
    */
   @JsonProperty("PHANTOM_BALLOTS")
-  private List<String> phantomBallots;
+  private List<Long> phantomBallots;
+
+  /**
+   * List of identifying information for CVRs that we want to treat as Phantoms.
+   */
+  @JsonProperty("PHANTOM_CVRS")
+  private List<Long> phantomCVRS;
 
   /**
    * Ballot choices for select CVR Ids and contests. The instance JSON records only the
@@ -123,16 +141,19 @@ public class Instance {
   public Instance(){
     name = "";
     riskLimit = BigDecimal.ONE;
+    seed = "";
     targets = new HashMap<>();
     canonicalList = "";
     manifests = new ArrayList<>();
     cvrs = new ArrayList<>();
     sqls = new ArrayList<>();
     dilutedMargins = new HashMap<>();
+    expectedSamples = new HashMap<>();
     irvContests = new ArrayList<>();
     expectedRounds = 0;
     results = new HashMap<>();
     phantomBallots = new ArrayList<>();
+    phantomCVRS = new ArrayList<>();
     actualChoices = new HashMap<>();
   }
   /**
@@ -175,6 +196,11 @@ public class Instance {
   }
 
   /**
+   * @return Seed for the test audit (as a string).
+   */
+  public String getSeed() { return seed;}
+
+  /**
    * @return Unmodifiable map of targeted contests (contest name key and contest type value).
    */
   public Map<String,String> getTargetedContests(){
@@ -196,6 +222,13 @@ public class Instance {
   }
 
   /**
+   * @return Unmodifiable mapping between targeted contest name and expected sample size.
+   */
+  public Map<String,Integer> getExpectedSamples(){
+    return Collections.unmodifiableMap(expectedSamples);
+  }
+
+  /**
    * @return The number of rounds of auditing we expect will take place.
    */
   public int getExpectedRounds(){
@@ -203,29 +236,35 @@ public class Instance {
   }
 
   /**
-   * @param imprintedId Imprinted id of the CVR for which we want to check if the matching paper
-   *                    ballot should be treated as a phantom ballot.
-   * @return True if the paper ballot matching the given imprinted ID should be treated as a
-   * phantom ballot.
+   * @param id  Id of the CVR for which we want to check if the matching paper
+   *            ballot should be treated as a phantom ballot.
+   * @return True if the paper ballot matching the given ID should be treated as a phantom ballot.
    */
-  public boolean isPhantomBallot(final String imprintedId){
-    return phantomBallots.contains(imprintedId);
+  public boolean isPhantomBallot(final long id){
+    return phantomBallots.contains(id);
+  }
+
+  /**
+   * @return List of Phantom CVRs (defined in terms of cvr ID).
+   */
+  public List<Long> getPhantomCVRS(){
+    return Collections.unmodifiableList(phantomCVRS);
   }
 
   /**
    * Get the expected result of a given round (in terms of a map between status type and expected
-   * value) for a given contest. If the round and/or contest cannot be found in our record of
-   * results, it means that all status values are expected to be 0 for that round and contest.
+   * value) for a given county. If the round and/or county cannot be found in our record of
+   * results, it means that all status values are expected to be 0 for that round and county.
    * @param round    Round number
-   * @param contest  Contest name
+   * @param county   County ID as a string
    * @return A mapping between status type (string) and the expected value for that status type
-   * for the given round and contest. Returns an empty Optional if no record for that round/contest
+   * for the given round and county. Returns an empty Optional if no record for that round/county
    * is present in our record of results.
    */
-  public Optional<Map<String,Integer>> getRoundContestResult(final int round, final String contest){
+  public Optional<Map<String,Integer>> getRoundCountyResult(final int round, final String county){
     if(results.containsKey(round)){
-      if(results.get(round).containsKey(contest)){
-        return Optional.of(results.get(round).get(contest));
+      if(results.get(round).containsKey(county)){
+        return Optional.of(results.get(round).get(county));
       }
     }
     return Optional.empty();

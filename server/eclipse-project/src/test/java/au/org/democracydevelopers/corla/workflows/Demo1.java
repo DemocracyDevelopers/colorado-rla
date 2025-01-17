@@ -162,12 +162,15 @@ public class Demo1 extends Workflow {
     // Byron should be 3820. Kempsey 332.
     // For each targeted contest, check that the set of assertions: (i) is not empty; (ii) has
     // the correct minimum diluted margin; and (ii) has resulted in the correct sample size estimate.
-    Map<String,Double> expectedDilutedMargins = Map.of("City of Longmont - Mayor", 0.09078192,
+    final Map<String,Double> expectedDilutedMargins = Map.of("City of Longmont - Mayor", 0.09078192,
         "Byron Mayoral", 0.00684644, "Kempsey Mayoral", 0.02200739);
+
+    final Map<String,Integer> expectedSamples = Map.of("City of Longmont - Mayor", 81,
+        "Byron Mayoral", 1065, "Kempsey Mayoral", 332);
 
     for(final String c : targets.keySet()) {
       verifySampleSize(c, expectedDilutedMargins.get(c),
-          sampleSizes.get(c).estimatedSamples(), riskLimit, irvContests.contains(c));
+          sampleSizes.get(c).estimatedSamples(), expectedSamples.get(c), irvContests.contains(c));
     }
 
     // 8. Start Audit Round

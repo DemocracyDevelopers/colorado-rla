@@ -22,10 +22,13 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.util;
 
 import au.org.democracydevelopers.corla.model.vote.IRVBallotInterpretation;
+import java.util.Optional;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.hibernate.Session;
+import org.hibernate.query.Query;
 import us.freeandfair.corla.model.CastVoteRecord;
+import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.persistence.Persistence;
 
 import javax.persistence.TypedQuery;

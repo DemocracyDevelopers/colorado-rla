@@ -515,7 +515,12 @@ public abstract class Assertion implements PersistentEntity {
     LOGGER.debug(String.format("%s Computing score for CVR ID %d, Assertion ID %d, contest %s.",
         prefix, cvr.id(), id, contestName));
 
-    if(cvr.recordType() == RecordType.PHANTOM_RECORD){
+    // Just in case other parts of the code base inconsistently use different PHANTOM
+    // indicators for phantom CVRS -- we want to make sure any PHANTOM identifier
+    // gets the CVR treated as a phantom.
+    if(cvr.recordType() == RecordType.PHANTOM_RECORD ||
+      cvr.recordType() == RecordType.PHANTOM_RECORD_ACVR ||
+      cvr.recordType() == RecordType.PHANTOM_BALLOT){
       // The CVR is missing entirely. Return a worst case CVR score of 1.
       LOGGER.debug(String.format("%s CVR %d is a Phantom Record, CVR score is 1 for Assertion ID %d.",
           prefix, cvr.id(), id));
@@ -569,8 +574,12 @@ public abstract class Assertion implements PersistentEntity {
     LOGGER.debug(String.format("%s Computing score for audited ballot for CVR ID %d, Assertion ID %d, " +
         "contest %s.", prefix, cvrID, id, contestName));
 
+    // Just in case other parts of the code base inconsistently use different PHANTOM
+    // indicators for phantom ballots -- we want to make sure any PHANTOM identifier
+    // gets the ballot treated as a phantom.
     if(auditedCVR.recordType() == RecordType.PHANTOM_BALLOT ||
-      auditedCVR.recordType() == RecordType.PHANTOM_RECORD_ACVR){
+      auditedCVR.recordType() == RecordType.PHANTOM_RECORD_ACVR ||
+      auditedCVR.recordType() == RecordType.PHANTOM_RECORD){
       // The audited ballot is missing entirely. Return a worst case audited ballot score of -1.
       LOGGER.debug(String.format("%s audited ballot for CVR ID %d is a Phantom Record, " +
           "audited ballot score is -1 for Assertion ID %d.",

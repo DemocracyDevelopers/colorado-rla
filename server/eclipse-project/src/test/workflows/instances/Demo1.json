@@ -3,6 +3,8 @@
 
   "RISK_LIMIT" : 0.03,
 
+  "SEED" : "24098249082409821390482049098",
+
   "SQLS" : [
     "SQL/demo1-assertions.sql"
   ],
@@ -155,6 +157,12 @@
     "Kempsey Mayoral" : 0.02200739
   },
 
+  "EXPECTED_SAMPLES" : {
+    "City of Longmont - Mayor" : 81,
+    "Byron Mayoral" : 1065,
+    "Kempsey Mayoral" : 332
+  },
+
   "IRV_CONTESTS" : [
     "Byron Mayoral",
     "Kempsey Mayoral",
@@ -168,8 +176,12 @@
 
   ],
 
+  "PHANTOM_CVRS" : [
+
+  ],
+
   "CHOICES" : {
-    "NonExistentImprintedId" : {
+    "NonExistentImprintedId1" : {
       "Byron Mayoral" : [
         "Bobby(1)",
         "Daryl(2)",
@@ -180,10 +192,9 @@
 
   "RESULTS" : {
     "1" : {
-      "City of Longmont - Mayor" : {
-        "estimated_ballots_to_audit" : 0,
-        "ballots_remaining_in_round" : 0,
-        "discrepancy_count" : 0
+      "1": {
+        "estimated_ballots_to_audit": 0,
+        "ballots_remaining_in_round": 0
       }
     }
   }

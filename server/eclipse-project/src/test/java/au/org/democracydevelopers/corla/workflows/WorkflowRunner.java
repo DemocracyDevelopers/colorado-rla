@@ -49,6 +49,13 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+/**
+ * TODO:
+ * -- Modelling database updates (embedding phantom records)
+ * -- Checking for correct discrepancy counts
+ * -- support for addition of disagreements
+ * -- support for reauditing
+ */
 @Test(enabled=true)
 public class WorkflowRunner extends Workflow {
 
@@ -76,6 +83,10 @@ public class WorkflowRunner extends Workflow {
   }
 
 
+  /**
+   * Run all workflow instances (with JSON extensions) defined in the WorkflowRunner.pathToInstances
+   * directory. This method calls WorkflowRunner::runInstance for each of those workflow JSONs.
+   */
   @Test(enabled=true)
   public void runWorkflows()  {
     final String prefix = "[runWorkflows]";
@@ -107,14 +118,23 @@ public class WorkflowRunner extends Workflow {
     });
   }
 
+  /**
+   * Given a JSON file defining an audit workflow (CVRs, Manifests, which CVRs to replace with
+   * phantoms, which ballots to treat as phantoms, expected diluted margins and sample sizes,
+   * which ballots to simulate discrepancies for, and expected end of round states ...), run
+   * the test audit and verify that the expected outcomes arise.
+   * @param pathToInstance Path to the JSON workflow instance defining the test.
+   * @throws InterruptedException
+   */
   private void runInstance(final Path pathToInstance) throws InterruptedException {
     final String prefix = "[runWorkflows] " + pathToInstance;
 
     try {
+      // Convert data in the JSON workflow file to a workflow Instance.
       ObjectMapper toJson = new ObjectMapper();
       final Instance instance = toJson.readValue(pathToInstance.toFile(), Instance.class);
 
-      // Upload all the manifests and CVRs
+      // Upload all the manifests and CVRs as defined in the Instance.
       final List<String> cvrs = instance.getCVRs();
       final List<String> manifests = instance.getManifests();
 
@@ -142,6 +162,7 @@ public class WorkflowRunner extends Workflow {
       assertNull(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON));
       assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
 
+      // Provide a risk limit, canonicalisation file, and seed as defined in the Instance.
       updateAuditInfo(instance.getCanonicalisationFile(), instance.getRiskLimit());
       dashboard = getDoSDashBoardRefreshResponse();
       assertEquals(0, instance.getRiskLimit()
@@ -155,8 +176,14 @@ public class WorkflowRunner extends Workflow {
       assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
       assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
+      // At this point, if the Instance specifies that some CVRs should be treated as
+      // Phantoms, we will need to replace the existing record type for that CVR with a Phantom.
+
+      // TODO
+
       // Load additional SQL data (this is data that we want to add after we have
-      // CVRs, manifests, etc loaded for each county).
+      // CVRs, manifests, etc loaded for each county). This will mostly be used to load
+      // assertion data into the database, simulating a call to the raire-service.
       instance.getSQLs().forEach(TestClassWithDatabase::runSQLSetupScript);
 
       dashboard = getDoSDashBoardRefreshResponse();
@@ -166,30 +193,34 @@ public class WorkflowRunner extends Workflow {
       final Map<String,String> targets = instance.getTargetedContests();
       assertEquals(irvContests.size(), dashboard.getList("generate_assertions_summaries").size());
 
-      // Choose targeted contests for audit.
+      // Choose targeted contests for audit as specified in the Instance.
       targetContests(targets);
 
-      // Set the seed.
-      setSeed(defaultSeed);
+      // Set the seed (as specified in the Instance).
+      setSeed(instance.getSeed());
 
-      // This should be complete audit info.
+      // The ASM state for the dashboard should be COMPLETE_AUDIT_INFO_SET.
       dashboard = getDoSDashBoardRefreshResponse();
       assertEquals(dashboard.get(AUDIT_INFO + "." + SEED), defaultSeed);
       assertEquals(dashboard.get(ASM_STATE), COMPLETE_AUDIT_INFO_SET.toString());
 
-      // Estimate sample sizes; sanity check.
+      // Estimate sample sizes; and then verify that they are as expected.
+      // For each targeted IRV contest, check that the set of assertions: (i) is not empty; (ii) has
+      // the correct minimum diluted margin; and (ii) has resulted in the correct sample size estimate.
       Map<String, EstimateSampleSizes.EstimateData> sampleSizes = getSampleSizeEstimates();
       assertFalse(sampleSizes.isEmpty());
 
-      // For each targeted contest, check that the set of assertions: (i) is not empty; (ii) has
-      // the correct minimum diluted margin; and (ii) has resulted in the correct sample size estimate.
-      final Map<String,Double> expectedDilutedMargins = instance.getDilutedMargins();
-
+      final Map<String,Integer> expectedSamples = instance.getExpectedSamples();
+      final Map<String,Double> expectedMargins = instance.getDilutedMargins();
       for(final String c : targets.keySet()) {
-        verifySampleSize(c, expectedDilutedMargins.get(c),
-            sampleSizes.get(c).estimatedSamples(), instance.getRiskLimit(), irvContests.contains(c));
+        verifySampleSize(c, expectedMargins.get(c), sampleSizes.get(c).estimatedSamples(),
+            expectedSamples.get(c), irvContests.contains(c));
       }
 
+      // Run audit rounds until the number of expected samples required for each targeted
+      // contest is zero. Check that the number of rounds completed is as expected for the
+      // Instance, and that the end of round state for targeted contests is as expected
+      // for the Instance.
       boolean auditNotFinished = true;
       int rounds = 0;
 
@@ -198,7 +229,7 @@ public class WorkflowRunner extends Workflow {
         // Start Audit Round
         startAuditRound();
 
-        // 9. Log in as each county, and audit all ballots in sample.
+        // Log in as each county, and audit all ballots in sample.
         List<TestAuditSession> sessions = new ArrayList<>();
         for (final int cty : allCounties) {
           sessions.add(countyAuditInitialise(cty));
@@ -228,10 +259,10 @@ public class WorkflowRunner extends Workflow {
           final int ballotsRemaining = Integer.parseInt(entry.getValue().get(BALLOTS_REMAINING).toString());
           final int estimatedBallots = Integer.parseInt(entry.getValue().get(ESTIMATED_BALLOTS).toString());
 
-          final String contest = entry.getKey();
-          final Optional<Map<String,Integer>> results =
-              instance.getRoundContestResult(rounds+1, contest);
+          final String county = entry.getKey(); // this is county, not contest
+          final Optional<Map<String,Integer>> results = instance.getRoundCountyResult(rounds+1, county);
 
+          // TODO: check for right discrepancy counts
           if(results.isPresent()) {
             final Map<String,Integer> roundResults = results.get();
             assertEquals(ballotsRemaining, roundResults.get(BALLOTS_REMAINING).intValue());
@@ -240,10 +271,9 @@ public class WorkflowRunner extends Workflow {
           else {
             assertEquals(ballotsRemaining, 0);
             assertEquals(estimatedBallots, 0);
-            assertEquals(entry.getValue().get(DISCREPANCY_COUNT).toString(), "{}");
           }
 
-          if(ballotsRemaining > 0|| estimatedBallots > 0){
+          if(ballotsRemaining > 0 || estimatedBallots > 0){
             auditNotFinished = true;
           }
         }

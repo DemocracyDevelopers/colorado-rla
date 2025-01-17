@@ -59,7 +59,6 @@ import org.apache.http.HttpStatus;
 import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.BeforeClass;
-import us.freeandfair.corla.math.Audit;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
@@ -141,6 +140,11 @@ public class Workflow extends TestClassWithDatabase {
   protected static final String STATUS = "status";
   protected static final String BALLOTS_REMAINING = "ballots_remaining_in_round";
   protected static final String DISCREPANCY_COUNT = "discrepancy_count";
+  protected static final String ONE_OVER_COUNT = "one_over_count";
+  protected static final String ONE_UNDER_COUNT = "one_under_count";
+  protected static final String TWO_OVER_COUNT = "two_over_count";
+  protected static final String TWO_UNDER_COUNT = "two_under_count";
+  protected static final String OTHER_COUNT = "other_count";
 
   @BeforeClass
   public void setup() {
@@ -494,7 +498,7 @@ public class Workflow extends TestClassWithDatabase {
       audited_cvr.put("timestamp", rec.timestamp());
 
       // Check if this CVR should map to a phantom ballot for the purposes of this workflow
-      if(instance.isPhantomBallot(rec.imprintedID())){
+      if(instance.isPhantomBallot(rec.id())){
         audited_cvr.put("ballot_type", RecordType.PHANTOM_RECORD_ACVR);
       }
       else {
@@ -537,7 +541,7 @@ public class Workflow extends TestClassWithDatabase {
    */
   protected JsonPath getDoSDashBoardRefreshResponse() {
     // Note: this would be a lot simpler if it just returned a DoSDashBoardRefreshResponse via
-    // DoSDashboardRefreshResponse DoSDasboard = GSON.fromJson(data, DoSDashboardRefreshResponse.class);
+    // DoSDashboardRefreshResponse DoSDashboard = GSON.fromJson(data, DoSDashboardRefreshResponse.class);
     // but that throws errors relating to parsing of enums. Not sure exactly why.
     // Similarly, so does getting the response and then calling
     // .as(DoSDashboardRefreshResponse.class);
@@ -705,10 +709,11 @@ public class Workflow extends TestClassWithDatabase {
    * @param contest                   Name of the contest.
    * @param expectedDilutedMargin     Expected diluted margin of the contest.
    * @param actualEstimatedSamples    Actual sample size computation for the contest.
-   * @param riskLimit                 Risk limit for the audit.
+   * @param expectedEstimatedSamples  Expected sample size for the contest.
+   * @param isIRV                     True if the contest is an IRV contest.
    */
   protected void verifySampleSize(final String contest, final double expectedDilutedMargin,
-      final int actualEstimatedSamples, final BigDecimal riskLimit, final boolean isIRV){
+      final int actualEstimatedSamples, final int expectedEstimatedSamples, final boolean isIRV){
 
     if(isIRV) {
       final List<Assertion> assertions = AssertionQueries.matching(contest);
@@ -721,11 +726,7 @@ public class Workflow extends TestClassWithDatabase {
       assertEquals(comp.compare(actualDilutedMargin.doubleValue(), expectedDilutedMargin), 0);
     }
 
-    // Sample size formula is (-2 * gamma * log(risk_limit))/dilutedMargin
-    final int samples = (int)(Math.ceil(-2.0 * Audit.GAMMA.doubleValue() *
-        Math.log(riskLimit.doubleValue())/expectedDilutedMargin));
-
-    assertEquals(actualEstimatedSamples, samples);
+    assertEquals(actualEstimatedSamples, expectedEstimatedSamples);
   }
 
   /**
