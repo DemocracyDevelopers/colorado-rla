@@ -844,7 +844,7 @@ public class Workflow extends TestClassWithDatabase {
       final StringWriter sw = new StringWriter();
 
       sw.write("UPDATE cast_vote_record ");
-      sw.write("SET record_type=\"PHANTOM_RECORD\" ");
+      sw.write("SET record_type='PHANTOM_RECORD' ");
       sw.write("WHERE ");
 
       for(int i = 0; i < phantomCVRs.size()-1; ++i){

@@ -182,7 +182,7 @@ public abstract class TestClassWithDatabase {
    * @param query SQL query (as a string).
    * @throws SQLException when the given SQL query could not be executed.
    */
-  protected static void executeSQLScript(String query) throws SQLException {
+  protected static void executeSQLScript(final String query) throws SQLException {
     Connection con = DriverManager.getConnection(postgres.getJdbcUrl(),
         postgres.getUsername(), postgres.getPassword());
     if(con == null) {
