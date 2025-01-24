@@ -127,6 +127,7 @@ public class Workflow extends TestClassWithDatabase {
   protected static final String CVR_FILETYPE = "cvr-export";
   protected static final String CVR_JSON = "cvr_export_file";
   protected static final String ESTIMATED_BALLOTS = "estimated_ballots_to_audit";
+  protected static final String OPTIMISTIC_BALLOTS = "optimistic_ballots_to_audit";
   protected static final String ELECTION_DATE = "election_date";
   protected static final String ELECTION_TYPE = "election_type";
   protected static final String ID = "id";
@@ -145,6 +146,11 @@ public class Workflow extends TestClassWithDatabase {
   protected static final String TWO_OVER_COUNT = "two_over_count";
   protected static final String TWO_UNDER_COUNT = "two_under_count";
   protected static final String OTHER_COUNT = "other_count";
+  protected static final String ONE_OVER = "1";
+  protected static final String ONE_UNDER = "-1";
+  protected static final String OTHER = "0";
+  protected static final String TWO_OVER = "2";
+  protected static final String TWO_UNDER = "-2";
 
   @BeforeClass
   public void setup() {
@@ -510,9 +516,10 @@ public class Workflow extends TestClassWithDatabase {
         // irv_ballot_interpretation table. So, we can, for any IRV vote, check whether
         // there is an entry for it in the interpretations table. If so, we take the raw choices
         // from there. Otherwise, we recreate the raw choices from info.choices().
+        final String consensus = (instance.hasDisagreement(rec.id())) ? "NO" : "YES";
         final List<Map<String, Object>> contest_info = rec.contestInfo().stream().map(info ->
             Map.of("choices", translateToRawChoices(info, rec.imprintedID(), instance),
-                "comment", "", "consensus", "YES",
+                "comment", "", "consensus", consensus,
                 "contest", info.contest().id())).toList();
 
         audited_cvr.put("contest_info", contest_info);
@@ -744,10 +751,14 @@ public class Workflow extends TestClassWithDatabase {
         .assertThat()
         .statusCode(HttpStatus.SC_OK);
   }
+
   /**
    * Select contests to target, by name.
+   * @param targetedContestsWithReasons Contests to target alongside the reasons for targeting them.
+   * @return A mapping between contest name (all contests, not just those targeted) and its
+   * database record ID (as a string).
    */
-  protected void targetContests(final Map<String, String> targetedContestsWithReasons) {
+  protected Map<String,String> targetContests(final Map<String, String> targetedContestsWithReasons) {
     // Login as state admin.
     final SessionFilter filter = doLogin("stateadmin1");
 
@@ -767,17 +778,21 @@ public class Workflow extends TestClassWithDatabase {
     // The contests and reasons to be requested.
     final JSONArray contestSelections = new JSONArray();
 
+    Map<String,String> contestToDBID = new HashMap<>();
+
     // Find the IDs of the ones we want to target.
     for(int i=0 ; i < contests.getList("").size() ; i++) {
 
       final String contestName = contests.getString("[" + i + "]." + NAME);
       // If this contest's name is one of the targeted ones...
       final String reason = targetedContestsWithReasons.get(contestName);
+      final Integer contestId = contests.getInt("[" + i + "]." + ID);
+      contestToDBID.put(contestName, contestId.toString());
+
       if(reason != null) {
         // add it to the selections.
         final JSONObject contestSelection = new JSONObject();
 
-        final Integer contestId = contests.getInt("[" + i + "]." + ID);
         contestSelection.put(AUDIT, COMPARISON.toString());
         contestSelection.put(CONTEST, contestId);
         contestSelection.put(REASON, reason);
@@ -795,6 +810,7 @@ public class Workflow extends TestClassWithDatabase {
         .assertThat()
         .statusCode(HttpStatus.SC_OK);
 
+    return contestToDBID;
   }
 
   /**

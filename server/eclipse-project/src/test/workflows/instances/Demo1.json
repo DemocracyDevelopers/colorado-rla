@@ -180,6 +180,10 @@
 
   ],
 
+  "DISAGREEMENTS" : [
+
+  ],
+
   "CHOICES" : {
     "NonExistentImprintedId1" : {
       "Byron Mayoral" : [
@@ -190,11 +194,83 @@
     }
   },
 
-  "RESULTS" : {
-    "1" : {
+  "COUNTY_RESULTS" : {
+    "1": {
       "1": {
         "estimated_ballots_to_audit": 0,
-        "ballots_remaining_in_round": 0
+        "ballots_remaining_in_round" : 0
+      },
+      "2": {
+        "estimated_ballots_to_audit": 0,
+        "ballots_remaining_in_round" : 0
+      },
+      "3": {
+        "estimated_ballots_to_audit": 0,
+        "ballots_remaining_in_round" : 0
+      },
+      "4": {
+        "estimated_ballots_to_audit": 0,
+        "ballots_remaining_in_round" : 0
+      },
+      "5": {
+        "estimated_ballots_to_audit": 0,
+        "ballots_remaining_in_round" : 0
+      },
+      "6": {
+        "estimated_ballots_to_audit": 0,
+        "ballots_remaining_in_round" : 0
+      },
+      "7": {
+        "estimated_ballots_to_audit": 0,
+        "ballots_remaining_in_round" : 0
+      },
+      "8": {
+        "estimated_ballots_to_audit": 0,
+        "ballots_remaining_in_round" : 0
+      },
+      "22": {
+        "estimated_ballots_to_audit": 0,
+        "ballots_remaining_in_round" : 0
+      },
+      "40": {
+        "estimated_ballots_to_audit": 0,
+        "ballots_remaining_in_round" : 0
+      },
+      "64": {
+        "estimated_ballots_to_audit": 0,
+        "ballots_remaining_in_round" : 0
+      }
+    }
+  },
+
+  "CONTEST_RESULTS" : {
+    "1" : {
+      "Byron Mayoral" : {
+        "estimated_ballots_to_audit" : 0,
+        "optimistic_ballots_to_audit": 0,
+        "one_over_count" : 0,
+        "two_over_count" : 0,
+        "one_under_count" : 0,
+        "two_under_count" : 0,
+        "other_count" : 0
+      },
+      "City of Longmont - Mayor" : {
+        "estimated_ballots_to_audit" : 0,
+        "optimistic_ballots_to_audit": 0,
+        "one_over_count" : 0,
+        "two_over_count" : 0,
+        "one_under_count" : 0,
+        "two_under_count" : 0,
+        "other_count" : 0
+      },
+      "Kempsey Mayoral" : {
+        "estimated_ballots_to_audit" : 0,
+        "optimistic_ballots_to_audit": 0,
+        "one_over_count" : 0,
+        "two_over_count" : 0,
+        "one_under_count" : 0,
+        "two_under_count" : 0,
+        "other_count" : 0
       }
     }
   }

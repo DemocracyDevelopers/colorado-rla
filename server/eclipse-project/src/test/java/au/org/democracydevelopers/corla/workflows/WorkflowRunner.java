@@ -194,7 +194,7 @@ public class WorkflowRunner extends Workflow {
       assertEquals(irvContests.size(), dashboard.getList("generate_assertions_summaries").size());
 
       // Choose targeted contests for audit as specified in the Instance.
-      targetContests(targets);
+      final Map<String,String> contestToDBID = targetContests(targets);
 
       // Set the seed (as specified in the Instance).
       setSeed(instance.getSeed());
@@ -249,29 +249,66 @@ public class WorkflowRunner extends Workflow {
         // Check that there are no more ballots to sample across all counties in first round,
         // and as this demo involved no discrepancies, that all audits are complete.
         dashboard = getDoSDashBoardRefreshResponse();
-        final Map<String, Map<String, Object>> status = dashboard.get(COUNTY_STATUS);
+        final Map<String,Integer> statusEstBallotsToAudit = dashboard.get(ESTIMATED_BALLOTS);
+        final Map<String,Integer> statusOptBallotsToAudit = dashboard.get(OPTIMISTIC_BALLOTS);
+        final Map<String, Map<String,Integer>> discrepancies = dashboard.get(DISCREPANCY_COUNT);
 
         auditNotFinished = false;
 
         // Verify that the result of this round is what we expected in terms of number of
-        // ballots remaining and estimated ballots to be audited for each county.
+        // estimated and optimistic ballots to audit for each contest mentioned in the associated
+        // field in the instance. Also test that the resulting discrepancy counts are as expected.
+        final Optional<Map<String,Map<String,Integer>>> results = instance.getRoundContestResult(rounds+1);
+        if(results.isPresent()){
+          final Map<String,Map<String,Integer>> roundResults = results.get();
+
+          for(final String contestName : roundResults.keySet()){
+            final String dbID = contestToDBID.get(contestName);
+            final Map<String,Integer> contestResult = roundResults.get(contestName);
+
+            final int actEstBallots = statusEstBallotsToAudit.get(dbID);
+            final int actOptBallots = statusOptBallotsToAudit.get(dbID);
+
+            assertEquals(actEstBallots, contestResult.get(ESTIMATED_BALLOTS).intValue());
+            assertEquals(actOptBallots, contestResult.get(OPTIMISTIC_BALLOTS).intValue());
+
+            final int oneOverCount = contestResult.get(ONE_OVER_COUNT);
+            final int oneUnderCount = contestResult.get(ONE_UNDER_COUNT);
+            final int twoOverCount = contestResult.get(TWO_OVER_COUNT);
+            final int twoUnderCount = contestResult.get(TWO_UNDER_COUNT);
+            final int otherCount = contestResult.get(OTHER_COUNT);
+
+            final Map<String,Integer> contestDiscrepancies = discrepancies.get(dbID);
+            assertEquals(contestDiscrepancies.get(ONE_OVER).intValue(), oneOverCount);
+            assertEquals(contestDiscrepancies.get(ONE_UNDER).intValue(), oneUnderCount);
+            assertEquals(contestDiscrepancies.get(OTHER).intValue(), otherCount);
+            assertEquals(contestDiscrepancies.get(TWO_OVER).intValue(), twoOverCount);
+            assertEquals(contestDiscrepancies.get(TWO_UNDER).intValue(), twoUnderCount);
+          }
+        }
+
+        // Go through the county statuses for those that have an entry in our instance for
+        // the given round.
+        final Map<String, Map<String,Object>> status = dashboard.get(COUNTY_STATUS);
+        final Optional<Map<String,Map<String,Integer>>> countyResults = instance.getRoundCountyResult(rounds+1);
+
+        if(countyResults.isPresent()){
+          for(final Map.Entry<String, Map<String, Integer>> entry : countyResults.get().entrySet()){
+            final Map<String,Integer> expStatus = entry.getValue();
+            final Map<String,Object> countyStatus = status.get(entry.getKey());
+
+            final int ballotsRemaining = Integer.parseInt(countyStatus.get(BALLOTS_REMAINING).toString());
+            final int estimatedBallots = Integer.parseInt(countyStatus.get(ESTIMATED_BALLOTS).toString());
+
+            assertEquals(ballotsRemaining, expStatus.get(BALLOTS_REMAINING).intValue());
+            assertEquals(estimatedBallots, expStatus.get(ESTIMATED_BALLOTS).intValue());
+          }
+        }
+
+        // Check county statuses to determine whether the audit needs to go to another round or not.
         for (final Map.Entry<String, Map<String, Object>> entry : status.entrySet()) {
           final int ballotsRemaining = Integer.parseInt(entry.getValue().get(BALLOTS_REMAINING).toString());
           final int estimatedBallots = Integer.parseInt(entry.getValue().get(ESTIMATED_BALLOTS).toString());
-
-          final String county = entry.getKey(); // this is county, not contest
-          final Optional<Map<String,Integer>> results = instance.getRoundCountyResult(rounds+1, county);
-
-          // TODO: check for right discrepancy counts
-          if(results.isPresent()) {
-            final Map<String,Integer> roundResults = results.get();
-            assertEquals(ballotsRemaining, roundResults.get(BALLOTS_REMAINING).intValue());
-            assertEquals(estimatedBallots, roundResults.get(ESTIMATED_BALLOTS).intValue());
-          }
-          else {
-            assertEquals(ballotsRemaining, 0);
-            assertEquals(estimatedBallots, 0);
-          }
 
           if(ballotsRemaining > 0 || estimatedBallots > 0){
             auditNotFinished = true;

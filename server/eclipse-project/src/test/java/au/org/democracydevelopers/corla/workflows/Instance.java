@@ -111,10 +111,16 @@ public class Instance {
   private int expectedRounds;
 
   /**
-   * Non-zero round by round results for audited contests.
+   * Non-zero round by round results for contests whose statuses we want to test.
    */
-  @JsonProperty("RESULTS")
-  private Map<Integer,Map<String,Map<String,Integer>>> results;
+  @JsonProperty("CONTEST_RESULTS")
+  private Map<Integer,Map<String,Map<String,Integer>>> contestResults;
+
+  /**
+   * Non-zero round by round results for counties whose statuses we want to test.
+   */
+  @JsonProperty("COUNTY_RESULTS")
+  private Map<Integer,Map<String,Map<String,Integer>>> countyResults;
 
   /**
    * Imprinted CVR ids that should map to phantom ballots.
@@ -127,6 +133,12 @@ public class Instance {
    */
   @JsonProperty("PHANTOM_CVRS")
   private List<Long> phantomCVRS;
+
+  /**
+   * List of identifying information for CVRs that we want to introduce an audit board disagreement.
+   */
+  @JsonProperty("DISAGREEMENTS")
+  private List<Long> disagreements;
 
   /**
    * Ballot choices for select CVR Ids and contests. The instance JSON records only the
@@ -151,11 +163,14 @@ public class Instance {
     expectedSamples = new HashMap<>();
     irvContests = new ArrayList<>();
     expectedRounds = 0;
-    results = new HashMap<>();
+    contestResults = new HashMap<>();
+    countyResults = new HashMap<>();
     phantomBallots = new ArrayList<>();
     phantomCVRS = new ArrayList<>();
     actualChoices = new HashMap<>();
+    disagreements = new ArrayList<>();
   }
+
   /**
    * @return SQL files (as path strings) representing additional data to load
    * into the database for the given workflow instance. Returned as an
@@ -245,6 +260,15 @@ public class Instance {
   }
 
   /**
+   * @param id Id of the CVR for which we want to check whether we should introduce an audit board
+   *           disagreement when it is audited.
+   * @return True if we should introduce a disagreement.
+   */
+  public boolean hasDisagreement(final long id){
+    return disagreements.contains(id);
+  }
+
+  /**
    * @return List of Phantom CVRs (defined in terms of cvr ID).
    */
   public List<Long> getPhantomCVRS(){
@@ -252,20 +276,31 @@ public class Instance {
   }
 
   /**
-   * Get the expected result of a given round (in terms of a map between status type and expected
-   * value) for a given county. If the round and/or county cannot be found in our record of
-   * results, it means that all status values are expected to be 0 for that round and county.
-   * @param round    Round number
-   * @param county   County ID as a string
-   * @return A mapping between status type (string) and the expected value for that status type
-   * for the given round and county. Returns an empty Optional if no record for that round/county
-   * is present in our record of results.
+   * Get the expected result of a given round (in terms of a map between contest name and a
+   * map of status type and expected value for that contest). If the round cannot be found in our
+   * record of results, it means that we don't want to check their value in our testing.
+   * @param round     Round number
+   * @return A mapping between contest name and a map of status type and expected value for that
+   * contest. Returns an empty Optional if no record for that round is present in our record of results.
    */
-  public Optional<Map<String,Integer>> getRoundCountyResult(final int round, final String county){
-    if(results.containsKey(round)){
-      if(results.get(round).containsKey(county)){
-        return Optional.of(results.get(round).get(county));
-      }
+  public Optional<Map<String,Map<String,Integer>>> getRoundContestResult(final int round){
+    if(contestResults.containsKey(round)){
+      return Optional.of(contestResults.get(round));
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Get the expected result of a given round (in terms of a map between county and a
+   * map of status type and expected value for that county). If the round cannot be found in our
+   * record of results, it means that we don't want to check their value in our testing.
+   * @param round     Round number
+   * @return A mapping between county and a map of status type and expected value for that
+   * county. Returns an empty Optional if no record for that round is present in our record of results.
+   */
+  public Optional<Map<String,Map<String,Integer>>> getRoundCountyResult(final int round){
+    if(countyResults.containsKey(round)){
+      return Optional.of(countyResults.get(round));
     }
     return Optional.empty();
   }
