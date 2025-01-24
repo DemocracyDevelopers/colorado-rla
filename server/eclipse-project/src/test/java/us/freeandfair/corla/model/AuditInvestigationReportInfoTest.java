@@ -1,6 +1,5 @@
 package us.freeandfair.corla.model;
 
-import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import org.testng.annotations.Test;
 
 import java.time.Instant;
@@ -9,7 +8,7 @@ import static org.testng.Assert.assertNotEquals;
 import static org.testng.AssertJUnit.*;
 import static us.freeandfair.corla.util.EqualsHashcodeHelper.nullableHashCode;
 
-public class AuditInvestigationReportInfoTest extends TestClassWithDatabase {
+public class AuditInvestigationReportInfoTest {
 
     private static final String name = "name";
     private static final String report = "report";
