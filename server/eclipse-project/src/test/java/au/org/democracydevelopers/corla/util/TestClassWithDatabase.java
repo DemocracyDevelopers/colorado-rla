@@ -21,8 +21,17 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.util;
 
+import java.io.FileOutputStream;
+import java.io.StringWriter;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Properties;
 
+import javax.script.ScriptException;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.jdbc.JdbcDatabaseDelegate;
@@ -157,8 +166,30 @@ public abstract class TestClassWithDatabase {
     return hibernateProperties;
   }
 
+  /**
+   * Given a path to an SQL file containing an SQL script that we want to run, run the script.
+   * Interacts with a test database.
+   * @param initScriptPath Path to an SQL file containing the SQL script we want to run.
+   */
   protected static void runSQLSetupScript(String initScriptPath) {
     var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
     ScriptUtils.runInitScript(containerDelegate, initScriptPath);
+  }
+
+
+  /**
+   * Execute an SQL query, contained within a given string, on the test database.
+   * @param query SQL query (as a string).
+   * @throws SQLException when the given SQL query could not be executed.
+   */
+  protected static void executeSQLScript(String query) throws SQLException {
+    Connection con = DriverManager.getConnection(postgres.getJdbcUrl(),
+        postgres.getUsername(), postgres.getPassword());
+    if(con == null) {
+      throw new SQLException("Connection could not be created.");
+    }
+
+    Statement statement = con.createStatement();
+    statement.executeQuery(query);
   }
 }

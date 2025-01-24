@@ -10,7 +10,7 @@ Content-Type: application/json
   "password":""
 }
 > {%
-  import {authSanityCheck} from 'testScripts/testUtils';
+  import {authSanityCheck} from 'workflows/testScripts/testUtils';
   authSanityCheck("countyadmin1", 1, 'TRADITIONALLY_AUTHENTICATED');
 %}
 
@@ -24,7 +24,7 @@ Content-Type: application/json
 }
 
 > {%
-  import {authSanityCheck} from 'testScripts/testUtils';
+  import {authSanityCheck} from 'workflows/testScripts/testUtils';
   authSanityCheck("countyadmin1", 2, 'SECOND_FACTOR_AUTHENTICATED');
  %}
 

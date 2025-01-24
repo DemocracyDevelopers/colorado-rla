@@ -49,10 +49,12 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import javax.script.ScriptException;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
@@ -107,7 +109,7 @@ public class Workflow extends TestClassWithDatabase {
   /**
    * Path for storing temporary config files
    */
-  private static final String tempConfigPath = "src/test/workflows/temp/";
+  protected static final String tempConfigPath = "src/test/resources/workflows/temp/";
 
   /**
    * Path for all the data files.
@@ -324,7 +326,6 @@ public class Workflow extends TestClassWithDatabase {
    */
   private List<String> translateToRawChoices(final CVRContestInfo info, final String imprintedId,
       final Instance instance){
-    final String prefix = "[translateToRawChoices]";
 
     // Check if the CVR's imprinted Id is present in the workflow instance
     final Optional<List<String>> choices = instance.getActualChoices(imprintedId,
@@ -831,6 +832,30 @@ public class Workflow extends TestClassWithDatabase {
         .then()
         .assertThat()
         .statusCode(HttpStatus.SC_OK);
+  }
+
+  /**
+   * Given a list of CVR record ids, this method replaces their record type with
+   * PHANTOM_RECORD.
+   * @param phantomCVRs List of CVR record ids that we are going to make PHANTOMS.
+   */
+  protected void makePhantoms(final List<Long> phantomCVRs) throws SQLException {
+    if(!phantomCVRs.isEmpty()) {
+      final StringWriter sw = new StringWriter();
+
+      sw.write("UPDATE cast_vote_record ");
+      sw.write("SET record_type=\"PHANTOM_RECORD\" ");
+      sw.write("WHERE ");
+
+      for(int i = 0; i < phantomCVRs.size()-1; ++i){
+        sw.write(" record_id="+phantomCVRs.get(i).toString() + " OR ");
+      }
+      sw.write(" record_id="+phantomCVRs.get(phantomCVRs.size()-1).toString());
+
+      // Note that this function won't find the query file unless we specify a
+      // path off resources.
+      TestClassWithDatabase.executeSQLScript(sw.toString());
+    }
   }
 
   /**
