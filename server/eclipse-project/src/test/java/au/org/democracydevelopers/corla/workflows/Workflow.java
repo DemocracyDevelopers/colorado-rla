@@ -851,6 +851,7 @@ public class Workflow extends TestClassWithDatabase {
         sw.write(" record_id="+phantomCVRs.get(i).toString() + " OR ");
       }
       sw.write(" record_id="+phantomCVRs.get(phantomCVRs.size()-1).toString());
+      sw.write(" RETURNING *");
 
       // Note that this function won't find the query file unless we specify a
       // path off resources.

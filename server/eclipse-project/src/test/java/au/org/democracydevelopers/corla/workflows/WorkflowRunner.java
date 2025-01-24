@@ -32,9 +32,7 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.PARTIAL_AUDIT_
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import io.restassured.path.json.JsonPath;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,8 +45,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.ext.ScriptUtils;
-import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -180,6 +176,11 @@ public class WorkflowRunner extends Workflow {
       assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
       assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
+      // Load additional SQL data (this is data that we want to add after we have
+      // CVRs, manifests, etc loaded for each county). This will mostly be used to load
+      // assertion data into the database, simulating a call to the raire-service.
+      instance.getSQLs().forEach(TestClassWithDatabase::runSQLSetupScript);
+
       // At this point, if the Instance specifies that some CVRs should be treated as
       // Phantoms, we will need to replace the existing record type for that CVR with a Phantom.
       final List<Long> phantomCVRs = instance.getPhantomCVRS();
@@ -191,11 +192,6 @@ public class WorkflowRunner extends Workflow {
         LOGGER.error(msg);
         throw new RuntimeException(msg);
       }
-
-      // Load additional SQL data (this is data that we want to add after we have
-      // CVRs, manifests, etc loaded for each county). This will mostly be used to load
-      // assertion data into the database, simulating a call to the raire-service.
-      instance.getSQLs().forEach(TestClassWithDatabase::runSQLSetupScript);
 
       dashboard = getDoSDashBoardRefreshResponse();
 
