@@ -183,9 +183,8 @@ public class WorkflowRunner extends Workflow {
 
       // At this point, if the Instance specifies that some CVRs should be treated as
       // Phantoms, we will need to replace the existing record type for that CVR with a Phantom.
-      final List<Long> phantomCVRs = instance.getPhantomCVRS();
       try {
-        makePhantoms(phantomCVRs);
+        makePhantoms(instance.getPhantomCVRS());
       }
       catch(Exception e){
         final String msg = prefix + " cannot run make phantoms SQL script: " + e.getMessage();

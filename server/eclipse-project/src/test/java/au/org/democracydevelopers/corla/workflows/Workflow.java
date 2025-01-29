@@ -49,15 +49,15 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import javax.script.ScriptException;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
+import org.hibernate.Session;
+import org.hibernate.query.Query;
 import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.jdbc.JdbcDatabaseDelegate;
 import org.testng.annotations.BeforeClass;
@@ -65,6 +65,7 @@ import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.model.UploadedFile;
+import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 import wiremock.net.minidev.json.JSONArray;
 import wiremock.net.minidev.json.JSONObject;
@@ -505,7 +506,7 @@ public class Workflow extends TestClassWithDatabase {
       audited_cvr.put("timestamp", rec.timestamp());
 
       // Check if this CVR should map to a phantom ballot for the purposes of this workflow
-      if(instance.isPhantomBallot(rec.id())){
+      if(instance.isPhantomBallot(rec.imprintedID(), rec.countyID())){
         audited_cvr.put("ballot_type", RecordType.PHANTOM_RECORD_ACVR);
       }
       else {
@@ -517,10 +518,10 @@ public class Workflow extends TestClassWithDatabase {
         // irv_ballot_interpretation table. So, we can, for any IRV vote, check whether
         // there is an entry for it in the interpretations table. If so, we take the raw choices
         // from there. Otherwise, we recreate the raw choices from info.choices().
-        final String consensus = (instance.hasDisagreement(rec.id())) ? "NO" : "YES";
+        final List<String> disagreements = instance.getDisagreements(rec.imprintedID(), rec.countyID());
         final List<Map<String, Object>> contest_info = rec.contestInfo().stream().map(info ->
-            Map.of("choices", translateToRawChoices(info, rec.imprintedID(), instance),
-                "comment", "", "consensus", consensus,
+            Map.of("choices", translateToRawChoices(info, rec.imprintedID(), instance), "comment",
+                "", "consensus", disagreements.contains(info.contest().name()) ? "YES" : "NO",
                 "contest", info.contest().id())).toList();
 
         audited_cvr.put("contest_info", contest_info);
@@ -839,23 +840,35 @@ public class Workflow extends TestClassWithDatabase {
    * PHANTOM_RECORD.
    * @param phantomCVRs List of CVR record ids that we are going to make PHANTOMS.
    */
-  protected void makePhantoms(final List<Long> phantomCVRs) throws SQLException {
+  protected void makePhantoms(final Map<String,List<String>> phantomCVRs) {
     if(!phantomCVRs.isEmpty()) {
       final StringWriter sw = new StringWriter();
 
       sw.write("UPDATE cast_vote_record ");
-      sw.write("SET record_type='PHANTOM_RECORD' ");
+      sw.write("SET record_type='PHANTOM_RECORD', revision=1 ");
       sw.write("WHERE ");
 
-      for(int i = 0; i < phantomCVRs.size()-1; ++i){
-        sw.write(" record_id="+phantomCVRs.get(i).toString() + " OR ");
-      }
-      sw.write(" record_id="+phantomCVRs.get(phantomCVRs.size()-1).toString());
-      sw.write(" RETURNING *");
+      // Get total number of rows to modify
+      final int toModify = phantomCVRs.values().stream().mapToInt(List::size).sum();
 
-      // Note that this function won't find the query file unless we specify a
-      // path off resources.
-      TestClassWithDatabase.executeSQLScript(sw.toString());
+      int count = 1;
+      for(final String county : phantomCVRs.keySet()){
+        for(final String id : phantomCVRs.get(county)){
+          sw.write(" ( county_id=" + county +
+              " AND imprinted_id='" + id +
+              "' AND record_type='UPLOADED' ) ");
+          if(count < toModify){
+            sw.write(" OR ");
+          }
+          count += 1;
+        }
+      }
+
+     final Session s = Persistence.currentSession();
+     final Query q = s.createNativeQuery(sw.toString());
+     final int result = q.executeUpdate();
+
+     assertEquals(result, toModify);
     }
   }
 

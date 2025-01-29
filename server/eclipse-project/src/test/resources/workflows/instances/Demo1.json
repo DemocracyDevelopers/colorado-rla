@@ -172,17 +172,17 @@
 
   "EXPECTED_ROUNDS" : 1,
 
-  "PHANTOM_BALLOTS" : [
+  "PHANTOM_BALLOTS" : {
+  },
 
-  ],
+  "PHANTOM_CVRS" : {
+    "4" : [
+      "1-1-10"
+    ]
+  },
 
-  "PHANTOM_CVRS" : [
-    111171
-  ],
-
-  "DISAGREEMENTS" : [
-
-  ],
+  "DISAGREEMENTS" : {
+  },
 
   "CHOICES" : {
     "NonExistentImprintedId1" : {

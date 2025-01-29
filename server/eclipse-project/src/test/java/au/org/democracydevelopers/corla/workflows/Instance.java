@@ -126,19 +126,23 @@ public class Instance {
    * Imprinted CVR ids that should map to phantom ballots.
    */
   @JsonProperty("PHANTOM_BALLOTS")
-  private List<Long> phantomBallots;
+  private Map<String,List<String>> phantomBallots;
 
   /**
-   * List of identifying information for CVRs that we want to treat as Phantoms.
+   * Identifying information (Imprinted ID) for CVRs that we want to treat as Phantoms. Organised
+   * as a map between county ID (as a string), and the list of imprinted IDs for CVRs in that
+   * county that we want to convert to Phantoms.
    */
   @JsonProperty("PHANTOM_CVRS")
-  private List<Long> phantomCVRS;
+  private Map<String,List<String>> phantomCVRS;
 
   /**
-   * List of identifying information for CVRs that we want to introduce an audit board disagreement.
+   * Identifying information for contests on CVRs that we want to introduce an audit board
+   * disagreement. Organised as a map between county ID (as a string), and a map between contest
+   * name and the imprinted IDs for which we want to introduce a disagreement for that contest.
    */
   @JsonProperty("DISAGREEMENTS")
-  private List<Long> disagreements;
+  private Map<String,Map<String,List<String>>> disagreements;
 
   /**
    * Ballot choices for select CVR Ids and contests. The instance JSON records only the
@@ -165,10 +169,10 @@ public class Instance {
     expectedRounds = 0;
     contestResults = new HashMap<>();
     countyResults = new HashMap<>();
-    phantomBallots = new ArrayList<>();
-    phantomCVRS = new ArrayList<>();
+    phantomBallots = new HashMap<>();
+    phantomCVRS = new HashMap<>();
     actualChoices = new HashMap<>();
-    disagreements = new ArrayList<>();
+    disagreements = new HashMap<>();
   }
 
   /**
@@ -251,28 +255,44 @@ public class Instance {
   }
 
   /**
-   * @param id  Id of the CVR for which we want to check if the matching paper
-   *            ballot should be treated as a phantom ballot.
+   * Considers a CVR identified by imprinted ID and county ID, and determines if we should
+   * treat the matching paper ballot as a phantom ballot.
+   * @param id  Imprinted Id of the CVR.
+   * @param countyID County id of the CVR
    * @return True if the paper ballot matching the given ID should be treated as a phantom ballot.
    */
-  public boolean isPhantomBallot(final long id){
-    return phantomBallots.contains(id);
+  public boolean isPhantomBallot(final String id, final long countyID){
+    final String county = String.valueOf(countyID);
+    if(phantomBallots.containsKey(county)){
+      return phantomBallots.get(county).contains(id);
+    }
+    return false;
   }
 
   /**
-   * @param id Id of the CVR for which we want to check whether we should introduce an audit board
-   *           disagreement when it is audited.
-   * @return True if we should introduce a disagreement.
+   * Considers a CVR identified by imprinted ID and county ID, and returns the list of contests
+   * that we should introduce a disagreement for on the CVR (if any).
+   * @param id  Imprinted Id of the CVR.
+   * @param countyID County id of the CVR
+   * @return List of names of contests for which we want to introduce a disagreement during auditing
+   * of the given CVR.
    */
-  public boolean hasDisagreement(final long id){
-    return disagreements.contains(id);
+  public List<String> getDisagreements(final String id, final long countyID){
+    final String county = String.valueOf(countyID);
+    if(disagreements.containsKey(county)) {
+      if (disagreements.get(county).containsKey(id)) {
+        return Collections.unmodifiableList(disagreements.get(county).get(id));
+      }
+    }
+    return List.of();
   }
 
   /**
-   * @return List of Phantom CVRs (defined in terms of cvr ID).
+   * @return Map containing identifying information of Phantom CVRs (defined in terms of imprinted ID
+   * and county ID).
    */
-  public List<Long> getPhantomCVRS(){
-    return Collections.unmodifiableList(phantomCVRS);
+  public Map<String,List<String>> getPhantomCVRS(){
+    return Collections.unmodifiableMap(phantomCVRS);
   }
 
   /**
