@@ -53,6 +53,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.CriteriaUpdate;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
@@ -846,34 +852,31 @@ public class Workflow extends TestClassWithDatabase {
    * @param phantomCVRs CVRs that we want to make phantoms (identified by county ID and imprinted ID).
    */
   protected void makePhantoms(final Map<String,List<String>> phantomCVRs) {
-    if(!phantomCVRs.isEmpty()) {
-      final StringWriter sw = new StringWriter();
-
-      sw.write("UPDATE cast_vote_record ");
-      sw.write("SET record_type='PHANTOM_RECORD', revision=1 ");
-      sw.write("WHERE ");
-
-      // Get total number of rows to modify
+    if (!phantomCVRs.isEmpty()) {
       final int toModify = phantomCVRs.values().stream().mapToInt(List::size).sum();
 
-      int count = 1;
-      for(final String county : phantomCVRs.keySet()){
-        for(final String id : phantomCVRs.get(county)){
-          sw.write(" ( county_id=" + county +
-              " AND imprinted_id='" + id +
-              "' AND record_type='UPLOADED' ) ");
-          if(count < toModify){
-            sw.write(" OR ");
-          }
-          count += 1;
+      final Session s = Persistence.currentSession();
+      final CriteriaBuilder cb = s.getCriteriaBuilder();
+      final CriteriaUpdate<CastVoteRecord> cq = cb.createCriteriaUpdate(CastVoteRecord.class);
+
+      final Root<CastVoteRecord> root = cq.from(CastVoteRecord.class);
+      cq.set("my_record_type", RecordType.PHANTOM_RECORD);
+      cq.set("revision", 1);
+
+      final Predicate disjunction = cb.disjunction();
+      for (final String county : phantomCVRs.keySet()) {
+        for (final String id : phantomCVRs.get(county)) {
+          final Predicate conjunct = cb.and(cb.equal(root.get("my_county_id"), county));
+          conjunct.getExpressions().add(cb.and(cb.equal(root.get("my_imprinted_id"), id)));
+          conjunct.getExpressions().add(cb.and(cb.equal(root.get("my_record_type"), RecordType.UPLOADED)));
+          disjunction.getExpressions().add(conjunct);
         }
       }
 
-     final Session s = Persistence.currentSession();
-     final Query q = s.createNativeQuery(sw.toString());
-     final int result = q.executeUpdate();
+      cq.where(disjunction);
+      final int result = s.createQuery(cq).executeUpdate();
 
-     assertEquals(result, toModify);
+      assertEquals(result, toModify);
     }
   }
 

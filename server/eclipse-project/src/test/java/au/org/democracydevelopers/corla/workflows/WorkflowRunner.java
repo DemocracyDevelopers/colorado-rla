@@ -48,6 +48,9 @@ import org.apache.log4j.Logger;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.model.CastVoteRecord;
+import us.freeandfair.corla.model.CastVoteRecord.RecordType;
+import us.freeandfair.corla.query.CastVoteRecordQueries;
 
 /**
  * This workflow runner is designed to execute all JSON workflows present in a specified
@@ -195,6 +198,7 @@ public class WorkflowRunner extends Workflow {
         LOGGER.error(msg);
         throw new RuntimeException(msg);
       }
+      List<CastVoteRecord> records = CastVoteRecordQueries.getMatching(RecordType.PHANTOM_RECORD).toList();
 
       dashboard = getDoSDashBoardRefreshResponse();
 
