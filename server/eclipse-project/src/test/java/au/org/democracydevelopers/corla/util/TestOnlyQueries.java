@@ -90,4 +90,52 @@ public class TestOnlyQueries {
       throw new RuntimeException(msg);
     }
   }
+
+  /**
+   * Retrieve all IRVBallotInterpretations in the database belonging to the contest with the given
+   * name, on a given CVR, of the requested record type.
+   *
+   * @param cvrNumber   CVR number
+   * @param contestName The contest name.
+   * @param imprintedId The imprinted ID.
+   * @param recordType The record type (UPLOADED or AUDITOR_ENTERED or REAUDIT).
+   * @return the list of matching IRVBallotInterpretations. There may be none, or several.
+   * @throws RuntimeException when an unexpected error arose in assertion retrieval (not including
+   *                          a NoResultException, which is handled by returning an empty optional item).
+   */
+  public static List<IRVBallotInterpretation> matching(final int cvrNumber, final String contestName,
+      final String imprintedId, final CastVoteRecord.RecordType recordType) throws RuntimeException {
+    final String prefix = "[matching]";
+    try {
+      LOGGER.debug(String.format("%s Select query on IRV Ballot interpretations, retrieving " +
+          "all for contest with name %s, cvr number %d, of recordType %s.", prefix, contestName,
+          cvrNumber, recordType));
+
+      final Session s = Persistence.currentSession();
+      final TypedQuery<IRVBallotInterpretation> q = s.createQuery("select bi from IRVBallotInterpretation bi "
+          + " where bi.cvrNumber = :cvrNumber AND bi.contest.my_name = :contestName AND bi.imprintedID = :imprintedId " +
+          "AND bi.recordType = :recordType", IRVBallotInterpretation.class);
+      q.setParameter("contestName", contestName);
+      q.setParameter("cvrNumber", cvrNumber);
+      q.setParameter("imprintedId", imprintedId);
+      q.setParameter("recordType", recordType);
+
+      final List<IRVBallotInterpretation> result = q.getResultList();
+      LOGGER.debug(String.format("%s %d summary results retrieved for contest %s, cvr number %d.", prefix,
+          result.size(), contestName, cvrNumber));
+      if(result.isEmpty()) {
+        // No summary was present for this contest. This is expected if GenerateAssertions has not run.
+        return new ArrayList<>();
+      } else {
+        // Expected unique summary, after a run of GenerateAssertions.
+        return result;
+      }
+    }
+    catch(Exception e){
+      final String msg = String.format("%s An error arose when attempting to retrieve IRV Ballot " +
+          "intepretations for contest %s, cvr number %d: %s", prefix, contestName, cvrNumber, e.getMessage());
+      LOGGER.error(msg);
+      throw new RuntimeException(msg);
+    }
+  }
 }

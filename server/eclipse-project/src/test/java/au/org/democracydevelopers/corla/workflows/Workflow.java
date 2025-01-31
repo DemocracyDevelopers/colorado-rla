@@ -320,19 +320,21 @@ public class Workflow extends TestClassWithDatabase {
   /**
    * Given a vote in a specific contest, return the raw choices to be used in creating the
    * ACVR containing the vote.
+   * @param countyID ID of the county to which the CVR belongs, as a string.
+   * @param cvrNumber CVR number for the CVR containing the given vote.
    * @param info Details of the vote for the relevant contest.
    * @param imprintedId Imprinted identifier of the CVR containing the given vote.
    * @param instance Details of the workflow instance being run.
    * @return The list of original choices on the pre-interpreted CVR with the given imprinted ID.
    */
-  private List<String> translateToRawChoices(final CVRContestInfo info, final String imprintedId,
-      final Instance instance){
+  private List<String> translateToRawChoices(final String countyID, final int cvrNumber,
+      final CVRContestInfo info, final String imprintedId, final Instance instance){
 
     // Check if the CVR's imprinted Id is present in the workflow instance
-    final Optional<List<String>> choices = instance.getActualChoices(imprintedId,
+    final Optional<List<String>> choices = instance.getActualChoices(countyID, imprintedId,
         info.contest().name());
 
-    return choices.orElseGet(() -> translateToRawChoices(info, imprintedId));
+    return choices.orElseGet(() -> translateToRawChoices(cvrNumber, info, imprintedId));
   }
 
   /**
@@ -341,17 +343,19 @@ public class Workflow extends TestClassWithDatabase {
    * return the choices from info.choices(). Otherwise, check whether the vote's original choices
    * were interpreted to remove errors. If so, return the original raw choices from the
    * irv_ballot_interpretation table. Otherwise, add ranks to each choice name and return.
+   * @param cvrNumber Number of the CVR containing the given vote.
    * @param info Details of the vote for the relevant contest.
    * @param imprintedId Imprinted identifier of the CVR containing the given vote.
    * @return The list of original choices on the pre-interpreted CVR with the given imprinted ID.
    */
-  private List<String> translateToRawChoices(final CVRContestInfo info, final String imprintedId){
+  private List<String> translateToRawChoices(final int cvrNumber, final CVRContestInfo info,
+      final String imprintedId){
     final String prefix = "[translateToRawChoices]";
 
     if(info.contest().description().equals(ContestType.IRV.toString())){
       // The contest is an IRV contest.
       final List<IRVBallotInterpretation> interpretations = TestOnlyQueries.matching(
-          info.contest().name(), imprintedId, RecordType.UPLOADED);
+          cvrNumber, info.contest().name(), imprintedId, RecordType.UPLOADED);
 
       if(interpretations.isEmpty()){
         List<String> rawChoices = new ArrayList<>();
@@ -520,8 +524,9 @@ public class Workflow extends TestClassWithDatabase {
         // from there. Otherwise, we recreate the raw choices from info.choices().
         final List<String> disagreements = instance.getDisagreements(rec.imprintedID(), rec.countyID());
         final List<Map<String, Object>> contest_info = rec.contestInfo().stream().map(info ->
-            Map.of("choices", translateToRawChoices(info, rec.imprintedID(), instance), "comment",
-                "", "consensus", disagreements.contains(info.contest().name()) ? "YES" : "NO",
+            Map.of("choices", translateToRawChoices(rec.countyID().toString(), rec.cvrNumber(),
+                    info, rec.imprintedID(), instance), "comment", "", "consensus",
+                disagreements.contains(info.contest().name()) ? "NO" : "YES",
                 "contest", info.contest().id())).toList();
 
         audited_cvr.put("contest_info", contest_info);
@@ -836,9 +841,9 @@ public class Workflow extends TestClassWithDatabase {
   }
 
   /**
-   * Given a list of CVR record ids, this method replaces their record type with
-   * PHANTOM_RECORD.
-   * @param phantomCVRs List of CVR record ids that we are going to make PHANTOMS.
+   * Given a map between county id (as a string) and a list of imprinted IDs representing CVRs
+   * in that county, make those CVRs phantom records.
+   * @param phantomCVRs CVRs that we want to make phantoms (identified by county ID and imprinted ID).
    */
   protected void makePhantoms(final Map<String,List<String>> phantomCVRs) {
     if(!phantomCVRs.isEmpty()) {

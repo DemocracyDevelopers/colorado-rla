@@ -176,21 +176,20 @@
   },
 
   "PHANTOM_CVRS" : {
-    "4" : [
-      "1-1-10"
-    ]
   },
 
   "DISAGREEMENTS" : {
   },
 
   "CHOICES" : {
-    "NonExistentImprintedId1" : {
-      "Byron Mayoral" : [
-        "Bobby(1)",
-        "Daryl(2)",
-        "Candice(3)"
-      ]
+    "1" : {
+      "NonExistentImprintedId1": {
+        "Byron Mayoral": [
+          "Bobby(1)",
+          "Daryl(2)",
+          "Candice(3)"
+        ]
+      }
     }
   },
 

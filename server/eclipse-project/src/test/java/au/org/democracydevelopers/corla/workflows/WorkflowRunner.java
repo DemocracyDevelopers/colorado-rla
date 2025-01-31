@@ -50,11 +50,15 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
+ * This workflow runner is designed to execute all JSON workflows present in a specified
+ * directory (defined in the "pathToInstances" member). These JSON workflows define a complete
+ * audit to undertake, along with expected results. The workflow runner will execute all stages of
+ * the audit: CVR and manifest uploads; defining the audit; selecting contests to target;
+ * uploading audited ballots; and executing rounds until there are no further ballots to sample.
+ * The workflow ends when the audit ends. Reporting is not tested in these workflows.
+ *
  * TODO:
- * -- Modelling database updates (embedding phantom records)
- * -- Checking for correct discrepancy counts
- * -- support for addition of disagreements
- * -- support for reauditing
+ * -- support for reauditing of ballots.
  */
 @Test(enabled=true)
 public class WorkflowRunner extends Workflow {
