@@ -59,7 +59,6 @@ import us.freeandfair.corla.query.CastVoteRecordQueries;
  * the audit: CVR and manifest uploads; defining the audit; selecting contests to target;
  * uploading audited ballots; and executing rounds until there are no further ballots to sample.
  * The workflow ends when the audit ends. Reporting is not tested in these workflows.
- *
  * TODO:
  * -- support for reauditing of ballots.
  */
@@ -198,7 +197,6 @@ public class WorkflowRunner extends Workflow {
         LOGGER.error(msg);
         throw new RuntimeException(msg);
       }
-      List<CastVoteRecord> records = CastVoteRecordQueries.getMatching(RecordType.PHANTOM_RECORD).toList();
 
       dashboard = getDoSDashBoardRefreshResponse();
 
