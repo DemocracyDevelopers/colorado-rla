@@ -37,6 +37,15 @@ import java.util.Optional;
 public class Instance {
 
   /**
+   * Specification of reaudit choices and consensus for a specific contest on a CVR.
+   * @param choices    Choices, as a list of strings, for the relevant contest/CVR.
+   * @param consensus  Whether the audit board reached a consensus on those choices ("YES","NO").
+   */
+  public record ReAuditDetails(
+      @JsonProperty("choices") List<String> choices,
+      @JsonProperty("consensus") String consensus) {}
+
+  /**
    * Name of the workflow instance.
    */
   @JsonProperty("NAME")
@@ -151,6 +160,18 @@ public class Instance {
   @JsonProperty("CHOICES")
   private Map<String,Map<String,Map<String,List<String>>>> actualChoices;
 
+
+  /**
+   * Specification of ballots to reaudit. Organised as a map between county ID,
+   * and a map between CVR imprinted ID and a list of maps that define the paper
+   * ballot choices to upload for selected contests (where we want them to differ
+   * from what's on the CVR). These choices, and whether the audit board reached
+   * a consensus on those choices, are defined in terms of a ReAuditDetails record.
+   */
+  @JsonProperty("REAUDITS")
+  private Map<String,Map<String,List<Map<String,ReAuditDetails>>>> reaudits;
+
+
   /**
    * Constructs an empty workflow instance.
    */
@@ -173,6 +194,7 @@ public class Instance {
     phantomCVRS = new HashMap<>();
     actualChoices = new HashMap<>();
     disagreements = new HashMap<>();
+    reaudits = new HashMap<>();
   }
 
   /**
@@ -329,7 +351,8 @@ public class Instance {
    * If in our workflow instance record, we want a specific choices list to be used as the
    * ACVR entry for a contest and CVR, this method returns the choices to be used. If we want
    * to simply use what is on the CVR (ie. the raw choices that were on the CVR), then this method
-   * will return an empty Optional.
+   * will return an empty Optional. This method is used for the first auditing of a ballot, and
+   * not for reaudits.
    * @param countyID        County ID for the CVR as a string.
    * @param imprintedId     Imprinted ID of the CVR that we want to create a choice list for.
    * @param contest         Contest of interest on the CVR.
@@ -344,6 +367,26 @@ public class Instance {
           return Optional.of(
               Collections.unmodifiableList(actualChoices.get(countyID).get(imprintedId).get(contest)));
         }
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * For a given CVR, identified by county ID and imprinted Id, return (if any) the details of
+   * any reaudits we want to perform on that CVR. These details will be a list of maps (string-list of
+   * string) where each map details the actual choices to be entered for given contests (where we
+   * want them to differ from what is on the CVR). The number of maps in this list equals the number
+   * of times we want the CVR to be reaudited.
+   * @param countyID     County ID for the CVR being reaudited.
+   * @param imprintedId  Imprinted ID of the CVR being reaudited.
+   * @return An optional list of maps, one for each reaudit of the CVR, detailing the sets of contests
+   * whose choices we want to alter from the CVR, and how they should be altered.
+   */
+  public Optional<List<Map<String,ReAuditDetails>>> getReAudits(final String countyID, final String imprintedId){
+    if(reaudits.containsKey(countyID)){
+      if(reaudits.get(countyID).containsKey(imprintedId)){
+        return Optional.of(reaudits.get(countyID).get(imprintedId));
       }
     }
     return Optional.empty();

@@ -39,6 +39,7 @@ import au.org.democracydevelopers.corla.query.AssertionQueries;
 import au.org.democracydevelopers.corla.util.DoubleComparator;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.TestOnlyQueries;
+import au.org.democracydevelopers.corla.workflows.Instance.ReAuditDetails;
 import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
 import io.restassured.path.json.JsonPath;
@@ -337,7 +338,35 @@ public class Workflow extends TestClassWithDatabase {
     final Optional<List<String>> choices = instance.getActualChoices(countyID, imprintedId,
         info.contest().name());
 
+    if(choices.isPresent()){
+      LOGGER.info("Alternative choices specified for CVR " + imprintedId +
+          " from county " + countyID + ".");
+    }
+
     return choices.orElseGet(() -> translateToRawChoices(cvrNumber, info, imprintedId));
+  }
+
+  /**
+   * Given a vote in a specific contest (on a CVR that is being reaudited), return the raw choices
+   * to be used in creating the ACVR containing the vote.
+   * @param cvrNumber CVR number for the CVR containing the given vote.
+   * @param info Details of the vote for the relevant contest.
+   * @param imprintedId Imprinted identifier of the CVR containing the given vote.
+   * @param entry A mapping between contest name and reaudit details for that contest. Note that
+   *              this map may not contain the relevant contest, in which case we know that we
+   *              should return the choices as they are defined on the CVR.
+   * @return The list of original choices on the pre-interpreted CVR with the given imprinted ID.
+   */
+  private List<String> translateToRawChoicesReAudit(final int cvrNumber, final CVRContestInfo info,
+      final String imprintedId, final Map<String,ReAuditDetails> entry){
+
+    final String contestName = info.contest().name();
+
+    if(entry.containsKey(contestName)){
+      return entry.get(contestName).choices();
+    }
+
+    return translateToRawChoices(cvrNumber, info, imprintedId);
   }
 
   /**
@@ -416,15 +445,12 @@ public class Workflow extends TestClassWithDatabase {
   }
 
   /**
-   * Return list of CVRs to audit for the given round and the given county (identified by
-   * their TestAuditSession).
+   * Return list of CVRs to audit for the given round.
    * @param round      Audit round.
-   * @param session    TestAuditSession capturing the audit session for the relevant county.
-   * @return List of CVRs to audit for the county and round.
+   * @param filter     Session filter for use when calling thr cvr-to-audit-list endpoint.
+   * @return List of CVRs to audit for given round.
    */
-  protected List<CastVoteRecord> getCvrsToAudit(int round, final TestAuditSession session){
-    final SessionFilter filter = session.filter();
-
+  public List<CastVoteRecord> getCvrsToAudit(int round, SessionFilter filter){
     // Collect CVRs to audit
     final JsonPath cvrs = given()
         .filter(filter)
@@ -462,6 +488,51 @@ public class Workflow extends TestClassWithDatabase {
     return CastVoteRecordQueries.get(cvrIds);
   }
 
+  /**
+   * Given a cast vote record, initialise a map to be used when uploading the audited ballot
+   * corresponding to that CVR. This map defines attributes like ballot type, batch id, and so on.
+   * @param rec Cast vote record being audited.
+   * @return A map defining the attributes of the audited ballot, for use when calling the endpoint
+   * to upload an audited ballot.
+   */
+  private Map<String,Object> initialiseAuditedCVR(final CastVoteRecord rec){
+    Map<String, Object> audited_cvr = new HashMap<>();
+    audited_cvr.put("ballot_type", rec.ballotType());
+    audited_cvr.put("batch_id", rec.batchID());
+    audited_cvr.put("county_id", rec.countyID());
+    audited_cvr.put("cvr_number", rec.cvrNumber());
+    audited_cvr.put("id", rec.id());
+    audited_cvr.put("imprinted_id", rec.imprintedID());
+    audited_cvr.put("record_id", rec.recordID());
+    audited_cvr.put("record_type", rec.recordType());
+    audited_cvr.put("scanner_id", rec.scannerID());
+    audited_cvr.put("timestamp", rec.timestamp());
+    return audited_cvr;
+  }
+
+  /**
+   * With the given payload -- audited CVR attributes for the CVR with the given ID -- call the
+   * endpoint for uploading an audited CVR.
+   * @param audited_cvr  Attributes of the CVR being audited.
+   * @param cvrID        ID of the CVR being audited.
+   * @param filter       Session filter to use when calling the upload-audit-cvr endpoint.
+   */
+  private void callUploadCVREndpoint(final Map<String,Object> audited_cvr, final long cvrID,
+      final SessionFilter filter){
+
+    // Create JSON data structure to supply to upload-audit-cvr endpoint
+    final JSONObject params = createBody(Map.of(
+        "auditBoardIndex", 0,
+        "audit_cvr", audited_cvr,
+        "cvr_id", cvrID
+    ));
+
+    // Upload audited CVR
+    given().filter(filter)
+        .header("Content-Type", "application/json")
+        .body(params.toJSONString())
+        .post("/upload-audit-cvr");
+  }
 
   /**
    * For the given county number, collect the set of CVRs to audit for the given round, and
@@ -471,8 +542,12 @@ public class Workflow extends TestClassWithDatabase {
    */
   protected void auditCounty(final int round, final TestAuditSession session, final Instance instance){
 
-    final List<CastVoteRecord> cvrsToAudit = getCvrsToAudit(round, session);
     final SessionFilter filter = session.filter();
+    final List<CastVoteRecord> cvrsToAudit = getCvrsToAudit(round, filter);
+    LOGGER.info("CVRS FOR AUDIT IN ROUND " + round);
+    for(final CastVoteRecord rec : cvrsToAudit){
+      LOGGER.info("County ID," + rec.countyID() + ",Imprinted ID," + rec.imprintedID());
+    }
 
     // Upload audit CVRs
     for(final CastVoteRecord rec : cvrsToAudit){
@@ -500,20 +575,11 @@ public class Workflow extends TestClassWithDatabase {
       //  "cvr_id": ###
       //}
       // Create audited cvr as a map
-      Map<String, Object> audited_cvr = new HashMap<>();
-      audited_cvr.put("ballot_type", rec.ballotType());
-      audited_cvr.put("batch_id", rec.batchID());
-      audited_cvr.put("county_id", rec.countyID());
-      audited_cvr.put("cvr_number", rec.cvrNumber());
-      audited_cvr.put("id", rec.id());
-      audited_cvr.put("imprinted_id", rec.imprintedID());
-      audited_cvr.put("record_id", rec.recordID());
-      audited_cvr.put("record_type", rec.recordType());
-      audited_cvr.put("scanner_id", rec.scannerID());
-      audited_cvr.put("timestamp", rec.timestamp());
+      Map<String, Object> audited_cvr = initialiseAuditedCVR(rec);
 
       // Check if this CVR should map to a phantom ballot for the purposes of this workflow
-      if(instance.isPhantomBallot(rec.imprintedID(), rec.countyID())){
+      final boolean isPhantom = instance.isPhantomBallot(rec.imprintedID(), rec.countyID());
+      if(isPhantom){
         audited_cvr.put("ballot_type", RecordType.PHANTOM_RECORD_ACVR);
       }
       else {
@@ -535,18 +601,30 @@ public class Workflow extends TestClassWithDatabase {
         audited_cvr.put("contest_info", contest_info);
       }
 
-      // Create JSON data structure to supply to upload-audit-cvr endpoint
-      final JSONObject params = createBody(Map.of(
-          "auditBoardIndex", 0,
-          "audit_cvr", audited_cvr,
-          "cvr_id", rec.id()
-      ));
+      callUploadCVREndpoint(audited_cvr, rec.id(), filter);
 
-      // Upload discrepancy-free audited CVR
-      given().filter(filter)
-          .header("Content-Type", "application/json")
-          .body(params.toJSONString())
-          .post("/upload-audit-cvr");
+      if(!isPhantom) {
+        // Check whether we want to reaudit this ballot, and if so, process the reaudits.
+        final Optional<List<Map<String, ReAuditDetails>>> reaudits = instance.getReAudits(
+            rec.countyID().toString(), rec.imprintedID());
+
+        if (reaudits.isPresent()) {
+          for (final Map<String, ReAuditDetails> entry : reaudits.get()) {
+            Map<String, Object> reaudited_cvr = initialiseAuditedCVR(rec);
+            reaudited_cvr.put("reaudit", true);
+
+            final List<Map<String, Object>> contest_info = rec.contestInfo().stream().map(info ->
+                Map.of("choices", translateToRawChoicesReAudit(rec.cvrNumber(), info,
+                        rec.imprintedID(), entry), "comment", "", "consensus",
+                    entry.containsKey(info.contest().name()) ? entry.get(info.contest().name()).consensus() :
+                        "YES", "contest", info.contest().id())).toList();
+
+            reaudited_cvr.put("contest_info", contest_info);
+
+            callUploadCVREndpoint(reaudited_cvr, rec.id(), filter);
+          }
+        }
+      }
     }
   }
 

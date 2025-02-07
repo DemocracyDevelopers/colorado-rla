@@ -182,14 +182,39 @@
   },
 
   "CHOICES" : {
-    "1" : {
-      "NonExistentImprintedId1": {
-        "Byron Mayoral": [
-          "Bobby(1)",
-          "Daryl(2)",
-          "Candice(3)"
+    "4" : {
+      "1-1-12": {
+        "Kempsey Mayoral": [
+          "RAEBURN Bruce(1)",
+          "HAUVILLE Leo(2)",
+          "IRWIN Troy(3)",
+          "EVANS Andrew(4)",
+          "BAIN Arthur(5)",
+          "SAUL Dean(6)",
+          "CAMPBELL Liz(7)"
         ]
       }
+    }
+  },
+
+  "REAUDITS" : {
+    "4" : {
+      "1-1-12": [
+        {
+          "Kempsey Mayoral": {
+            "choices" : [
+              "HAUVILLE Leo(1)",
+              "RAEBURN Bruce(2)",
+              "IRWIN Troy(3)",
+              "EVANS Andrew(4)",
+              "BAIN Arthur(5)",
+              "SAUL Dean(6)",
+              "CAMPBELL Liz(7)"
+            ],
+            "consensus" : "YES"
+          }
+        }
+      ]
     }
   },
 
