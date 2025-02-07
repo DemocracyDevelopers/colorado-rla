@@ -71,6 +71,9 @@ public class Demo1 extends Workflow {
   public void runDemo1() throws InterruptedException {
     testUtils.log(LOGGER, "Demo1");
 
+    // Empty workflow instance
+    final Instance instance = new Instance();
+
     List<String> CVRS = new ArrayList<>();
 
     CVRS.add(dataPath + "Demo1/1-adams-cvrexport-plusByron-1.csv");
@@ -159,12 +162,15 @@ public class Demo1 extends Workflow {
     // Byron should be 3820. Kempsey 332.
     // For each targeted contest, check that the set of assertions: (i) is not empty; (ii) has
     // the correct minimum diluted margin; and (ii) has resulted in the correct sample size estimate.
-    Map<String,Double> expectedDilutedMargins = Map.of("City of Longmont - Mayor", 0.09078192,
+    final Map<String,Double> expectedDilutedMargins = Map.of("City of Longmont - Mayor", 0.09078192,
         "Byron Mayoral", 0.00684644, "Kempsey Mayoral", 0.02200739);
+
+    final Map<String,Integer> expectedSamples = Map.of("City of Longmont - Mayor", 81,
+        "Byron Mayoral", 1065, "Kempsey Mayoral", 332);
 
     for(final String c : targets.keySet()) {
       verifySampleSize(c, expectedDilutedMargins.get(c),
-          sampleSizes.get(c).estimatedSamples(), riskLimit, irvContests.contains(c));
+          sampleSizes.get(c).estimatedSamples(), expectedSamples.get(c), irvContests.contains(c));
     }
 
     // 8. Start Audit Round
@@ -179,7 +185,7 @@ public class Demo1 extends Workflow {
     // ACVR uploads for each county. Cannot run in parallel as corla does not like
     // simultaneous database accesses.
     for(final TestAuditSession  entry : sessions){
-      auditCounty(1, entry);
+      auditCounty(1, entry, instance);
     }
 
     // Audit board sign off for each county.
