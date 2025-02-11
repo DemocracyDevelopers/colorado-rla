@@ -158,6 +158,16 @@ public class Workflow extends TestClassWithDatabase {
   protected static final String OTHER = "0";
   protected static final String TWO_OVER = "2";
   protected static final String TWO_UNDER = "-2";
+  protected static final String BALLOT_TYPE = "ballot_type";
+  protected static final String BATCH_ID = "batch_id";
+  protected static final String COUNTY_ID = "county_id";
+  protected static final String CVR_NUMBER = "cvr_number";
+  protected static final String IMPRINTED_ID = "imprinted_id";
+  protected static final String RECORD_ID = "record_id";
+  protected static final String RECORD_TYPE = "record_type";
+  protected static final String SCANNER_ID = "scanner_id";
+  protected static final String TIMESTAMP = "timestamp";
+
 
   @BeforeClass
   public void setup() {
@@ -371,10 +381,11 @@ public class Workflow extends TestClassWithDatabase {
 
   /**
    * Given a vote in a specific contest, translate the choices on that vote (if an IRV contest)
-   * into the form "Candidate(Rank),...,Candidate(Rank)". If the contest is a Plurality contest,
-   * return the choices from info.choices(). Otherwise, check whether the vote's original choices
-   * were interpreted to remove errors. If so, return the original raw choices from the
-   * irv_ballot_interpretation table. Otherwise, add ranks to each choice name and return.
+   * into the form "Candidate(Rank),...,Candidate(Rank)", returning the simplest pre-interpretation
+   * set of choices. If the contest is a Plurality contest, return the choices from info.choices().
+   * Otherwise, check whether the vote's original choices were interpreted to remove errors. If so,
+   * return the original raw choices from the irv_ballot_interpretation table. Otherwise, add ranks
+   * to each choice name and return.
    * @param cvrNumber Number of the CVR containing the given vote.
    * @param info Details of the vote for the relevant contest.
    * @param imprintedId Imprinted identifier of the CVR containing the given vote.
@@ -497,16 +508,16 @@ public class Workflow extends TestClassWithDatabase {
    */
   private Map<String,Object> initialiseAuditedCVR(final CastVoteRecord rec){
     Map<String, Object> audited_cvr = new HashMap<>();
-    audited_cvr.put("ballot_type", rec.ballotType());
-    audited_cvr.put("batch_id", rec.batchID());
-    audited_cvr.put("county_id", rec.countyID());
-    audited_cvr.put("cvr_number", rec.cvrNumber());
-    audited_cvr.put("id", rec.id());
-    audited_cvr.put("imprinted_id", rec.imprintedID());
-    audited_cvr.put("record_id", rec.recordID());
-    audited_cvr.put("record_type", rec.recordType());
-    audited_cvr.put("scanner_id", rec.scannerID());
-    audited_cvr.put("timestamp", rec.timestamp());
+    audited_cvr.put(BALLOT_TYPE, rec.ballotType());
+    audited_cvr.put(BATCH_ID, rec.batchID());
+    audited_cvr.put(COUNTY_ID, rec.countyID());
+    audited_cvr.put(CVR_NUMBER, rec.cvrNumber());
+    audited_cvr.put(ID, rec.id());
+    audited_cvr.put(IMPRINTED_ID, rec.imprintedID());
+    audited_cvr.put(RECORD_ID, rec.recordID());
+    audited_cvr.put(RECORD_TYPE, rec.recordType());
+    audited_cvr.put(SCANNER_ID, rec.scannerID());
+    audited_cvr.put(TIMESTAMP, rec.timestamp());
     return audited_cvr;
   }
 

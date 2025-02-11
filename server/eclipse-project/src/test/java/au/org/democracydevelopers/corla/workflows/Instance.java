@@ -157,7 +157,7 @@ public class Instance {
    * Ballot choices for select CVR Ids and contests. The instance JSON records only the
    * ones we want to be different to what is on the CVR.
    */
-  @JsonProperty("CHOICES")
+  @JsonProperty("CHOICE_REPLACEMENTS")
   private Map<String,Map<String,Map<String,List<String>>>> actualChoices;
 
 
