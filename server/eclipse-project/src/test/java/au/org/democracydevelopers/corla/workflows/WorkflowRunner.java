@@ -45,8 +45,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -70,30 +71,15 @@ public class WorkflowRunner extends Workflow {
    */
   private static final String pathToInstances = "src/test/resources/workflows/instances";
 
-  /**
-   * Database init.
-   */
-  @BeforeClass
-  public static void beforeAllThisClass() {
-
-    // Used to initialize the database, e.g. to set the ASM state to the DOS_INITIAL_STATE
-    // and to insert counties and administrator test logins.
-    runSQLSetupScript("SQL/co-counties.sql");
-
-    runMain("Workflows");
-  }
-
 
   /**
-   * Run all workflow instances (with JSON extensions) defined in the WorkflowRunner.pathToInstances
-   * directory. This method calls WorkflowRunner::runInstance for each of those workflow JSONs.
+   * Returns a list of parameter lists to supply to the runWorkflow test method in this class.
+   * Each parameter list contains one element -- a path to the workflow JSON instance to run.
+   * @return A list of test parameter lists as a 2D array of objects.
    */
-  @Test(enabled=true)
-  public void runWorkflows()  {
-    final String prefix = "[runWorkflows]";
-
-    // Run every workflow instance present in the pathToInstances directory.
-    // Instances are JSON files.
+  @DataProvider(name="workflow-provider")
+  public Object[][] supplyWorkflowPaths(){
+    final String prefix = "[supplyWorkflowPaths]";
     List<Path> pathList;
 
     try (Stream<Path> stream = Files.walk(Paths.get(pathToInstances))) {
@@ -108,15 +94,12 @@ public class WorkflowRunner extends Workflow {
       throw new RuntimeException(msg);
     }
 
-    pathList.forEach(p -> {
-      try {
-        runInstance(p);
-      } catch (InterruptedException e) {
-        final String msg = prefix + " " + e.getMessage();
-        LOGGER.error(msg);
-        throw new RuntimeException(msg);
-      }
-    });
+    // Convert list of paths into an array of parameter arrays
+    Object[][] params = new Object[pathList.size()][1];
+    for(int i = 0; i < pathList.size(); ++i){
+      params[i][0] = pathList.get(i);
+    }
+    return params;
   }
 
   /**
@@ -127,10 +110,13 @@ public class WorkflowRunner extends Workflow {
    * @param pathToInstance Path to the JSON workflow instance defining the test.
    * @throws InterruptedException
    */
-  private void runInstance(final Path pathToInstance) throws InterruptedException {
-    final String prefix = "[runWorkflows] " + pathToInstance;
+  @Test(dataProvider = "workflow-provider")
+  public void runInstance(final Path pathToInstance) throws InterruptedException {
+    final String prefix = "[runInstance] " + pathToInstance;
 
     try {
+      PostgreSQLContainer<?> postgres = setupIndividualTestDatabase(pathToInstance.getFileName().toString());
+
       // Convert data in the JSON workflow file to a workflow Instance.
       ObjectMapper toJson = new ObjectMapper();
       final Instance instance = toJson.readValue(pathToInstance.toFile(), Instance.class);
@@ -180,7 +166,9 @@ public class WorkflowRunner extends Workflow {
       // Load additional SQL data (this is data that we want to add after we have
       // CVRs, manifests, etc loaded for each county). This will mostly be used to load
       // assertion data into the database, simulating a call to the raire-service.
-      instance.getSQLs().forEach(TestClassWithDatabase::runSQLSetupScript);
+      for(final String s : instance.getSQLs()){
+        TestClassWithDatabase.runSQLSetupScript(postgres, s);
+      }
 
       // At this point, if the Instance specifies that some CVRs should be treated as
       // Phantoms, we will need to replace the existing record type for that CVR with a Phantom.
@@ -326,6 +314,8 @@ public class WorkflowRunner extends Workflow {
       }
 
       assertEquals(rounds, instance.getExpectedRounds());
+
+      postgres.stop();
     }
     catch(IOException e){
       final String msg = prefix + " " + e.getMessage();

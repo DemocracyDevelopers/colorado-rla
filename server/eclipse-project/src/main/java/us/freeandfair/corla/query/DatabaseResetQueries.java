@@ -80,7 +80,8 @@ public final class DatabaseResetQueries {
         "assertion",
         "assertion_assumed_continuing",
         "assertion_discrepancies",
-        "generate_assertions_summary"
+        "generate_assertions_summary",
+        "irv_ballot_interpretation"
     };
 
     for (final String t : tables) {
