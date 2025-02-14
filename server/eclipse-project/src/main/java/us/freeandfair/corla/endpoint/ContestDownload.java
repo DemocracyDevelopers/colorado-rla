@@ -82,6 +82,9 @@ public class ContestDownload extends AbstractEndpoint {
     // only return contests for counties that have finished their uploads
     final Set<County> county_set = new HashSet<>();
     for (final CountyDashboard cdb : Persistence.getAll(CountyDashboard.class)) {
+      // FIXME (VT): Is there any reason we need the manifest file to have been uploaded?
+      // Is there any other part of the (client or server) code that assumes the manifest must have
+      // been uploaded in order to get this?
       if (cdb.manifestFile() != null && cdb.cvrFile() != null) {
         county_set.add(cdb.county());
       }

@@ -32,14 +32,3 @@ export function getContestIDsWithCounties(jsonString) {
 
   return contests;
 }
-
-export class ContestWithIDs {
-  constructor(name,IDName) {
-    // The name of the contest, as it appears in the CSV
-    this.contestName = name
-    // The name we'll use to retrieve it
-    this.IDName = IDName
-    // A list of (contestID, countyID) pairs that this contest name corresponds to.
-    this.IDs = []
-  }
-}

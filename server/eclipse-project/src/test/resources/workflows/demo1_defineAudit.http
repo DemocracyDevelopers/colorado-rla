@@ -24,8 +24,6 @@ Content-Type: application/json
 GET http://localhost:8888/dos-dashboard
 Content-Type: text/html
 
-
-
 ### Define the audit. This reads in from the canonical list contents hardcoded in the http-client.env file,
 ### though reading in from the demo1-canonical-list.csv file would be better.
 POST http://localhost:8888/update-audit-info
@@ -39,39 +37,12 @@ Content-Type: application/json
     "upload_file": [{"contents" : "{{demo1-canonical-list}}" }]
 }
 
-### Request contests we care about, search for IDs by name.
+### Request contests.
 GET http://localhost:8888/contest
 Content-Type: text/plain
 
 > {%
     client.global.set("contestJsonData", response.body);
-    import {getContestIDsWithCounties} from 'testScripts/testUtils';
-    // const jsonData = JSON.parse(response.body);
-
-   //  console.log("I work");
-
-    // Store the IDs of all the contests we care about, either for canonicalization or targeting.
-    const contestIDData = getContestIDsWithCounties(response.body);
-        /*
-            new ContestWithIDs("Byron Mayoral","ByronMayoralID"),
-        new ContestWithIDs("Kempsey Mayoral","KempseyMayoralID"),
-        new ContestWithIDs("City of Longmont - Mayor","LongmontMayoralID"),
-        new ContestWithIDs("City of Boulder Mayoral", "BoulderMayoralID"),
-        new ContestWithIDs("City of Boulder Council", "BoulderCouncilID"),
-        new ContestWithIDs("Regent of the University of Colorado", "U_CO_RegentID")
-
-
-        "Byron Mayoral",
-        "Kempsey Mayoral",
-        "City of Longmont - Mayor",
-        "City of Boulder Mayoral",
-        "City of Boulder Council",
-        "Regent of the University of Colorado"
-
-         */
-
-    client.global.set("contestIDData", contestIDData);
-
 %}
 
 ### Canonicalize contest names. This just matches what comes up when we do the obvious thing from
