@@ -21,6 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -29,9 +30,12 @@ import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.persistence.Persistence;
 
+import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
 
@@ -48,18 +52,6 @@ public class Demo1 extends Workflow {
    */
   private static final Logger LOGGER = LogManager.getLogger(Demo1.class);
 
-  /**
-   * Database init.
-   */
-  @BeforeClass
-  public static void beforeAllThisClass() {
-
-    // Used to initialize the database, e.g. to set the ASM state to the DOS_INITIAL_STATE
-    // and to insert counties and administrator test logins.
-    runSQLSetupScript("SQL/co-counties.sql");
-
-    runMain("Demo1");
-  }
 
   /**
    * This "test" uploads CVRs and ballot manifests for all 64 counties.
@@ -70,6 +62,8 @@ public class Demo1 extends Workflow {
   @Test(enabled=true)
   public void runDemo1() throws InterruptedException {
     testUtils.log(LOGGER, "Demo1");
+
+    PostgreSQLContainer<?> postgres = setupIndividualTestDatabase("Demo1");
 
     // Empty workflow instance
     final Instance instance = new Instance();
@@ -134,7 +128,7 @@ public class Demo1 extends Workflow {
     assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
     // 4. Generate assertions; sanity check
-    generateAssertions("SQL/demo1-assertions.sql", 1);
+    generateAssertions(postgres,"SQL/demo1-assertions.sql", 1);
     dashboard = getDoSDashBoardRefreshResponse();
 
     // There should be 4 IRV contests.
@@ -204,6 +198,7 @@ public class Demo1 extends Workflow {
       assertEquals(entry.getValue().get(DISCREPANCY_COUNT).toString(), "{}");
     }
 
+    postgres.stop();
     LOGGER.info("Successfully completed Demo1 (First round audit; No Discrepancies).");
   }
 

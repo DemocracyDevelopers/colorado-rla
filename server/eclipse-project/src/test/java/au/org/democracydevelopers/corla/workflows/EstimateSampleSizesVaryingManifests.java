@@ -69,29 +69,13 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   private static final Logger LOGGER = LogManager.getLogger(EstimateSampleSizesVaryingManifests.class);
 
   /**
-   * Container for the mock-up database.
-   */
-  private final static PostgreSQLContainer<?> postgres = createTestContainer();
-
-  /**
-   * Database init.
-   */
-  @BeforeClass
-  public static void beforeAllThisClass() {
-
-    // Used to initialize the database, e.g. to set the ASM state to the DOS_INITIAL_STATE
-    // and to insert counties and administrator test logins.
-    runSQLSetupScript("SQL/co-counties.sql");
-
-    runMain("EstimateSampleSizesVaryingManifests");
-  }
-
-  /**
    * This "test" uploads CVRs and ballot manifests.
    */
   @Test(enabled=true)
   public void runManifestVaryingDemo() throws InterruptedException {
     testUtils.log(LOGGER, "runManifestVaryingDemo");
+
+    PostgreSQLContainer<?> postgres = setupIndividualTestDatabase("EstimateSampleSizesVaryingManifests");
 
     final String margin2Contest = "PluralityMargin2";
     final String margin10Contest = "PluralityMargin10";

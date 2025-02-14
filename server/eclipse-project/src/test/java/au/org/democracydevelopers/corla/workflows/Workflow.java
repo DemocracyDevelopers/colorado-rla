@@ -21,6 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
+import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static io.restassured.RestAssured.given;
 import static java.util.Collections.min;
 import static org.testng.Assert.assertEquals;
@@ -62,8 +63,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
 import org.hibernate.Session;
-import org.testcontainers.ext.ScriptUtils;
-import org.testcontainers.jdbc.JdbcDatabaseDelegate;
+import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
@@ -78,7 +78,7 @@ import wiremock.net.minidev.json.JSONObject;
  * Base class for an API test workflow designed to run through a sequence of steps involving
  * a sequence of endpoint accesses.
  */
-public class Workflow extends TestClassWithDatabase {
+public class Workflow  {
 
   /**
    * A collection of data representing an audit session for a county.
@@ -176,11 +176,32 @@ public class Workflow extends TestClassWithDatabase {
   }
 
   /**
-   * Run main, using the psql container as its database. Main can take (database) properties as a
-   * CLI, but only as a file, so we need to make the file and then tell main to read it.
+   * Set up and return a new test database for use when running an individual workflow instance.
+   * @param testName Name of test instance.
+   * @return Postgres test database to use when running the instance.
+   */
+  protected static PostgreSQLContainer<?> setupIndividualTestDatabase(final String testName){
+    PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
+    Properties config = loadProperties();
+
+    postgres.start();
+    config.setProperty("hibernate.url", postgres.getJdbcUrl());
+    Persistence.setProperties(config);
+    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
+
+    runMain(config, testName);
+
+    Persistence.beginTransaction();
+
+    return postgres;
+  }
+
+  /**
+   * Create properties files for use when running main, and then runs main. Main can take (database)
+   * properties as a CLI, but only as a file, so we need to make the file and then tell main to read it.
    * @param testFileName the name of the test file - must be different for each test.
    */
-  protected static void runMain(final String testFileName) {
+  protected static void runMain(final Properties config, final String testFileName) {
     final String propertiesFile = tempConfigPath + testFileName + "-test.properties";
     try {
       FileOutputStream os = new FileOutputStream(propertiesFile);
@@ -193,6 +214,7 @@ public class Workflow extends TestClassWithDatabase {
     }
     main(propertiesFile);
   }
+
 
   /**
    * Transform a simple map of strings into a JSONObject.
@@ -790,10 +812,9 @@ public class Workflow extends TestClassWithDatabase {
    * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/218">...</a>
    * Set it up so that we run raire-service inside the Docker container and tell main where to find it.
    */
-  protected void generateAssertions(final String sqlPath, final double timeLimitSeconds)
+  protected void generateAssertions(final PostgreSQLContainer<?> postgres, final String sqlPath, final double timeLimitSeconds)
   {
-    final var containerDelegate = new JdbcDatabaseDelegate(postgres, "");
-    ScriptUtils.runInitScript(containerDelegate, sqlPath);
+    TestClassWithDatabase.runSQLSetupScript(postgres, sqlPath);
 
     // Version that connects to raire-service below:
     // Login as state admin.
