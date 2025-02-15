@@ -40,7 +40,7 @@ const contestsToDisplay = (
 };
 
 interface Props {
-    areContestsLoaded: boolean;
+    areCVRsLoaded: boolean;
     asm: DOS.ASMState;
     contests: DOS.Contests;
     canonicalContests: DOS.CanonicalContests;
@@ -49,7 +49,7 @@ interface Props {
 
 const StandardizeContestsPageContainer = (props: Props) => {
     const {
-        areContestsLoaded,
+        areCVRsLoaded,
         asm,
         canonicalContests,
         contests,
@@ -79,7 +79,7 @@ const StandardizeContestsPageContainer = (props: Props) => {
 
     let filteredContests = {};
 
-    if (areContestsLoaded) {
+    if (areCVRsLoaded) {
         filteredContests = contestsToDisplay(contests, canonicalContests);
 
         if (_.isEmpty(filteredContests)) {
@@ -87,7 +87,7 @@ const StandardizeContestsPageContainer = (props: Props) => {
         }
     }
 
-    return <StandardizeContestsPage areContestsLoaded={ areContestsLoaded }
+    return <StandardizeContestsPage areCVRsLoaded={ areCVRsLoaded }
                                     back={ previousPage }
                                     canonicalContests={ canonicalContests }
                                     contests={ filteredContests }
@@ -97,12 +97,12 @@ const StandardizeContestsPageContainer = (props: Props) => {
 const mapStateToProps = (state: DOS.AppState) => {
     const canonicalContests = state.canonicalContests;
     const contests = state.contests;
-    const areContestsLoaded = !_.isEmpty(contests)
+    const areCVRsLoaded = !_.isEmpty(contests)
         && !_.isEmpty(canonicalContests)
         && !state.settingAuditInfo;
 
     return {
-        areContestsLoaded,
+        areCVRsLoaded,
         asm: state.asm,
         canonicalContests,
         contests,

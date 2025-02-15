@@ -148,7 +148,7 @@ const ContestRow = (props: ContestRowProps) => {
 };
 
 interface PageProps {
-    areContestsLoaded: boolean;
+    areCVRsLoaded: boolean;
     canonicalContests: DOS.CanonicalContests;
     contests: DOS.Contests;
     forward: (x: DOS.Form.StandardizeContests.FormData) => void;
@@ -175,7 +175,7 @@ class StandardizeContestsPage extends React.Component<PageProps, PageState> {
      * form state with initial contest guesses.
      */
     public componentDidUpdate(prevProps: PageProps, prevState: PageState) {
-        if (!prevProps.areContestsLoaded && this.props.areContestsLoaded) {
+        if (!prevProps.areCVRsLoaded && this.props.areCVRsLoaded) {
             const {
                 canonicalContests,
                 contests,
@@ -200,7 +200,7 @@ class StandardizeContestsPage extends React.Component<PageProps, PageState> {
 
     public render() {
         const {
-            areContestsLoaded,
+            areCVRsLoaded,
             back,
             canonicalContests,
             contests,
@@ -209,7 +209,7 @@ class StandardizeContestsPage extends React.Component<PageProps, PageState> {
 
         let main = null;
 
-        if (areContestsLoaded) {
+        if (areCVRsLoaded) {
             main =
                 <div>
                     <Breadcrumbs />
