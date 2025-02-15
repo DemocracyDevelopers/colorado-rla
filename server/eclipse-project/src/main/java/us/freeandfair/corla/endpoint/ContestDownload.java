@@ -77,7 +77,7 @@ public class ContestDownload extends AbstractEndpoint {
   /**
    * Query specifier for ignoring (the absence of) manifests.
    */
-  private static final String IGNORE_MANIFEST = "ignoreManifests";
+  private static final String IGNORE_MANIFESTS = "ignoreManifests";
 
   /**
    * {@inheritDoc}
@@ -90,7 +90,7 @@ public class ContestDownload extends AbstractEndpoint {
     if (validateParameters(the_request)) {
 
       final boolean ignoreManifests
-          = Boolean.parseBoolean(the_request.queryParamOrDefault(IGNORE_MANIFEST, "false"));
+          = Boolean.parseBoolean(the_request.queryParamOrDefault(IGNORE_MANIFESTS, "false"));
       final Set<County> county_set = new HashSet<>();
       for (final CountyDashboard cdb : Persistence.getAll(CountyDashboard.class)) {
         // If 'ignoreManifests' has been requested, then counties that have only CVRs uploaded are
@@ -128,7 +128,7 @@ public class ContestDownload extends AbstractEndpoint {
   @Override
   protected boolean validateParameters(final Request the_request) {
 
-    final String ignoreManifests = the_request.queryParams(IGNORE_MANIFEST);
+    final String ignoreManifests = the_request.queryParams(IGNORE_MANIFESTS);
     return ignoreManifests == null
         || ignoreManifests.equalsIgnoreCase("true")
         || ignoreManifests.equalsIgnoreCase("false");
