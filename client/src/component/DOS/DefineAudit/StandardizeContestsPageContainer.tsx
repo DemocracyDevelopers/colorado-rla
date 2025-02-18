@@ -96,8 +96,9 @@ const StandardizeContestsPageContainer = (props: Props) => {
 
 const mapStateToProps = (state: DOS.AppState) => {
     const canonicalContests = state.canonicalContests;
+    const contestsIgnoringAbsentManifests = state.contestsIgnoringManifests;
     const contests = state.contests;
-    const areCVRsLoaded = !_.isEmpty(contests)
+    const areCVRsLoaded = !_.isEmpty(contestsIgnoringAbsentManifests)
         && !_.isEmpty(canonicalContests)
         && !state.settingAuditInfo;
 
@@ -105,7 +106,7 @@ const mapStateToProps = (state: DOS.AppState) => {
         areCVRsLoaded,
         asm: state.asm,
         canonicalContests,
-        contests,
+        contestsIgnoringAbsentManifests,
     };
 };
 

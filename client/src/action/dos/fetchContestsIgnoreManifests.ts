@@ -2,7 +2,9 @@ import { endpoint } from 'corla/config';
 
 import createFetchAction from 'corla/action/createFetchAction';
 
-const url = endpoint('contest');
+// A copy of `fetchContests.ts`, except that it sets ignoreManifests=true.
+const url = endpoint('contest')
+    + '?ignoreManifests=true'
 
 export default createFetchAction({
     failType: 'DOS_FETCH_CONTESTS_FAIL',

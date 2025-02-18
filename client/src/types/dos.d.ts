@@ -4,6 +4,7 @@ declare namespace DOS {
         auditedContests: DOS.AuditedContests;
         auditTypes: ContestAuditTypes;
         contests: DOS.Contests;
+        contestsIgnoringManifests: DOS.Contests;
         countyStatus: DOS.CountyStatuses;
         canonicalContests?: DOS.CanonicalContests;
         canonicalChoices?: DOS.CanonicalChoices;

@@ -15,6 +15,7 @@ import uploadingBallotManifest from './county/uploadingBallotManifest';
 import uploadingCvrExport from './county/uploadingCvrExport';
 
 import dosContestFetchOk from './dos/contestFetchOk';
+import dosContestFetchIgnoreManifestsOk from './dos/contestFetchIgnoreManifestsOk';
 import dosDashboardRefreshOk from './dos/dashboardRefreshOk';
 import dosDeleteFileOk from './dos/deleteFileOk';
 import fetchDOSASMStateOk from './dos/fetchDOSASMStateOk';
