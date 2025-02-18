@@ -21,10 +21,10 @@ import counties from 'corla/data/counties';
  * something that can be easily displayed in a tabular format.
  */
 const flattenContests = (
-    contests: DOS.Contests,
+    contestsIgnoringManifests: DOS.Contests,
     canonicalChoices: DOS.CanonicalChoices,
 ): DOS.Form.StandardizeChoices.Row[] => {
-    return _.flatMap(contests, (contest: Contest) => {
+    return _.flatMap(contestsIgnoringManifests, (contest: Contest) => {
         return _.map(contest.choices, (choice: ContestChoice, idx) => {
             return {
                 choiceIndex: idx,
@@ -56,7 +56,7 @@ const filterRows = (
 interface Props {
     areChoicesLoaded: boolean;
     asm: DOS.ASMState;
-    contests: DOS.Contests;
+    contestsIgnoringManifests: DOS.Contests;
     canonicalChoices: DOS.CanonicalChoices;
     history: History;
 }
@@ -66,7 +66,7 @@ const PageContainer = (props: Props) => {
         areChoicesLoaded,
         asm,
         canonicalChoices,
-        contests,
+        contestsIgnoringManifests,
         history,
     } = props;
 
@@ -77,7 +77,7 @@ const PageContainer = (props: Props) => {
         }
         isRequestInProgress = true;
 
-        standardizeChoices(contests, data).then(r => {
+        standardizeChoices(contestsIgnoringManifests, data).then(r => {
             isRequestInProgress = false;
             // use the result here
             if (r.ok) {
@@ -96,7 +96,7 @@ const PageContainer = (props: Props) => {
 
     function getNextPath() {
         // Only route to Assertion Generation page if IRV contests exist
-        if (Object.values(contests).some(contest => contest.description === 'IRV')) {
+        if (Object.values(contestsIgnoringManifests).some(contest => contest.description === 'IRV')) {
             return '/sos/audit/generate-assertions';
         } else {
             return '/sos/audit/estimate-sample-sizes';
@@ -110,7 +110,7 @@ const PageContainer = (props: Props) => {
     let rows: DOS.Form.StandardizeChoices.Row[] = [];
 
     if (areChoicesLoaded) {
-        rows = filterRows(flattenContests(contests, canonicalChoices));
+        rows = filterRows(flattenContests(contestsIgnoringManifests, canonicalChoices));
 
         if (_.isEmpty(rows)) {
             return <Redirect to={ getNextPath() } />;
@@ -119,15 +119,15 @@ const PageContainer = (props: Props) => {
 
     return <StandardizeChoicesPage areChoicesLoaded={ areChoicesLoaded }
                                    back={ previousPage }
-                                   contests={ contests }
+                                   contestsIgnoringManifests={ contestsIgnoringManifests }
                                    rows={ rows }
                                    forward={ nextPage } />;
 };
 
 const mapStateToProps = (state: DOS.AppState) => {
-    const contests = state.contests;
+    const contestsIgnoringManifests = state.contestsIgnoringManifests;
     const canonicalChoices = state.canonicalChoices;
-    const areChoicesLoaded = !_.isEmpty(contests)
+    const areChoicesLoaded = !_.isEmpty(contestsIgnoringManifests)
         && !_.isEmpty(canonicalChoices)
         && !state.standardizingContests;
 
@@ -135,7 +135,7 @@ const mapStateToProps = (state: DOS.AppState) => {
         areChoicesLoaded,
         asm: state.asm,
         canonicalChoices,
-        contests,
+        contestsIgnoringManifests,
     };
 };
 

@@ -101,7 +101,6 @@ const mapStateToProps = (state: DOS.AppState) => {
     const areCVRsLoaded = !_.isEmpty(contestsIgnoringManifests)
         && !_.isEmpty(canonicalContests)
         && !state.settingAuditInfo;
-    console.log("contestsIgnoringManifests size = "+contestsIgnoringManifests.toString()+". State = "+state.asm);
 
     return {
         areCVRsLoaded,

@@ -16,7 +16,6 @@ function* contestOverviewSaga() {
     });
 }
 
-// TODO (VT): I believe this is unused.
 function* contestDetailSaga() {
     yield takeLatest('DOS_COUNTY_DETAIL_SYNC', () => {
         fetchContests();
