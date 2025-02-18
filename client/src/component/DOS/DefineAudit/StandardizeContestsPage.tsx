@@ -58,14 +58,14 @@ interface UpdateFormMessage {
 }
 
 interface TableProps {
-    contests: DOS.Contests;
+    contestsIgnoringManifests: DOS.Contests;
     canonicalContests: DOS.CanonicalContests;
     formData: DOS.Form.StandardizeContests.FormData;
     updateFormData: (msg: UpdateFormMessage) => void;
 }
 
 const StandardizeContestsTable = (props: TableProps) => {
-    const { canonicalContests, contests, formData, updateFormData } = props;
+    const { canonicalContests, contestsIgnoringManifests, formData, updateFormData } = props;
 
     return (
         <table className='pt-html-table pt-html-table-striped'>
@@ -76,7 +76,7 @@ const StandardizeContestsTable = (props: TableProps) => {
                     <th>Standardized Contest Name</th>
                 </tr>
             </thead>
-            <ContestBody contests={ contests }
+            <ContestBody contestsIgnoringManifests={ contestsIgnoringManifests }
                          canonicalContests={ canonicalContests }
                          formData={ formData }
                          updateFormData={ updateFormData } />
@@ -85,16 +85,16 @@ const StandardizeContestsTable = (props: TableProps) => {
 };
 
 interface BodyProps {
-    contests: DOS.Contests;
+    contestsIgnoringManifests: DOS.Contests;
     canonicalContests: DOS.CanonicalContests;
     formData: DOS.Form.StandardizeContests.FormData;
     updateFormData: (msg: UpdateFormMessage) => void;
 }
 
 const ContestBody = (props: BodyProps) => {
-    const { canonicalContests, contests, formData, updateFormData } = props;
+    const { canonicalContests, contestsIgnoringManifests, formData, updateFormData } = props;
 
-    const rows = _.map(contests, c => {
+    const rows = _.map(contestsIgnoringManifests, c => {
         return <ContestRow key={ c.id }
                            contest={ c }
                            canonicalContests={ canonicalContests }
@@ -150,7 +150,7 @@ const ContestRow = (props: ContestRowProps) => {
 interface PageProps {
     areCVRsLoaded: boolean;
     canonicalContests: DOS.CanonicalContests;
-    contests: DOS.Contests;
+    contestsIgnoringManifests: DOS.Contests;
     forward: (x: DOS.Form.StandardizeContests.FormData) => void;
     back: () => void;
 }
@@ -178,12 +178,12 @@ class StandardizeContestsPage extends React.Component<PageProps, PageState> {
         if (!prevProps.areCVRsLoaded && this.props.areCVRsLoaded) {
             const {
                 canonicalContests,
-                contests,
+                contestsIgnoringManifests,
             } = this.props;
 
             const formData: DOS.Form.StandardizeContests.FormData = {};
 
-            _.forEach(contests, contest => {
+            _.forEach(contestsIgnoringManifests, contest => {
                 const countyName = counties[contest.countyId].name;
                 const standards = canonicalContests[countyName];
 
@@ -203,7 +203,7 @@ class StandardizeContestsPage extends React.Component<PageProps, PageState> {
             areCVRsLoaded,
             back,
             canonicalContests,
-            contests,
+            contestsIgnoringManifests,
             forward,
         } = this.props;
 
@@ -226,7 +226,7 @@ class StandardizeContestsPage extends React.Component<PageProps, PageState> {
                         </p>
 
                         <StandardizeContestsTable canonicalContests={ canonicalContests }
-                                                  contests={ contests }
+                                                  contestsIgnoringManifests={ contestsIgnoringManifests }
                                                   formData={ this.state.formData }
                                                   updateFormData={ this.updateFormData } />
                     </Card>

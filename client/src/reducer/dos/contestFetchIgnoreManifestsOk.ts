@@ -5,7 +5,7 @@ import { parse } from 'corla/adapter/contestFetch';
 // regardless of whether we ignore manifests - i.e. the contest data is the same.
 export default function contestFetchOk(
     state: DOS.AppState,
-    action: Action.DOSFetchContestsOk,
+    action: Action.DOSFetchContestsIgnoreManifestsOk,
 ): DOS.AppState {
     const nextState = { ...state };
 

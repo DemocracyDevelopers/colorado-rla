@@ -71,6 +71,10 @@ export default function root(state: AppState, action: Action.App) {
         return dosContestFetchOk(state as DOS.AppState, action);
     }
 
+    case 'DOS_FETCH_CONTESTS_IGNORE_MANIFESTS_OK': {
+        return dosContestFetchIgnoreManifestsOk(state as DOS.AppState, action);
+    }
+
     case 'DOS_LOGIN_OK': {
         return dosLoginOk(state as LoginAppState);
     }

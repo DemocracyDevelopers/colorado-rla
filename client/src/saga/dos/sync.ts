@@ -20,6 +20,7 @@ function* contestOverviewSaga() {
 function* contestDetailSaga() {
     yield takeLatest('DOS_COUNTY_DETAIL_SYNC', () => {
         fetchContests();
+        fetchContestsIgnoreManifests();
         dashboardRefresh();
     });
 }
