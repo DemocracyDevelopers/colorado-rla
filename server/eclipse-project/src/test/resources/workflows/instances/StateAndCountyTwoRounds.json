@@ -1,5 +1,5 @@
 {
-  "NAME" : "Demo1",
+  "NAME" : "AllDiscrepanciesReauditedSingleRound",
 
   "RISK_LIMIT" : 0.03,
 
@@ -170,7 +170,7 @@
     "City of Boulder Mayoral"
   ],
 
-  "EXPECTED_ROUNDS" : 1,
+  "EXPECTED_ROUNDS" : 2,
 
   "PHANTOM_BALLOTS" : {
   },
@@ -182,34 +182,96 @@
   },
 
   "CHOICES" : {
+    "32" : {
+      "1-1-22": {
+        "Byron Mayoral": [
+          "COOREY Cate(1)",
+          "SWIVEL Mark(2)",
+          "PUGH Asren(3)",
+          "LYON Michael(4)",
+          "CLARKE Bruce(5)"
+        ]
+      }
+    },
+    "64" : {
+      "1-2-20": {
+        "Byron Mayoral": [
+          "SWIVEL Mark(1)",
+          "COOREY Cate(2)"
+        ]
+      }
+    },
+    "7" : {
+      "101-1-58": {
+        "Byron Mayoral": [
+          "CLARKE Bruce(1)",
+          "PUGH Asren(2)",
+          "SWIVEL Mark(3)",
+          "HUNTER Alan(4)",
+          "COOREY Cate(5)"
+        ]
+      }
+    },
     "4" : {
-      "1-1-12": {
+      "1-99-59": {
         "Kempsey Mayoral": [
-          "RAEBURN Bruce(1)",
-          "HAUVILLE Leo(2)",
-          "IRWIN Troy(3)",
-          "EVANS Andrew(4)",
-          "BAIN Arthur(5)",
-          "SAUL Dean(6)",
-          "CAMPBELL Liz(7)"
+          "HAUVILLE Leo(1)"
+        ]
+      },
+      "1-1-45": {
+        "Kempsey Mayoral": [
+          "CAMPBELL Liz(1)"
         ]
       }
     }
   },
 
   "REAUDITS" : {
+    "32" : {
+      "1-1-22": [
+        {
+          "Byron Mayoral": {
+            "choices" : [
+              "COOREY Cate(1)",
+              "SWIVEL Mark(2)",
+              "PUGH Asren(3)",
+              "LYON Michael(4)",
+              "CLARKE Bruce(5)"
+            ],
+            "consensus" : "YES"
+          }
+        }
+      ]
+    },
+    "64" : {
+      "1-2-20": [
+        {
+          "Byron Mayoral": {
+            "choices" : [
+              "SWIVEL Mark(1)",
+              "COOREY Cate(2)"
+            ],
+            "consensus" : "YES"
+          }
+        }
+      ]
+    },
     "4" : {
-      "1-1-12": [
+      "1-99-59": [
         {
           "Kempsey Mayoral": {
             "choices" : [
-              "HAUVILLE Leo(1)",
-              "RAEBURN Bruce(2)",
-              "IRWIN Troy(3)",
-              "EVANS Andrew(4)",
-              "BAIN Arthur(5)",
-              "SAUL Dean(6)",
-              "CAMPBELL Liz(7)"
+              "CAMPBELL Liz(1)"
+            ],
+            "consensus" : "NO"
+          }
+        }
+      ],
+      "1-1-45": [
+        {
+          "Kempsey Mayoral": {
+            "choices" : [
+              "CAMPBELL Liz(1)"
             ],
             "consensus" : "YES"
           }
@@ -219,7 +281,7 @@
   },
 
   "COUNTY_RESULTS" : {
-    "1": {
+    "2": {
       "1": {
         "estimated_ballots_to_audit": 0,
         "ballots_remaining_in_round" : 0
@@ -270,10 +332,39 @@
   "CONTEST_RESULTS" : {
     "1" : {
       "Byron Mayoral" : {
+        "estimated_ballots_to_audit" : 997,
+        "optimistic_ballots_to_audit": 996,
+        "one_over_count" : 1,
+        "two_over_count" : 2,
+        "one_under_count" : 0,
+        "two_under_count" : 0,
+        "other_count" : 0
+      },
+      "City of Longmont - Mayor" : {
         "estimated_ballots_to_audit" : 0,
         "optimistic_ballots_to_audit": 0,
         "one_over_count" : 0,
         "two_over_count" : 0,
+        "one_under_count" : 0,
+        "two_under_count" : 0,
+        "other_count" : 0
+      },
+      "Kempsey Mayoral" : {
+        "estimated_ballots_to_audit" : 310,
+        "optimistic_ballots_to_audit": 309,
+        "one_over_count" : 1,
+        "two_over_count" : 1,
+        "one_under_count" : 0,
+        "two_under_count" : 0,
+        "other_count" : 0
+      }
+    },
+    "2" : {
+      "Byron Mayoral" : {
+        "estimated_ballots_to_audit" : 0,
+        "optimistic_ballots_to_audit": 0,
+        "one_over_count" : 1,
+        "two_over_count" : 2,
         "one_under_count" : 0,
         "two_under_count" : 0,
         "other_count" : 0
@@ -290,8 +381,8 @@
       "Kempsey Mayoral" : {
         "estimated_ballots_to_audit" : 0,
         "optimistic_ballots_to_audit": 0,
-        "one_over_count" : 0,
-        "two_over_count" : 0,
+        "one_over_count" : 1,
+        "two_over_count" : 1,
         "one_under_count" : 0,
         "two_under_count" : 0,
         "other_count" : 0

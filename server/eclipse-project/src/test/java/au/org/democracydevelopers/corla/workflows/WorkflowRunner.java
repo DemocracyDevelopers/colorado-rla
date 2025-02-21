@@ -261,12 +261,6 @@ public class WorkflowRunner extends Workflow {
             final String dbID = contestToDBID.get(contestName);
             final Map<String,Integer> contestResult = roundResults.get(contestName);
 
-            final int actEstBallots = statusEstBallotsToAudit.get(dbID);
-            final int actOptBallots = statusOptBallotsToAudit.get(dbID);
-
-            assertEquals(actEstBallots, contestResult.get(ESTIMATED_BALLOTS).intValue());
-            assertEquals(actOptBallots, contestResult.get(OPTIMISTIC_BALLOTS).intValue());
-
             final int oneOverCount = contestResult.get(ONE_OVER_COUNT);
             final int oneUnderCount = contestResult.get(ONE_UNDER_COUNT);
             final int twoOverCount = contestResult.get(TWO_OVER_COUNT);
@@ -279,6 +273,12 @@ public class WorkflowRunner extends Workflow {
             assertEquals(contestDiscrepancies.get(OTHER).intValue(), otherCount);
             assertEquals(contestDiscrepancies.get(TWO_OVER).intValue(), twoOverCount);
             assertEquals(contestDiscrepancies.get(TWO_UNDER).intValue(), twoUnderCount);
+
+            final int actEstBallots = statusEstBallotsToAudit.get(dbID);
+            final int actOptBallots = statusOptBallotsToAudit.get(dbID);
+
+            assertEquals(actOptBallots, contestResult.get(OPTIMISTIC_BALLOTS).intValue());
+            assertEquals(actEstBallots, contestResult.get(ESTIMATED_BALLOTS).intValue());
           }
         }
 
