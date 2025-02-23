@@ -333,7 +333,7 @@
     "1" : {
       "Byron Mayoral" : {
         "estimated_ballots_to_audit" : 997,
-        "optimistic_ballots_to_audit": 996,
+        "optimistic_ballots_to_audit": 995,
         "one_over_count" : 1,
         "two_over_count" : 2,
         "one_under_count" : 0,

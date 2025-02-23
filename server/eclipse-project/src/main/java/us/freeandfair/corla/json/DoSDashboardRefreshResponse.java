@@ -190,7 +190,7 @@ public class DoSDashboardRefreshResponse {
             optimistic = ca.optimisticRemaining();
             estimated = ca.estimatedRemaining();
 
-            LOGGER.debug(String
+            LOGGER.info(String
                 .format("[createResponse: optimistic=%d, estimated = %d, ca.optimisticSamplesToAudit()=%d, ca.estimatedSamplesToAudit()=%d, ca.getAuditedSampleCount()=%d]",
                         optimistic, estimated, ca.optimisticSamplesToAudit(),
                         ca.estimatedSamplesToAudit(), ca.getAuditedSampleCount()));
