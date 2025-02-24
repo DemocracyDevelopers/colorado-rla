@@ -205,8 +205,8 @@ public class DoSDashboardRefreshResponse {
             }
           }
 
-          estimated_ballots_to_audit.put(cta.contest().id(), optimistic);
-          optimistic_ballots_to_audit.put(cta.contest().id(), estimated);
+          estimated_ballots_to_audit.put(cta.contest().id(), estimated);
+          optimistic_ballots_to_audit.put(cta.contest().id(), optimistic);
           discrepancy_count.put(cta.contest().id(), discrepancy);
           break;
 
