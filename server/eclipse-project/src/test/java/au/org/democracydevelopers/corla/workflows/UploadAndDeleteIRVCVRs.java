@@ -60,10 +60,6 @@ public class UploadAndDeleteIRVCVRs extends Workflow {
   public void runUploadAndDeleteCVRs() throws InterruptedException {
     testUtils.log(LOGGER, "runUploadAndDeleteIRVCVRs");
 
-    PostgreSQLContainer<?> postgres = setupIndividualTestDatabase("UploadAndDeleteIRVCVRs");
-
-    final String irvContest = "TinyInvalidExample1";
-
     // Upload CSVs with 10 invalid IRV votes, for counties 1 and 2.
     final String CVRFile = dataPath + "ThreeCandidatesTenInvalidVotes";
 

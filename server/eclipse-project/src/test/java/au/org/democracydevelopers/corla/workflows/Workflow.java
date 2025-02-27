@@ -742,12 +742,12 @@ public class Workflow  {
   }
 
   /**
-   * Get a CSV report.
+   * Get a CSV report. Note this has only been tested with the irv ballot interpretation report.
    * @param report the name of the report. See list of possibilities at src/main/resources/sql.
    * @return each line of the CSV as a string, including the header.
    */
   protected List<String> getReportAsCSV(String report) {
-    final String prefix = "[getIRVBallotInterpretations]";
+    final String prefix = "[getReportAsCSV]";
 
     // Login as state admin.
     final SessionFilter filter = doLogin("stateadmin1");
