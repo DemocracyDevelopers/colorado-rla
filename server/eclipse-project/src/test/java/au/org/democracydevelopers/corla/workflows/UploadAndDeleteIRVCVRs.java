@@ -83,6 +83,7 @@ public class UploadAndDeleteIRVCVRs extends Workflow {
     assertEquals(ivrBallotInterpretations.size(), 11);
 
     // County 2 deletes its csv.
+    deleteFile(2, "cvr");
 
     // Now there should be 0 interpretations of invalid IRV votes, i.e. only the header.
     ivrBallotInterpretations = getReportAsCSV("ranked_ballot_interpretation");
