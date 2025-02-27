@@ -24,7 +24,6 @@ package au.org.democracydevelopers.corla.workflows;
 import au.org.democracydevelopers.corla.util.testUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -60,6 +59,8 @@ public class UploadAndDeleteIRVCVRs extends Workflow {
   public void runUploadAndDeleteCVRs() throws InterruptedException {
     testUtils.log(LOGGER, "runUploadAndDeleteIRVCVRs");
 
+    setupIndividualTestDatabase("UploadAndDeleteIRVCVRs");
+
     // Upload CSVs with 10 invalid IRV votes, for counties 1 and 2.
     final String CVRFile = dataPath + "ThreeCandidatesTenInvalidVotes";
 
@@ -82,6 +83,7 @@ public class UploadAndDeleteIRVCVRs extends Workflow {
     assertEquals(ivrBallotInterpretations.size(), 11);
 
     // County 2 deletes its csv.
+    deleteFile(2, "cvr");
 
     // Now there should be 0 interpretations of invalid IRV votes, i.e. only the header.
     ivrBallotInterpretations = getReportAsCSV("ranked_ballot_interpretation");
