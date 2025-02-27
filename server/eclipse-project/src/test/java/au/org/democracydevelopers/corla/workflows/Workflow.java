@@ -138,6 +138,7 @@ public class Workflow  {
   protected static final String ELECTION_DATE = "election_date";
   protected static final String ELECTION_TYPE = "election_type";
   protected static final String ID = "id";
+  protected static final String IGNORE_MANIFESTS = "ignoreManifests";
   protected static final String MANIFEST_FILETYPE = "ballot-manifest";
   protected static final String MANIFEST_JSON = "ballot_manifest_file";
   protected static final String NAME = "name";
@@ -884,16 +885,7 @@ public class Workflow  {
 
     // First get the contests.
     // Again, this would be a lot easier if we could use .as(Contest[].class), but serialization is a problem.
-    final JsonPath contests = given()
-            .filter(filter)
-            .header("Content-Type", "text/plain")
-            .get("/contest")
-            .then()
-            .assertThat()
-            .statusCode(HttpStatus.SC_OK)
-        .extract()
-        .body()
-        .jsonPath();
+    final JsonPath contests = getContests(false);
 
     // The contests and reasons to be requested.
     final JSONArray contestSelections = new JSONArray();
@@ -931,6 +923,32 @@ public class Workflow  {
         .statusCode(HttpStatus.SC_OK);
 
     return contestToDBID;
+  }
+
+  /**
+   * Hit the /contests endpoint, to learn all the contests.
+   * @param ignoreManifests
+   * @return the response, as a JsonPath.
+   */
+  protected JsonPath getContests(boolean ignoreManifests) {
+
+    // Login as state admin.
+    final SessionFilter filter = doLogin("stateadmin1");
+
+    final String query = ignoreManifests ? "?" + IGNORE_MANIFESTS +"=true" : "";
+
+    // First get the contests.
+    // Again, this would be a lot easier if we could use .as(Contest[].class), but serialization is a problem.
+    return given()
+        .filter(filter)
+        .header("Content-Type", "text/plain")
+        .get("/contest"+query)
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK)
+        .extract()
+        .body()
+        .jsonPath();
   }
 
   /**
