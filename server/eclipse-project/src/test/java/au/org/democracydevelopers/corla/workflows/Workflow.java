@@ -577,6 +577,7 @@ public class Workflow  {
 
     final SessionFilter filter = session.filter();
     final List<CastVoteRecord> cvrsToAudit = getCvrsToAudit(round, filter);
+
     LOGGER.info("CVRS FOR AUDIT IN ROUND " + round);
     for(final CastVoteRecord rec : cvrsToAudit){
       LOGGER.info("County ID," + rec.countyID() + ",Imprinted ID," + rec.imprintedID());

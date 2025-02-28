@@ -120,13 +120,13 @@ public class Instance {
   private int expectedRounds;
 
   /**
-   * Non-zero round by round results for contests whose statuses we want to test.
+   * Round by round results for contests whose statuses we want to test.
    */
   @JsonProperty("CONTEST_RESULTS")
   private Map<Integer,Map<String,Map<String,Integer>>> contestResults;
 
   /**
-   * Non-zero round by round results for counties whose statuses we want to test.
+   * Round by round results for counties whose statuses we want to test.
    */
   @JsonProperty("COUNTY_RESULTS")
   private Map<Integer,Map<String,Map<String,Integer>>> countyResults;
