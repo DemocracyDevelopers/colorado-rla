@@ -30,13 +30,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="1-adams-plusByron-1-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/Demo1/1-adams-plusByron-1-manifest.csv
+< ../CSVs/Demo1/1-adams-plusByron-1-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/Demo1/1-adams-plusByron-1-manifest.csv.sha256sum
+< ../CSVs/Demo1/1-adams-plusByron-1-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -88,13 +88,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="2-alamosa-plusByron-2-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/Demo1/2-alamosa-plusByron-2-manifest.csv
+< ../CSVs/Demo1/2-alamosa-plusByron-2-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/Demo1/2-alamosa-plusByron-2-manifest.csv.sha256sum
+< ../CSVs/Demo1/2-alamosa-plusByron-2-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -146,13 +146,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-3-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-3-manifest.csv
+< ../CSVs/split-Byron/Byron-3-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-3-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-3-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -204,13 +204,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Kempsey_Mayoral.manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/NewSouthWales21/Kempsey_Mayoral.manifest.csv
+< ../CSVs/NewSouthWales21/Kempsey_Mayoral.manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/NewSouthWales21/Kempsey_Mayoral.manifest.csv.sha256sum
+< ../CSVs/NewSouthWales21/Kempsey_Mayoral.manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -261,13 +261,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-5-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-5-manifest.csv
+< ../CSVs/split-Byron/Byron-5-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-5-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-5-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -318,13 +318,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-6-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-6-manifest.csv
+< ../CSVs/split-Byron/Byron-6-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-6-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-6-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -375,13 +375,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-8-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-8-manifest.csv
+< ../CSVs/split-Byron/Byron-8-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-8-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-8-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -437,13 +437,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-9-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-9-manifest.csv
+< ../CSVs/split-Byron/Byron-9-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-9-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-9-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -499,13 +499,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-10-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-10-manifest.csv
+< ../CSVs/split-Byron/Byron-10-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-10-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-10-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -561,13 +561,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-11-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-11-manifest.csv
+< ../CSVs/split-Byron/Byron-11-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-11-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-11-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -623,13 +623,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-12-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-12-manifest.csv
+< ../CSVs/split-Byron/Byron-12-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-12-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-12-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -685,13 +685,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-13-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-13-manifest.csv
+< ../CSVs/split-Byron/Byron-13-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-13-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-13-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -747,13 +747,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-14-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-14-manifest.csv
+< ../CSVs/split-Byron/Byron-14-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-14-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-14-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -809,13 +809,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-15-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-15-manifest.csv
+< ../CSVs/split-Byron/Byron-15-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-15-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-15-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -871,13 +871,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-16-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-16-manifest.csv
+< ../CSVs/split-Byron/Byron-16-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-16-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-16-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -933,13 +933,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-17-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-17-manifest.csv
+< ../CSVs/split-Byron/Byron-17-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-17-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-17-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -995,13 +995,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-18-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-18-manifest.csv
+< ../CSVs/split-Byron/Byron-18-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-18-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-18-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -1057,13 +1057,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-19-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-19-manifest.csv
+< ../CSVs/split-Byron/Byron-19-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-19-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-19-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -1119,13 +1119,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-20-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-20-manifest.csv
+< ../CSVs/split-Byron/Byron-20-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-20-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-20-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -1181,13 +1181,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-21-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-21-manifest.csv
+< ../CSVs/split-Byron/Byron-21-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-21-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-21-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -1243,13 +1243,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-22-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-22-manifest.csv
+< ../CSVs/split-Byron/Byron-22-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-22-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-22-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -1305,13 +1305,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-23-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-23-manifest.csv
+< ../CSVs/split-Byron/Byron-23-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-23-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-23-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -1367,13 +1367,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-24-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-24-manifest.csv
+< ../CSVs/split-Byron/Byron-24-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-24-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-24-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -1429,13 +1429,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-25-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-25-manifest.csv
+< ../CSVs/split-Byron/Byron-25-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-25-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-25-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -1491,13 +1491,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-26-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-26-manifest.csv
+< ../CSVs/split-Byron/Byron-26-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-26-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-26-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -1553,13 +1553,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-27-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-27-manifest.csv
+< ../CSVs/split-Byron/Byron-27-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-27-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-27-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -1615,13 +1615,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-28-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-28-manifest.csv
+< ../CSVs/split-Byron/Byron-28-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-28-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-28-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -1677,13 +1677,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-29-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-29-manifest.csv
+< ../CSVs/split-Byron/Byron-29-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-29-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-29-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -1739,13 +1739,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-30-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-30-manifest.csv
+< ../CSVs/split-Byron/Byron-30-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-30-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-30-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -1801,13 +1801,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-31-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-31-manifest.csv
+< ../CSVs/split-Byron/Byron-31-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-31-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-31-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -1863,13 +1863,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-32-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-32-manifest.csv
+< ../CSVs/split-Byron/Byron-32-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-32-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-32-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -1925,13 +1925,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-33-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-33-manifest.csv
+< ../CSVs/split-Byron/Byron-33-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-33-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-33-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -1987,13 +1987,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-34-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-34-manifest.csv
+< ../CSVs/split-Byron/Byron-34-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-34-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-34-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -2049,13 +2049,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-35-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-35-manifest.csv
+< ../CSVs/split-Byron/Byron-35-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-35-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-35-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -2111,13 +2111,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-36-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-36-manifest.csv
+< ../CSVs/split-Byron/Byron-36-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-36-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-36-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -2173,13 +2173,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-37-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-37-manifest.csv
+< ../CSVs/split-Byron/Byron-37-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-37-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-37-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -2235,13 +2235,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-38-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-38-manifest.csv
+< ../CSVs/split-Byron/Byron-38-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-38-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-38-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -2297,13 +2297,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-39-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-39-manifest.csv
+< ../CSVs/split-Byron/Byron-39-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-39-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-39-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -2359,13 +2359,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-40-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-40-manifest.csv
+< ../CSVs/split-Byron/Byron-40-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-40-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-40-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -2421,13 +2421,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-41-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-41-manifest.csv
+< ../CSVs/split-Byron/Byron-41-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-41-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-41-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -2483,13 +2483,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-42-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-42-manifest.csv
+< ../CSVs/split-Byron/Byron-42-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-42-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-42-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -2545,13 +2545,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-43-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-43-manifest.csv
+< ../CSVs/split-Byron/Byron-43-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-43-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-43-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -2607,13 +2607,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-44-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-44-manifest.csv
+< ../CSVs/split-Byron/Byron-44-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-44-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-44-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -2669,13 +2669,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-45-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-45-manifest.csv
+< ../CSVs/split-Byron/Byron-45-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-45-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-45-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -2731,13 +2731,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-46-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-46-manifest.csv
+< ../CSVs/split-Byron/Byron-46-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-46-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-46-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -2793,13 +2793,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-47-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-47-manifest.csv
+< ../CSVs/split-Byron/Byron-47-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-47-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-47-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -2855,13 +2855,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-48-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-48-manifest.csv
+< ../CSVs/split-Byron/Byron-48-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-48-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-48-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -2917,13 +2917,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-49-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-49-manifest.csv
+< ../CSVs/split-Byron/Byron-49-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-49-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-49-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -2979,13 +2979,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-50-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-50-manifest.csv
+< ../CSVs/split-Byron/Byron-50-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-50-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-50-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -3041,13 +3041,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-51-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-51-manifest.csv
+< ../CSVs/split-Byron/Byron-51-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-51-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-51-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -3103,13 +3103,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-52-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-52-manifest.csv
+< ../CSVs/split-Byron/Byron-52-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-52-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-52-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -3165,13 +3165,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-53-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-53-manifest.csv
+< ../CSVs/split-Byron/Byron-53-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-53-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-53-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -3227,13 +3227,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-54-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-54-manifest.csv
+< ../CSVs/split-Byron/Byron-54-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-54-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-54-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -3289,13 +3289,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-55-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-55-manifest.csv
+< ../CSVs/split-Byron/Byron-55-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-55-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-55-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -3351,13 +3351,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-56-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-56-manifest.csv
+< ../CSVs/split-Byron/Byron-56-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-56-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-56-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -3413,13 +3413,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-57-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-57-manifest.csv
+< ../CSVs/split-Byron/Byron-57-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-57-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-57-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -3475,13 +3475,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-58-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-58-manifest.csv
+< ../CSVs/split-Byron/Byron-58-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-58-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-58-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -3537,13 +3537,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-59-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-59-manifest.csv
+< ../CSVs/split-Byron/Byron-59-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-59-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-59-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -3599,13 +3599,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-60-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-60-manifest.csv
+< ../CSVs/split-Byron/Byron-60-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-60-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-60-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -3661,13 +3661,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-61-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-61-manifest.csv
+< ../CSVs/split-Byron/Byron-61-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-61-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-61-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -3723,13 +3723,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-62-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-62-manifest.csv
+< ../CSVs/split-Byron/Byron-62-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-62-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-62-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -3785,13 +3785,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-63-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-63-manifest.csv
+< ../CSVs/split-Byron/Byron-63-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-63-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-63-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -3847,13 +3847,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Byron-64-manifest.csv"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-64-manifest.csv
+< ../CSVs/split-Byron/Byron-64-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../resources/CSVs/split-Byron/Byron-64-manifest.csv.sha256sum
+< ../CSVs/split-Byron/Byron-64-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
