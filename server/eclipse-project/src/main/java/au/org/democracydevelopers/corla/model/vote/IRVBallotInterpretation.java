@@ -1,6 +1,9 @@
 package au.org.democracydevelopers.corla.model.vote;
 
 import java.util.Collections;
+
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.Contest;
 import us.freeandfair.corla.persistence.PersistentEntity;
@@ -39,6 +42,7 @@ public class IRVBallotInterpretation implements PersistentEntity {
    * The contest to which the interpreted vote belongs.
    */
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
+  @OnDelete(action = OnDeleteAction.CASCADE)
   private Contest contest;
 
   /**
