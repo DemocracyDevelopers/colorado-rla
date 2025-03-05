@@ -6,10 +6,12 @@ import createPollSaga from 'corla/saga/createPollSaga';
 
 import dashboardRefresh from 'corla/action/dos/dashboardRefresh';
 import fetchContests from 'corla/action/dos/fetchContests';
+import fetchContestsIgnoreManifests from 'corla/action/dos/fetchContestsIgnoreManifests';
 
 function* contestOverviewSaga() {
     yield takeLatest('DOS_CONTEST_OVERVIEW_SYNC', () => {
         fetchContests();
+        fetchContestsIgnoreManifests();
         dashboardRefresh();
     });
 }
@@ -17,6 +19,7 @@ function* contestOverviewSaga() {
 function* contestDetailSaga() {
     yield takeLatest('DOS_COUNTY_DETAIL_SYNC', () => {
         fetchContests();
+        fetchContestsIgnoreManifests();
         dashboardRefresh();
     });
 }
@@ -31,6 +34,7 @@ function* countyOverviewSaga() {
 
 const DOS_POLL_DELAY = config.pollDelay;
 
+// TODO (VT): I belive this is also unused.
 const dashboardPollSaga = createPollSaga(
     [dashboardRefresh, fetchContests],
     'DOS_DASHBOARD_POLL_START',

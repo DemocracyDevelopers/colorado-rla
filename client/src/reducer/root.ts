@@ -15,6 +15,7 @@ import uploadingBallotManifest from './county/uploadingBallotManifest';
 import uploadingCvrExport from './county/uploadingCvrExport';
 
 import dosContestFetchOk from './dos/contestFetchOk';
+import dosContestFetchIgnoreManifestsOk from './dos/contestFetchIgnoreManifestsOk';
 import dosDashboardRefreshOk from './dos/dashboardRefreshOk';
 import dosDeleteFileOk from './dos/deleteFileOk';
 import fetchDOSASMStateOk from './dos/fetchDOSASMStateOk';
@@ -68,6 +69,10 @@ export default function root(state: AppState, action: Action.App) {
 
     case 'DOS_FETCH_CONTESTS_OK': {
         return dosContestFetchOk(state as DOS.AppState, action);
+    }
+
+    case 'DOS_FETCH_CONTESTS_IGNORE_MANIFESTS_OK': {
+        return dosContestFetchIgnoreManifestsOk(state as DOS.AppState, action);
     }
 
     case 'DOS_LOGIN_OK': {

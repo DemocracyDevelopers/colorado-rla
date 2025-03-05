@@ -29,6 +29,7 @@ export function dosState(): DOS.AppState {
         auditTypes: {},
         auditedContests: {},
         contests: {},
+        contestsIgnoringManifests: {},
         countyStatus: {},
         type: 'DOS',
         generateAssertionsSummaries: [],

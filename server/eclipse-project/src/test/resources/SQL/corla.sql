@@ -492,6 +492,7 @@ create table irv_ballot_interpretation
     contest_id     bigint        not null
         constraint fkinw3u6cigskdttcwqosnsl98e
             references contest
+            on delete cascade
 );
 
 alter table irv_ballot_interpretation

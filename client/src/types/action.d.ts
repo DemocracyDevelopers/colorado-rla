@@ -18,6 +18,7 @@ declare namespace Action {
         | DOSDashboardRefreshOk
         | DOSDeleteFileOk
         | DOSFetchContestsOk
+        | DOSFetchContestsIgnoreManifestsOk
         | DOSLoginOk
         | DeleteFileOK
         | FetchAuditBoardASMStateOk
@@ -115,6 +116,11 @@ declare namespace Action {
 
     interface DOSFetchContestsOk {
         type: 'DOS_FETCH_CONTESTS_OK';
+        data: any;
+    }
+
+    interface DOSFetchContestsIgnoreManifestsOk {
+        type: 'DOS_FETCH_CONTESTS_IGNORE_MANIFESTS_OK';
         data: any;
     }
 

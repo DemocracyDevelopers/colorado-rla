@@ -54,6 +54,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaUpdate;
@@ -131,13 +133,16 @@ public class Workflow  {
   protected static final String CANONICAL_CHOICES = "canonicalChoices";
   protected static final String CANONICAL_CONTESTS = "canonicalContests";
   protected static final String COUNTY_STATUS = "county_status";
+  protected static final String COUNTYID = "countyId";
   protected static final String CVR_FILETYPE = "cvr-export";
   protected static final String CVR_JSON = "cvr_export_file";
   protected static final String ESTIMATED_BALLOTS = "estimated_ballots_to_audit";
   protected static final String OPTIMISTIC_BALLOTS = "optimistic_ballots_to_audit";
   protected static final String ELECTION_DATE = "election_date";
   protected static final String ELECTION_TYPE = "election_type";
+  protected static final String FILETYPE = "fileType";
   protected static final String ID = "id";
+  protected static final String IGNORE_MANIFESTS = "ignoreManifests";
   protected static final String MANIFEST_FILETYPE = "ballot-manifest";
   protected static final String MANIFEST_JSON = "ballot_manifest_file";
   protected static final String NAME = "name";
@@ -739,6 +744,41 @@ public class Workflow  {
   }
 
   /**
+   * Get a CSV report. Note this has only been tested with the irv ballot interpretation report.
+   * @param report the name of the report. See list of possibilities at src/main/resources/sql.
+   * @return each line of the CSV as a string, including the header.
+   */
+  protected List<String> getReportAsCSV(String report) {
+    final String prefix = "[getReportAsCSV]";
+
+    // Login as state admin.
+    final SessionFilter filter = doLogin("stateadmin1");
+
+    // Get the IRV ballot interpretation report.
+
+    final byte[] zip = given()
+        .filter(filter)
+        .get("/download-audit-report?reports="+report)
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK)
+        .extract()
+        .response().asByteArray();
+
+    ZipInputStream zipStream = new ZipInputStream(new ByteArrayInputStream(zip));
+    // There should only be one file in the .zip, since we only requested one.
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    try {
+      zipStream.getNextEntry();
+      zipStream.transferTo(baos);
+    } catch (IOException | NullPointerException e) {
+      LOGGER.error(String.format("%s Error retrieving report %s: %s", prefix, report, e.getMessage()));
+    }
+    return Arrays.stream(baos.toString().split("\n")).toList();
+
+  }
+
+  /**
    * Used by DoS admin to set audit info, including risk limit and canonical list.
    * Sets the election date to an arbitrary date and the public meeting for one week later.
    * @param canonicalListFile the path to the canonical list csv file.
@@ -874,6 +914,36 @@ public class Workflow  {
   }
 
   /**
+   * Delete a csv or manifest file, for the logged in county.
+   *
+   * @param countyId the ID number of the county (1 to 64)
+   * @param type     either "cvr" or "bmi" (for the manifest)
+   */
+  protected void deleteFile(int countyId, String type) {
+    final String prefix = "[deleteFile]";
+    final SessionFilter filter = doLogin("stateadmin" + countyId);
+
+    // add it to the selections.
+    final JSONObject fileSelection = new JSONObject();
+    fileSelection.put(FILETYPE, type);
+    fileSelection.put(COUNTYID, countyId);
+
+    if(!type.equals("bmi") &&  !type.equals("cvr")) {
+      LOGGER.error(String.format("%s Delete file needs type 'bmi' or 'cvr'.", prefix));
+    }
+
+    // Post the delete-file request
+    given()
+        .filter(filter)
+        .header("Content-Type", "application/json")
+        .body(fileSelection.toString())
+        .post("/delete-file")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
+  }
+
+  /**
    * Select contests to target, by name.
    * @param targetedContestsWithReasons Contests to target alongside the reasons for targeting them.
    * @return A mapping between contest name (all contests, not just those targeted) and its
@@ -885,16 +955,7 @@ public class Workflow  {
 
     // First get the contests.
     // Again, this would be a lot easier if we could use .as(Contest[].class), but serialization is a problem.
-    final JsonPath contests = given()
-            .filter(filter)
-            .header("Content-Type", "text/plain")
-            .get("/contest")
-            .then()
-            .assertThat()
-            .statusCode(HttpStatus.SC_OK)
-        .extract()
-        .body()
-        .jsonPath();
+    final JsonPath contests = getContests(false);
 
     // The contests and reasons to be requested.
     final JSONArray contestSelections = new JSONArray();
@@ -932,6 +993,32 @@ public class Workflow  {
         .statusCode(HttpStatus.SC_OK);
 
     return contestToDBID;
+  }
+
+  /**
+   * Hit the /contests endpoint, to learn all the contests.
+   * @param ignoreManifests
+   * @return the response, as a JsonPath.
+   */
+  protected JsonPath getContests(boolean ignoreManifests) {
+
+    // Login as state admin.
+    final SessionFilter filter = doLogin("stateadmin1");
+
+    final String query = ignoreManifests ? "?" + IGNORE_MANIFESTS +"=true" : "";
+
+    // First get the contests.
+    // Again, this would be a lot easier if we could use .as(Contest[].class), but serialization is a problem.
+    return given()
+        .filter(filter)
+        .header("Content-Type", "text/plain")
+        .get("/contest"+query)
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK)
+        .extract()
+        .body()
+        .jsonPath();
   }
 
   /**
@@ -1016,5 +1103,4 @@ public class Workflow  {
     authenticate(filter, username,"s d f",2);
     return filter;
   }
-
 }

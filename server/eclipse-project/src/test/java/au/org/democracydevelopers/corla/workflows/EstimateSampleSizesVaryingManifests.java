@@ -27,10 +27,7 @@ import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.ext.ScriptUtils;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import us.freeandfair.corla.persistence.Persistence;
 
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
@@ -52,8 +49,6 @@ import java.util.Set;
  * the manifest, and (if present) the number of ballots it states.
  * Note that it does not test for correct sample sizes, only for correct _changes_ to the sample
  * sizes as a consequence of changes to the manifest.
- * At the moment, this seems to run fine if run alone, but not to run in parallel with Demo1 or in
- * github actions. Hence currently disabled.
  */
 @Test(enabled=true)
 public class EstimateSampleSizesVaryingManifests extends Workflow {
@@ -101,12 +96,19 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     updateAuditInfo(dataPath + "Plurality_Only_Test_Canonical_List.csv", riskLimit);
     setSeed(defaultSeed);
     dashboard = getDoSDashBoardRefreshResponse();
-    assertEquals(0, riskLimit
-        .compareTo(new BigDecimal(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON).toString())));
+    assertEquals(riskLimit
+        .compareTo(new BigDecimal(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON).toString())), 0);
 
     // Estimate Sample sizes, without the manifest. This should count the CSVs. Sanity check.
     Map<String, EstimateSampleSizes.EstimateData> estimatesWithoutManifests = getSampleSizeEstimates();
     assertEquals(estimatesWithoutManifests.size(), 6);
+
+    // Get contest lists. Without manifests, this should be empty for the plain endpoint and
+    // non-empty when the ignoreManifests flag is true.
+    JsonPath response = getContests(false);
+    JsonPath responseIgnoringManifests = getContests(true);
+    assertTrue(response.getList("$").isEmpty());
+    assertFalse(responseIgnoringManifests.getList("$").isEmpty());
 
     // Upload the manifests.
     // County 1 gets a manifest that matches the CSV count
@@ -136,6 +138,15 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
         margin2Contest + suffixes[1], COUNTY_WIDE_CONTEST.toString(),
         margin2Contest + suffixes[2], COUNTY_WIDE_CONTEST.toString()
     ));
+
+    // Get contest lists again. Now this should be non-empty regardless of whether manifests are
+    // ignored.
+    response = getContests(false);
+    JsonPath responseIgnoringManifests2 = getContests(true);
+    assertFalse(response.getList("$").isEmpty());
+    assertFalse(responseIgnoringManifests2.getList("$").isEmpty());
+    // Adding the manifests makes no difference to the ignore-manifests response.
+    assertEquals(responseIgnoringManifests.get("$").toString(), responseIgnoringManifests2.get("$").toString());
 
     startAuditRound();
     dashboard = getDoSDashBoardRefreshResponse();
