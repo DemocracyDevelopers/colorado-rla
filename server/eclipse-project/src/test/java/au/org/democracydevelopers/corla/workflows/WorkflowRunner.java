@@ -244,7 +244,7 @@ public class WorkflowRunner extends Workflow {
 
         // Check that there are no more ballots to sample across all counties
         dashboard = getDoSDashBoardRefreshResponse();
-        final Map<String,Integer> statusEstBallotsToAudit = dashboard.get(ESTIMATED_BALLOTS);
+        final Map<String,Integer> statusOptBallotsToAudit = dashboard.get(OPTIMISTIC_BALLOTS);
         final Map<String, Map<String,Integer>> discrepancies = dashboard.get(DISCREPANCY_COUNT);
 
         auditNotFinished = false;
@@ -252,7 +252,7 @@ public class WorkflowRunner extends Workflow {
         // Verify that the result of this round is what we expected in terms of number of
         // estimated and optimistic ballots to audit for each contest mentioned in the associated
         // field in the instance. Also test that the resulting discrepancy counts are as expected.
-        int maxEstimated = 0;
+        int maxOptimistic = 0;
         final Optional<Map<String,Map<String,Integer>>> results = instance.getRoundContestResult(rounds+1);
         if(results.isPresent()){
           final Map<String,Map<String,Integer>> roundResults = results.get();
@@ -274,9 +274,9 @@ public class WorkflowRunner extends Workflow {
             assertEquals(contestDiscrepancies.get(TWO_OVER).intValue(), twoOverCount);
             assertEquals(contestDiscrepancies.get(TWO_UNDER).intValue(), twoUnderCount);
 
-            final int actEstBallots = statusEstBallotsToAudit.get(dbID);
+            final int actOptBallots = statusOptBallotsToAudit.get(dbID);
 
-            maxEstimated = max(maxEstimated, actEstBallots);
+            maxOptimistic = max(maxOptimistic, actOptBallots);
           }
         }
 
@@ -296,7 +296,7 @@ public class WorkflowRunner extends Workflow {
           }
         }
 
-        if(maxEstimated > 0){
+        if(maxOptimistic > 0){
           auditNotFinished = true;
         }
 

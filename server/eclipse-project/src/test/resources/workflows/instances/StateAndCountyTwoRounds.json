@@ -6,14 +6,14 @@
   "SEED" : "24098249082409821390482049098",
 
   "SQLS" : [
-    "SQL/demo1-assertions.sql"
+    "SQL/demo2-assertions.sql"
   ],
 
   "CVRS" : [
     "src/test/resources/CSVs/Demo1/1-adams-cvrexport-plusByron-1.csv",
     "src/test/resources/CSVs/Demo1/2-alamosa-cvrexport-plusByron-2.csv",
     "src/test/resources/CSVs/Demo1/3-arapahoe-Byron-3-plus-tied-irv.csv",
-    "src/test/resources/CSVs/Demo1/4-archuleta-kempsey-plusByron-4.csv",
+    "src/test/resources/CSVs/Demo2/4-archuleta-uralla-plusByron-4.csv",
     "src/test/resources/CSVs/split-Byron/Byron-5.csv",
     "src/test/resources/CSVs/split-Byron/Byron-6.csv",
     "src/test/resources/CSVs/Demo1/7-unredacted-boulder-2023-plusByron-7.csv",
@@ -80,7 +80,7 @@
     "src/test/resources/CSVs/Demo1/1-adams-plusByron-1-manifest.csv",
     "src/test/resources/CSVs/Demo1/2-alamosa-plusByron-2-manifest.csv",
     "src/test/resources/CSVs/split-Byron/Byron-3-manifest.csv",
-    "src/test/resources/CSVs/NewSouthWales21/Kempsey_Mayoral.manifest.csv",
+    "src/test/resources/CSVs/NewSouthWales21/Uralla_Mayoral.manifest.csv",
     "src/test/resources/CSVs/split-Byron/Byron-5-manifest.csv",
     "src/test/resources/CSVs/split-Byron/Byron-6-manifest.csv",
     "src/test/resources/CSVs/Demo1/7-unredacted-Boulder-IRV-Manifest.csv",
@@ -143,32 +143,40 @@
     "src/test/resources/CSVs/split-Byron/Byron-64-manifest.csv"
   ],
 
-  "CANONICAL_LIST" : "src/test/resources/CSVs/Demo1/demo1-canonical-list.csv",
+  "CANONICAL_LIST" : "src/test/resources/CSVs/Demo2/demo2-canonical-list.csv",
 
   "TARGETS" : {
     "City of Longmont - Mayor" : "COUNTY_WIDE_CONTEST",
     "Byron Mayoral" : "STATE_WIDE_CONTEST",
-    "Kempsey Mayoral" : "COUNTY_WIDE_CONTEST"
+    "Uralla Mayoral" : "COUNTY_WIDE_CONTEST"
   },
 
   "DILUTED_MARGINS" : {
     "City of Longmont - Mayor" : 0.09078192,
     "Byron Mayoral" : 0.00684644,
-    "Kempsey Mayoral" : 0.02200739
+    "Uralla Mayoral" : 0.613594287
   },
 
   "EXPECTED_SAMPLES" : {
     "City of Longmont - Mayor" : 81,
     "Byron Mayoral" : 1065,
-    "Kempsey Mayoral" : 332
+    "Uralla Mayoral" : 12
+  },
+
+  "FINAL_EXPECTED_AUDITED_BALLOTS" : {
+    "City of Longmont - Mayor" : 332,
+    "Byron Mayoral" : 1157,
+    "Uralla Mayoral" : 12
   },
 
   "IRV_CONTESTS" : [
     "Byron Mayoral",
-    "Kempsey Mayoral",
+    "Uralla Mayoral",
     "Tied_IRV",
     "City of Boulder Mayoral"
   ],
+
+  "EXPECTED_ROUNDS" : 2,
 
   "PHANTOM_BALLOTS" : {
   },
@@ -180,8 +188,19 @@
   },
 
   "CHOICES" : {
+    "32" : {
+      "1-2-4": {
+        "Byron Mayoral": [
+          "COOREY Cate(1)",
+          "SWIVEL Mark(2)",
+          "PUGH Asren(3)",
+          "LYON Michael(4)",
+          "CLARKE Bruce(5)"
+        ]
+      }
+    },
     "64" : {
-      "1-2-20": {
+      "1-3-50": {
         "Byron Mayoral": [
           "SWIVEL Mark(1)",
           "COOREY Cate(2)"
@@ -189,71 +208,51 @@
       }
     },
     "7" : {
-      "101-1-58": {
+      "108-1-87": {
         "Byron Mayoral": [
-          "CLARKE Bruce(1)",
-          "PUGH Asren(2)",
-          "SWIVEL Mark(3)",
-          "HUNTER Alan(4)",
-          "COOREY Cate(5)"
-        ]
-      }
-    },
-    "4" : {
-      "1-225-32": {
-        "Kempsey Mayoral": [
-          "HAUVILLE Leo(1)",
-          "CAMPBELL Liz(2)",
-          "EVANS Andrew(3)",
-          "RAEBURN Bruce(4)"
-        ]
-      },
-      "1-221-35": {
-        "Kempsey Mayoral": [
-          "BAIN Arthur(1)",
-          "EVANS Andrew(2)",
-          "RAEBURN Bruce(3)"
+          "LYON Michael(1)",
+          "DEY Duncan(2)"
         ]
       }
     }
   },
 
   "REAUDITS" : {
-    "64" : {
-      "1-2-20": [
+    "32" : {
+      "1-2-4": [
         {
           "Byron Mayoral": {
             "choices" : [
-              "SWIVEL Mark(1)",
-              "COOREY Cate(2)"
+              "COOREY Cate(1)",
+              "SWIVEL Mark(2)",
+              "PUGH Asren(3)",
+              "LYON Michael(4)",
+              "CLARKE Bruce(5)"
             ],
             "consensus" : "YES"
           }
         }
       ]
     },
-    "4" : {
-      "1-225-32": [
+    "64" : {
+      "1-3-50": [
         {
-          "Kempsey Mayoral": {
+          "Byron Mayoral": {
             "choices" : [
-              "HAUVILLE Leo(1)",
-              "CAMPBELL Liz(2)",
-              "EVANS Andrew(3)",
-              "RAEBURN Bruce(4)"
+              "SWIVEL Mark(1)"
             ],
-            "consensus" : "YES"
+            "consensus" : "NO"
           }
         }
-      ],
-      "1-221-35": [
+      ]
+    },
+    "7" : {
+      "108-1-87": [
         {
-          "Kempsey Mayoral": {
+          "Byron Mayoral": {
             "choices" : [
-              "HAUVILLE Leo(1)",
-              "BAIN Arthur(2)",
-              "EVANS Andrew(3)",
-              "RAEBURN Bruce(4)"
+              "LYON Michael(1)",
+              "DEY Duncan(2)"
             ],
             "consensus" : "YES"
           }
@@ -261,17 +260,13 @@
       ]
     }
   },
-  "COUNTY_RESULTS" : {
-  },
-
-
 
   "CONTEST_RESULTS" : {
     "1" : {
       "Byron Mayoral" : {
         "one_over_count" : 1,
         "two_over_count" : 1,
-        "one_under_count" : 0,
+        "one_under_count" : 1,
         "two_under_count" : 0,
         "other_count" : 0
       },
@@ -282,10 +277,10 @@
         "two_under_count" : 0,
         "other_count" : 0
       },
-      "Kempsey Mayoral" : {
+      "Uralla Mayoral" : {
         "one_over_count" : 0,
         "two_over_count" : 0,
-        "one_under_count" : 1,
+        "one_under_count" : 0,
         "two_under_count" : 0,
         "other_count" : 0
       }
@@ -294,7 +289,7 @@
       "Byron Mayoral" : {
         "one_over_count" : 1,
         "two_over_count" : 1,
-        "one_under_count" : 0,
+        "one_under_count" : 1,
         "two_under_count" : 0,
         "other_count" : 0
       },
@@ -305,33 +300,10 @@
         "two_under_count" : 0,
         "other_count" : 0
       },
-      "Kempsey Mayoral" : {
-        "one_over_count" : 0,
-        "two_over_count" : 0,
-        "one_under_count" : 1,
-        "two_under_count" : 0,
-        "other_count" : 0
-      }
-    },
-    "3" : {
-      "Byron Mayoral" : {
-        "one_over_count" : 1,
-        "two_over_count" : 1,
-        "one_under_count" : 0,
-        "two_under_count" : 0,
-        "other_count" : 0
-      },
-      "City of Longmont - Mayor" : {
+      "Uralla Mayoral" : {
         "one_over_count" : 0,
         "two_over_count" : 0,
         "one_under_count" : 0,
-        "two_under_count" : 0,
-        "other_count" : 0
-      },
-      "Kempsey Mayoral" : {
-        "one_over_count" : 0,
-        "two_over_count" : 0,
-        "one_under_count" : 1,
         "two_under_count" : 0,
         "other_count" : 0
       }

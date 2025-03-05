@@ -102,10 +102,16 @@ public class Instance {
   private Map<String,Double> dilutedMargins;
 
   /**
-   * Expected sample sizes for targeted contests.
+   * Expected sample sizes for targeted contests (first round).
    */
   @JsonProperty("EXPECTED_SAMPLES")
   private Map<String,Integer> expectedSamples;
+
+  /**
+   * Expected number of audited ballots for each targeted contest, after all rounds.
+   */
+  @JsonProperty("FINAL_EXPECTED_AUDITED_BALLOTS")
+  private Map<String,Integer> finalExpectedSamples;
 
   /**
    * Subset of contests targeted for audit that are IRV contests.
@@ -267,6 +273,14 @@ public class Instance {
    */
   public Map<String,Integer> getExpectedSamples(){
     return Collections.unmodifiableMap(expectedSamples);
+  }
+
+  /**
+   * @return Unmodifiable mapping between targeted contest name and expected number of audited
+   * ballots after all audit rounds.
+   */
+  public Map<String,Integer> getExpectedAuditedBallots(){
+    return Collections.unmodifiableMap(finalExpectedSamples);
   }
 
   /**
