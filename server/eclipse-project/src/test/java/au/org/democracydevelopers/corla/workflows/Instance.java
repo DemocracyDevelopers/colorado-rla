@@ -114,10 +114,10 @@ public class Instance {
   private List<String> irvContests;
 
   /**
-   * Number of rounds of auditing that we expect will take place.
+   * Number of rounds of auditing that we expect will take place. Optional (can be null).
    */
   @JsonProperty("EXPECTED_ROUNDS")
-  private int expectedRounds;
+  private Integer expectedRounds;
 
   /**
    * Round by round results for contests whose statuses we want to test.
@@ -187,7 +187,6 @@ public class Instance {
     dilutedMargins = new HashMap<>();
     expectedSamples = new HashMap<>();
     irvContests = new ArrayList<>();
-    expectedRounds = 0;
     contestResults = new HashMap<>();
     countyResults = new HashMap<>();
     phantomBallots = new HashMap<>();
@@ -195,6 +194,7 @@ public class Instance {
     actualChoices = new HashMap<>();
     disagreements = new HashMap<>();
     reaudits = new HashMap<>();
+    expectedRounds = null;
   }
 
   /**
@@ -270,9 +270,10 @@ public class Instance {
   }
 
   /**
-   * @return The number of rounds of auditing we expect will take place.
+   * @return The number of rounds of auditing we expect will take place. Can be null if nothing
+   * specified in JSON instance.
    */
-  public int getExpectedRounds(){
+  public Integer getExpectedRounds(){
     return expectedRounds;
   }
 

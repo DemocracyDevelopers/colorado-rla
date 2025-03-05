@@ -39,7 +39,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -304,7 +303,10 @@ public class WorkflowRunner extends Workflow {
         rounds += 1;
       }
 
-      assert(rounds >= instance.getExpectedRounds());
+      final Integer expectedRounds = instance.getExpectedRounds();
+      if(expectedRounds != null){
+        assertEquals(expectedRounds.intValue(), rounds);
+      }
 
       postgres.stop();
     }
