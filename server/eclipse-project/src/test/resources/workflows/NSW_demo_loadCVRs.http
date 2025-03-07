@@ -1,0 +1,823 @@
+### This loads all 32 manifests for NSW (in alphabetical order) in CO's first 32 counties.
+
+### 1. Adams County, with Ballina Mayoral.
+### POST request with basic login.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin1",
+  "password":""
+}
+> {%
+  import {authSanityCheck} from 'testScripts/testUtils';
+  authSanityCheck("countyadmin1", 1, 'TRADITIONALLY_AUTHENTICATED');
+%}
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin1",
+  "second_factor":"s d f"
+}
+
+> {%
+  import {authSanityCheck} from 'testScripts/testUtils';
+  authSanityCheck("countyadmin1", 2, 'SECOND_FACTOR_AUTHENTICATED');
+ %}
+
+### GET the county dashboard. This is just to test that the login worked.
+GET http://localhost:8888/county-dashboard
+
+### POST the cvr file and its hash
+#POST http://localhost:8888/upload-file
+#Content-Type: multipart/form-data; boundary=TheBoundary
+
+#--TheBoundary
+#Content-Disposition: form-data; name="file"; filename="1-adams-cvrexport-plusByron-1.csv"
+#Content-Type: text/csv
+
+#< ../CSVs/Demo1/1-adams-cvrexport-plusByron-1.csv
+
+#--TheBoundary
+#Content-Disposition: form-data; name="hash"
+#Content-Type: text/csv
+
+#< ../CSVs/Demo1/1-adams-cvrexport-plusByron-1.csv.sha256sum
+#--TheBoundary--
+
+#> {%
+#    const cvrUploadResponse = response.body;
+#    client.global.set("cvrUploadResponse", cvrUploadResponse);
+#%}
+
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="Ballina_Mayoral.csv"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Ballina_Mayoral.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Ballina_Mayoral.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse)
+%}
+
+### Request the CVR export to be imported.
+### Oddly enough, this requires resending the response from the file upload.
+POST  http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":"countyadmin1"
+}
+
+### 2. Alamosa County, with Bellingen Mayoral.
+### POST request with basic login.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin2",
+  "password":""
+}
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin2",
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="Bellingen_Mayoral.csv"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Bellingen_Mayoral.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Bellingen_Mayoral.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse)
+%}
+
+### Request the CVR export to be imported.
+POST  http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":"countyadmin2"
+}
+
+### 3. Arapahoe County, with Burwood Mayoral.
+### POST request with basic login.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin3",
+  "password":""
+}
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin3",
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="Burwood_Mayoral.csv"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Burwood_Mayoral.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Burwood_Mayoral.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse)
+%}
+
+### Request the CVR export to be imported.
+POST  http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":"countyadmin3"
+}
+
+### 4. Archuleta County, with Kempsey Mayoral.
+### POST request with basic login.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin4",
+  "password":""
+}
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin4",
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="Kempsey_Mayoral.csv"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Kempsey_Mayoral.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Kempsey_Mayoral.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse)
+%}
+
+### Request the CVR export to be imported.
+POST  http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}}
+}
+
+### Now county 24
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin24",
+  "password":""
+}
+
+> {%
+    client.global.set("countyUsername", "countyadmin24")
+%}
+
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}},
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="Mosman_Mayoral.csv"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Mosman_Mayoral.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Mosman_Mayoral.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse)
+%}
+
+### Request the CVR export to be imported.
+POST  http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}}
+}
+
+### Now county 25
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin25",
+  "password":""
+}
+
+> {%
+    client.global.set("countyUsername", "countyadmin25")
+%}
+
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}},
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="Nambucca_Valley_Mayoral.csv"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Nambucca_Valley_Mayoral.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Nambucca_Valley_Mayoral.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse)
+%}
+
+### Request the CVR export to be imported.
+POST  http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}}
+}
+
+### Now county 26
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin26",
+  "password":""
+}
+
+> {%
+    client.global.set("countyUsername", "countyadmin26")
+%}
+
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}},
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="Port_Macquarie-Hastings_Mayoral.csv"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Port_Macquarie-Hastings_Mayoral.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Port_Macquarie-Hastings_Mayoral.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse)
+%}
+
+### Request the CVR export to be imported.
+POST  http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}}
+}
+
+### Now county 27
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin27",
+  "password":""
+}
+
+> {%
+    client.global.set("countyUsername", "countyadmin27")
+%}
+
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}},
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="Port_Stephens_Mayoral.csv"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Port_Stephens_Mayoral.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Port_Stephens_Mayoral.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse)
+%}
+
+### Request the CVR export to be imported.
+POST  http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}}
+}
+
+### Now county 28
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin28",
+  "password":""
+}
+
+> {%
+    client.global.set("countyUsername", "countyadmin28")
+%}
+
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}},
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="Richmond_Valley_Mayoral.csv"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Richmond_Valley_Mayoral.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Richmond_Valley_Mayoral.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse)
+%}
+
+### Request the CVR export to be imported.
+POST  http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}}
+}
+
+### Now county 29
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin29",
+  "password":""
+}
+
+> {%
+    client.global.set("countyUsername", "countyadmin29")
+%}
+
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}},
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="Singleton_Mayoral.csv"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Singleton_Mayoral.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Singleton_Mayoral.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse)
+%}
+
+### Request the CVR export to be imported.
+POST  http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}}
+}
+
+### Now county 30
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin30",
+  "password":""
+}
+
+> {%
+    client.global.set("countyUsername", "countyadmin30")
+%}
+
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}},
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="The_Hills_Shire_Mayoral.csv"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/The_Hills_Shire_Mayoral.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/The_Hills_Shire_Mayoral.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse)
+%}
+
+### Request the CVR export to be imported.
+POST  http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}}
+}
+
+### Now county 31
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin31",
+  "password":""
+}
+
+> {%
+    client.global.set("countyUsername", "countyadmin31")
+%}
+
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}},
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="Uralla_Mayoral.csv"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Uralla_Mayoral.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Uralla_Mayoral.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse)
+%}
+
+### Request the CVR export to be imported.
+POST  http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}}
+}
+
+### Now county 32
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":"countyadmin32",
+  "password":""
+}
+
+> {%
+    client.global.set("countyUsername", "countyadmin32")
+%}
+
+
+### POST request for second factor.
+POST http://localhost:8888/auth-admin
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}},
+  "second_factor":"s d f"
+}
+
+### GET the county dashboard.
+GET http://localhost:8888/county-dashboard
+
+### POST the manifest and its hash
+POST http://localhost:8888/upload-file
+Content-Type: multipart/form-data; boundary=TheBoundary
+
+--TheBoundary
+Content-Disposition: form-data; name="file"; filename="Wollondilly_Mayoral.csv"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Wollondilly_Mayoral.csv
+
+--TheBoundary
+Content-Disposition: form-data; name="hash"
+Content-Type: text/csv
+
+< ../CSVs/NewSouthWales21/Wollondilly_Mayoral.csv.sha256sum
+--TheBoundary--
+
+> {%
+    const cvrUploadResponse = response.body;
+    client.global.set("cvrUploadResponse", cvrUploadResponse)
+%}
+
+### Request the CVR export to be imported.
+POST  http://localhost:8888/import-cvr-export
+Content-Type: application/json
+
+{{cvrUploadResponse}}
+
+### Log out
+POST http://localhost:8888/unauthenticate
+Content-Type: application/json
+
+{
+  "username":{{countyUsername}}
+}

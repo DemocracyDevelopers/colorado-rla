@@ -285,36 +285,43 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
     } catch (final NoSuchElementException e) {
       // This happens if the contest name is not in the IRVContestResults, or if the Contest Result
       // does not actually contain any contests (the latter should never happen).
-      LOGGER.error(String.format("%s %s %s.", prefix, e.getMessage(), contestName));
-      throw new IllegalArgumentException(e.getMessage() + " " + contestName);
+      final String msg = "Unrecognised IRV contest: ";
+      final String errorMsg = String.format("%s %s %s.%s", prefix, msg, contestName, e.getMessage()==null?"":" "+e.getMessage());
+      LOGGER.error(errorMsg);
+      throw new RuntimeException(errorMsg);
     } catch (JsonSyntaxException e) {
       // This happens if the raire service returns something that isn't interpretable as json,
       // so gson throws a syntax exception when trying to parse raireResponse.
       final String msg = "Error interpreting Raire response for contest ";
-      LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
-      throw new RuntimeException(msg + contestName);
+      final String errorMsg = String.format("%s %s %s.%s", prefix, msg, contestName, e.getMessage()==null?"":" "+e.getMessage());
+      LOGGER.error(errorMsg);
+      throw new RuntimeException(errorMsg);
     } catch (final UnsupportedEncodingException e) {
       // This really shouldn't happen, but would happen if the effort to make the
       // generateAssertionsRequest as json failed.
       final String msg = "Error generating request to Raire for contest ";
-      LOGGER.error(String.format("%s %s %s %s", prefix, msg, contestName, e.getMessage()));
-      throw new RuntimeException(msg + contestName + e.getMessage());
+      final String errorMsg = String.format("%s %s %s.%s", prefix, msg, contestName, e.getMessage()==null?"":" "+e.getMessage());
+      LOGGER.error(errorMsg);
+      throw new RuntimeException(errorMsg);
     } catch (final NullPointerException e) {
       // This also shouldn't happen - it would indicate an unexpected problem such as the httpClient
       // returning a null response.
       final String msg = "Error requesting or receiving assertions for contest";
-      LOGGER.error(String.format("%s %s %s.", prefix, msg, contestName));
-      throw new RuntimeException(msg + contestName);
+      final String errorMsg = String.format("%s %s %s.%s", prefix, msg, contestName, e.getMessage()==null?"":" "+e.getMessage());
+      LOGGER.error(errorMsg);
+      throw new RuntimeException(errorMsg);
     } catch (final IOException e) {
       // Generic error that can be thrown by the httpClient if the connection attempt fails.
       final String msg = "I/O error during generate assertions attempt for contest";
-      LOGGER.error(String.format("%s %s %s. %s", prefix, msg, contestName, e.getMessage()));
-      throw new RuntimeException(msg + contestName + e.getMessage());
+      final String errorMsg = String.format("%s %s %s.%s", prefix, msg, contestName, e.getMessage()==null?"":" "+e.getMessage());
+      LOGGER.error(errorMsg);
+      throw new RuntimeException(errorMsg);
     } catch (final InterruptedException e) {
       // The http connection to RAIRE was interrupted.
       final String msg = "Connection to RAIRE interrupted for contest";
-      LOGGER.error(String.format("%s %s %s. %s", prefix, msg, contestName, e.getMessage()));
-      throw new RuntimeException(msg + contestName + e.getMessage());
+      final String errorMsg = String.format("%s %s %s.%s", prefix, msg, contestName, e.getMessage()==null?"":" "+e.getMessage());
+      LOGGER.error(errorMsg);
+      throw new RuntimeException(errorMsg);
     }
   }
 

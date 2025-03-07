@@ -27,7 +27,7 @@ The first 4 can run in any order, but they can take a while - make sure they're 
 ## Examining the output.
 `demo1-defineAudit` prints into the console a list of 'ballots remaining in round' for all contests. Counties 4 and 7 should have hundreds of ballots to audit; the rest should have a range of values from 0 to about 6.
 
-It also saves the sample sizes and assertions files in the `workflows/demo1-stored-data` directory.
+It also saves the sample sizes and assertions files in the `workflows/demo-stored-data` directory.
 
 `county-2-Alamosa-do-audit` prints the requested audit ballot IDs to the console - there should be two.
 
