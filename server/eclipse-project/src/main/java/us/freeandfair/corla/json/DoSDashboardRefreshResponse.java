@@ -190,7 +190,7 @@ public class DoSDashboardRefreshResponse {
             optimistic = ca.optimisticRemaining();
             estimated = ca.estimatedRemaining();
 
-            LOGGER.debug(String
+            LOGGER.info(String
                 .format("[createResponse: optimistic=%d, estimated = %d, ca.optimisticSamplesToAudit()=%d, ca.estimatedSamplesToAudit()=%d, ca.getAuditedSampleCount()=%d]",
                         optimistic, estimated, ca.optimisticSamplesToAudit(),
                         ca.estimatedSamplesToAudit(), ca.getAuditedSampleCount()));
@@ -205,8 +205,8 @@ public class DoSDashboardRefreshResponse {
             }
           }
 
-          estimated_ballots_to_audit.put(cta.contest().id(), optimistic);
-          optimistic_ballots_to_audit.put(cta.contest().id(), estimated);
+          estimated_ballots_to_audit.put(cta.contest().id(), estimated);
+          optimistic_ballots_to_audit.put(cta.contest().id(), optimistic);
           discrepancy_count.put(cta.contest().id(), discrepancy);
           break;
 

@@ -1,5 +1,5 @@
 {
-  "NAME" : "StateAndCountySingleRound",
+  "NAME" : "LastBallotInRoundDiscrepancy",
 
   "RISK_LIMIT" : 0.03,
 
@@ -188,9 +188,39 @@
   },
 
   "DISCREPANT_AUDITED_BALLOT_CHOICES" : {
+    "64" : {
+      "1-4-25": {
+        "Byron Mayoral": [
+          "SWIVEL Mark(1)",
+          "COOREY Cate(2)",
+          "CLARKE Bruce(3)",
+          "ANDERSON John(4)",
+          "MCILRATH Christopher(5)",
+          "DEY Duncan(6)"
+        ]
+      }
+    }
   },
 
   "REAUDITS" : {
+    "64" : {
+      "1-4-25": [
+        {
+          "Byron Mayoral": {
+            "choices" : [
+              "SWIVEL Mark(1)",
+              "LYON Michael(2)",
+              "COOREY Cate(3)",
+              "CLARKE Bruce(4)",
+              "MCILRATH Christopher(5)",
+              "ANDERSON John(6)",
+              "DEY Duncan(7)"
+            ],
+            "consensus" : "YES"
+          }
+        }
+      ]
+    }
   },
 
   "CONTEST_RESULTS" : {
