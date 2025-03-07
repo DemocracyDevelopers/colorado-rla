@@ -1,16 +1,16 @@
 This directory contains the http files for loading up the database intended to be used for demo 1.
 
-## Running the demo
-
-Before running the demo, 
+# Setup
+Before running these demos, 
 - drop all tables from the corla database,
 - run colorado-rla by following the 
 [developer instructions](https://github.com/DemocracyDevelopers/colorado-rla/blob/main/docs/25_developer.md), 
 - including loading the test credentials from colorado-rla/test/corla-test-credentials.psql.
 - Run the raire-service by following its [README](https://github.com/DemocracyDevelopers/raire-service).
 
-Both the raire-service and colorado-rla need to be running while the demo is running.
+Both the raire-service and colorado-rla need to be running while the demos are running.
 
+# Running Demo 1.
 Now you should be able to run demo http files by clicking on the double-green-arrow in IntelliJ. 
 Run them in the `dev` environment, which appears as a drop down after 'Run with' if you open the .http
 file in the IntelliJ editor. This loads some variables from `http-client.env.json`. 
@@ -49,3 +49,32 @@ For each other county n, the demo loads `split-Byron/Byron-n.csv` and uses the a
 
 Each of the .http files can be used independently if you like. For example, if you want to test whether Sample Size estimation works without manifests, run `Boulder_loadCVRs` and `demo1_loadCVRs.http`
 then hit the sample size estimation endpoint.
+
+# Running the NSW Demo
+
+Very similar to Demo 1.
+To run the complete demo, set the environment to 'dev' and execute the following:
+- `NSW_demo_loadCVRs.http`
+- `NSW_demo_loadManifests.http`
+- `NSW_defineAudit.http`
+
+# Running the Tiny IRV Demo
+
+Very similar to the other demos.
+
+
+## Examining the output
+TODO.
+
+## Details of the data
+- Lake County (33) has the TinyExample1 IRV contest, plus a tied and a non-tied plurality contest.
+- La Plata County (34) has an example of TinyExample1 that is meant to contain
+  - an invalid contest name (TinyInvalidExample should be canonicalized to TinyExample1),
+  - an invalid candidate name (Alicia should be canonicalized to Alice),
+  - invalid IRV votes (e.g. repeated or missing ranks).
+- Larimer County (35) has a TiedIRV contest.
+- Las Animas County (36) has the Guide To Raire Example 3.
+
+## Running it manually
+This demo is well suited to running manually with the client UI.
+

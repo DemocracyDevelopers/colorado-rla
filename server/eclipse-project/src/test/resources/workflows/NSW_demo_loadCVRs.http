@@ -31,28 +31,6 @@ Content-Type: application/json
 ### GET the county dashboard. This is just to test that the login worked.
 GET http://localhost:8888/county-dashboard
 
-### POST the cvr file and its hash
-#POST http://localhost:8888/upload-file
-#Content-Type: multipart/form-data; boundary=TheBoundary
-
-#--TheBoundary
-#Content-Disposition: form-data; name="file"; filename="1-adams-cvrexport-plusByron-1.csv"
-#Content-Type: text/csv
-
-#< ../CSVs/Demo1/1-adams-cvrexport-plusByron-1.csv
-
-#--TheBoundary
-#Content-Disposition: form-data; name="hash"
-#Content-Type: text/csv
-
-#< ../CSVs/Demo1/1-adams-cvrexport-plusByron-1.csv.sha256sum
-#--TheBoundary--
-
-#> {%
-#    const cvrUploadResponse = response.body;
-#    client.global.set("cvrUploadResponse", cvrUploadResponse);
-#%}
-
 ### POST the CVRs and the file hash
 POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
