@@ -285,10 +285,8 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
     } catch (final NoSuchElementException e) {
       // This happens if the contest name is not in the IRVContestResults, or if the Contest Result
       // does not actually contain any contests (the latter should never happen).
-      final String msg = "Unrecognised IRV contest: ";
-      final String errorMsg = String.format("%s %s %s.%s", prefix, msg, contestName, e.getMessage()==null?"":" "+e.getMessage());
-      LOGGER.error(errorMsg);
-      throw new RuntimeException(errorMsg);
+      LOGGER.error(String.format("%s %s %s.", prefix, e.getMessage(), contestName));
+      throw new IllegalArgumentException(e.getMessage() + " " + contestName);
     } catch (JsonSyntaxException e) {
       // This happens if the raire service returns something that isn't interpretable as json,
       // so gson throws a syntax exception when trying to parse raireResponse.
