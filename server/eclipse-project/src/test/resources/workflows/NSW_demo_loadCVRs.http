@@ -1,4 +1,4 @@
-### This loads all 32 manifests for NSW (in alphabetical order) in CO's first 32 counties.
+### This loads all 32 CVRs for NSW (in alphabetical order) in CO's first 32 counties.
 
 ### 1. Adams County, with Ballina Mayoral.
 ### POST request with basic login.
@@ -252,7 +252,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -309,7 +309,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -366,7 +366,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -423,7 +423,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -485,7 +485,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -547,7 +547,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -609,7 +609,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -671,7 +671,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -733,7 +733,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -795,7 +795,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -857,7 +857,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -919,7 +919,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -981,7 +981,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -1043,7 +1043,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -1105,7 +1105,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -1167,7 +1167,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -1229,7 +1229,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -1291,7 +1291,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -1353,7 +1353,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -1415,7 +1415,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -1477,7 +1477,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -1539,7 +1539,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -1601,7 +1601,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -1663,7 +1663,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -1725,7 +1725,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -1787,7 +1787,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -1849,7 +1849,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -1911,7 +1911,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
@@ -1973,7 +1973,7 @@ Content-Type: text/csv
 %}
 
 ### Request the CVR export to be imported.
-POST  http://localhost:8888/import-ballot-manifest
+POST  http://localhost:8888/import-cvr-export
 Content-Type: application/json
 
 {{cvrUploadResponse}}
