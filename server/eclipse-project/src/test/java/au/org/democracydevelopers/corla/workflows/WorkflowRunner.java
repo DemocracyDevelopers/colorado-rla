@@ -39,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -252,14 +253,13 @@ public class WorkflowRunner extends Workflow {
         // Verify that the result of this round is what we expected in terms of number of
         // estimated and optimistic ballots to audit for each contest mentioned in the associated
         // field in the instance. Also test that the resulting discrepancy counts are as expected.
-        int maxOptimistic = 0;
         final Optional<Map<String,Map<String,Integer>>> results = instance.getRoundContestResult(rounds+1);
-        if(results.isPresent()){
-          final Map<String,Map<String,Integer>> roundResults = results.get();
+        if(results.isPresent()) {
+          final Map<String, Map<String, Integer>> roundResults = results.get();
 
-          for(final String contestName : roundResults.keySet()){
+          for (final String contestName : roundResults.keySet()) {
             final String dbID = contestToDBID.get(contestName);
-            final Map<String,Integer> contestResult = roundResults.get(contestName);
+            final Map<String, Integer> contestResult = roundResults.get(contestName);
 
             final int oneOverCount = contestResult.get(ONE_OVER_COUNT);
             final int oneUnderCount = contestResult.get(ONE_UNDER_COUNT);
@@ -267,22 +267,21 @@ public class WorkflowRunner extends Workflow {
             final int twoUnderCount = contestResult.get(TWO_UNDER_COUNT);
             final int otherCount = contestResult.get(OTHER_COUNT);
 
-            final Map<String,Integer> contestDiscrepancies = discrepancies.get(dbID);
+            final Map<String, Integer> contestDiscrepancies = discrepancies.get(dbID);
             assertEquals(contestDiscrepancies.get(ONE_OVER).intValue(), oneOverCount);
             assertEquals(contestDiscrepancies.get(ONE_UNDER).intValue(), oneUnderCount);
             assertEquals(contestDiscrepancies.get(OTHER).intValue(), otherCount);
             assertEquals(contestDiscrepancies.get(TWO_OVER).intValue(), twoOverCount);
             assertEquals(contestDiscrepancies.get(TWO_UNDER).intValue(), twoUnderCount);
-
-            final int actOptBallots = statusOptBallotsToAudit.get(dbID);
-
-            maxOptimistic = max(maxOptimistic, actOptBallots);
           }
         }
+
+        final int maxOptimistic = Collections.max(statusOptBallotsToAudit.values());
 
         final Map<String, Map<String,Object>> status = dashboard.get(COUNTY_STATUS);
         final Optional<Map<String,Map<String,Integer>>> countyResults = instance.getRoundCountyResult(rounds+1);
 
+        int maxBallotsRemaining = 0;
         if(countyResults.isPresent()){
           for(final Map.Entry<String, Map<String, Integer>> entry : countyResults.get().entrySet()){
             final Map<String,Integer> expStatus = entry.getValue();
@@ -293,19 +292,37 @@ public class WorkflowRunner extends Workflow {
 
             assertEquals(ballotsRemaining, expStatus.get(BALLOTS_REMAINING).intValue());
             assertEquals(estimatedBallots, expStatus.get(ESTIMATED_BALLOTS).intValue());
+
+            maxBallotsRemaining = max(ballotsRemaining, maxBallotsRemaining);
           }
         }
 
-        if(maxOptimistic > 0){
+        if(maxOptimistic > 0 || maxBallotsRemaining > 0){
           auditNotFinished = true;
         }
 
         rounds += 1;
       }
 
+      // Check that the number of rounds completed is as expected. Note that this may
+      // not be specified in the instance.
       final Integer expectedRounds = instance.getExpectedRounds();
       if(expectedRounds != null){
         assertEquals(expectedRounds.intValue(), rounds);
+      }
+
+      // Check that the number of audited ballots for targeted contests meets expectations.
+      final Map<String,Integer> expectedAuditedBallots = instance.getExpectedAuditedBallots();
+      final List<String> content = getReportAsCSV("contest");
+      for(final String line : content){
+        final String[] tokens = line.split(",");
+        for(final String contest : targets.keySet()){
+          if(tokens[0].equalsIgnoreCase(contest)){
+            final int expected = expectedAuditedBallots.get(contest);
+            assert(Integer.parseInt(tokens[9]) >= expected);
+            break;
+          }
+        }
       }
 
       postgres.stop();

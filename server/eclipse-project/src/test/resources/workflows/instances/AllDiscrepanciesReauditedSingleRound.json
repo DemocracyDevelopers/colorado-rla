@@ -1,5 +1,5 @@
 {
-  "NAME" : "StateAndCountySingleRound",
+  "NAME" : "AllDiscrepanciesReauditedSingleRound",
 
   "RISK_LIMIT" : 0.03,
 
@@ -163,6 +163,12 @@
     "Kempsey Mayoral" : 332
   },
 
+  "FINAL_EXPECTED_AUDITED_BALLOTS" : {
+    "City of Longmont - Mayor" : 81,
+    "Byron Mayoral" : 1065,
+    "Kempsey Mayoral" : 332
+   },
+
   "IRV_CONTESTS" : [
     "Byron Mayoral",
     "Kempsey Mayoral",
@@ -181,10 +187,159 @@
   "DISAGREEMENTS" : {
   },
 
-  "CHOICES" : {
+  "DISCREPANT_AUDITED_BALLOT_CHOICES" : {
+    "32" : {
+      "1-1-22": {
+        "Byron Mayoral": [
+          "COOREY Cate(1)",
+          "SWIVEL Mark(2)",
+          "PUGH Asren(3)",
+          "LYON Michael(4)",
+          "CLARKE Bruce(5)"
+        ]
+      }
+    },
+    "64" : {
+      "1-2-20": {
+        "Byron Mayoral": [
+          "SWIVEL Mark(1)",
+          "COOREY Cate(2)"
+        ]
+      }
+    },
+    "7" : {
+      "101-1-58": {
+        "Byron Mayoral": [
+          "CLARKE Bruce(1)",
+          "PUGH Asren(2)",
+          "SWIVEL Mark(3)",
+          "HUNTER Alan(4)",
+          "COOREY Cate(5)"
+        ]
+      }
+    },
+    "4" : {
+      "1-99-59": {
+        "Kempsey Mayoral": [
+          "HAUVILLE Leo(1)"
+        ]
+      },
+      "1-1-45": {
+        "Kempsey Mayoral": [
+          "CAMPBELL Liz(1)"
+        ]
+      },
+      "1-225-32": {
+         "Kempsey Mayoral": [
+            "HAUVILLE Leo(1)",
+            "CAMPBELL Liz(2)",
+            "EVANS Andrew(3)",
+            "RAEBURN Bruce(4)"
+         ]
+      },
+      "1-221-35": {
+         "Kempsey Mayoral": [
+            "BAIN Arthur(1)",
+            "EVANS Andrew(2)",
+            "RAEBURN Bruce(3)"
+         ]
+      }
+    }
   },
 
   "REAUDITS" : {
+    "32" : {
+      "1-1-22": [
+        {
+          "Byron Mayoral": {
+            "choices" : [
+              "SWIVEL Mark(1)",
+              "PUGH Asren(2)",
+              "LYON Michael(3)",
+              "CLARKE Bruce(4)",
+              "COOREY Cate(5)"
+            ],
+            "consensus" : "YES"
+          }
+        }
+      ]
+    },
+    "64" : {
+      "1-2-20": [
+        {
+          "Byron Mayoral": {
+            "choices" : [
+              "SWIVEL Mark(1)"
+            ],
+            "consensus" : "YES"
+          }
+        }
+      ]
+    },
+    "7" : {
+      "101-1-58": [
+        {
+          "Byron Mayoral": {
+            "choices" : [
+              "LYON Michael(1)",
+              "CLARKE Bruce(2)",
+              "PUGH Asren(3)",
+              "SWIVEL Mark(4)",
+              "HUNTER Alan(5)",
+              "COOREY Cate(6)"
+            ],
+            "consensus" : "YES"
+          }
+        }
+      ]
+    },
+    "4" : {
+      "1-99-59": [
+        {
+          "Kempsey Mayoral": {
+            "choices" : [
+              "CAMPBELL Liz(1)"
+            ],
+            "consensus" : "YES"
+          }
+        }
+      ],
+      "1-1-45": [
+        {
+          "Kempsey Mayoral": {
+            "choices" : [
+              "HAUVILLE Leo(1)"
+            ],
+            "consensus" : "YES"
+          }
+        }
+      ],
+      "1-225-32": [
+        {
+          "Kempsey Mayoral": {
+            "choices" : [
+              "CAMPBELL Liz(1)",
+              "EVANS Andrew(2)",
+              "RAEBURN Bruce(3)"
+            ],
+            "consensus" : "YES"
+          }
+        }
+      ],
+      "1-221-35": [
+        {
+          "Kempsey Mayoral": {
+            "choices" : [
+              "HAUVILLE Leo(1)",
+              "BAIN Arthur(2)",
+              "EVANS Andrew(3)",
+              "RAEBURN Bruce(4)"
+            ],
+            "consensus" : "YES"
+          }
+        }
+      ]
+    }
   },
 
   "CONTEST_RESULTS" : {

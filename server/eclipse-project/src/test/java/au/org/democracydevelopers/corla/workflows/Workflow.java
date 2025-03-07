@@ -54,7 +54,6 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -122,6 +121,11 @@ public class Workflow  {
    * Path for all the data files.
    */
   protected static final String dataPath = "src/test/resources/CSVs/";
+
+  /**
+   * Path to folder containing export queries for reports.
+   */
+  protected static final String exportSQLQueriesPath = "src/main/resources/sql/";
 
   /**
    * Strings for colorado-rla JSON structures.

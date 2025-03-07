@@ -163,6 +163,12 @@
     "Kempsey Mayoral" : 332
   },
 
+  "FINAL_EXPECTED_AUDITED_BALLOTS" : {
+    "City of Longmont - Mayor" : 81,
+    "Byron Mayoral" : 1065,
+    "Kempsey Mayoral" : 332
+  },
+
   "IRV_CONTESTS" : [
     "Byron Mayoral",
     "Kempsey Mayoral",
@@ -181,7 +187,7 @@
   "DISAGREEMENTS" : {
   },
 
-  "CHOICES" : {
+  "DISCREPANT_AUDITED_BALLOT_CHOICES" : {
     "64" : {
       "1-4-25": {
         "Byron Mayoral": [
