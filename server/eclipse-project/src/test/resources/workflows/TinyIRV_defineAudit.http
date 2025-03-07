@@ -53,15 +53,20 @@ Content-Type: text/plain
 ### which are called separately.
 ### Also note that we have to find the IDs by asking for the _wrong_ names, then put the right name
 ### in the request.
+### TODO: Introduce errors into candidate names in the InvalidIRV contest.
 < {%
     import {getContestIDsWithCounties} from 'testScripts/testUtils';
     const contestIDData = getContestIDsWithCounties(client.global.get("contestTinyIRVJsonData"));
     console.log("contestTinyIRVJsonData = "+client.global.get("contestTinyIRVJsonData"));
+    // Canonicalize TinyInvalidExample1 to TinyExample1
+    request.variables.set("TinyInvalidExample1ID", contestIDData.get("TinyInvalidExample1")[0][0]);
 %}
 POST http://localhost:8888/set-contest-names
 Content-Type: application/json
 
-[]
+[
+  {"contestId":{{TinyInvalidExample1ID}},"countyId":34,"name":"TinyExample1"}
+]
 
 ### Generate assertions.
 GET http://localhost:8888/generate-assertions?timeLimitSeconds=1
@@ -84,15 +89,15 @@ client.test("Response content-type is json", function() {
     import {getContestIDsWithCounties} from 'testScripts/testUtils';
     console.log("Do we even get to here?")
     const contestIDData = getContestIDsWithCounties(client.global.get("contestTinyIRVJsonData"));
-    request.variables.set("KempseyMayoralID", contestIDData.get("TinyExample1")[0][0]);
-    request.variables.set("ByronMayoralID", contestIDData.get("Example3")[0][0]);
+    request.variables.set("TinyExample1ID", contestIDData.get("TinyExample1")[0][0]);
+    request.variables.set("Example3ID", contestIDData.get("Example3")[0][0]);
 %}
 POST http://localhost:8888/select-contests
 Content-Type: application/json
 
 [
-    {"audit":"COMPARISON","contest":{{KempseyMayoralID}},"reason":"COUNTY_WIDE_CONTEST"},
-    {"audit":"COMPARISON","contest":{{ByronMayoralID}},"reason":"COUNTY_WIDE_CONTEST"}
+    {"audit":"COMPARISON","contest":{{TinyExample1ID}},"reason":"STATE_WIDE_CONTEST"},
+    {"audit":"COMPARISON","contest":{{Example3ID}},"reason":"COUNTY_WIDE_CONTEST"}
 ]
 
 ### Request sample size estimates.

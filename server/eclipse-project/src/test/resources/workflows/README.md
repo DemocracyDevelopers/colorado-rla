@@ -76,5 +76,25 @@ TODO.
 - Las Animas County (36) has the Guide To Raire Example 3.
 
 ## Running it manually
-This demo is well suited to running manually with the client UI.
+This demo is well suited to running manually with the client UI. All of the data files are available
+in `src/test/resources/CSVs/Tiny-IRV-Examples`. For every file `x.y` requiring a sha256sum, the directory
+also contains it in a file called `x.y.sha256sum`.
 
+1. County data upload.
+   - Log in as countyadmin33 (Lake) and upload CVRs `ThreeCandidatesTenVotesPlusTiedPlurality.csv`
+     and manifest `ThreeCandidatesTenVotes_Manifest.csv`.
+   - Log in as countyadmin34 (La Plata) and upload CVRs `ThreeCandidatesTenInvalidVotes.csv` 
+     and manifest `ThreeCandidatesTenVotes_Manifest.csv`.   
+   - Log in as countyadmin35 (Larimer) and upload CVRs `ThreeCandidatesTenVotes_TiedIRV.csv`
+     and manifest `ThreeCandidatesTenVotes_Manifest.csv`.
+   - Log in as countyadmin36 (Las Animas) and upload CVRs `GuideToRAIREExample3.csv`
+     and manifest `GuideToRAIREExample3-manifest.csv` 
+2. Defining the audit. Choose any dates you like, and a risk limit of 0.03.
+   - Upload Tiny_IRV_Demo_Canonical_List.csv as the canonical list file.
+   - At the 'Canonicalize contests' step, canonicalize 'TinyInvalidExample1' to 'TinyExample1' as colorado-rla suggests.
+   - Generate the assertions. You should see successes for Example3 (Las Animas) and TinyExample1 (Multiple), and a TIED_WINNERS failure for Tied_IRV. Optionally, download some.
+   - Optionally, download the sample size estimate csv.
+   - At the 'Select contests' page, choose Example3 (County Contest) and TinyExample1 (State Contest).
+   - Enter the seed (our example is "9823749812374981273489712389471238974").
+   - Launch the audit. I see 5 remaining ballots to audit in Lake and La Plata Counties and 57 in Las Animas.
+3. Auditing ballots. TODO.
