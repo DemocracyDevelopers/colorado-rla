@@ -174,7 +174,7 @@ Content-Type: application/json
   "username":"countyadmin3"
 }
 
-### 4. Archuleta County, with Kempsey Mayoral.
+### 4. Archuleta County, with Byron Mayoral.
 ### POST request with basic login.
 POST http://localhost:8888/auth-admin
 Content-Type: application/json
@@ -258,7 +258,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-5-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="Canada_Bay_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/Canada_Bay_Mayoral.manifest.csv
@@ -315,7 +315,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-6-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="City_of_Broken_Hill_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/City_of_Broken_Hill_Mayoral.manifest.csv
@@ -372,7 +372,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-8-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="City_of_Cessnock_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/City_of_Cessnock_Mayoral.manifest.csv
@@ -434,7 +434,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-9-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="City_of_Coffs_Harbour_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/City_of_Coffs_Harbour_Mayoral.manifest.csv
@@ -496,7 +496,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-10-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="City_of_Griffith_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/City_of_Griffith_Mayoral.manifest.csv
@@ -558,7 +558,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-11-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="City_of_Lake_Macquarie_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/City_of_Lake_Macquarie_Mayoral.manifest.csv
@@ -620,7 +620,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-12-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="City_of_Lismore_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/City_of_Lismore_Mayoral.manifest.csv
@@ -682,7 +682,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-13-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="City_of_Liverpool_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/City_of_Liverpool_Mayoral.manifest.csv
@@ -744,7 +744,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-14-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="City_of_Maitland_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/City_of_Maitland_Mayoral.manifest.csv
@@ -806,7 +806,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-15-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="City_of_Newcastle_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/City_of_Newcastle_Mayoral.manifest.csv
@@ -868,7 +868,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-16-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="City_of_Orange_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/City_of_Orange_Mayoral.manifest.csv
@@ -930,7 +930,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-17-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="City_of_Shellharbour_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/City_of_Shellharbour_Mayoral.manifest.csv
@@ -992,7 +992,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-18-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="City_of_Shoalhaven_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/City_of_Shoalhaven_Mayoral.manifest.csv
@@ -1054,7 +1054,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-19-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="City_of_Sydney_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/City_of_Sydney_Mayoral.manifest.csv
@@ -1116,7 +1116,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-20-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="City_of_Willoughby_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/City_of_Willoughby_Mayoral.manifest.csv
@@ -1178,7 +1178,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-21-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="City_of_Wollongong_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/City_of_Wollongong_Mayoral.manifest.csv
@@ -1240,7 +1240,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-22-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="Eurobodalla_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/Eurobodalla_Mayoral.manifest.csv
@@ -1302,7 +1302,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-23-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="Hornsby_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/Hornsby_Mayoral.manifest.csv
@@ -1364,7 +1364,7 @@ POST http://localhost:8888/upload-file
 Content-Type: multipart/form-data; boundary=TheBoundary
 
 --TheBoundary
-Content-Disposition: form-data; name="file"; filename="Byron-24-manifest.csv"
+Content-Disposition: form-data; name="file"; filename="Kempsey_Mayoral.manifest.csv"
 Content-Type: text/csv
 
 < ../CSVs/NewSouthWales21/Kempsey_Mayoral.manifest.csv
