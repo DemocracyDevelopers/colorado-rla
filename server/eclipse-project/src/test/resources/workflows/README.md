@@ -61,10 +61,10 @@ To run the complete demo, set the environment to 'dev' and execute the following
 # Running the Tiny IRV Demo
 
 Very similar to the other demos.
-
-
-## Examining the output
-TODO.
+To run the complete demo, set the environment to 'dev' and execute the following:
+- `TinyIRV_demo_loadCVRs.http`
+- `TinyIRV_demo_loadManifests.http`
+- `TinyIRV_defineAudit.http`
 
 ## Details of the data
 - Lake County (33) has the TinyExample1 IRV contest, plus a tied and a non-tied plurality contest.
@@ -88,13 +88,18 @@ also contains it in a file called `x.y.sha256sum`.
    - Log in as countyadmin35 (Larimer) and upload CVRs `ThreeCandidatesTenVotes_TiedIRV.csv`
      and manifest `ThreeCandidatesTenVotes_Manifest.csv`.
    - Log in as countyadmin36 (Las Animas) and upload CVRs `GuideToRAIREExample3.csv`
-     and manifest `GuideToRAIREExample3-manifest.csv` 
+     and manifest `GuideToRAIREExample3-manifest.csv`.
 2. Defining the audit. Choose any dates you like, and a risk limit of 0.03.
    - Upload Tiny_IRV_Demo_Canonical_List.csv as the canonical list file.
    - At the 'Canonicalize contests' step, canonicalize 'TinyInvalidExample1' to 'TinyExample1' as colorado-rla suggests.
+   - At the 'Canonicalize choices' step, canonicalize A to Aaron, B to Bernice, C to Cherry and D to Dinh.
    - Generate the assertions. You should see successes for Example3 (Las Animas) and TinyExample1 (Multiple), and a TIED_WINNERS failure for Tied_IRV. Optionally, download some.
    - Optionally, download the sample size estimate csv.
    - At the 'Select contests' page, choose Example3 (County Contest) and TinyExample1 (State Contest).
    - Enter the seed (our example is "9823749812374981273489712389471238974").
    - Launch the audit. I see 5 remaining ballots to audit in Lake and La Plata Counties and 57 in Las Animas.
-3. Auditing ballots. TODO.
+3. Auditing ballots. TODO - Add instructions and testing for ballot auditing.
+
+## Examining the output
+TODO - Calculate expected sample sizes etc.
+
