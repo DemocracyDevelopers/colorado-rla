@@ -89,16 +89,23 @@ also contains it in a file called `x.y.sha256sum`.
      and manifest `ThreeCandidatesTenVotes_Manifest.csv`.
    - Log in as countyadmin36 (Las Animas) and upload CVRs `GuideToRAIREExample3.csv`
      and manifest `GuideToRAIREExample3-manifest.csv`.
-2. Defining the audit. Choose any dates you like, and a risk limit of 0.03.
+2. Defining the audit. 
+   - Log in as stateadmin. Choose any dates you like, and a risk limit of 0.03.
    - Upload Tiny_IRV_Demo_Canonical_List.csv as the canonical list file.
-   - At the 'Canonicalize contests' step, canonicalize 'TinyInvalidExample1' to 'TinyExample1' as colorado-rla suggests.
-   - At the 'Canonicalize choices' step, canonicalize A to Aaron, B to Bernice, C to Cherry and D to Dinh.
+   - At the 'Standardize contest names' step, canonicalize 'TinyInvalidExample1' to 'TinyExample1' as colorado-rla suggests.
+   - At the 'Standardize choice names' step, canonicalize A to Aaron, B to Bernice, C to Cherry and D to Dinh.
    - Generate the assertions. You should see successes for Example3 (Las Animas) and TinyExample1 (Multiple), and a TIED_WINNERS failure for Tied_IRV. Optionally, download some.
    - Optionally, download the sample size estimate csv.
    - At the 'Select contests' page, choose Example3 (County Contest) and TinyExample1 (State Contest).
+     The TiedIRV checkbox should be disabled because it is not auditable. (VT: neither is tied plurality - should that be disabled?)
    - Enter the seed (our example is "9823749812374981273489712389471238974").
-   - Launch the audit. I see 5 remaining ballots to audit in Lake and La Plata Counties and 57 in Las Animas.
+   - Launch the audit. I see 5 remaining ballots to audit in Lake and La Plata Counties and 57 in Las Animas, but you will
+     see different numbers if you chose a different risk limit or seed.
 3. Auditing ballots. TODO - Add instructions and testing for ballot auditing.
+
+Alternatively, all these steps can be done without manifests, in which case the CDOS audit sequence
+blocks after sample size estimation. For this data, the sample size estimates should be the same
+with or without manifests.
 
 ## Examining the output
 TODO - Calculate expected sample sizes etc.
