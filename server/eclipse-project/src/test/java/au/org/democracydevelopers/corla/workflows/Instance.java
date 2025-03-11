@@ -102,10 +102,16 @@ public class Instance {
   private Map<String,Double> dilutedMargins;
 
   /**
-   * Expected sample sizes for targeted contests.
+   * Expected sample sizes for targeted contests (first round).
    */
   @JsonProperty("EXPECTED_SAMPLES")
   private Map<String,Integer> expectedSamples;
+
+  /**
+   * Expected number of audited ballots for each targeted contest, after all rounds.
+   */
+  @JsonProperty("FINAL_EXPECTED_AUDITED_BALLOTS")
+  private Map<String,Integer> finalExpectedSamples;
 
   /**
    * Subset of contests targeted for audit that are IRV contests.
@@ -114,19 +120,19 @@ public class Instance {
   private List<String> irvContests;
 
   /**
-   * Number of rounds of auditing that we expect will take place.
+   * Number of rounds of auditing that we expect will take place. Optional (can be null).
    */
   @JsonProperty("EXPECTED_ROUNDS")
-  private int expectedRounds;
+  private Integer expectedRounds;
 
   /**
-   * Non-zero round by round results for contests whose statuses we want to test.
+   * Round by round results for contests whose statuses we want to test.
    */
   @JsonProperty("CONTEST_RESULTS")
   private Map<Integer,Map<String,Map<String,Integer>>> contestResults;
 
   /**
-   * Non-zero round by round results for counties whose statuses we want to test.
+   * Round by round results for counties whose statuses we want to test.
    */
   @JsonProperty("COUNTY_RESULTS")
   private Map<Integer,Map<String,Map<String,Integer>>> countyResults;
@@ -154,10 +160,10 @@ public class Instance {
   private Map<String,Map<String,List<String>>> disagreements;
 
   /**
-   * Ballot choices for select CVR Ids and contests. The instance JSON records only the
+   * Audited ballot choices for select CVR Ids and contests. The instance JSON records only the
    * ones we want to be different to what is on the CVR.
    */
-  @JsonProperty("CHOICES")
+  @JsonProperty("DISCREPANT_AUDITED_BALLOT_CHOICES")
   private Map<String,Map<String,Map<String,List<String>>>> actualChoices;
 
 
@@ -187,7 +193,6 @@ public class Instance {
     dilutedMargins = new HashMap<>();
     expectedSamples = new HashMap<>();
     irvContests = new ArrayList<>();
-    expectedRounds = 0;
     contestResults = new HashMap<>();
     countyResults = new HashMap<>();
     phantomBallots = new HashMap<>();
@@ -195,6 +200,7 @@ public class Instance {
     actualChoices = new HashMap<>();
     disagreements = new HashMap<>();
     reaudits = new HashMap<>();
+    expectedRounds = null;
   }
 
   /**
@@ -270,9 +276,18 @@ public class Instance {
   }
 
   /**
-   * @return The number of rounds of auditing we expect will take place.
+   * @return Unmodifiable mapping between targeted contest name and expected number of audited
+   * ballots after all audit rounds.
    */
-  public int getExpectedRounds(){
+  public Map<String,Integer> getExpectedAuditedBallots(){
+    return Collections.unmodifiableMap(finalExpectedSamples);
+  }
+
+  /**
+   * @return The number of rounds of auditing we expect will take place. Can be null if nothing
+   * specified in JSON instance.
+   */
+  public Integer getExpectedRounds(){
     return expectedRounds;
   }
 
