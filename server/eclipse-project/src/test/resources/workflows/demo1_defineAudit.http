@@ -114,7 +114,7 @@ Content-Type: application/json
 GET http://localhost:8888/estimate-sample-sizes
 
 # Save the response to a file.
->>! demo1-stored-data/sample-sizes.csv
+>>! demo-stored-data/sample-sizes.csv
 
 ### Post the random seed.
 POST http://localhost:8888/random-seed
@@ -143,14 +143,14 @@ GET http://localhost:8888/dos-dashboard
 GET localhost:8888/get-assertions
 
 # Save them to a file.
->>! demo1-stored-data/demo1-assertions-json.zip
+>>! demo-stored-data/demo1-assertions-json.zip
 
 ### Get the assertions as csv.
 GET http://localhost:8888/get-assertions?format=csv
 Content-Type: application/x-www-form-urlencoded
 
 # Save them to a file.
->>! demo1-stored-data/demo1-assertions-csv.zip
+>>! demo-stored-data/demo1-assertions-csv.zip
 
 ### Log out
 POST http://localhost:8888/unauthenticate
