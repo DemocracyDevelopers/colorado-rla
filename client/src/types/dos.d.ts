@@ -20,6 +20,7 @@ declare namespace DOS {
         assertionsGenerated?: boolean;
         generateAssertionsSummaries: DOS.GenerateAssertionsSummaryWithCounty[];
         assertionGenerationStatuses?: DOS.AssertionGenerationStatuses;
+        raireServiceStatus: string;
         type: 'DOS';
     }
 
