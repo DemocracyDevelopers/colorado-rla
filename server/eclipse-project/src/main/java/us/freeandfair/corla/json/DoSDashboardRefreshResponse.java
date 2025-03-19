@@ -33,6 +33,8 @@ import us.freeandfair.corla.query.ComparisonAuditQueries;
 import us.freeandfair.corla.query.ContestResultQueries;
 import us.freeandfair.corla.util.SuppressFBWarnings;
 
+import static au.org.democracydevelopers.corla.endpoint.GetAssertions.pingRaireService;
+
 /**
  * The response generated on a refresh of the DoS dashboard.
  *
@@ -310,11 +312,5 @@ public class DoSDashboardRefreshResponse {
   protected record GenerateAssertionsSummaryWithCounty(
       GenerateAssertionsSummary summary,
       String countyName
-  ){};
-
-  private static String pingRaireService() {
-    return "testing";
-  }
-
-
+  ){}
 }

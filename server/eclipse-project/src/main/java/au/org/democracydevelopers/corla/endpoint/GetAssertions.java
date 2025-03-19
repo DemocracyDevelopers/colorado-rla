@@ -68,6 +68,12 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
     protected static final String RAIRE_ENDPOINT = "/raire/get-assertions";
 
     /**
+     * RAIRE service url.
+     */
+    private static final String raireUrl
+        = Main.properties().getProperty(RAIRE_URL, "") + RAIRE_ENDPOINT;
+
+    /**
      * RAIRE service suffix for csv.
      */
     public static final String CSV_SUFFIX = "csv";
@@ -81,6 +87,16 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
      * String for "format" query parameter (value will be csv or json).
      */
     private static final String FORMAT_PARAM = "format";
+
+    /**
+     * The response string to return when the service is unreachable.
+     */
+    private final static String unreachable = "Unreachable";
+
+    /**
+     * The response to return when the raire service is reachable.
+     */
+    private final static String ok = "OK";
 
     /**
      * {@inheritDoc}
@@ -162,7 +178,6 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
         throws IOException, InterruptedException {
         final String prefix = "[getAssertions]";
 
-        final String raireUrl = Main.properties().getProperty(RAIRE_URL, "") + RAIRE_ENDPOINT;
 
         // Use the DoS Dashboard to get the risk limit; default to 0 if none is specified.
         // This is a safe default because the true risk limit cannot be smaller.
@@ -239,5 +254,66 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
                 throw new RuntimeException(msg);
             }
         }
+    }
+
+    /**
+     * Ask for assertions for a non-existent contest and check that we get a response.
+     * This is just an easy way of checking that the service is reachable.
+     * We expect to get an error - check if it's the expected error from raire or an error that
+     * indicates that the connection failed.
+     * @return  "OK" if the server is reachable, "Unreachable" otherwise.
+     */
+    public static String pingRaireService() {
+        final String prefix = "[pingRaireService]";
+
+        // Make a request for assertions for a non-existent contest.
+        final GetAssertionsRequest getAssertionsRequest = new GetAssertionsRequest(
+            "NonExistentContestForServerReachabilityTesting",
+            1000,
+            List.of("No candidates"),
+            BigDecimal.valueOf(0.05)
+        );
+
+        try {
+            final HttpResponse<String> raireResponse = httpClient.send(HttpRequest.newBuilder()
+                    .uri(new URL(raireUrl + "-" + JSON_SUFFIX).toURI())
+                    .header("content-type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(getAssertionsRequest)))
+                    .build(),
+                HttpResponse.BodyHandlers.ofString()
+            );
+            LOGGER.debug(String.format("%s %s.", prefix, "Sent Assertion Request to Raire service for "
+                + getAssertionsRequest.contestName));
+
+            final int statusCode = raireResponse.statusCode();
+            if (statusCode == HttpURLConnection.HTTP_BAD_REQUEST) {
+
+                // This is the expected response: Raire should respond and complain about the
+                // non-existent contest.
+                LOGGER.debug(String.format("%s %s %s.", prefix, "Error response " ,
+                    "received from RAIRE for " + getAssertionsRequest.contestName) + ", as expected.");
+                return ok;
+
+            } else if (statusCode == HttpURLConnection.HTTP_OK) {
+
+                // This shouldn't happen, unless there really is a contest called 'nonExistentContest'.
+                LOGGER.error(String.format("%s %s.", prefix, "Unexpected OK response received from RAIRE for "
+                    + getAssertionsRequest.contestName));
+                throw new RuntimeException(prefix + " " + "TODO");
+            } else {
+
+                // Something went wrong with the connection.
+                final String msg = "Bad response from Raire service for contest " + getAssertionsRequest.contestName
+                    + ":" + statusCode + " " + raireResponse.statusCode();
+                LOGGER.debug(String.format("%s %s", prefix, msg));
+            }
+        } catch (URISyntaxException | MalformedURLException e) {
+            final String msg = "Bad configuration of raire-service url. Fix the config file.";
+            LOGGER.debug(String.format("%s %s %s", prefix, msg, e.getMessage()));
+        } catch (IOException | InterruptedException e) {
+            final String msg = "Failed attempt to ping raire service.";
+            LOGGER.debug(String.format("%s %s %s", prefix, msg, e.getMessage()));
+        }
+        return unreachable;
     }
 }

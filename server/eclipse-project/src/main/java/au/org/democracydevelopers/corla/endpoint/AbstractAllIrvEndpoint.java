@@ -66,7 +66,6 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
      */
     protected final static HttpClient httpClient = HttpClient.newHttpClient();
 
-
     /**
      * The event to return for this endpoint.
      */
