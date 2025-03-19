@@ -9,8 +9,8 @@ interface RaireStatusProps {
 
 const RaireStatus = ( { raireServiceStatus }: RaireStatusProps) => {
     return (
-        <div>
-            Raire service: {raireServiceStatus}
+        <div className ='state-dashboard-audit-definition' >
+            Raire service: { raireServiceStatus }
         </div>
     )
 }
