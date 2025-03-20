@@ -355,7 +355,7 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
    * When given a bad url, an appropriate url-parsing error appears.
    */
   @Test(expectedExceptions = RuntimeException.class,
-      expectedExceptionsMessageRegExp = ".*Bad configuration of Raire service url.*")
+      expectedExceptionsMessageRegExp = ".*configuration of Raire service url.*")
   public void badUrlThrowsUrlException() {
     testUtils.log(LOGGER, "badUrlThrowsUrlException");
 
@@ -369,7 +369,7 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
    * When given a bad url, an appropriate url-parsing error appears.
    */
   @Test(expectedExceptions = RuntimeException.class,
-      expectedExceptionsMessageRegExp = ".*Bad configuration of Raire service url.*")
+      expectedExceptionsMessageRegExp = ".*configuration of Raire service url.*")
   public void nonExistentContestThrowsException() {
     testUtils.log(LOGGER, "badUrlThrowsUrlException");
 

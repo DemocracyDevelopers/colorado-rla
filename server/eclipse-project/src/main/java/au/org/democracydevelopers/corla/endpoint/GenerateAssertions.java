@@ -277,9 +277,9 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
         LOGGER.error(String.format("%s %s", prefix, msg));
         throw new RuntimeException(msg);
       }
-    } catch (final URISyntaxException | MalformedURLException e) {
+    } catch (final URISyntaxException | MalformedURLException | IllegalArgumentException e) {
       // The raire service url is malformed, probably a config error.
-      final String msg = "Bad configuration of Raire service url: " + raireUrl + ". Check your config file.";
+      final String msg = "Raire connection error, probably bad configuration of Raire service url: " + raireUrl + ". Check your config file.";
       LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
       throw new RuntimeException(msg);
     } catch (final NoSuchElementException e) {

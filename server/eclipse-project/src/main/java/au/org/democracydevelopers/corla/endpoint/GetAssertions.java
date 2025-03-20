@@ -239,7 +239,7 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
 
                 zos.closeEntry();
             } catch (URISyntaxException | IllegalArgumentException e) {
-                final String msg = "Bad configuration of raire-service url. Fix the config file.";
+                final String msg = "Raire connection error, probably bad configuration of Raire service url: " + raireUrl + ". Check your config file.";
                 LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
                 throw new RuntimeException(msg);
             }

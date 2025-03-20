@@ -197,10 +197,10 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
             }
         } catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
             // This happens if the url specified in default.properties is an invalid/unparseable url.
-            final String msg = "Bad configuration of raire-service url. Fix the config file.";
+            final String msg = "Raire connection error, probably bad configuration of Raire service url: " + helloUrl + ". Check your config file.";
             LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
         } catch (IOException | InterruptedException e) {
-            final String msg = "Failed attempt to ping raire service";
+            final String msg = "Failed attempt to ping raire service. Check that the service is up, the url is correct and (if relevant) the TLS cert is valid";
             LOGGER.warn(String.format("%s %s.", prefix, msg));
         }
         return unreachable;

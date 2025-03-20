@@ -239,17 +239,19 @@ public class GetAssertionsTests extends TestClassWithDatabase {
   @DataProvider(name = "SampleBadUrls")
   public static String[][] SampleBadUrls() {
     return new String[][]{
-        {"completelyNotAUrl" + "/badUrl", CSV_SUFFIX},
-        {"completelyNotAUrl" + "/badUrl", JSON_SUFFIX}
+        {"http:/completelyNotAUrl" + "/badUrl", CSV_SUFFIX},
+        {"http:/completelyNotAUrl" + "/badUrl", JSON_SUFFIX}
     };
   }
 
   /**
-   * Checks that, when given a bad url, an appropriate url-parsing exception is thrown, for both csv and json.
+   * Checks that, when given a bad url, an appropriate exception is thrown, for both csv and json.
+   * This is caught in the getAssertions function and re-thrown as a runtime exception.
    *
    * @throws Exception always.
    */
-  @Test(dataProvider = "SampleBadUrls", expectedExceptions = MalformedURLException.class)
+  @Test(dataProvider = "SampleBadUrls", expectedExceptions = RuntimeException.class,
+      expectedExceptionsMessageRegExp = ".*configuration of Raire service url.*")
   public void badUrlThrowsUrlException(String url, String suffix) throws Exception {
     testUtils.log(LOGGER, "badUrlThrowsUrlException");
     try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults
