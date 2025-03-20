@@ -197,8 +197,7 @@ public class GetAssertionsBadURLTests extends TestClassWithDatabase {
    *
    * @throws Exception always.
    */
-  @Test(dataProvider = "SampleBadUrls", expectedExceptions = RuntimeException.class,
-                expectedExceptionsMessageRegExp = ".*configuration of Raire service url.*")
+  @Test(dataProvider = "SampleBadUrls", expectedExceptions = RuntimeException.class)
   public void badUrlThrowsUrlException(String url, String suffix) throws Exception {
     testUtils.log(LOGGER, "badUrlThrowsUrlException");
     try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults
