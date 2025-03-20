@@ -23,33 +23,34 @@ package au.org.democracydevelopers.corla.endpoint;
 
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 import us.freeandfair.corla.Main;
-import us.freeandfair.corla.model.*;
+import us.freeandfair.corla.model.AuditReason;
 
-import java.io.*;
-import java.net.MalformedURLException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.Properties;
 import java.util.Set;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipInputStream;
-
-import com.github.tomakehurst.wiremock.WireMockServer;
+import java.util.zip.ZipOutputStream;
 
 import static au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint.RAIRE_URL;
 import static au.org.democracydevelopers.corla.endpoint.GetAssertions.*;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.*;
 
 /**
  * Test the GetAssertions endpoint, both CSV and JSON versions. The response is supposed to be a zip file containing
@@ -63,9 +64,9 @@ import static org.testng.Assert.assertNotNull;
  * - Testing that the service throws appropriate exceptions if the raire service connection isn't set up properly.
  * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/125">...</a>
  */
-public class GetAssertionsTests extends TestClassWithDatabase {
+public class GetAssertionsBadURLTests extends TestClassWithDatabase {
 
-  private static final Logger LOGGER = LogManager.getLogger(GetAssertionsTests.class);
+  private static final Logger LOGGER = LogManager.getLogger(GetAssertionsBadURLTests.class);
 
   /**
    * Endpoint for getting assertions.
@@ -143,54 +144,78 @@ public class GetAssertionsTests extends TestClassWithDatabase {
     wireMockRaireServer.stop();
   }
 
-
   /**
-   * Test data for the two valid IRV contests, with json and csv.  This gives the successfully-sanitized version of
-   * the contest names.
+   * Good urls with bad endpoints.
    */
-  @DataProvider(name = "TwoIRVContests")
-  public static String[][] TwoIRVContests() {
+  @DataProvider(name = "SampleBadEndpoints")
+  public static String[][] SampleBadEndpoints() {
     return new String[][]{
-        {"CityofBoulderMayoralCandidates", tinyIRV, JSON_SUFFIX},
-        {"CityofBoulderMayoralCandidates", tinyIRV, CSV_SUFFIX}
+        {baseUrl + "/badUrl", CSV_SUFFIX},
+        {baseUrl + "/badUrl", JSON_SUFFIX}
     };
   }
 
   /**
-   * Calls the getAssertions main endpoint function and checks that the right file names are present in the
-   * zip.
+   * Checks that, when given a bad endpoint, a runtime exception is thrown, for both csv and json.
    *
-   * @throws Exception never.
+   * @throws Exception always.
    */
-  @Test(priority=1, dataProvider = "TwoIRVContests")
-  public void rightFileNamesInZip(String contestName1, String contestName2, String suffix) throws Exception {
-    testUtils.log(LOGGER, "rightFileNamesInZip");
-
-    try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults = Mockito.mockStatic(AbstractAllIrvEndpoint.class);
+  @Test(dataProvider = "SampleBadEndpoints", expectedExceptions = RuntimeException.class)
+  public void badEndpointThrowsRuntimeException(String url, String suffix) throws Exception {
+    testUtils.log(LOGGER, "badEndpointThrowsRuntimeException");
+    try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults
+             = Mockito.mockStatic(AbstractAllIrvEndpoint.class);
          MockedStatic<Main> mockedMain = Mockito.mockStatic(Main.class)) {
+      mockIRVContestResults.when(AbstractAllIrvEndpoint::getIRVContestResults)
+          .thenReturn(mockedIRVContestResults);
 
-      // Mock IRV contest results
-      mockIRVContestResults.when(AbstractAllIrvEndpoint::getIRVContestResults).thenReturn(mockedIRVContestResults);
-
-      // Mock the RAIRE_URL from main.
-      mockedMain.when(Main::properties).thenReturn(mockProperties);
+      final Properties badURLProperties = new Properties();
+      badURLProperties.setProperty(RAIRE_URL, url);
+      mockedMain.when(Main::properties).thenReturn(badURLProperties);
 
       ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
       ZipOutputStream zos = new ZipOutputStream(bytesOut);
       getAssertions(zos, "", suffix);
       zos.close();
+    }
+  }
 
-      byte[] bytes = bytesOut.toByteArray();
-      InputStream bais = new ByteArrayInputStream(bytes);
-      ZipInputStream in = new ZipInputStream(bais);
-      ZipEntry firstEntry = in.getNextEntry();
-      assertNotNull(firstEntry);
-      assertEquals(firstEntry.getName(), contestName1 + "_assertions." + suffix);
-      ZipEntry secondEntry = in.getNextEntry();
-      assertNotNull(secondEntry);
-      assertEquals(secondEntry.getName(), contestName2 + "_assertions." + suffix);
-      ZipEntry thirdEntry = in.getNextEntry();
-      assertNull(thirdEntry);
+  /**
+   * Bad urls.
+   */
+  @DataProvider(name = "SampleBadUrls")
+  public static String[][] SampleBadUrls() {
+    return new String[][]{
+        {"http:/completelyNotAUrl" + "/badUrl", CSV_SUFFIX},
+        {"http:/completelyNotAUrl" + "/badUrl", JSON_SUFFIX}
+    };
+  }
+
+  /**
+   * Checks that, when given a bad url, an appropriate exception is thrown, for both csv and json.
+   * This is caught in the getAssertions function and re-thrown as a runtime exception.
+   *
+   * @throws Exception always.
+   */
+  @Test(dataProvider = "SampleBadUrls", expectedExceptions = RuntimeException.class,
+                expectedExceptionsMessageRegExp = ".*configuration of Raire service url.*")
+  public void badUrlThrowsUrlException(String url, String suffix) throws Exception {
+    testUtils.log(LOGGER, "badUrlThrowsUrlException");
+    try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults
+             = Mockito.mockStatic(AbstractAllIrvEndpoint.class);
+         MockedStatic<Main> mockedMain = Mockito.mockStatic(Main.class)) {
+
+      mockIRVContestResults.when(AbstractAllIrvEndpoint::getIRVContestResults)
+          .thenReturn(mockedIRVContestResults);
+
+      final Properties badURLProperties = new Properties();
+      badURLProperties.setProperty(RAIRE_URL, url);
+      mockedMain.when(Main::properties).thenReturn(badURLProperties);
+
+      ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+      ZipOutputStream zos = new ZipOutputStream(bytesOut);
+      getAssertions(zos, "", suffix);
+      zos.close();
     }
   }
 }
