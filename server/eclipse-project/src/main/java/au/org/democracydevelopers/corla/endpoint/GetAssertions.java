@@ -68,12 +68,6 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
     protected static final String RAIRE_ENDPOINT = "/raire/get-assertions";
 
     /**
-     * RAIRE service url.
-     */
-    private static final String raireUrl
-        = Main.properties().getProperty(RAIRE_URL, "") + RAIRE_ENDPOINT;
-
-    /**
      * RAIRE service suffix for csv.
      */
     public static final String CSV_SUFFIX = "csv";
@@ -168,6 +162,8 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
         throws IOException, InterruptedException {
         final String prefix = "[getAssertions]";
 
+        final String raireUrl
+            = Main.properties().getProperty(RAIRE_URL, "") + RAIRE_ENDPOINT;
 
         // Use the DoS Dashboard to get the risk limit; default to 0 if none is specified.
         // This is a safe default because the true risk limit cannot be smaller.
