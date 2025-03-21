@@ -111,7 +111,7 @@ POST http://localhost:8888/random-seed
 Content-Type: application/json
 
 {
-  "seed":"9823749812374981273489712389471238974"
+  "seed":"23987213984712389471238947129384128974"
 }
 
 ### Start the audit round.
