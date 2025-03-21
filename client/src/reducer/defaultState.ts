@@ -33,6 +33,7 @@ export function dosState(): DOS.AppState {
         countyStatus: {},
         type: 'DOS',
         generateAssertionsSummaries: [],
+        raireServiceStatus: '',
     };
 }
 

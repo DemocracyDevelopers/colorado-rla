@@ -33,6 +33,8 @@ import us.freeandfair.corla.query.ComparisonAuditQueries;
 import us.freeandfair.corla.query.ContestResultQueries;
 import us.freeandfair.corla.util.SuppressFBWarnings;
 
+import static au.org.democracydevelopers.corla.endpoint.GetAssertions.pingRaireService;
+
 /**
  * The response generated on a refresh of the DoS dashboard.
  *
@@ -107,6 +109,11 @@ public class DoSDashboardRefreshResponse {
   private final List<GenerateAssertionsSummaryWithCounty> my_generate_assertions_summaries;
 
   /**
+   * The status of the raire service when ping'd. Either "OK" or "Unreachable".
+   */
+  private final String my_raire_service_status;
+
+  /**
    * Placeholder string for when a contest crosses multiple counties. Used for IRV assertion-generation
    * summaries.
    */
@@ -127,6 +134,7 @@ public class DoSDashboardRefreshResponse {
    * @param the_audit_reasons                 The reasons for auditing each contest.
    * @param the_audit_types                   The audit type (usually either COMPARISON or NOT_AUDITABLE)
    * @param the_generate_assertions_summaries The GenerateAssertionsSummaries, for IRV contests, with contest names added.
+   * @param the_raire_service_status          The status of the raire service, either "OK" or "Unreachable".
    */
   @SuppressWarnings("PMD.ExcessiveParameterList")
   protected DoSDashboardRefreshResponse(final ASMState the_asm_state,
@@ -139,7 +147,8 @@ public class DoSDashboardRefreshResponse {
                                         final AuditInfo the_audit_info,
                                         final SortedMap<Long, AuditReason> the_audit_reasons,
                                         final SortedMap<Long, AuditType> the_audit_types,
-                                        final List<GenerateAssertionsSummaryWithCounty> the_generate_assertions_summaries) {
+                                        final List<GenerateAssertionsSummaryWithCounty> the_generate_assertions_summaries,
+                                        final String the_raire_service_status) {
     my_asm_state = the_asm_state;
     my_audited_contests = the_audited_contests;
     my_estimated_ballots_to_audit = the_estimated_ballots_to_audit;
@@ -151,6 +160,7 @@ public class DoSDashboardRefreshResponse {
     my_audit_reasons = the_audit_reasons;
     my_audit_types = the_audit_types;
     my_generate_assertions_summaries = the_generate_assertions_summaries;
+    my_raire_service_status = the_raire_service_status;
   }
 
   /**
@@ -227,12 +237,14 @@ public class DoSDashboardRefreshResponse {
     final DoSDashboardASM asm =
         ASMUtilities.asmFor(DoSDashboardASM.class, DoSDashboardASM.IDENTITY);
 
+    final String raireServiceStatus = pingRaireService();
+
     return new DoSDashboardRefreshResponse(asm.currentState(), audited_contests,
                                            estimated_ballots_to_audit,
                                            optimistic_ballots_to_audit, discrepancy_count,
                                            countyStatusMap(), hand_count_contests,
                                            dashboard.auditInfo(), audit_reasons, audit_types,
-                                           addCountiesToSummaries());
+                                           addCountiesToSummaries(), raireServiceStatus);
   }
 
 
@@ -300,5 +312,5 @@ public class DoSDashboardRefreshResponse {
   protected record GenerateAssertionsSummaryWithCounty(
       GenerateAssertionsSummary summary,
       String countyName
-  ){};
+  ){}
 }

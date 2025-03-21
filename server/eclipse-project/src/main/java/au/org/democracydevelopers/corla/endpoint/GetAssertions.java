@@ -162,7 +162,8 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
         throws IOException, InterruptedException {
         final String prefix = "[getAssertions]";
 
-        final String raireUrl = Main.properties().getProperty(RAIRE_URL, "") + RAIRE_ENDPOINT;
+        final String raireUrl
+            = Main.properties().getProperty(RAIRE_URL, "") + RAIRE_ENDPOINT;
 
         // Use the DoS Dashboard to get the risk limit; default to 0 if none is specified.
         // This is a safe default because the true risk limit cannot be smaller.
@@ -233,11 +234,13 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
                 }
 
                 zos.closeEntry();
-            } catch (URISyntaxException e) {
+            } catch (URISyntaxException | IllegalArgumentException e) {
                 final String msg = "Bad configuration of raire-service url. Fix the config file.";
                 LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
                 throw new RuntimeException(msg);
             }
         }
     }
+
+
 }

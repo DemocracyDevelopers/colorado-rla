@@ -25,13 +25,21 @@ import au.org.democracydevelopers.corla.model.ContestType;
 import com.google.gson.Gson;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.endpoint.AbstractDoSDashboardEndpoint;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.BallotManifestInfoQueries;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,7 +73,6 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
      * The httpClient used for making requests to the raire-service.
      */
     protected final static HttpClient httpClient = HttpClient.newHttpClient();
-
 
     /**
      * The event to return for this endpoint.
@@ -146,5 +153,56 @@ public abstract class AbstractAllIrvEndpoint extends AbstractDoSDashboardEndpoin
         }
 
         return results;
+    }
+
+    /**
+     * Ping the raire service /hello endpoint.
+     * This is just an easy way of checking that the service is reachable.
+     * @return "OK" if the server is reachable, "Unreachable" otherwise.
+     */
+    public static String pingRaireService() {
+        final String prefix = "[pingRaireService]";
+
+        // The response string to return when the service is unreachable.
+        final String unreachable = "Unreachable";
+
+        // The response to return when the raire service is reachable.
+        final String ok = "OK";
+
+        final String helloUrl
+            = Main.properties().getProperty(RAIRE_URL, "") + "/raire/hello";
+
+        try {
+            final HttpResponse<String> raireResponse = httpClient.send(HttpRequest.newBuilder()
+                    .uri(new URL(helloUrl).toURI())
+                    .POST(HttpRequest.BodyPublishers.noBody())
+                    .build(),
+                HttpResponse.BodyHandlers.ofString()
+            );
+            LOGGER.debug(String.format("%s %s.", prefix, "Pinged Raire service"));
+
+            final int statusCode = raireResponse.statusCode();
+            if (statusCode == HttpURLConnection.HTTP_OK) {
+
+                // The raire service is OK.
+                LOGGER.debug(String.format("%s %s.", prefix, "OK response received from RAIRE"));
+                return ok;
+
+            } else {
+
+                // The raire service is not OK. This also happens if the port or url are wrong.
+                LOGGER.warn(String.format("%s Error %s %s.", prefix, statusCode, "received from RAIRE"));
+                return unreachable;
+
+            }
+        } catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
+            // This happens if the url specified in default.properties is an invalid/unparseable url.
+            final String msg = "Bad configuration of raire-service url. Fix the config file.";
+            LOGGER.error(String.format("%s %s %s", prefix, msg, e.getMessage()));
+        } catch (IOException | InterruptedException e) {
+            final String msg = "Failed attempt to ping raire service";
+            LOGGER.warn(String.format("%s %s.", prefix, msg));
+        }
+        return unreachable;
     }
 }
