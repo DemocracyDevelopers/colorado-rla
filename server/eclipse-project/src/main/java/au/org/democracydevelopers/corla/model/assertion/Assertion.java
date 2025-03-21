@@ -726,10 +726,14 @@ public abstract class Assertion implements PersistentEntity {
     }
 
     if(min(List.of(oneVoteOverCount, oneVoteUnderCount, twoVoteOverCount, twoVoteUnderCount, otherCount)) < 0) {
+      // This should really be an error, however there appears to be some logic in CORLA that
+      // allows discrepancy counts to temporarily fall below zero in certain scenarios
+      // (eg. when the same ballot appears in multiple rounds, CORLA seems to unaudit the ballot
+      // a given number of times corresponding to how often the ballot has appeared in the samples
+      // across all rounds, and the audit it again a certain number of times.)
       final String msg = String.format("%s Negative discrepancy counts in Assertion ID %d, " +
           "contest %s when removing discrepancy for CVR %d.", prefix, id, contestName, theRecord.id());
-      LOGGER.error(msg);
-      throw new RuntimeException(msg);
+      LOGGER.warn(msg);
     }
 
     return removed;

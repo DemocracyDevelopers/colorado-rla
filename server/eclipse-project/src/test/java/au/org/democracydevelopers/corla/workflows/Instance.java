@@ -138,7 +138,9 @@ public class Instance {
   private Map<Integer,Map<String,Map<String,Integer>>> countyResults;
 
   /**
-   * Imprinted CVR ids that should map to phantom ballots.
+   * Imprinted CVR ids that should map to phantom ballots. Organised as a map between county ID
+   * (as a string), and the list of imprinted IDs for ballots in that county that we want to convert
+   * to Phantoms.
    */
   @JsonProperty("PHANTOM_BALLOTS")
   private Map<String,List<String>> phantomBallots;
@@ -153,15 +155,35 @@ public class Instance {
 
   /**
    * Identifying information for contests on CVRs that we want to introduce an audit board
-   * disagreement. Organised as a map between county ID (as a string), and a map between contest
-   * name and the imprinted IDs for which we want to introduce a disagreement for that contest.
+   * disagreement. Organised as a map between county ID (as a string), and a map between
+   * ballot imprinted ID and the names of the contests for which we want disagreements injected.
+   * Example entry:
+   *     "4" : {
+   *       "1-5-9" : [
+   *         "Uralla Mayoral"
+   *       ]
+   *     }
    */
   @JsonProperty("DISAGREEMENTS")
   private Map<String,Map<String,List<String>>> disagreements;
 
   /**
    * Audited ballot choices for select CVR Ids and contests. The instance JSON records only the
-   * ones we want to be different to what is on the CVR.
+   * ones we want to be different to what is on the CVR. Example map element (below). We are
+   * specifying discrepant choices for ballot 108-1-87 in county 7 for the contest Byron Mayoral.
+   *     "7" : {
+   *       "108-1-87": [
+   *         {
+   *           "Byron Mayoral": {
+   *             "choices" : [
+   *               "LYON Michael(1)",
+   *               "DEY Duncan(2)"
+   *             ],
+   *             "consensus" : "YES"
+   *           }
+   *         }
+   *       ]
+   *     }
    */
   @JsonProperty("DISCREPANT_AUDITED_BALLOT_CHOICES")
   private Map<String,Map<String,Map<String,List<String>>>> actualChoices;
