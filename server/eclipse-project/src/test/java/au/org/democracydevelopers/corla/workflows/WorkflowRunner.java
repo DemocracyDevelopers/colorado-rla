@@ -26,6 +26,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
+import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_COMPLETE;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.COMPLETE_AUDIT_INFO_SET;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.PARTIAL_AUDIT_INFO_SET;
@@ -226,10 +227,21 @@ public class WorkflowRunner extends Workflow {
         // Start Audit Round
         startAuditRound();
 
-        // Log in as each county, and audit all ballots in sample.
+        dashboard = getDoSDashBoardRefreshResponse();
+
+        final Map<String, Map<String,Object>> roundStartStatus = dashboard.get(COUNTY_STATUS);
+
+        // Log in as each county whose audit is not yet complete, and audit all ballots in sample.
+        List<String> countiesWithAudits = new ArrayList<>();
         List<TestAuditSession> sessions = new ArrayList<>();
         for (final int cty : allCounties) {
+          final String ctyID = String.valueOf(cty);
+          final String asmState = roundStartStatus.get(ctyID).get(ASM_STATE).toString();
+          if(asmState.equalsIgnoreCase(COUNTY_AUDIT_COMPLETE.toString()))
+            continue;
+
           sessions.add(countyAuditInitialise(cty));
+          countiesWithAudits.add(ctyID);
         }
 
         // ACVR uploads for each county. Cannot run in parallel as corla does not like
@@ -284,6 +296,9 @@ public class WorkflowRunner extends Workflow {
         int maxBallotsRemaining = 0;
         if(countyResults.isPresent()){
           for(final Map.Entry<String, Map<String, Integer>> entry : countyResults.get().entrySet()){
+            if(!countiesWithAudits.contains(entry.getKey()))
+              continue;
+
             final Map<String,Integer> expStatus = entry.getValue();
             final Map<String,Object> countyStatus = status.get(entry.getKey());
 

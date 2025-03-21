@@ -489,9 +489,10 @@ public class IRVComparisonAudit extends ComparisonAudit {
         }
       }
 
-      LOGGER.info(String.format("%s total number of overstatements (%f), optimistic sample " +
+      LOGGER.info(String.format("%s total number of overstatements (%d), optimistic sample " +
               "recalculate needed (%s), estimated sample recalculate needed (%s),", prefix,
-          getOverstatements(), my_optimistic_recalculate_needed, my_estimated_recalculate_needed));
+          discrepancyCount(1)+discrepancyCount(2), my_optimistic_recalculate_needed,
+          my_estimated_recalculate_needed));
 
     } catch(Exception e){
       final String msg = String.format("%s an error arose in the removal of discrepancies " +
@@ -587,9 +588,10 @@ public class IRVComparisonAudit extends ComparisonAudit {
       // and the flag for indicating that a sample size recalculation is needed.
       super.recordDiscrepancy(theRecord, theType);
 
-      LOGGER.info(String.format("%s total number of overstatements (%f), optimistic sample " +
+      LOGGER.info(String.format("%s total number of overstatements (%d), optimistic sample " +
               "recalculate needed (%s), estimated sample recalculate needed (%s),", prefix,
-          getOverstatements(), my_optimistic_recalculate_needed, my_estimated_recalculate_needed));
+          discrepancyCount(1)+discrepancyCount(2),
+          my_optimistic_recalculate_needed, my_estimated_recalculate_needed));
 
     } catch(Exception e){
       final String msg = String.format("%s an error arose in the recording of discrepancies " +
