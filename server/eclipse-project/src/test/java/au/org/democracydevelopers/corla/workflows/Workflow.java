@@ -577,6 +577,26 @@ public class Workflow  {
   }
 
   /**
+   * With the given payload -- CVR ID -- call the ballot not found endpoint.
+   * @param cvrID        ID of the CVR being audited.
+   * @param filter       Session filter to use when calling the upload-audit-cvr endpoint.
+   */
+  private void callBallotNotFoundEndpoint(final long cvrID, final SessionFilter filter){
+
+    // Create JSON data structure to supply to upload-audit-cvr endpoint
+    final JSONObject params = createBody(Map.of(
+        "auditBoardIndex", 0,
+        "id", cvrID
+    ));
+
+    // Upload audited CVR
+    given().filter(filter)
+        .header("Content-Type", "application/json")
+        .body(params.toJSONString())
+        .post("/ballot-not-found");
+  }
+
+  /**
    * For the given county number, collect the set of CVRs to audit for the given round, and
    * upload the audit CVRs.
    * @param round   Audit round.
@@ -623,49 +643,47 @@ public class Workflow  {
       // Check if this CVR should map to a phantom ballot for the purposes of this workflow
       final boolean isPhantom = instance.isPhantomBallot(rec.imprintedID(), rec.countyID());
       if(isPhantom){
-        audited_cvr.put("ballot_type", RecordType.PHANTOM_RECORD_ACVR);
+        callBallotNotFoundEndpoint(rec.id(), filter);
+        continue;
       }
-      else {
-        // Create contest_info for audited cvr.
-        // Note that info.choices() has to be converted into "Name(Rank)" form, however
-        // info.choices() gives the already interpreted form, and we want to provide
-        // the raw choices (which is not stored in the database in the table for CVR contest
-        // info). Raw choices for IRV votes that contained errors *are* stored in the
-        // irv_ballot_interpretation table. So, we can, for any IRV vote, check whether
-        // there is an entry for it in the interpretations table. If so, we take the raw choices
-        // from there. Otherwise, we recreate the raw choices from info.choices().
-        final List<String> disagreements = instance.getDisagreements(rec.imprintedID(), rec.countyID());
-        final List<Map<String, Object>> contest_info = rec.contestInfo().stream().map(info ->
-            Map.of("choices", translateToRawChoices(rec.countyID().toString(), rec.cvrNumber(),
-                    info, rec.imprintedID(), instance), "comment", "", "consensus",
-                disagreements.contains(info.contest().name()) ? "NO" : "YES",
-                "contest", info.contest().id())).toList();
 
-        audited_cvr.put("contest_info", contest_info);
-      }
+      // Create contest_info for audited cvr.
+      // Note that info.choices() has to be converted into "Name(Rank)" form, however
+      // info.choices() gives the already interpreted form, and we want to provide
+      // the raw choices (which is not stored in the database in the table for CVR contest
+      // info). Raw choices for IRV votes that contained errors *are* stored in the
+      // irv_ballot_interpretation table. So, we can, for any IRV vote, check whether
+      // there is an entry for it in the interpretations table. If so, we take the raw choices
+      // from there. Otherwise, we recreate the raw choices from info.choices().
+      final List<String> disagreements = instance.getDisagreements(rec.imprintedID(), rec.countyID());
+      final List<Map<String, Object>> contest_info = rec.contestInfo().stream().map(info ->
+          Map.of("choices", translateToRawChoices(rec.countyID().toString(), rec.cvrNumber(),
+                  info, rec.imprintedID(), instance), "comment", "", "consensus",
+              disagreements.contains(info.contest().name()) ? "NO" : "YES",
+              "contest", info.contest().id())).toList();
+
+      audited_cvr.put("contest_info", contest_info);
 
       callUploadCVREndpoint(audited_cvr, rec.id(), filter);
 
-      if(!isPhantom) {
-        // Check whether we want to reaudit this ballot, and if so, process the reaudits.
-        final Optional<List<Map<String, ReAuditDetails>>> reaudits = instance.getReAudits(
-            rec.countyID().toString(), rec.imprintedID());
+      // Check whether we want to reaudit this ballot, and if so, process the reaudits.
+      final Optional<List<Map<String, ReAuditDetails>>> reaudits = instance.getReAudits(
+          rec.countyID().toString(), rec.imprintedID());
 
-        if (reaudits.isPresent()) {
-          for (final Map<String, ReAuditDetails> entry : reaudits.get()) {
-            Map<String, Object> reaudited_cvr = initialiseAuditedCVR(rec);
-            reaudited_cvr.put("reaudit", true);
+      if (reaudits.isPresent()) {
+        for (final Map<String, ReAuditDetails> entry : reaudits.get()) {
+          Map<String, Object> reaudited_cvr = initialiseAuditedCVR(rec);
+          reaudited_cvr.put("reaudit", true);
 
-            final List<Map<String, Object>> contest_info = rec.contestInfo().stream().map(info ->
-                Map.of("choices", translateToRawChoicesReAudit(rec.cvrNumber(), info,
-                        rec.imprintedID(), entry), "comment", "", "consensus",
-                    entry.containsKey(info.contest().name()) ? entry.get(info.contest().name()).consensus() :
-                        "YES", "contest", info.contest().id())).toList();
+          final List<Map<String, Object>> new_contest_info = rec.contestInfo().stream().map(info ->
+              Map.of("choices", translateToRawChoicesReAudit(rec.cvrNumber(), info,
+                      rec.imprintedID(), entry), "comment", "", "consensus",
+                  entry.containsKey(info.contest().name()) ? entry.get(info.contest().name()).consensus() :
+                      "YES", "contest", info.contest().id())).toList();
 
-            reaudited_cvr.put("contest_info", contest_info);
+          reaudited_cvr.put("contest_info", new_contest_info);
 
-            callUploadCVREndpoint(reaudited_cvr, rec.id(), filter);
-          }
+          callUploadCVREndpoint(reaudited_cvr, rec.id(), filter);
         }
       }
     }
