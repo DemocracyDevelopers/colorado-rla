@@ -29,9 +29,5 @@ public class AuditReasonTest {
 
         assert(statewide.isTargeted());
 
-
-
-
     }
-
 }
