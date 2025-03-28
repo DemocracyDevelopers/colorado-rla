@@ -44,7 +44,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -128,8 +130,7 @@ public class WorkflowRunner extends Workflow {
       final List<String> cvrs = instance.getCVRs();
       final List<String> manifests = instance.getManifests();
 
-      assertEquals(manifests.size(), numCounties);
-      assertEquals(cvrs.size(), numCounties);
+      assertEquals(cvrs.size(), manifests.size());
 
       for(int i = 0; i < manifests.size(); ++i){
         uploadCounty(i+1, MANIFEST_FILETYPE, manifests.get(i), manifests.get(i) + ".sha256sum");
@@ -141,9 +142,12 @@ public class WorkflowRunner extends Workflow {
         uploadCounty(i+1, CVR_FILETYPE, cvrs.get(i), cvrs.get(i) + ".sha256sum");
       }
 
+      final int countyCount = cvrs.size();
+      final Set<Integer> countyIDs = IntStream.rangeClosed(1,countyCount).boxed().collect(Collectors.toSet());
+
       // Wait while the CVRs (and manifests) are uploaded.
-      assertTrue(uploadSuccessfulWithin(600, allCounties, CVR_JSON));
-      assertTrue(uploadSuccessfulWithin(20, allCounties, MANIFEST_JSON));
+      assertTrue(uploadSuccessfulWithin(600, countyIDs, CVR_JSON));
+      assertTrue(uploadSuccessfulWithin(20, countyIDs, MANIFEST_JSON));
 
       // Get the DoSDashboard refresh response; sanity check for initial state.
       JsonPath dashboard = getDoSDashBoardRefreshResponse();
@@ -159,7 +163,7 @@ public class WorkflowRunner extends Workflow {
           .compareTo(new BigDecimal(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON).toString())));
 
       // There should be canonical contests for each county.
-      assertEquals(numCounties,
+      assertEquals(countyCount,
           dashboard.getMap(AUDIT_INFO + "." + CANONICAL_CONTESTS).values().size());
 
       // Check that the seed is still null.
@@ -234,7 +238,7 @@ public class WorkflowRunner extends Workflow {
         // Log in as each county whose audit is not yet complete, and audit all ballots in sample.
         List<String> countiesWithAudits = new ArrayList<>();
         List<TestAuditSession> sessions = new ArrayList<>();
-        for (final int cty : allCounties) {
+        for (final int cty : countyIDs) {
           final String ctyID = String.valueOf(cty);
           final String asmState = roundStartStatus.get(ctyID).get(ASM_STATE).toString();
           if(asmState.equalsIgnoreCase(COUNTY_AUDIT_COMPLETE.toString()))
