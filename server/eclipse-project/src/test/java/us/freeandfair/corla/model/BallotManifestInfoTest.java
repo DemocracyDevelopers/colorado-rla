@@ -8,7 +8,7 @@ import java.util.Optional;
 import static org.testng.AssertJUnit.*;
 import static us.freeandfair.corla.util.EqualsHashcodeHelper.nullableHashCode;
 
-public class BallotManifestInfoTest extends TestClassWithDatabase {
+public class BallotManifestInfoTest {
 
     private static final Long the_county_id = 1L;
     private static final Integer the_scanner_id = 1;
