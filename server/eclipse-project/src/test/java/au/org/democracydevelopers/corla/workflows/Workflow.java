@@ -56,14 +56,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipInputStream;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaUpdate;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
-import org.hibernate.Session;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
 import us.freeandfair.corla.model.CVRContestInfo;
@@ -121,11 +116,6 @@ public class Workflow  {
    * Path for all the data files.
    */
   protected static final String dataPath = "src/test/resources/CSVs/";
-
-  /**
-   * Path to folder containing export queries for reports.
-   */
-  protected static final String exportSQLQueriesPath = "src/main/resources/sql/";
 
   /**
    * Strings for colorado-rla JSON structures.
@@ -1061,40 +1051,6 @@ public class Workflow  {
         .then()
         .assertThat()
         .statusCode(HttpStatus.SC_OK);
-  }
-
-  /**
-   * Given a map between county id (as a string) and a list of imprinted IDs representing CVRs
-   * in that county, make those CVRs phantom records.
-   * @param phantomCVRs CVRs that we want to make phantoms (identified by county ID and imprinted ID).
-   */
-  protected void makePhantoms(final Map<String,List<String>> phantomCVRs) {
-    if (!phantomCVRs.isEmpty()) {
-      final int toModify = phantomCVRs.values().stream().mapToInt(List::size).sum();
-
-      final Session s = Persistence.currentSession();
-      final CriteriaBuilder cb = s.getCriteriaBuilder();
-      final CriteriaUpdate<CastVoteRecord> cq = cb.createCriteriaUpdate(CastVoteRecord.class);
-
-      final Root<CastVoteRecord> root = cq.from(CastVoteRecord.class);
-      cq.set("my_record_type", RecordType.PHANTOM_RECORD);
-      cq.set("revision", 1);
-
-      final Predicate disjunction = cb.disjunction();
-      for (final String county : phantomCVRs.keySet()) {
-        for (final String id : phantomCVRs.get(county)) {
-          final Predicate conjunct = cb.and(cb.equal(root.get("my_county_id"), county));
-          conjunct.getExpressions().add(cb.and(cb.equal(root.get("my_imprinted_id"), id)));
-          conjunct.getExpressions().add(cb.and(cb.equal(root.get("my_record_type"), RecordType.UPLOADED)));
-          disjunction.getExpressions().add(conjunct);
-        }
-      }
-
-      cq.where(disjunction);
-      final int result = s.createQuery(cq).executeUpdate();
-
-      assertEquals(result, toModify);
-    }
   }
 
   /**

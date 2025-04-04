@@ -146,14 +146,6 @@ public class Instance {
   private Map<String,List<String>> phantomBallots;
 
   /**
-   * Identifying information (Imprinted ID) for CVRs that we want to treat as Phantoms. Organised
-   * as a map between county ID (as a string), and the list of imprinted IDs for CVRs in that
-   * county that we want to convert to Phantoms.
-   */
-  @JsonProperty("PHANTOM_CVRS")
-  private Map<String,List<String>> phantomCVRS;
-
-  /**
    * Identifying information for contests on CVRs that we want to introduce an audit board
    * disagreement. Organised as a map between county ID (as a string), and a map between
    * ballot imprinted ID and the names of the contests for which we want disagreements injected.
@@ -218,7 +210,6 @@ public class Instance {
     contestResults = new HashMap<>();
     countyResults = new HashMap<>();
     phantomBallots = new HashMap<>();
-    phantomCVRS = new HashMap<>();
     actualChoices = new HashMap<>();
     disagreements = new HashMap<>();
     reaudits = new HashMap<>();
@@ -344,14 +335,6 @@ public class Instance {
       }
     }
     return List.of();
-  }
-
-  /**
-   * @return Map containing identifying information of Phantom CVRs (defined in terms of imprinted ID
-   * and county ID).
-   */
-  public Map<String,List<String>> getPhantomCVRS(){
-    return Collections.unmodifiableMap(phantomCVRS);
   }
 
   /**

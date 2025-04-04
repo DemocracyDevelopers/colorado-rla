@@ -1,0 +1,119 @@
+{
+  "NAME" : "AllPluralityTwoVoteOverstatementTwoRounds",
+
+  "RISK_LIMIT" : 0.03,
+
+  "SEED" : "24098249082409821390482049098",
+
+  "SQLS" : [
+  ],
+
+  "CVRS" : [
+    "src/test/resources/CSVs/AdamsAndAlamosa/adams-cvrexport.csv",
+    "src/test/resources/CSVs/AdamsAndAlamosa/alamosa-cvrexport.csv"
+  ],
+
+  "MANIFESTS" : [
+    "src/test/resources/CSVs/AdamsAndAlamosa/adams-manifest.csv",
+    "src/test/resources/CSVs/AdamsAndAlamosa/alamosa-manifest.csv"
+  ],
+
+  "CANONICAL_LIST" : "src/test/resources/CSVs/AdamsAndAlamosa/adams-and-alamosa-canonical-list.csv",
+
+  "TARGETS" : {
+    "Regent of the University of Colorado - At Large" : "STATE_WIDE_CONTEST",
+    "Adams COUNTY COMMISSIONER DISTRICT 3" : "COUNTY_WIDE_CONTEST",
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : "COUNTY_WIDE_CONTEST"
+  },
+
+  "DILUTED_MARGINS" : {
+    "Regent of the University of Colorado - At Large" : 0.654545455,
+    "Adams COUNTY COMMISSIONER DISTRICT 3" : 0.254545455,
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : 0.224242424
+  },
+
+  "EXPECTED_SAMPLES" : {
+    "Regent of the University of Colorado - At Large" : 12,
+    "Adams COUNTY COMMISSIONER DISTRICT 3" : 29,
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : 33
+  },
+
+  "FINAL_EXPECTED_AUDITED_BALLOTS" : {
+    "Regent of the University of Colorado - At Large" : 22,
+    "Adams COUNTY COMMISSIONER DISTRICT 3" : 29,
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : 33
+  },
+
+  "IRV_CONTESTS" : [
+  ],
+
+  "EXPECTED_ROUNDS" : 2,
+
+  "PHANTOM_BALLOTS" : {
+  },
+
+  "DISAGREEMENTS" : {
+  },
+
+  "DISCREPANT_AUDITED_BALLOT_CHOICES" : {
+    "1" : {
+      "3-800-1": {
+        "Regent of the University of Colorado - At Large": [
+          "Distant Loser"
+        ]
+      }
+    }
+  },
+
+  "REAUDITS" : {
+  },
+
+  "CONTEST_RESULTS" : {
+    "1" : {
+      "Regent of the University of Colorado - At Large" : {
+        "one_over_count" : 0,
+        "two_over_count" : 1,
+        "one_under_count" : 0,
+        "two_under_count" : 0,
+        "other_count" : 0
+      },
+      "Adams COUNTY COMMISSIONER DISTRICT 3" : {
+        "one_over_count" : 0,
+        "two_over_count" : 0,
+        "one_under_count" : 0,
+        "two_under_count" : 0,
+        "other_count" : 0
+      },
+      "Alamosa COUNTY COMMISSIONER DISTRICT 3" : {
+        "one_over_count" : 0,
+        "two_over_count" : 0,
+        "one_under_count" : 0,
+        "two_under_count" : 0,
+        "other_count" : 0
+      }
+    },
+    "2" : {
+      "Regent of the University of Colorado - At Large" : {
+        "one_over_count" : 0,
+        "two_over_count" : 1,
+        "one_under_count" : 0,
+        "two_under_count" : 0,
+        "other_count" : 0
+      },
+      "Adams COUNTY COMMISSIONER DISTRICT 3" : {
+        "one_over_count" : 0,
+        "two_over_count" : 0,
+        "one_under_count" : 0,
+        "two_under_count" : 0,
+        "other_count" : 0
+      },
+      "Alamosa COUNTY COMMISSIONER DISTRICT 3" : {
+        "one_over_count" : 0,
+        "two_over_count" : 0,
+        "one_under_count" : 0,
+        "two_under_count" : 0,
+        "other_count" : 0
+      }
+    }
+  }
+}
