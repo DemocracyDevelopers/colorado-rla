@@ -569,6 +569,8 @@ public class Workflow  {
         "cvr_id", cvrID
     ));
 
+    final String temp = params.toJSONString();
+
     // Upload audited CVR
     given().filter(filter)
         .header("Content-Type", "application/json")
@@ -1061,40 +1063,6 @@ public class Workflow  {
         .then()
         .assertThat()
         .statusCode(HttpStatus.SC_OK);
-  }
-
-  /**
-   * Given a map between county id (as a string) and a list of imprinted IDs representing CVRs
-   * in that county, make those CVRs phantom records.
-   * @param phantomCVRs CVRs that we want to make phantoms (identified by county ID and imprinted ID).
-   */
-  protected void makePhantoms(final Map<String,List<String>> phantomCVRs) {
-    if (!phantomCVRs.isEmpty()) {
-      final int toModify = phantomCVRs.values().stream().mapToInt(List::size).sum();
-
-      final Session s = Persistence.currentSession();
-      final CriteriaBuilder cb = s.getCriteriaBuilder();
-      final CriteriaUpdate<CastVoteRecord> cq = cb.createCriteriaUpdate(CastVoteRecord.class);
-
-      final Root<CastVoteRecord> root = cq.from(CastVoteRecord.class);
-      cq.set("my_record_type", RecordType.PHANTOM_RECORD);
-      cq.set("revision", 1);
-
-      final Predicate disjunction = cb.disjunction();
-      for (final String county : phantomCVRs.keySet()) {
-        for (final String id : phantomCVRs.get(county)) {
-          final Predicate conjunct = cb.and(cb.equal(root.get("my_county_id"), county));
-          conjunct.getExpressions().add(cb.and(cb.equal(root.get("my_imprinted_id"), id)));
-          conjunct.getExpressions().add(cb.and(cb.equal(root.get("my_record_type"), RecordType.UPLOADED)));
-          disjunction.getExpressions().add(conjunct);
-        }
-      }
-
-      cq.where(disjunction);
-      final int result = s.createQuery(cq).executeUpdate();
-
-      assertEquals(result, toModify);
-    }
   }
 
   /**
