@@ -56,14 +56,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipInputStream;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaUpdate;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
-import org.hibernate.Session;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
 import us.freeandfair.corla.model.CVRContestInfo;
@@ -121,11 +116,6 @@ public class Workflow  {
    * Path for all the data files.
    */
   protected static final String dataPath = "src/test/resources/CSVs/";
-
-  /**
-   * Path to folder containing export queries for reports.
-   */
-  protected static final String exportSQLQueriesPath = "src/main/resources/sql/";
 
   /**
    * Strings for colorado-rla JSON structures.
@@ -568,8 +558,6 @@ public class Workflow  {
         "audit_cvr", audited_cvr,
         "cvr_id", cvrID
     ));
-
-    final String temp = params.toJSONString();
 
     // Upload audited CVR
     given().filter(filter)
