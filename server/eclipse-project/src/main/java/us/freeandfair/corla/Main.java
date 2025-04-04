@@ -43,12 +43,14 @@ import org.eclipse.jetty.server.Server;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import org.eclipse.jetty.util.thread.ThreadPool;
 import spark.Request;
 import spark.Response;
 import spark.Service;
 import spark.embeddedserver.EmbeddedServers;
 import spark.embeddedserver.jetty.EmbeddedJettyServer;
 import spark.embeddedserver.jetty.JettyHandler;
+import spark.embeddedserver.jetty.JettyServerFactory;
 import spark.http.matching.MatcherFilter;
 import spark.route.Routes;
 import spark.staticfiles.StaticFilesConfiguration;
@@ -556,10 +558,16 @@ public final class Main {
         // secure cookies don't work if we're not using HTTPS
         // handler.getSessionCookieConfig().setSecure(true);
 
-        return new EmbeddedJettyServer((int the_max_threads, 
-                                        int the_min_threads, 
-                                        int the_thread_timeout) -> {
-          return new Server();
+        return new EmbeddedJettyServer(new JettyServerFactory() {
+          @Override
+          public Server create(int the_max_threads, int the_min_threads, int the_threat_timeout) {
+            return new Server();
+          }
+
+          @Override
+          public Server create(ThreadPool threadPool) {
+            return null;
+          }
         }, handler);
       });
     
