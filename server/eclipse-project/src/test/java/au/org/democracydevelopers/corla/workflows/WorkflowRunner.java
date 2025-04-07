@@ -177,17 +177,6 @@ public class WorkflowRunner extends Workflow {
         TestClassWithDatabase.runSQLSetupScript(postgres, s);
       }
 
-      // At this point, if the Instance specifies that some CVRs should be treated as
-      // Phantoms, we will need to replace the existing record type for that CVR with a Phantom.
-      try {
-        makePhantoms(instance.getPhantomCVRS());
-      }
-      catch(Exception e){
-        final String msg = prefix + " cannot run make phantoms SQL script: " + e.getMessage();
-        LOGGER.error(msg);
-        throw new RuntimeException(msg);
-      }
-
       dashboard = getDoSDashBoardRefreshResponse();
 
       // Check that the right number of IRV contests are present
@@ -215,6 +204,11 @@ public class WorkflowRunner extends Workflow {
       final Map<String,Integer> expectedSamples = instance.getExpectedSamples();
       final Map<String,Double> expectedMargins = instance.getDilutedMargins();
       for(final String c : targets.keySet()) {
+        if(!sampleSizes.containsKey(c)){
+          throw new RuntimeException("When verifying sample sizes, the targeted contest name "
+              + c + " does not exist in sample sizes data structure returned by CORLA. " +
+              "Likely incorrectly specified contest name in workflow JSON.");
+        }
         verifySampleSize(c, expectedMargins.get(c), sampleSizes.get(c).estimatedSamples(),
             expectedSamples.get(c), irvContests.contains(c));
       }
@@ -274,6 +268,12 @@ public class WorkflowRunner extends Workflow {
           final Map<String, Map<String, Integer>> roundResults = results.get();
 
           for (final String contestName : roundResults.keySet()) {
+            if(!contestToDBID.containsKey(contestName)){
+              throw new RuntimeException("When verifying round results, the contest name "
+                  + contestName + " does not exist in contest-database ID map. " +
+                  "Likely incorrectly specified contest name in workflow JSON.");
+            }
+
             final String dbID = contestToDBID.get(contestName);
             final Map<String, Integer> contestResult = roundResults.get(contestName);
 
@@ -283,6 +283,10 @@ public class WorkflowRunner extends Workflow {
             final int twoUnderCount = contestResult.get(TWO_UNDER_COUNT);
             final int otherCount = contestResult.get(OTHER_COUNT);
 
+            if(!discrepancies.containsKey(dbID)){
+              throw new RuntimeException("Likely incorrectly specified contest name (" +
+                  contestName + ") in workflow JSON.");
+            }
             final Map<String, Integer> contestDiscrepancies = discrepancies.get(dbID);
             assertEquals(contestDiscrepancies.get(ONE_OVER).intValue(), oneOverCount);
             assertEquals(contestDiscrepancies.get(ONE_UNDER).intValue(), oneUnderCount);
