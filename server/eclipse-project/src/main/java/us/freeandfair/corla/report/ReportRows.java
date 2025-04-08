@@ -221,7 +221,7 @@ public class ReportRows {
       row.put("comment", info.comment());
     }
 
-    if (null == discrepancy || 0 == discrepancy) {
+    if (null == discrepancy) {
       row.put("discrepancy", null);
     } else {
       row.put("discrepancy", renderDiscrepancy(discrepancy));
