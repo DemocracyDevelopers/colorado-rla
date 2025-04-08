@@ -393,6 +393,7 @@ public class ReportRows {
       row.put("diluted margin %", percentage(ca.getDilutedMargin()).toString());
       row.put("disc +2", toString(ca.discrepancyCount(2)));
       row.put("disc +1", toString(ca.discrepancyCount(1)));
+      row.put("disc 0", toString(ca.discrepancyCount(0)));
       row.put("disc -1", toString(ca.discrepancyCount(-1)));
       row.put("disc -2", toString(ca.discrepancyCount(-2)));
       row.put("gamma", toString(ca.getGamma()));
