@@ -17,7 +17,7 @@ SELECT
    ca.audited_sample_count,
    ca.two_vote_over_count,
    ca.one_vote_over_count,
-   ca.other_count,
+   ca.other_count as zero_discrepancy_count,
    ca.one_vote_under_count,
    ca.two_vote_under_count,
    ca.disagreement_count,

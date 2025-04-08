@@ -309,6 +309,7 @@ public class ReportRows {
       "diluted margin %",
       "disc +2",
       "disc +1",
+      "disc 0",
       "disc -1",
       "disc -2",
       "gamma",
