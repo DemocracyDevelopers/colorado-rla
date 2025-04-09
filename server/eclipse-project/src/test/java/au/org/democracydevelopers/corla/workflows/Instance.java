@@ -90,6 +90,27 @@ public class Instance {
   private String canonicalList;
 
   /**
+   *  Map between old contest names and their new ones -- for use in canonicalisation.
+   *   "CONTEST_NAME_CHANGE" : {
+   *     "Regent of the University of Colorado - At Large" : "Regent of the University of Colorado"
+   *   },
+   */
+  @JsonProperty("CONTEST_NAME_CHANGE")
+  private Map<String,String> contestNameChanges;
+
+  /**
+   * Map between contest names (after canonicalisation of contest names) and old candidate names
+   * with their new values -- for use in canonicalisation.
+   * "CANDIDATE_NAME_CHANGE" : {
+   *   "Regent of the University of Colorado" : {
+   *      "Clear Winner" : "Distant Winner"
+   *   }
+   * },
+   */
+  @JsonProperty("CANDIDATE_NAME_CHANGE")
+  private Map<String,Map<String,String>> candidateNameChanges;
+
+  /**
    * Contests targeted for audit, map between contest name and contest type.
    */
   @JsonProperty("TARGETS")
@@ -201,6 +222,8 @@ public class Instance {
     seed = "";
     targets = new HashMap<>();
     canonicalList = "";
+    contestNameChanges = new HashMap<>();
+    candidateNameChanges = new HashMap<>();
     manifests = new ArrayList<>();
     cvrs = new ArrayList<>();
     sqls = new ArrayList<>();
@@ -253,6 +276,22 @@ public class Instance {
    */
   public String getCanonicalisationFile(){
     return canonicalList;
+  }
+
+  /**
+   * @return Mapping between old contest names and the new names for those contests
+   * that should be applied during canonicalisation, as an unmodifiable map.
+   */
+  public Map<String,String> getContestNameChanges() {
+    return Collections.unmodifiableMap(contestNameChanges);
+  }
+
+  /**
+   * @return Mapping between contest names, and a map of candidate name changes to be
+   * applied during canonicalisation, as an unmodifiable map.
+   */
+  public Map<String,Map<String,String>> getCandidateNameChanges(){
+    return Collections.unmodifiableMap(candidateNameChanges);
   }
 
   /**

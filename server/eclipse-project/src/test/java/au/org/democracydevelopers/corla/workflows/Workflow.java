@@ -124,10 +124,14 @@ public class Workflow  {
   protected static final String AUDIT = "audit";
   protected static final String AUDIT_INFO = "audit_info";
   protected static final String CONTEST = "contest";
+  protected static final String CONTESTID = "contestId";
   protected static final String CANONICAL_CHOICES = "canonicalChoices";
   protected static final String CANONICAL_CONTESTS = "canonicalContests";
   protected static final String COUNTY_STATUS = "county_status";
   protected static final String COUNTYID = "countyId";
+  protected static final String CHOICES = "choices";
+  protected static final String OLDNAME = "oldName";
+  protected static final String NEWNAME = "newName";
   protected static final String CVR_FILETYPE = "cvr-export";
   protected static final String CVR_JSON = "cvr_export_file";
   protected static final String ESTIMATED_BALLOTS = "estimated_ballots_to_audit";
@@ -860,26 +864,13 @@ public class Workflow  {
    * are mocking that functionality. To do so, we take the path to a file containing SQL insert
    * statements for all assertion related content that would have been created by the raire-service,
    * and inserted into the database, and insert it into the database here.
-   * TODO Replace this with a call to the raire-service. Currently problematic because it will be
+   * Note that it is problematic to call the RAIRE service in this test context, because it will be
    * reading the wrong database.
    * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/218">...</a>
-   * Set it up so that we run raire-service inside the Docker container and tell main where to find it.
    */
   protected void generateAssertions(final PostgreSQLContainer<?> postgres, final String sqlPath, final double timeLimitSeconds)
   {
     TestClassWithDatabase.runSQLSetupScript(postgres, sqlPath);
-
-    // Version that connects to raire-service below:
-    // Login as state admin.
-    //final SessionFilter filter = doLogin("stateadmin1");
-
-    //given()
-    //    .filter(filter)
-    //    .header("Content-Type", "application/x-www-form-urlencoded")
-    //    .get("/generate-assertions?timeLimitSeconds="+timeLimitSeconds)
-    //    .then()
-    //    .assertThat()
-    //    .statusCode(HttpStatus.SC_OK);
   }
 
   /**
@@ -1031,6 +1022,68 @@ public class Workflow  {
         .extract()
         .body()
         .jsonPath();
+  }
+
+  /**
+   * Given a workflow instance, perform cononicalisation of candidate and contest names.
+   * @param instance           Workflow instance
+   * @param ignoreManifests
+   */
+  protected void canonicalise(final Instance instance, boolean ignoreManifests){
+    final JsonPath contests = getContests(ignoreManifests);
+
+    final Map<String,String> contestNameChanges = instance.getContestNameChanges();
+    final Map<String, Map<String,String>> candNameChanges = instance.getCandidateNameChanges();
+
+    final JSONArray canonicaliseContests = new JSONArray();
+    final JSONArray canonicaliseCandidates = new JSONArray();
+
+    // Find the IDs of the ones we want to target.
+    for(int i=0 ; i < contests.getList("").size() ; i++) {
+      final String contestName = contests.getString("[" + i + "]." + NAME);
+      final Integer contestId = contests.getInt("[" + i + "]." + ID);
+      final Integer countyId = contests.getInt("[" + i + "]." + COUNTY_ID);
+
+      final String newName = contestNameChanges.getOrDefault(contestName, contestName);
+
+      if(contestNameChanges.containsKey(contestName)){
+        canonicaliseContests.add(Map.of(CONTESTID, contestId, COUNTYID,
+            countyId, NAME, contestNameChanges.get(contestName)));
+      }
+
+      if(candNameChanges.containsKey(newName)){
+        JSONArray candChanges = new JSONArray();
+        for(Map.Entry<String,String> change : candNameChanges.get(newName).entrySet()){
+          candChanges.add(createBody(Map.of(OLDNAME, change.getKey(),
+              NEWNAME, change.getValue())));
+        }
+        canonicaliseCandidates.add(createBody(Map.of(CONTESTID, contestId,
+            COUNTYID, countyId, CHOICES, candChanges)));
+      }
+    }
+
+    final SessionFilter filter = doLogin("stateadmin1");
+    final String request = canonicaliseContests.toString();
+
+    // Post the set contest names request (canonicalise contest names)
+    given()
+        .filter(filter)
+        .header("Content-Type", "application/json")
+        .body(canonicaliseContests.toString())
+        .post("/set-contest-names")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
+
+    // Post the set contest names request (canonicalise candidate names)
+    given()
+        .filter(filter)
+        .header("Content-Type", "application/json")
+        .body(canonicaliseCandidates.toString())
+        .post("/set-contest-names")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
   }
 
   /**

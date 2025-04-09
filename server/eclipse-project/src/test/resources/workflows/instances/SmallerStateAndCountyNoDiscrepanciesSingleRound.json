@@ -23,6 +23,12 @@
 
   "CANONICAL_LIST" : "src/test/resources/CSVs/WollongongAndSplitRichmondValley/WollongongAndSplitRichmond_Canonical_List.csv",
 
+  "CONTEST_NAME_CHANGE" : {
+  },
+
+  "CANDIDATE_NAME_CHANGE" : {
+  },
+
   "TARGETS" : {
     "Richmond Valley Mayoral" : "STATE_WIDE_CONTEST",
     "City of Wollongong Mayoral" : "COUNTY_WIDE_CONTEST"

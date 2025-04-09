@@ -41,6 +41,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -169,6 +170,9 @@ public class WorkflowRunner extends Workflow {
       // Check that the seed is still null.
       assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
       assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
+
+      canonicalise(instance, true);
+      dashboard = getDoSDashBoardRefreshResponse();
 
       // Load additional SQL data (this is data that we want to add after we have
       // CVRs, manifests, etc loaded for each county). This will mostly be used to load
