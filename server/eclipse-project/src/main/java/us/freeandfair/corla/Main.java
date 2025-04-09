@@ -44,6 +44,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import org.eclipse.jetty.util.thread.ThreadPool;
+import spark.ExceptionMapper;
 import spark.Request;
 import spark.Response;
 import spark.Service;
@@ -545,12 +546,13 @@ public final class Main {
     
     // secure the session cookies by adding an embedded server handler
     EmbeddedServers.add(EmbeddedServers.Identifiers.JETTY, 
-        (final Routes the_route_matcher, 
-         final StaticFilesConfiguration the_static_files_config, 
+        (final Routes the_route_matcher,
+         final StaticFilesConfiguration the_static_files_config,
+         final ExceptionMapper the_exception_mapper,
          final boolean the_has_multiple_handler) -> {
         final MatcherFilter matcher_filter = 
-            new MatcherFilter(the_route_matcher, the_static_files_config, 
-                              false, the_has_multiple_handler);
+            new MatcherFilter(the_route_matcher, the_static_files_config,
+                    new ExceptionMapper(), false, the_has_multiple_handler);
         matcher_filter.init(null);
 
         final JettyHandler handler = new JettyHandler(matcher_filter);
