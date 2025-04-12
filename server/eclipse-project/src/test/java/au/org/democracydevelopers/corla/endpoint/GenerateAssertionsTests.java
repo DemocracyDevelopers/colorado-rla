@@ -313,9 +313,11 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   /**
    * When raire sends an uninterpretable response, an appropriate error message appears.
    * This tests a response that is not valid json.
+   * The (?s) workaround is added because otherwise the regexp was failing to match, but tbh I'm not
+   * sure why that's necessary.
    */
   @Test(expectedExceptions = RuntimeException.class,
-      expectedExceptionsMessageRegExp = ".*Error interpreting Raire response for contest.*")
+      expectedExceptionsMessageRegExp = "(?s).*Error interpreting Raire response for contest.*")
   public void uninterpretableRaireResponseThrowsRuntimeException() {
     testUtils.log(LOGGER, "uninterpretableRaireResponseThrowsRuntimeException");
 
@@ -329,7 +331,7 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
    * This tests a response that is valid json, but not the json we were expecting.
    */
   @Test(expectedExceptions = RuntimeException.class,
-      expectedExceptionsMessageRegExp = ".*Error interpreting Raire response for contest.*")
+      expectedExceptionsMessageRegExp = "(?s).*Error interpreting Raire response for contest.*")
   public void unexpectedRaireResponseThrowsRuntimeException() {
     testUtils.log(LOGGER, "unexpectedRaireResponseThrowsRuntimeException");
 
