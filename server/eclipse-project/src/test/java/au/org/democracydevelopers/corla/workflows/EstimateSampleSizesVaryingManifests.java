@@ -134,9 +134,12 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
 
     // Target the margin-2 contests in every county.
     targetContests(Map.of(
-        margin2Contest, COUNTY_WIDE_CONTEST.toString(),
-        margin2Contest + suffixes[1], COUNTY_WIDE_CONTEST.toString(),
-        margin2Contest + suffixes[2], COUNTY_WIDE_CONTEST.toString()
+        margin2Contest,
+        Map.of(Workflow.REASON, COUNTY_WIDE_CONTEST.toString(), Workflow.WINNER, ""),
+        margin2Contest + suffixes[1],
+        Map.of(Workflow.REASON, COUNTY_WIDE_CONTEST.toString(), Workflow.WINNER, ""),
+        margin2Contest + suffixes[2],
+        Map.of(Workflow.REASON, COUNTY_WIDE_CONTEST.toString(), Workflow.WINNER, "")
     ));
 
     // Get contest lists again. Now this should be non-empty regardless of whether manifests are

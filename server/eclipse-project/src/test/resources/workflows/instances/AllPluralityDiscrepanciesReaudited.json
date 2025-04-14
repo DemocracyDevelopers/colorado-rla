@@ -30,10 +30,22 @@
     }
   },
 
+  "CONTESTS_BY_SELECTED_COUNTIES" : {
+  },
+
   "TARGETS" : {
-    "Regent of the University of Colorado" : "STATE_WIDE_CONTEST",
-    "Adams COUNTY COMMISSIONER DISTRICT 3" : "COUNTY_WIDE_CONTEST",
-    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : "COUNTY_WIDE_CONTEST"
+    "Regent of the University of Colorado" : {
+      "reason" : "STATE_WIDE_CONTEST",
+      "winner" : ""
+    },
+    "Adams COUNTY COMMISSIONER DISTRICT 3" : {
+      "reason" : "COUNTY_WIDE_CONTEST",
+      "winner" : ""
+    },
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : {
+      "reason" : "COUNTY_WIDE_CONTEST",
+      "winner" : ""
+    }
   },
 
   "DILUTED_MARGINS" : {
@@ -112,21 +124,24 @@
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       },
       "Adams COUNTY COMMISSIONER DISTRICT 3" : {
         "one_over_count" : 0,
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       },
       "Alamosa COUNTY COMMISSIONER DISTRICT 3" : {
         "one_over_count" : 0,
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       }
     }
   }

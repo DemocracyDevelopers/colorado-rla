@@ -151,10 +151,22 @@
   "CANDIDATE_NAME_CHANGE" : {
   },
 
+  "CONTESTS_BY_SELECTED_COUNTIES" : {
+  },
+
   "TARGETS" : {
-    "City of Longmont - Mayor" : "COUNTY_WIDE_CONTEST",
-    "Byron Mayoral" : "STATE_WIDE_CONTEST",
-    "Uralla Mayoral" : "COUNTY_WIDE_CONTEST"
+    "City of Longmont - Mayor" : {
+      "reason" : "COUNTY_WIDE_CONTEST",
+      "winner" : ""
+    },
+    "Byron Mayoral" : {
+      "reason" : "STATE_WIDE_CONTEST",
+      "winner" : ""
+    },
+    "Uralla Mayoral" : {
+      "reason" : "COUNTY_WIDE_CONTEST",
+      "winner" : ""
+    }
   },
 
   "DILUTED_MARGINS" : {
@@ -208,21 +220,24 @@
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       },
       "City of Longmont - Mayor" : {
         "one_over_count" : 0,
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       },
       "Uralla Mayoral" : {
         "one_over_count" : 1,
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 1
       }
     },
     "2" : {
@@ -231,21 +246,24 @@
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       },
       "City of Longmont - Mayor" : {
         "one_over_count" : 0,
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       },
       "Uralla Mayoral" : {
         "one_over_count" : 1,
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 1
       }
     }
   }

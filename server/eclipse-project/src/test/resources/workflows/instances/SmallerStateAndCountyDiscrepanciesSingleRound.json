@@ -29,9 +29,18 @@
   "CANDIDATE_NAME_CHANGE" : {
   },
 
+  "CONTESTS_BY_SELECTED_COUNTIES" : {
+  },
+
   "TARGETS" : {
-    "Richmond Valley Mayoral" : "STATE_WIDE_CONTEST",
-    "City of Wollongong Mayoral" : "COUNTY_WIDE_CONTEST"
+    "Richmond Valley Mayoral" : {
+      "reason" : "STATE_WIDE_CONTEST",
+      "winner" : "MUSTOW Robert"
+    },
+    "City of Wollongong Mayoral" : {
+      "reason" : "COUNTY_WIDE_CONTEST",
+      "winner" : "BRADBERY Gordon"
+    }
   },
 
   "DILUTED_MARGINS" : {
@@ -91,14 +100,16 @@
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       },
       "City of Wollongong Mayoral" : {
         "one_over_count" : 1,
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 1
+        "other_count" : 1,
+        "disagreements" : 0
       }
     }
   }

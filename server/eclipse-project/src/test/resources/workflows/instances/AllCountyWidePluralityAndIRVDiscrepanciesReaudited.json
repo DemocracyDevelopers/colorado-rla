@@ -41,11 +41,50 @@
     }
   },
 
+  "CONTESTS_BY_SELECTED_COUNTIES" : {
+    "Adams" : [
+      "Wollondilly Mayoral",
+      "Adams COUNTY COMMISSIONER DISTRICT 3",
+      "Regent of the University of Colorado"
+    ],
+    "Alamosa" : [
+      "Alamosa COUNTY COMMISSIONER DISTRICT 3",
+      "Regent of the University of Colorado"
+    ],
+    "Arapahoe" : [
+      "Ballina Mayoral"
+    ],
+    "Archuleta" : [
+      "Bellingen Mayoral"
+    ],
+    "Baca" : [
+      "Burwood Mayoral"
+    ],
+    "Bent" : [
+      "Byron Mayoral"
+    ],
+    "Boulder" : [
+      "Canada Bay Mayoral"
+    ]
+  },
+
   "TARGETS" : {
-    "Regent of the University of Colorado" : "COUNTY_WIDE_CONTEST",
-    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : "COUNTY_WIDE_CONTEST",
-    "Wollondilly Mayoral" : "COUNTY_WIDE_CONTEST",
-    "Burwood Mayoral" : "COUNTY_WIDE_CONTEST"
+    "Regent of the University of Colorado" : {
+      "reason" : "COUNTY_WIDE_CONTEST",
+      "winner" : "Distant Winner"
+    },
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : {
+      "reason" : "COUNTY_WIDE_CONTEST",
+      "winner" : "Jeff Baker"
+    },
+    "Wollondilly Mayoral" : {
+      "reason" : "COUNTY_WIDE_CONTEST",
+      "winner" : "GOULD Matt"
+    },
+    "Burwood Mayoral" : {
+      "reason" : "COUNTY_WIDE_CONTEST",
+      "winner" : "LYON Michael"
+    }
   },
 
   "DILUTED_MARGINS" : {
@@ -139,28 +178,32 @@
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       },
       "Alamosa COUNTY COMMISSIONER DISTRICT 3" : {
         "one_over_count" : 0,
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       },
       "Wollondilly Mayoral" : {
         "one_over_count" : 0,
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       },
       "Burwood Mayoral" : {
         "one_over_count" : 0,
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       }
     }
   }

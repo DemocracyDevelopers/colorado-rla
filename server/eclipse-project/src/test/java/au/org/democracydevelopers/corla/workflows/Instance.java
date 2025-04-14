@@ -111,10 +111,11 @@ public class Instance {
   private Map<String,Map<String,String>> candidateNameChanges;
 
   /**
-   * Contests targeted for audit, map between contest name and contest type.
+   * Contests targeted for audit, map between contest name and a map that identifies the
+   * audit reason (eg. contest type) and winner.
    */
   @JsonProperty("TARGETS")
-  private Map<String,String> targets;
+  private Map<String,Map<String,String>> targets;
 
   /**
    * Expected diluted margins for targeted contests.
@@ -212,6 +213,14 @@ public class Instance {
   @JsonProperty("REAUDITS")
   private Map<String,Map<String,List<Map<String,ReAuditDetails>>>> reaudits;
 
+  /**
+   * Names of contests present in selected counties, when verifying the reports after
+   * conclusion of the audit, the contests identified for these counties will be checked
+   * against what is expected. Map between county name and the list of contests for that county.
+   */
+  @JsonProperty("CONTESTS_BY_SELECTED_COUNTIES")
+  private Map<String,List<String>> contestsByCounty;
+
 
   /**
    * Constructs an empty workflow instance.
@@ -237,6 +246,7 @@ public class Instance {
     disagreements = new HashMap<>();
     reaudits = new HashMap<>();
     expectedRounds = null;
+    contestsByCounty = new HashMap<>();
   }
 
   /**
@@ -300,17 +310,38 @@ public class Instance {
   public String getSeed() { return seed;}
 
   /**
-   * @return Unmodifiable map of targeted contests (contest name key and contest type value).
+   * @return Unmodifiable map of targeted contests (contest name key and value is a map identifying
+   * audit reason and contest winner).
    */
-  public Map<String,String> getTargetedContests(){
+  public Map<String,Map<String,String>> getTargetedContests(){
     return Collections.unmodifiableMap(targets);
   }
 
   /**
    * @return Unmodifiable list of IRV contests among those targeted for audit.
    */
-  public List<String> getIRVContests(){
-    return Collections.unmodifiableList(irvContests);
+  public List<String> getIRVContests(){ return Collections.unmodifiableList(irvContests); }
+
+  /**
+   * @return Winner of the given targeted contest, and an empty String if that contest is not present
+   * in the instances records.
+   */
+  public String getTargetedContestWinner(final String contest){
+    if(targets.containsKey(contest)){
+      return targets.get(contest).get(Workflow.WINNER);
+    }
+    return "";
+  }
+
+  /**
+   * @return Audit reason of the given targeted contest, and an empty String if that contest is not present
+   * in the instances records.
+   */
+  public String getTargetedContestReason(final String contest){
+    if(targets.containsKey(contest)){
+      return targets.get(contest).get(Workflow.REASON);
+    }
+    return "";
   }
 
   /**
@@ -449,5 +480,12 @@ public class Instance {
       }
     }
     return Optional.empty();
+  }
+
+  /**
+   * @return Map between selected county names and the full list of contests for that county.
+   */
+  public Map<String,List<String>> getContestsByCounty(){
+    return Collections.unmodifiableMap(contestsByCounty);
   }
 }
