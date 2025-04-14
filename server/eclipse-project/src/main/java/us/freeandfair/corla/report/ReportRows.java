@@ -221,7 +221,7 @@ public class ReportRows {
       row.put("comment", info.comment());
     }
 
-    if (null == discrepancy || 0 == discrepancy) {
+    if (null == discrepancy) {
       row.put("discrepancy", null);
     } else {
       row.put("discrepancy", renderDiscrepancy(discrepancy));
@@ -309,6 +309,7 @@ public class ReportRows {
       "diluted margin %",
       "disc +2",
       "disc +1",
+      "disc 0",
       "disc -1",
       "disc -2",
       "gamma",
@@ -393,6 +394,7 @@ public class ReportRows {
       row.put("diluted margin %", percentage(ca.getDilutedMargin()).toString());
       row.put("disc +2", toString(ca.discrepancyCount(2)));
       row.put("disc +1", toString(ca.discrepancyCount(1)));
+      row.put("disc 0", toString(ca.discrepancyCount(0)));
       row.put("disc -1", toString(ca.discrepancyCount(-1)));
       row.put("disc -2", toString(ca.discrepancyCount(-2)));
       row.put("gamma", toString(ca.getGamma()));
