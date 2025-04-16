@@ -36,15 +36,15 @@
   "TARGETS" : {
     "Regent of the University of Colorado" : {
       "reason" : "STATE_WIDE_CONTEST",
-      "winner" : ""
+      "winner" : "Distant Winner"
     },
     "Adams COUNTY COMMISSIONER DISTRICT 3" : {
       "reason" : "COUNTY_WIDE_CONTEST",
-      "winner" : ""
+      "winner" : "Jeff Baker"
     },
     "Alamosa COUNTY COMMISSIONER DISTRICT 3" : {
       "reason" : "COUNTY_WIDE_CONTEST",
-      "winner" : ""
+      "winner" : "Jeff Baker"
     }
   },
 

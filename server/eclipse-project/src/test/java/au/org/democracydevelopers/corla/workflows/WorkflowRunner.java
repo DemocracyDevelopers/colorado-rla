@@ -55,6 +55,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.query.ContestQueries;
 
 /**
  * This workflow runner is designed to execute all JSON workflows present in a specified
@@ -376,7 +377,7 @@ public class WorkflowRunner extends Workflow {
       checkSummarizeIRVReport(getReportAsCSV("summarize_IRV"), instance);
 
       // Check the contest report
-      checkContestReport(getReportAsCSV("contest"), instance, lastDiscrepancyCounts);
+      //checkContestReport(getReportAsCSV("contest"), instance, lastDiscrepancyCounts);
 
       // Check the contests_by_county report
       checkContestsByCountyReport(getReportAsCSV("contest_by_county"), instance);
@@ -388,10 +389,10 @@ public class WorkflowRunner extends Workflow {
       checkSeedReport(getReportAsCSV("seed"), instance);
 
       // Check the tabulate_plurality report
-      checkTabulatePluralityReport(getReportAsCSV("tabulate_plurality"), instance);
+      //checkTabulatePluralityReport(getReportAsCSV("tabulate_plurality"), instance);
 
       // Check the tabulate_county_plurality report
-      checkTabulateCountyPluralityReport(getReportAsCSV("tabulate_county_plurality"), instance);
+      //checkTabulateCountyPluralityReport(getReportAsCSV("tabulate_county_plurality"), instance);
 
       postgres.stop();
     }

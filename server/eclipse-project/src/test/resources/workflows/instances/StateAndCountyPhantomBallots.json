@@ -146,6 +146,7 @@
   "CANONICAL_LIST" : "src/test/resources/CSVs/Demo2/demo2-canonical-list.csv",
 
   "CONTEST_NAME_CHANGE" : {
+    "City of Boulder Mayoral" : "City of Boulder Mayoral Candidates"
   },
 
   "CANDIDATE_NAME_CHANGE" : {
@@ -157,15 +158,15 @@
   "TARGETS" : {
     "City of Longmont - Mayor" : {
       "reason" : "COUNTY_WIDE_CONTEST",
-      "winner" : ""
+      "winner" : "Joan Peck"
     },
     "Byron Mayoral" : {
       "reason" : "STATE_WIDE_CONTEST",
-      "winner" : ""
+      "winner" : "LYON Michael"
     },
     "Uralla Mayoral" : {
       "reason" : "COUNTY_WIDE_CONTEST",
-      "winner" : ""
+      "winner" : "BELL Robert"
     }
   },
 
@@ -191,7 +192,7 @@
     "Byron Mayoral",
     "Uralla Mayoral",
     "Tied_IRV",
-    "City of Boulder Mayoral"
+    "City of Boulder Mayoral Candidates"
   ],
 
   "EXPECTED_ROUNDS" : 2,

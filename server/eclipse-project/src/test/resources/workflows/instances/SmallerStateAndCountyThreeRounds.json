@@ -43,6 +43,11 @@
     }
   },
 
+  "IRV_CONTESTS" : [
+    "Richmond Valley Mayoral",
+    "City of Wollongong Mayoral"
+  ],
+
   "DILUTED_MARGINS" : {
     "Richmond Valley Mayoral" : 0.43424095,
     "City of Wollongong Mayoral" : 0.02095253

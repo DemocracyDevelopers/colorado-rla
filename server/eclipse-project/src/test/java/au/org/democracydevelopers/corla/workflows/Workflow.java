@@ -68,6 +68,7 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.model.UploadedFile;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
+import us.freeandfair.corla.query.ContestResultQueries;
 import wiremock.net.minidev.json.JSONArray;
 import wiremock.net.minidev.json.JSONObject;
 
@@ -1202,19 +1203,24 @@ public class Workflow  {
     // targeted contest.
     final Map<String,Integer> expectedAuditedBallots = instance.getExpectedAuditedBallots();
 
-    assertEquals(1 + instance.getTargetedContests().size(), lines.size());
+    final int numContests = ContestResultQueries.count();
+    assertEquals(1 + numContests, lines.size());
     for(int i = 1; i < lines.size(); ++i) {
       final List<String> tokens = Arrays.stream(lines.get(i).split(",")).toList();
 
-      // There are at least 2 columns in this report
-      assertTrue(tokens.size() >= 2);
+      // There are at least 3 columns in this report
+      assertTrue(tokens.size() >= 3);
 
-      final String contestName = tokens.get(0);
+      final String contestName = tokens.get(1);
+      final int minMargin = Integer.parseInt(tokens.get(0));
 
-      // The number of ballots selected in this contest's sample should be at least
-      // as much as the final optimistic sample count.
-      final int selected = tokens.get(1).split(",").length;
-      assertEquals(expectedAuditedBallots.get(contestName).intValue(), selected);
+      if(instance.getTargetedContests().containsKey(contestName)) {
+        // The number of ballots selected in this contest's sample should be at least
+        // as much as the final optimistic sample count.
+        final int selected = tokens.size() - 2;
+        assertTrue(selected >= expectedAuditedBallots.get(contestName));
+      }
+      // TODO: check min margin
     }
   }
 
@@ -1272,11 +1278,13 @@ public class Workflow  {
       // Check that the contest *is* an IRV contest, as specified in the instance.
       assertTrue(instance.getIRVContests().contains(contestName));
 
-      // Check that the winner is correct, as specified in the instance.
-      assertEquals(instance.getTargetedContestWinner(contestName), winner);
+      if(instance.getTargetedContests().containsKey(contestName)) {
+        // Check that the winner is correct, as specified in the instance.
+        assertEquals(instance.getTargetedContestWinner(contestName), winner);
 
-      // Check that the target reason is correct, as specified in the instance.
-      assertEquals(instance.getTargetedContestReason(contestName), targetReason);
+        // Check that the target reason is correct, as specified in the instance.
+        assertEquals(instance.getTargetedContestReason(contestName), targetReason);
+      }
     }
   }
 

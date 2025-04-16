@@ -157,15 +157,15 @@
   "TARGETS" : {
     "City of Longmont - Mayor" : {
       "reason" : "COUNTY_WIDE_CONTEST",
-      "winner" : ""
+      "winner" : "Joan Peck"
     },
     "Byron Mayoral" : {
       "reason" : "STATE_WIDE_CONTEST",
-      "winner" : ""
+      "winner" : "LYON Michael"
     },
     "Kempsey Mayoral" : {
       "reason" : "COUNTY_WIDE_CONTEST",
-      "winner" : ""
+      "winner" : "HAUVILLE Leo"
     }
   },
 
