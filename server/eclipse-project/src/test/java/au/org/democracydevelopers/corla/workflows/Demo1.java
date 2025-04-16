@@ -128,7 +128,7 @@ public class Demo1 extends Workflow {
     assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
     // 4. Generate assertions; sanity check
-    generateAssertions(postgres,"SQL/demo1-assertions.sql", 1);
+    makeAssertionData(postgres, List.of("SQL/demo1-assertions.sql"), false);
     dashboard = getDoSDashBoardRefreshResponse();
 
     // There should be 4 IRV contests.
@@ -202,4 +202,13 @@ public class Demo1 extends Workflow {
     LOGGER.info("Successfully completed Demo1 (First round audit; No Discrepancies).");
   }
 
+  /**
+   * This is identical to the makdeAssertionData function in the Workflow runner and can be
+   * easily incorporated into one of the generic workflows.
+   */
+  @Override
+  protected void makeAssertionData(PostgreSQLContainer<?> postgres, List<String> SQLfiles, boolean useRaire) {
+    assertEquals(SQLfiles.size(), 1);
+    TestClassWithDatabase.runSQLSetupScript(postgres, SQLfiles.get(0));
+  }
 }

@@ -24,6 +24,7 @@ package au.org.democracydevelopers.corla.workflows;
 import au.org.democracydevelopers.corla.util.testUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -90,4 +91,10 @@ public class UploadAndDeleteIRVCVRs extends Workflow {
     assertEquals(ivrBallotInterpretations.size(), 1);
   }
 
+  /** Not used. Can be removed when this is transformed into a standard workflow.
+   */
+  @Override
+  protected void makeAssertionData(PostgreSQLContainer<?> postgres, List<String> SQLfiles, boolean useRaire) {
+    return;
+  }
 }

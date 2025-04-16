@@ -74,7 +74,7 @@ import wiremock.net.minidev.json.JSONObject;
  * Base class for an API test workflow designed to run through a sequence of steps involving
  * a sequence of endpoint accesses.
  */
-public class Workflow  {
+public abstract class Workflow  {
 
   /**
    * A collection of data representing an audit session for a county.
@@ -176,10 +176,36 @@ public class Workflow  {
 
   /**
    * Set up and return a new test database for use when running an individual workflow instance.
+   * This loads in the properties in resources/test.properties, then overwrites the database
+   * location with the one in the newly-created test container.
    * @param testName Name of test instance.
    * @return Postgres test database to use when running the instance.
    */
   protected static PostgreSQLContainer<?> setupIndividualTestDatabase(final String testName){
+    PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
+    Properties config = loadProperties();
+
+    postgres.start();
+    config.setProperty("hibernate.url", postgres.getJdbcUrl());
+    Persistence.setProperties(config);
+    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
+
+    runMain(config, testName);
+
+    Persistence.beginTransaction();
+
+    return postgres;
+  }
+
+  /**
+   * Run everything with the database and raire url set up in test.properties. TODO check whether
+   * we need the sql setup script. I guess it depends on what's already in the database.
+   * This loads in the properties in resources/test.properties.
+   * @param testName The name of the test
+   * @return Postgres test database to use when running the instance, which needs to be already
+   * running.
+   */
+  protected static PostgreSQLContainer<?> setupForRunningOnExistingDatabase(final String testName){
     PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
     Properties config = loadProperties();
 
@@ -862,6 +888,8 @@ public class Workflow  {
    * and inserted into the database, and insert it into the database here.
    * TODO Replace this with a call to the raire-service. Currently problematic because it will be
    * reading the wrong database.
+   * This can probably be removed when the demo1 is translated into a standard workflow.
+   * Alternatively, since demo1 is the only use, it could be replaced with runSQLSetupScript.
    * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/218">...</a>
    * Set it up so that we run raire-service inside the Docker container and tell main where to find it.
    */
@@ -881,6 +909,13 @@ public class Workflow  {
     //    .assertThat()
     //    .statusCode(HttpStatus.SC_OK);
   }
+
+
+  /**
+   * This abstract version allows descendents to make the assertions in their own way, either by
+   * calling raire or by retrieving assertions and related data from an sql file.
+   */
+  protected abstract void makeAssertionData(final PostgreSQLContainer<?> postgres, final List<String> SQLfiles, boolean useRaire);
 
   /**
    * Verify that some assertions are present for the given contest, that the minimum diluted

@@ -170,12 +170,7 @@ public class WorkflowRunner extends Workflow {
       assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
       assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
-      // Load additional SQL data (this is data that we want to add after we have
-      // CVRs, manifests, etc loaded for each county). This will mostly be used to load
-      // assertion data into the database, simulating a call to the raire-service.
-      for(final String s : instance.getSQLs()){
-        TestClassWithDatabase.runSQLSetupScript(postgres, s);
-      }
+      makeAssertionData(postgres, instance.getSQLs(), false);
 
       dashboard = getDoSDashBoardRefreshResponse();
 
@@ -357,6 +352,16 @@ public class WorkflowRunner extends Workflow {
     }
   }
 
+  // Load additional SQL data (this is data that we want to add after we have
+  // CVRs, manifests, etc loaded for each county). This will mostly be used to load
+  // assertion data into the database, simulating a call to the raire-service.
+  protected void makeAssertionData(final PostgreSQLContainer<?> postgres, final List<String> SQLfiles, boolean useRaire) {
+    // This should not be called with 'useRaire' true in this workflow.
+    assertFalse(useRaire);
+    for (final String s : SQLfiles) {
+      TestClassWithDatabase.runSQLSetupScript(postgres, s);
+    }
+  }
 
   /**
    * Utility that returns true if the given file path represents a JSON file.

@@ -172,4 +172,11 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     // int test = dashboard.getInt("county_status.3.estimated_ballots_to_audit");
   }
 
+  /**
+   * Not used. Can be removed when this is transformed into a standard workflow.
+   */
+  @Override
+  protected void makeAssertionData(PostgreSQLContainer<?> postgres, List<String> SQLfiles, boolean useRaire) {
+    return;
+  }
 }
