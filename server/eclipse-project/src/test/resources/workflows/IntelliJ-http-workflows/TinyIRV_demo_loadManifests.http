@@ -10,7 +10,7 @@ Content-Type: application/json
   "password":""
 }
 > {%
-  import {authSanityCheck} from 'testScripts/testUtils';
+  import {authSanityCheck} from 'workflows/IntelliJ-http-workflows/testScripts/testUtils';
   authSanityCheck("countyadmin33", 1, 'TRADITIONALLY_AUTHENTICATED');
 %}
 
@@ -24,7 +24,7 @@ Content-Type: application/json
 }
 
 > {%
-  import {authSanityCheck} from 'testScripts/testUtils';
+  import {authSanityCheck} from 'workflows/IntelliJ-http-workflows/testScripts/testUtils';
   authSanityCheck("countyadmin33", 2, 'SECOND_FACTOR_AUTHENTICATED');
  %}
 
@@ -39,13 +39,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="ThreeCandidatesTenVotes_Manifest.csv"
 Content-Type: text/csv
 
-< ../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv
+< ../../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv.sha256sum
+< ../../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -99,13 +99,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="ThreeCandidatesTenVotes_Manifest.csv"
 Content-Type: text/csv
 
-< ../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv
+< ../../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv.sha256sum
+< ../../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -157,13 +157,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="ThreeCandidatesTenVotes_Manifest.csv"
 Content-Type: text/csv
 
-< ../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv
+< ../../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv.sha256sum
+< ../../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -216,13 +216,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="GuideToRAIREExample3-manifest.csv"
 Content-Type: text/csv
 
-< ../CSVs/Tiny-IRV-Examples/GuideToRAIREExample3-manifest.csv
+< ../../CSVs/Tiny-IRV-Examples/GuideToRAIREExample3-manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../CSVs/Tiny-IRV-Examples/GuideToRAIREExample3-manifest.csv.sha256sum
+< ../../CSVs/Tiny-IRV-Examples/GuideToRAIREExample3-manifest.csv.sha256sum
 --TheBoundary--
 
 > {%

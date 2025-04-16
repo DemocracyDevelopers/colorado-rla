@@ -1,5 +1,6 @@
 ### This defines the audit for Demo 1.
-### This needs to run with the 'dev' environment, which reads http-client.env.json to retrieve the demo1-canonical-list.
+### This needs to run with the 'dev' environment, which reads http-client.env.json to retrieve the nsw-canonical-list.
+### It also needs both the colorado-rla server and the raire-server to be running, because it generates assertions.
 
 ### 1. Define the audit
 ### POST request with basic login.
@@ -25,7 +26,8 @@ GET http://localhost:8888/dos-dashboard
 Content-Type: text/html
 
 ### Define the audit. This reads in from the canonical list contents hardcoded in the http-client.env file,
-### though reading in from the demo1-canonical-list.csv file would be better.
+### Note that that doesn't include canonicalization data for most of the contests.
+### Reading in from the nsw-canonical-list.csv file would be better.
 POST http://localhost:8888/update-audit-info
 Content-Type: application/json
 
@@ -34,7 +36,7 @@ Content-Type: application/json
     "election_type":"general",
     "public_meeting_date":"2024-09-22T05:42:22.037Z",
     "risk_limit":0.03,
-    "upload_file": [{"contents" : "{{demo1-canonical-list}}" }]
+    "upload_file": [{"contents" : "{{nsw-canonical-list}}" }]
 }
 
 ### Request contests.
@@ -42,7 +44,7 @@ GET http://localhost:8888/contest?ignoreManifests=true
 Content-Type: text/plain
 
 > {%
-    client.global.set("contestJsonData", response.body);
+    client.global.set("contestNSWJsonData", response.body);
 %}
 
 ### Canonicalize contest names. This just matches what comes up when we do the obvious thing from
@@ -52,30 +54,14 @@ Content-Type: text/plain
 ### Also note that we have to find the IDs by asking for the _wrong_ names, then put the right name
 ### in the request.
 < {%
-    import {getContestIDsWithCounties} from 'testScripts/testUtils';
-    const contestIDData = getContestIDsWithCounties(client.global.get("contestJsonData"));
-    console.log("contestJsonData = "+client.global.get("contestJsonData"));
-    request.variables.set("BoulderMayoralID", contestIDData.get("City of Boulder Mayoral Candidates")[0][0]);
-    console.log("BoulderMayoralID = "+contestIDData.get("City of Boulder Mayoral Candidates")[0][0]);
-    request.variables.set("BoulderCouncilID", contestIDData.get("City of Boulder Council Candidates")[0][0]);
-    request.variables.set("LafayetteCouncilID",  contestIDData.get("City of Lafayette City Council Candidates")[0][0]);
-    // U CO Regent is spread over Adams and Alamosa, so we have two contestIDs and we need
-    // to match the corresponding county ID.
-    request.variables.set("U_CO_Regent_1_ID",  contestIDData.get("Regent of the University of Colorado - At Large")[0][0]);
-    request.variables.set("U_CO_Regent_1_County_ID",  contestIDData.get("Regent of the University of Colorado - At Large")[0][1]);
-    request.variables.set("U_CO_Regent_2_ID",  contestIDData.get("Regent of the University of Colorado - At Large")[1][0]);
-    request.variables.set("U_CO_Regent_2_County_ID",  contestIDData.get("Regent of the University of Colorado - At Large")[1][1]);
+    import {getContestIDsWithCounties} from 'workflows/IntelliJ-http-workflows/testScripts/testUtils';
+    const contestIDData = getContestIDsWithCounties(client.global.get("contestNSWJsonData"));
+    console.log("contestNSWJsonData = "+client.global.get("contestNSWJsonData"));
 %}
 POST http://localhost:8888/set-contest-names
 Content-Type: application/json
 
-[
-  {"contestId":{{BoulderMayoralID}},"countyId":7,"name":"City of Boulder Mayoral"},
-  {"contestId":{{BoulderCouncilID}},"countyId":7,"name":"City of Boulder Council"},
-  {"contestId":{{LafayetteCouncilID}},"countyId":7,"name":"City of Lafayette City Council"},
-  {"contestId":{{U_CO_Regent_1_ID}},"countyId":{{U_CO_Regent_1_County_ID}},"name":"Regent of the University of Colorado"},
-  {"contestId":{{U_CO_Regent_2_ID}},"countyId":{{U_CO_Regent_2_County_ID}},"name":"Regent of the University of Colorado"}
-]
+[]
 
 ### Generate assertions.
 GET http://localhost:8888/generate-assertions?timeLimitSeconds=1
@@ -95,26 +81,25 @@ client.test("Response content-type is json", function() {
 
 ### Select contests to be targeted.
 < {%
-    import {getContestIDsWithCounties} from 'testScripts/testUtils';
-    const contestIDData = getContestIDsWithCounties(client.global.get("contestJsonData"));
+    import {getContestIDsWithCounties} from 'workflows/IntelliJ-http-workflows/testScripts/testUtils';
+    console.log("Do we even get to here?")
+    const contestIDData = getContestIDsWithCounties(client.global.get("contestNSWJsonData"));
     request.variables.set("KempseyMayoralID", contestIDData.get("Kempsey Mayoral")[0][0]);
     request.variables.set("ByronMayoralID", contestIDData.get("Byron Mayoral")[0][0]);
-    request.variables.set("LongmontMayoralID",  contestIDData.get("City of Longmont - Mayor")[0][0]);
 %}
 POST http://localhost:8888/select-contests
 Content-Type: application/json
 
 [
-  {"audit":"COMPARISON","contest":{{KempseyMayoralID}},"reason":"COUNTY_WIDE_CONTEST"},
-  {"audit":"COMPARISON","contest":{{ByronMayoralID}},"reason":"STATE_WIDE_CONTEST"},
-  {"audit":"COMPARISON","contest":{{LongmontMayoralID}},"reason":"COUNTY_WIDE_CONTEST"}
+    {"audit":"COMPARISON","contest":{{KempseyMayoralID}},"reason":"COUNTY_WIDE_CONTEST"},
+    {"audit":"COMPARISON","contest":{{ByronMayoralID}},"reason":"COUNTY_WIDE_CONTEST"}
 ]
 
 ### Request sample size estimates.
 GET http://localhost:8888/estimate-sample-sizes
 
 # Save the response to a file.
->>! demo-stored-data/sample-sizes.csv
+>>! demo-stored-data/nsw-sample-sizes.csv
 
 ### Post the random seed.
 POST http://localhost:8888/random-seed
@@ -143,14 +128,14 @@ GET http://localhost:8888/dos-dashboard
 GET localhost:8888/get-assertions
 
 # Save them to a file.
->>! demo-stored-data/demo1-assertions-json.zip
+>>! demo-stored-data/nsw-assertions-json.zip
 
 ### Get the assertions as csv.
 GET http://localhost:8888/get-assertions?format=csv
 Content-Type: application/x-www-form-urlencoded
 
 # Save them to a file.
->>! demo-stored-data/demo1-assertions-csv.zip
+>>! demo-stored-data/nsw-assertions-csv.zip
 
 ### Log out
 POST http://localhost:8888/unauthenticate

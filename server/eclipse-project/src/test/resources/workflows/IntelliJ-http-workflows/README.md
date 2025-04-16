@@ -198,10 +198,10 @@ You can paste the .json assertions into the (Assertion Explainer)[https://democr
 
 For TinyExample1, you should see
 
-![Two trees](expected-outputs/TinyIRV/TinyExample1Assertions.png)
+![Two trees](../expected-outputs/TinyIRV/TinyExample1Assertions.png)
 
 For Example3, you should see
-![img.png](expected-outputs/TinyIRV/Example3Assertions.png)
+![img.png](../expected-outputs/TinyIRV/Example3Assertions.png)
 
 ### sample-sizes csv
 The sample sizes should match the Estimated samples to audit from the assertion .csv files.

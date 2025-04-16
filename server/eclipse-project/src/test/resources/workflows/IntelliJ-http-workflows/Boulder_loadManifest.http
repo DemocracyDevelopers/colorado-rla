@@ -28,13 +28,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="Boulder-IRV-Manifest.csv"
 Content-Type: text/csv
 
-< ../CSVs/Boulder23/Boulder-IRV-Manifest.csv
+< ../../CSVs/Boulder23/Boulder-IRV-Manifest.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../CSVs/Boulder23/Boulder-IRV-Manifest.csv.sha256sum
+< ../../CSVs/Boulder23/Boulder-IRV-Manifest.csv.sha256sum
 --TheBoundary--
 
 > {%
