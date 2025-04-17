@@ -881,18 +881,6 @@ public abstract class Workflow  {
     return false;
   }
 
-    // Version that connects to raire-service below:
-    // Login as state admin.
-    //final SessionFilter filter = doLogin("stateadmin1");
-
-    //given()
-    //    .filter(filter)
-    //    .header("Content-Type", "application/x-www-form-urlencoded")
-    //    .get("/generate-assertions?timeLimitSeconds="+timeLimitSeconds)
-    //    .then()
-    //    .assertThat()
-    //    .statusCode(HttpStatus.SC_OK);
-
   /**
    * This abstract version allows descendents to make the assertions in their own way, either by
    * calling raire or by retrieving assertions and related data from an sql file.
@@ -1092,7 +1080,7 @@ public abstract class Workflow  {
    * @param username Username for the user to authenticate
    * @return The user's session, to be interacted with in later testing.
    */
-  private SessionFilter doLogin(final String username) {
+  SessionFilter doLogin(final String username) {
     final SessionFilter filter = new SessionFilter();
     authenticate(filter, username,"",1);
     authenticate(filter, username,"s d f",2);
