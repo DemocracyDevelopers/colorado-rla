@@ -881,22 +881,6 @@ public abstract class Workflow  {
     return false;
   }
 
-  /**
-   * Generate assertions (for IRV contests). At the moment, rather than call raire-service, we
-   * are mocking that functionality. To do so, we take the path to a file containing SQL insert
-   * statements for all assertion related content that would have been created by the raire-service,
-   * and inserted into the database, and insert it into the database here.
-   * TODO Replace this with a call to the raire-service. Currently problematic because it will be
-   * reading the wrong database.
-   * This can probably be removed when the demo1 is translated into a standard workflow.
-   * Alternatively, since demo1 is the only use, it could be replaced with runSQLSetupScript.
-   * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/218">...</a>
-   * Set it up so that we run raire-service inside the Docker container and tell main where to find it.
-   */
-  protected void generateAssertions(final PostgreSQLContainer<?> postgres, final String sqlPath, final double timeLimitSeconds)
-  {
-    TestClassWithDatabase.runSQLSetupScript(postgres, sqlPath);
-
     // Version that connects to raire-service below:
     // Login as state admin.
     //final SessionFilter filter = doLogin("stateadmin1");
@@ -908,8 +892,6 @@ public abstract class Workflow  {
     //    .then()
     //    .assertThat()
     //    .statusCode(HttpStatus.SC_OK);
-  }
-
 
   /**
    * This abstract version allows descendents to make the assertions in their own way, either by
