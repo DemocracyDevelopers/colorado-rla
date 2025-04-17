@@ -32,6 +32,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.persistence.Persistence;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -83,8 +84,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
    * Each parameter list contains one element -- a path to the workflow JSON instance to run.
    * @return A list of test parameter lists as a 2D array of objects.
    */
-  @DataProvider(name="workflow-provider")
-  public Object[][] supplyWorkflowPaths(){
+  public Path supplyWorkflowPaths(int pickOneByIndex){
     final String prefix = "[supplyWorkflowPaths]";
     List<Path> pathList;
 
@@ -92,20 +92,19 @@ public class WorkflowRunnerWithRaire extends Workflow {
       pathList = stream.map(Path::normalize)
           .filter(Files::isRegularFile)
           .filter(p -> isJSON(p.toString()))
-          .collect(Collectors.toList());
+          .toList();
+      return pathList.get(pickOneByIndex);
     }
     catch(IOException e) {
       final String msg = prefix + " " + e.getMessage();
       LOGGER.error(msg);
       throw new RuntimeException(msg);
     }
-
-    // Convert list of paths into an array of parameter arrays
-    Object[][] params = new Object[pathList.size()][1];
-    for(int i = 0; i < pathList.size(); ++i){
-      params[i][0] = pathList.get(i);
+    catch (IndexOutOfBoundsException e) {
+      final String msg = prefix + " " + "given an invalid index: " + pickOneByIndex;
+      LOGGER.error(msg);
+      throw new RuntimeException(msg);
     }
-    return params;
   }
 
   /**
@@ -113,13 +112,16 @@ public class WorkflowRunnerWithRaire extends Workflow {
    * phantoms, which ballots to treat as phantoms, expected diluted margins and sample sizes,
    * which ballots to simulate discrepancies for, and expected end of round states ...), run
    * the test audit and verify that the expected outcomes arise.
-   * TODO (VT): Refactor to pass it the postgres db in? Or maybe rename setupIndividualTestDatabase
-   * and make it an abstract thing that can do either real or simulated?
-   * @param pathToInstance Path to the JSON workflow instance defining the test.
+   * Hopefully runs with something like
+   * mvn test -Dtest="src.test.java.workflows.WorkFlowRunnerWithRaire"
+   * See https://www.geeksforgeeks.org/how-to-pass-parameter-to-testng-xml-from-command-line-with-maven/
+   * pathToInstance Path to the JSON workflow instance defining the test.
    * @throws InterruptedException
    */
-  @Test(dataProvider = "workflow-provider")
-  public void runInstance(final Path pathToInstance) throws InterruptedException {
+  @Test
+  public void runInstance() throws InterruptedException {
+    // For now just grab the first one.
+    final Path pathToInstance = supplyWorkflowPaths(0);
     final String prefix = "[runInstance] " + pathToInstance;
 
     try {
@@ -389,6 +391,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
     assertTrue(postgres.isEmpty());
     testUtils.log(LOGGER, "[runMainAndInitializeDB] running workflow " + testName + ".");
     main("src/test/resources/test.properties");
+    Persistence.beginTransaction();
   }
 
   /**
