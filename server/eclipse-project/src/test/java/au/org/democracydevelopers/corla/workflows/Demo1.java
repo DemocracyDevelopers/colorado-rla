@@ -135,9 +135,10 @@ public class Demo1 extends Workflow {
     assertEquals(4, dashboard.getList("generate_assertions_summaries").size());
 
     // 5. Choose targeted contests for audit.
-    final Map<String,String> targets = Map.of("City of Longmont - Mayor","COUNTY_WIDE_CONTEST",
-        "Byron Mayoral", "STATE_WIDE_CONTEST",
-        "Kempsey Mayoral", "COUNTY_WIDE_CONTEST");
+    final Map<String,Map<String,String>> targets = Map.of("City of Longmont - Mayor",
+        Map.of(Workflow.REASON, "COUNTY_WIDE_CONTEST", Workflow.WINNER, ""),
+        "Byron Mayoral", Map.of(Workflow.REASON, "STATE_WIDE_CONTEST", Workflow.WINNER, ""),
+        "Kempsey Mayoral", Map.of(Workflow.REASON, "COUNTY_WIDE_CONTEST", Workflow.WINNER, ""));
     final List<String> irvContests = List.of("Byron Mayoral", "Kempsey Mayoral");
     targetContests(targets);
 

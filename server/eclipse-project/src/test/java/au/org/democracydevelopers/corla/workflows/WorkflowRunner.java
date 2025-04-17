@@ -41,6 +41,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -54,6 +55,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.query.ContestQueries;
 
 /**
  * This workflow runner is designed to execute all JSON workflows present in a specified
@@ -170,6 +172,9 @@ public class WorkflowRunner extends Workflow {
       assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
       assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
+      canonicalise(instance, true);
+      dashboard = getDoSDashBoardRefreshResponse();
+
       // Load additional SQL data (this is data that we want to add after we have
       // CVRs, manifests, etc loaded for each county). This will mostly be used to load
       // assertion data into the database, simulating a call to the raire-service.
@@ -181,7 +186,7 @@ public class WorkflowRunner extends Workflow {
 
       // Check that the right number of IRV contests are present
       final List<String> irvContests = instance.getIRVContests();
-      final Map<String,String> targets = instance.getTargetedContests();
+      final Map<String,Map<String,String>> targets = instance.getTargetedContests();
       assertEquals(irvContests.size(), dashboard.getList("generate_assertions_summaries").size());
 
       // Choose targeted contests for audit as specified in the Instance.
@@ -219,6 +224,15 @@ public class WorkflowRunner extends Workflow {
       // for the Instance.
       boolean auditNotFinished = true;
       int rounds = 0;
+
+      // Keep track of last executed rounds' discrepancy counts
+      Map<String,Integer> lastDiscrepancyCounts = new HashMap<>();
+      lastDiscrepancyCounts.put(ONE_OVER, 0);
+      lastDiscrepancyCounts.put(TWO_OVER, 0);
+      lastDiscrepancyCounts.put(ONE_UNDER, 0);
+      lastDiscrepancyCounts.put(TWO_UNDER, 0);
+      lastDiscrepancyCounts.put(OTHER, 0);
+      lastDiscrepancyCounts.put(DISAGREEMENTS, 0);
 
       while(auditNotFinished) {
 
@@ -282,6 +296,7 @@ public class WorkflowRunner extends Workflow {
             final int twoOverCount = contestResult.get(TWO_OVER_COUNT);
             final int twoUnderCount = contestResult.get(TWO_UNDER_COUNT);
             final int otherCount = contestResult.get(OTHER_COUNT);
+            final int disagreementCount = contestResult.get(DISAGREEMENTS);
 
             if(!discrepancies.containsKey(dbID)){
               throw new RuntimeException("Likely incorrectly specified contest name (" +
@@ -293,6 +308,15 @@ public class WorkflowRunner extends Workflow {
             assertEquals(contestDiscrepancies.get(OTHER).intValue(), otherCount);
             assertEquals(contestDiscrepancies.get(TWO_OVER).intValue(), twoOverCount);
             assertEquals(contestDiscrepancies.get(TWO_UNDER).intValue(), twoUnderCount);
+
+            // Record so that we can cross-check the reports against what should be the
+            // final discrepancy counts.
+            lastDiscrepancyCounts.put(ONE_OVER, oneOverCount);
+            lastDiscrepancyCounts.put(TWO_OVER, twoOverCount);
+            lastDiscrepancyCounts.put(ONE_UNDER, oneUnderCount);
+            lastDiscrepancyCounts.put(TWO_UNDER, twoUnderCount);
+            lastDiscrepancyCounts.put(OTHER, otherCount);
+            lastDiscrepancyCounts.put(DISAGREEMENTS, disagreementCount);
           }
         }
 
@@ -347,6 +371,28 @@ public class WorkflowRunner extends Workflow {
           }
         }
       }
+
+      // Verify contents of selected reports that are downloadable as CSV.
+      // Check the summarize_IRV report.
+      checkSummarizeIRVReport(getReportAsCSV("summarize_IRV"), instance);
+
+      // Check the contest report
+      //checkContestReport(getReportAsCSV("contest"), instance, lastDiscrepancyCounts);
+
+      // Check the contests_by_county report
+      checkContestsByCountyReport(getReportAsCSV("contest_by_county"), instance);
+
+      // Check the contest_selection report
+      checkContestSelectionReport(getReportAsCSV("contest_selection"), instance);
+
+      // Check the seed report
+      checkSeedReport(getReportAsCSV("seed"), instance);
+
+      // Check the tabulate_plurality report
+      //checkTabulatePluralityReport(getReportAsCSV("tabulate_plurality"), instance);
+
+      // Check the tabulate_county_plurality report
+      //checkTabulateCountyPluralityReport(getReportAsCSV("tabulate_county_plurality"), instance);
 
       postgres.stop();
     }

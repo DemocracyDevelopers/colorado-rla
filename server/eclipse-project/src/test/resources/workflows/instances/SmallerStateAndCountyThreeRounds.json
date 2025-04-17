@@ -23,10 +23,30 @@
 
   "CANONICAL_LIST" : "src/test/resources/CSVs/WollongongAndSplitRichmondValley/WollongongAndSplitRichmond_Canonical_List.csv",
 
-  "TARGETS" : {
-    "Richmond Valley Mayoral" : "STATE_WIDE_CONTEST",
-    "City of Wollongong Mayoral" : "COUNTY_WIDE_CONTEST"
+  "CONTEST_NAME_CHANGE" : {
   },
+
+  "CANDIDATE_NAME_CHANGE" : {
+  },
+
+  "CONTESTS_BY_SELECTED_COUNTIES" : {
+  },
+
+  "TARGETS" : {
+    "Richmond Valley Mayoral" : {
+      "reason" : "STATE_WIDE_CONTEST",
+      "winner" : "MUSTOW Robert"
+    },
+    "City of Wollongong Mayoral" : {
+      "reason" : "COUNTY_WIDE_CONTEST",
+      "winner" : "BRADBERY Gordon"
+    }
+  },
+
+  "IRV_CONTESTS" : [
+    "Richmond Valley Mayoral",
+    "City of Wollongong Mayoral"
+  ],
 
   "DILUTED_MARGINS" : {
     "Richmond Valley Mayoral" : 0.43424095,
@@ -42,11 +62,6 @@
     "Richmond Valley Mayoral" : 17,
     "City of Wollongong Mayoral" : 739
   },
-
-  "IRV_CONTESTS" : [
-    "Richmond Valley Mayoral",
-    "City of Wollongong Mayoral"
-  ],
 
   "EXPECTED_ROUNDS" : 3,
 
@@ -103,14 +118,16 @@
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       },
       "City of Wollongong Mayoral" : {
         "one_over_count" : 0,
         "two_over_count" : 1,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       }
     },
     "2" : {
@@ -119,14 +136,16 @@
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       },
       "City of Wollongong Mayoral" : {
         "one_over_count" : 1,
         "two_over_count" : 1,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       }
     },
     "3" : {
@@ -135,14 +154,16 @@
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       },
       "City of Wollongong Mayoral" : {
         "one_over_count" : 1,
         "two_over_count" : 1,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       }
     }
   }
