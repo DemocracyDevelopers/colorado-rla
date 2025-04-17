@@ -21,15 +21,20 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.persistence.Persistence;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 
+import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.*;
 
 /**
@@ -60,7 +65,8 @@ public class UploadAndDeleteIRVCVRs extends Workflow {
   public void runUploadAndDeleteCVRs() throws InterruptedException {
     testUtils.log(LOGGER, "runUploadAndDeleteIRVCVRs");
 
-    setupIndividualTestDatabase("UploadAndDeleteIRVCVRs");
+    final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
+    runMainAndInitializeDB("UploadAndDeleteIRVCVRs", Optional.of(postgres));
 
     // Upload CSVs with 10 invalid IRV votes, for counties 1 and 2.
     final String CVRFile = dataPath + "ThreeCandidatesTenInvalidVotes";
@@ -91,10 +97,31 @@ public class UploadAndDeleteIRVCVRs extends Workflow {
     assertEquals(ivrBallotInterpretations.size(), 1);
   }
 
+  /**
+   * Identical to corresponding function in WorkflowRunner. Should be deleted when this is turned
+   * into a standard workflow.
+   */
+  @Override
+  protected void runMainAndInitializeDB(String testName, Optional<PostgreSQLContainer<?>> postgresOpt) {
+
+    assertTrue(postgresOpt.isPresent());
+    final PostgreSQLContainer<?> postgres = postgresOpt.get();
+
+    Properties config = loadProperties();
+    postgres.start();
+    config.setProperty("hibernate.url", postgres.getJdbcUrl());
+    Persistence.setProperties(config);
+    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
+
+    runMain(config, testName);
+
+    Persistence.beginTransaction();
+  }
+
   /** Not used. Can be removed when this is transformed into a standard workflow.
    */
   @Override
-  protected void makeAssertionData(PostgreSQLContainer<?> postgres, List<String> SQLfiles, boolean useRaire) {
-    return;
+  protected void makeAssertionData(Optional<PostgreSQLContainer<?>> postgres, List<String> SQLfiles) {
+
   }
 }

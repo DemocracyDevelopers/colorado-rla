@@ -21,6 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
+import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static java.lang.Math.max;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -39,12 +40,7 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -54,6 +50,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.persistence.Persistence;
 
 /**
  * This workflow runner is designed to execute all JSON workflows present in a specified
@@ -120,7 +117,9 @@ public class WorkflowRunner extends Workflow {
     final String prefix = "[runInstance] " + pathToInstance;
 
     try {
-      PostgreSQLContainer<?> postgres = setupIndividualTestDatabase(pathToInstance.getFileName().toString());
+      // PostgreSQLContainer<?> postgres = setupDatabaseAndRunMain(pathToInstance.getFileName().toString());
+      final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
+      runMainAndInitializeDB(pathToInstance.getFileName().toString(), Optional.of(postgres));
 
       // Convert data in the JSON workflow file to a workflow Instance.
       ObjectMapper toJson = new ObjectMapper();
@@ -170,7 +169,7 @@ public class WorkflowRunner extends Workflow {
       assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
       assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
-      makeAssertionData(postgres, instance.getSQLs(), false);
+      makeAssertionData(Optional.of(postgres), instance.getSQLs());
 
       dashboard = getDoSDashBoardRefreshResponse();
 
@@ -352,15 +351,40 @@ public class WorkflowRunner extends Workflow {
     }
   }
 
-  // Load additional SQL data (this is data that we want to add after we have
-  // CVRs, manifests, etc loaded for each county). This will mostly be used to load
-  // assertion data into the database, simulating a call to the raire-service.
-  protected void makeAssertionData(final PostgreSQLContainer<?> postgres, final List<String> SQLfiles, boolean useRaire) {
-    // This should not be called with 'useRaire' true in this workflow.
-    assertFalse(useRaire);
+
+  /** Load additional SQL data (this is data that we want to add after we have
+   * CVRs, manifests, etc loaded for each county). This will mostly be used to load
+   * assertion data into the database, simulating a call to the raire-service.
+   */
+  protected void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgresOpt, final List<String> SQLfiles) {
+    assertTrue(postgresOpt.isPresent());
     for (final String s : SQLfiles) {
-      TestClassWithDatabase.runSQLSetupScript(postgres, s);
+      TestClassWithDatabase.runSQLSetupScript(postgresOpt.get(), s);
     }
+  }
+
+  /**
+   * Set up main's configuration file to match the given postgres container, then run main and
+   * load the colorado-rla init script into the database.
+   * This loads in the properties in resources/test.properties, then overwrites the database
+   * location with the one in the newly-created test container.
+   * @param testName Name of test instance.
+   * @param postgresOpt The PostgreSQL container to use.
+   */
+  @Override
+  protected void runMainAndInitializeDB(String testName, Optional<PostgreSQLContainer<?>> postgresOpt) {
+    assertTrue(postgresOpt.isPresent());
+    final PostgreSQLContainer<?> postgres = postgresOpt.get();
+
+    Properties config = loadProperties();
+    postgres.start();
+    config.setProperty("hibernate.url", postgres.getJdbcUrl());
+    Persistence.setProperties(config);
+    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
+
+    runMain(config, testName);
+
+    Persistence.beginTransaction();
   }
 
   /**

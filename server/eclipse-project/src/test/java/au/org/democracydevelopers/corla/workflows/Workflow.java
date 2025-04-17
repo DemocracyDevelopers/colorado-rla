@@ -174,52 +174,14 @@ public abstract class Workflow  {
     RestAssured.port = 8888;
   }
 
-  /**
-   * Set up and return a new test database for use when running an individual workflow instance.
-   * This loads in the properties in resources/test.properties, then overwrites the database
-   * location with the one in the newly-created test container.
-   * @param testName Name of test instance.
-   * @return Postgres test database to use when running the instance.
-   */
-  protected static PostgreSQLContainer<?> setupIndividualTestDatabase(final String testName){
-    PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
-    Properties config = loadProperties();
-
-    postgres.start();
-    config.setProperty("hibernate.url", postgres.getJdbcUrl());
-    Persistence.setProperties(config);
-    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
-
-    runMain(config, testName);
-
-    Persistence.beginTransaction();
-
-    return postgres;
-  }
 
   /**
-   * Run everything with the database and raire url set up in test.properties. TODO check whether
-   * we need the sql setup script. I guess it depends on what's already in the database.
-   * This loads in the properties in resources/test.properties.
-   * @param testName The name of the test
-   * @return Postgres test database to use when running the instance, which needs to be already
-   * running.
+   * Abstract to allow for either a simulated setup in a container, or a setup that makes http calls
+   * to raire.
+   * @param testName the name of the test.
+   * @param postgres the container where the test DB is found.
    */
-  protected static PostgreSQLContainer<?> setupForRunningOnExistingDatabase(final String testName){
-    PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
-    Properties config = loadProperties();
-
-    postgres.start();
-    config.setProperty("hibernate.url", postgres.getJdbcUrl());
-    Persistence.setProperties(config);
-    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
-
-    runMain(config, testName);
-
-    Persistence.beginTransaction();
-
-    return postgres;
-  }
+  protected abstract void runMainAndInitializeDB(final String testName, final Optional<PostgreSQLContainer<?>> postgres);
 
   /**
    * Create properties files for use when running main, and then runs main. Main can take (database)
@@ -885,7 +847,7 @@ public abstract class Workflow  {
    * This abstract version allows descendents to make the assertions in their own way, either by
    * calling raire or by retrieving assertions and related data from an sql file.
    */
-  protected abstract void makeAssertionData(final PostgreSQLContainer<?> postgres, final List<String> SQLfiles, boolean useRaire);
+  protected abstract void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgres, final List<String> SQLfiles);
 
   /**
    * Verify that some assertions are present for the given contest, that the minimum diluted

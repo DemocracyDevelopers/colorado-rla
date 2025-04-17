@@ -22,22 +22,22 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.workflows;
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.persistence.Persistence;
 
+import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
 import static us.freeandfair.corla.model.AuditReason.COUNTY_WIDE_CONTEST;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A demonstration workflow that tests sample size estimation with and without manifests, comparing
@@ -70,7 +70,8 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   public void runManifestVaryingDemo() throws InterruptedException {
     testUtils.log(LOGGER, "runManifestVaryingDemo");
 
-    PostgreSQLContainer<?> postgres = setupIndividualTestDatabase("EstimateSampleSizesVaryingManifests");
+    final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
+    runMainAndInitializeDB("EstimateSampleSizesVaryingManifests", Optional.of(postgres));
 
     final String margin2Contest = "PluralityMargin2";
     final String margin10Contest = "PluralityMargin10";
@@ -173,10 +174,30 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   }
 
   /**
+   * Identical to corresponding function in WorkflowRunner. Can be deleted when this is converted
+   * into a standard workflow.
+   */
+  @Override
+  protected void runMainAndInitializeDB(String testName, Optional<PostgreSQLContainer<?>> postgresOpt) {
+    assertTrue(postgresOpt.isPresent());
+    final PostgreSQLContainer<?> postgres = postgresOpt.get();
+
+    Properties config = loadProperties();
+    postgres.start();
+    config.setProperty("hibernate.url", postgres.getJdbcUrl());
+    Persistence.setProperties(config);
+    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
+
+    runMain(config, testName);
+
+    Persistence.beginTransaction();
+  }
+
+  /**
    * Not used. Can be removed when this is transformed into a standard workflow.
    */
   @Override
-  protected void makeAssertionData(PostgreSQLContainer<?> postgres, List<String> SQLfiles, boolean useRaire) {
+  protected void makeAssertionData(Optional<PostgreSQLContainer<?>> postgres, List<String> SQLfiles) {
     return;
   }
 }

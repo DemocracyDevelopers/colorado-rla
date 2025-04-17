@@ -31,7 +31,6 @@ import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
 
@@ -63,7 +62,8 @@ public class Demo1 extends Workflow {
   public void runDemo1() throws InterruptedException {
     testUtils.log(LOGGER, "Demo1");
 
-    PostgreSQLContainer<?> postgres = setupIndividualTestDatabase("Demo1");
+    final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
+    runMainAndInitializeDB("Demo1", Optional.of(postgres));
 
     // Empty workflow instance
     final Instance instance = new Instance();
@@ -128,7 +128,7 @@ public class Demo1 extends Workflow {
     assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
     // 4. Generate assertions; sanity check
-    makeAssertionData(postgres, List.of("SQL/demo1-assertions.sql"), false);
+    makeAssertionData(Optional.of(postgres), List.of("SQL/demo1-assertions.sql"));
     dashboard = getDoSDashBoardRefreshResponse();
 
     // There should be 4 IRV contests.
@@ -203,12 +203,33 @@ public class Demo1 extends Workflow {
   }
 
   /**
-   * This is identical to the makdeAssertionData function in the Workflow runner and can be
+   * This is identical to the same function in the Workflow runner and can be
    * easily incorporated into one of the generic workflows.
    */
   @Override
-  protected void makeAssertionData(PostgreSQLContainer<?> postgres, List<String> SQLfiles, boolean useRaire) {
+  protected void runMainAndInitializeDB(String testName, Optional<PostgreSQLContainer<?>> postgresOpt) {
+    assertTrue(postgresOpt.isPresent());
+    final PostgreSQLContainer<?> postgres = postgresOpt.get();
+
+    Properties config = loadProperties();
+    postgres.start();
+    config.setProperty("hibernate.url", postgres.getJdbcUrl());
+    Persistence.setProperties(config);
+    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
+
+    runMain(config, testName);
+
+    Persistence.beginTransaction();
+  }
+
+  /**
+   * This is identical to the make AssertionData function in the Workflow runner and can be
+   * easily incorporated into one of the generic workflows.
+   */
+  @Override
+  protected void makeAssertionData(Optional<PostgreSQLContainer<?>> postgresOpt, List<String> SQLfiles) {
     assertEquals(SQLfiles.size(), 1);
-    TestClassWithDatabase.runSQLSetupScript(postgres, SQLfiles.get(0));
+    assertTrue(postgresOpt.isPresent());
+    TestClassWithDatabase.runSQLSetupScript(postgresOpt.get(), SQLfiles.get(0));
   }
 }

@@ -22,7 +22,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.workflows;
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
-import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
+import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.filter.session.SessionFilter;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
@@ -44,8 +44,10 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.post;
 import static java.lang.Math.max;
 import static org.testng.Assert.*;
+import static us.freeandfair.corla.Main.main;
 import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_COMPLETE;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
 
@@ -56,6 +58,7 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
  * the audit: CVR and manifest uploads; defining the audit; selecting contests to target;
  * uploading audited ballots; reauditing ballots; and executing rounds until there are no further
  * ballots to sample. The workflow ends when the audit ends. Reporting is not tested in these workflows.
+ * FIXME: VT: I'll update this to run a single one given as a command-line argument.
  */
 @Test(enabled=true)
 public class WorkflowRunnerWithRaire extends Workflow {
@@ -110,6 +113,8 @@ public class WorkflowRunnerWithRaire extends Workflow {
    * phantoms, which ballots to treat as phantoms, expected diluted margins and sample sizes,
    * which ballots to simulate discrepancies for, and expected end of round states ...), run
    * the test audit and verify that the expected outcomes arise.
+   * TODO (VT): Refactor to pass it the postgres db in? Or maybe rename setupIndividualTestDatabase
+   * and make it an abstract thing that can do either real or simulated?
    * @param pathToInstance Path to the JSON workflow instance defining the test.
    * @throws InterruptedException
    */
@@ -118,7 +123,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
     final String prefix = "[runInstance] " + pathToInstance;
 
     try {
-      PostgreSQLContainer<?> postgres = setupIndividualTestDatabase(pathToInstance.getFileName().toString());
+      runMainAndInitializeDB("Workflow with raire", Optional.empty());
 
       // Convert data in the JSON workflow file to a workflow Instance.
       ObjectMapper toJson = new ObjectMapper();
@@ -168,7 +173,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
       assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
       assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
-      makeAssertionData(postgres, instance.getSQLs(), false);
+      makeAssertionData(Optional.empty(), instance.getSQLs());
 
       dashboard = getDoSDashBoardRefreshResponse();
 
@@ -341,7 +346,8 @@ public class WorkflowRunnerWithRaire extends Workflow {
         }
       }
 
-      postgres.stop();
+      // Not necessary for existing database.
+      // postgres.stop();
     }
     catch(IOException e){
       final String msg = prefix + " " + e.getMessage();
@@ -350,15 +356,15 @@ public class WorkflowRunnerWithRaire extends Workflow {
     }
   }
 
-  /** Version that connects to raire-service below:
-   *
+  /**
+   * Connect to the raire service and tell it to generate the assertions.
    * @param postgres The database (expected to be the same one raire uses).
-   * @param SQLfiles Not used.
-   * @param useRaire Should be true.
+   * @param SQLfiles Not used. FIXME it's possible we'll still want to load some sql,
+   *                 e.g. for auth init.
    */
-  protected void makeAssertionData(final PostgreSQLContainer<?> postgres, final List<String> SQLfiles, boolean useRaire) {
+  protected void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgres, final List<String> SQLfiles) {
     // This should not be called with 'useRaire' true in this workflow.
-    assertTrue(useRaire);
+    assertTrue(postgres.isEmpty());
 
     // Login as state admin.
     final SessionFilter filter = doLogin("stateadmin1");
@@ -369,7 +375,20 @@ public class WorkflowRunnerWithRaire extends Workflow {
         .then()
         .assertThat()
         .statusCode(HttpStatus.SC_OK);
+  }
 
+  /**
+   * Run everything with the database and raire url set up in test.properties. FIXME check whether
+   * we need the sql setup script. I guess it depends on what's already in the database.
+   * This loads in the properties in resources/test.properties.
+   * @param testName not used.
+   * @param postgres not used.
+   */
+  @Override
+  protected void runMainAndInitializeDB(String testName, Optional<PostgreSQLContainer<?>> postgres) {
+    assertTrue(postgres.isEmpty());
+    testUtils.log(LOGGER, "[runMainAndInitializeDB] running workflow " + testName + ".");
+    main("src/test/resources/test.properties");
   }
 
   /**
