@@ -1,4 +1,6 @@
-### This loads all 32 CVRs for NSW (in alphabetical order) in CO's first 32 counties.
+### This loads CVRs for the TinyIRV example. See README.md for details.
+### Differs slightly from the .json workflow because it loads them into counties 33-36
+### rather than 1-4, but this shouldn't make any difference to the data.
 
 ### 1. Lake County, with TinyExample1 (IRV) and a tied and non-tied plurality contest.
 ### POST request with basic login.

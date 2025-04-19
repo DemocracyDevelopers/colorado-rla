@@ -154,14 +154,14 @@ GET http://localhost:8888/dos-dashboard
 GET localhost:8888/get-assertions
 
 # Save them to a file.
->>! demo-stored-data/nsw-assertions-json.zip
+>>! demo-stored-data/tiny-irv-assertions-json.zip
 
 ### Get the assertions as csv.
 GET http://localhost:8888/get-assertions?format=csv
 Content-Type: application/x-www-form-urlencoded
 
 # Save them to a file.
->>! demo-stored-data/nsw-assertions-csv.zip
+>>! demo-stored-data/tiny-irv-assertions-csv.zip
 
 ### Log out
 POST http://localhost:8888/unauthenticate
