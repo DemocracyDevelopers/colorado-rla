@@ -30,7 +30,6 @@ import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.testng.annotations.Parameters;
 import us.freeandfair.corla.persistence.Persistence;
@@ -54,16 +53,15 @@ import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDI
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
 
 /**
- * This workflow runner is designed to execute all JSON workflows present in a specified
- * directory (defined in the "pathToInstances" member). These JSON workflows define a complete
- * audit to undertake, along with expected results. The workflow runner will execute all stages of
- * the audit: CVR and manifest uploads; defining the audit; selecting contests to target;
- * uploading audited ballots; reauditing ballots; and executing rounds until there are no further
- * ballots to sample. The workflow ends when the audit ends. Reporting is not tested in these workflows.
- * FIXME: VT: I'll update this to run a single one given as a command-line argument.
- * This can be run from the eclipse-project directory, using either of the following commands:
- * mvn -Dtest="au/org/democracydevelopers/corla/workflows/WorkflowRunnerWithRaire/*" test
- * mvn -Dtest="*WorkflowRunnerWithRaire" test
+ * This workflow runner is designed to run in a UAT environment in which the database, colorado-rla
+ * server and corla database are all set up.
+ * Use src/test/resources/test.properties to specify the raire url and the database login credentials.
+ * Ensure that maven and java are installed.
+ * From the eclipse-project directory, to run a workflow json file via the command line, enter
+ * `mvn -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="[Path to workflow file]" test`
+ * For example, to run the AllPluralityTwoVoteOverstatementTwoRounds workflow, enter
+ * `mvn -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json" test`
+ * This test is skipped when the tests are run with empty parameters, i.e. during normal testing.
  */
 @Test(enabled=true)
 public class WorkflowRunnerWithRaire extends Workflow {
@@ -74,64 +72,23 @@ public class WorkflowRunnerWithRaire extends Workflow {
   private static final Logger LOGGER = LogManager.getLogger(WorkflowRunnerWithRaire.class);
 
   /**
-   * Directory in which instance JSON files are stored.
-   */
-  private static final String pathToInstances = "src/test/resources/workflows/instances";
-
-  /**
    * Default time limit for raire call.
    */
   private static final int TIME_LIMIT_DEFAULT = 5;
-
-  /**
-   * Returns a list of parameter lists to supply to the runWorkflow test method in this class.
-   * Each parameter list contains one element -- a path to the workflow JSON instance to run.
-   * @return A list of test parameter lists as a 2D array of objects.
-   */
-  public Path supplyWorkflowPaths(int pickOneByIndex){
-    final String prefix = "[supplyWorkflowPaths]";
-    List<Path> pathList;
-
-    try (Stream<Path> stream = Files.walk(Paths.get(pathToInstances))) {
-      pathList = stream.map(Path::normalize)
-          .filter(Files::isRegularFile)
-          .filter(p -> isJSON(p.toString()))
-          .toList();
-      return pathList.get(pickOneByIndex);
-    }
-    catch(IOException e) {
-      final String msg = prefix + " " + e.getMessage();
-      LOGGER.error(msg);
-      throw new RuntimeException(msg);
-    }
-    catch (IndexOutOfBoundsException e) {
-      final String msg = prefix + " " + "given an invalid index: " + pickOneByIndex;
-      LOGGER.error(msg);
-      throw new RuntimeException(msg);
-    }
-  }
 
   /**
    * Given a JSON file defining an audit workflow (CVRs, Manifests, which CVRs to replace with
    * phantoms, which ballots to treat as phantoms, expected diluted margins and sample sizes,
    * which ballots to simulate discrepancies for, and expected end of round states ...), run
    * the test audit and verify that the expected outcomes arise.
-   * Hopefully runs with something like
-   * mvn test -Dtest="src.test.java.workflows.WorkFlowRunnerWithRaire"
-   * See https://www.geeksforgeeks.org/how-to-pass-parameter-to-testng-xml-from-command-line-with-maven/
-   * pathToInstance Path to the JSON workflow instance defining the test.
-   * Now with parameters:
-   * mvn -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json" test
-   *
    * @throws InterruptedException
    */
   @Parameters("workflowFile")
   @Test
   public void runInstance(String workflowFile) throws InterruptedException {
-    // For now just grab the first one.
-    final Path pathToInstance = supplyWorkflowPaths(0);
-    final String prefix = "[runInstance] " + pathToInstance;
-    System.out.println(String.format("%s %s %s.", prefix, "running workflow", workflowFile));
+    final Path pathToInstance = Paths.get(workflowFile);
+    final String prefix = "[runInstance] ";
+    LOGGER.info(String.format("%s %s %s.", prefix, "running workflow", pathToInstance));
 
     try {
       runMainAndInitializeDB("Workflow with raire", Optional.empty());
