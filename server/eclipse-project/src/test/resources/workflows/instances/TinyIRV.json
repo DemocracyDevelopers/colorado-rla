@@ -6,16 +6,16 @@
     "SQL/TinyIRV-assertions.sql"
   ],
   "CVRS": [
-    "Tiny-IRV-Examples/ThreeCandidatesTenVotesPlusTiedPlurality.csv",
-    "Tiny-IRV-Examples/ThreeCandidatesTenInvalidVotes.csv",
-    "Tiny-IRV-Examples/ThreeCandidatesTenVotes_TiedIRV.csv",
-    "Tiny-IRV-Examples/GuideToRAIREExample3.csv"
+    "src/test/resources/CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotesPlusTiedPlurality.csv",
+    "src/test/resources/CSVs/Tiny-IRV-Examples/ThreeCandidatesTenInvalidVotes.csv",
+    "src/test/resources/CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_TiedIRV.csv",
+    "src/test/resources/CSVs/Tiny-IRV-Examples/GuideToRAIREExample3.csv"
   ],
   "MANIFESTS": [
-    "Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv",
-    "Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv",
-    "Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv",
-    "Tiny-IRV-Examples/GuideToRAIREExample3-manifest.csv"
+    "src/test/resources/CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv",
+    "src/test/resources/CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv",
+    "src/test/resources/CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv",
+    "src/test/resources/CSVs/Tiny-IRV-Examples/GuideToRAIREExample3-manifest.csv"
   ],
   "CANONICAL_LIST": "src/test/resources/CSVs/Tiny-IRV-Examples/Tiny_IRV_Demo_Canonical_List.csv",
   "TARGETS": {
