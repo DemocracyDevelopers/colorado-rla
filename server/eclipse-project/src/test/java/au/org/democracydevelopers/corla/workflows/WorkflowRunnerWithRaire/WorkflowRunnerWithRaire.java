@@ -32,6 +32,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.testng.annotations.Parameters;
 import us.freeandfair.corla.persistence.Persistence;
 
 import java.io.IOException;
@@ -60,6 +61,9 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
  * uploading audited ballots; reauditing ballots; and executing rounds until there are no further
  * ballots to sample. The workflow ends when the audit ends. Reporting is not tested in these workflows.
  * FIXME: VT: I'll update this to run a single one given as a command-line argument.
+ * This can be run from the eclipse-project directory, using either of the following commands:
+ * mvn -Dtest="au/org/democracydevelopers/corla/workflows/WorkflowRunnerWithRaire/*" test
+ * mvn -Dtest="*WorkflowRunnerWithRaire" test
  */
 @Test(enabled=true)
 public class WorkflowRunnerWithRaire extends Workflow {
@@ -116,13 +120,18 @@ public class WorkflowRunnerWithRaire extends Workflow {
    * mvn test -Dtest="src.test.java.workflows.WorkFlowRunnerWithRaire"
    * See https://www.geeksforgeeks.org/how-to-pass-parameter-to-testng-xml-from-command-line-with-maven/
    * pathToInstance Path to the JSON workflow instance defining the test.
+   * Now with parameters:
+   * mvn -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json" test
+   *
    * @throws InterruptedException
    */
+  @Parameters("workflowFile")
   @Test
-  public void runInstance() throws InterruptedException {
+  public void runInstance(String workflowFile) throws InterruptedException {
     // For now just grab the first one.
     final Path pathToInstance = supplyWorkflowPaths(0);
     final String prefix = "[runInstance] " + pathToInstance;
+    System.out.println(String.format("%s %s %s.", prefix, "running workflow", workflowFile));
 
     try {
       runMainAndInitializeDB("Workflow with raire", Optional.empty());
