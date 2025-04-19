@@ -103,8 +103,7 @@ also contains it in a file called `x.y.sha256sum`.
    9. Launch the audit. I see 5 remaining ballots to audit in Lake and La Plata Counties and 57 in Las Animas, but you will
      see different numbers if you chose a different risk limit or seed. (Technical note: 5 + 5 < 13, so it might seem
      as if we are going to audit fewer ballots than the expected sample size, but this can happen - especially in small 
-     contests - 
-     because an audit ballot can be repeated in the sample.)
+     contests - because an audit ballot can be repeated in the sample.)
 
 Alternatively, all these steps can be done without manifests, in which case the CDOS audit sequence
 blocks after sample size estimation. For this data, the sample size estimates should be the same
