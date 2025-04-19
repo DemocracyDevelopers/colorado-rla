@@ -1,0 +1,117 @@
+{
+  "NAME": "Demo1",
+  "RISK_LIMIT": 0.03,
+  "SEED": "24098249082409821390482049098",
+  "SQLS": [
+    "SQL/demo1-assertions.sql"
+  ],
+  "CVRS": [
+    "Demo1/1-adams-cvrexport-plusByron-1.csv",
+    "Demo1/2-alamosa-cvrexport-plusByron-2.csv",
+    "Demo1/3-arapahoe-Byron-3-plus-tied-irv.csv",
+    "Demo1/4-archuleta-kempsey-plusByron-4.csv",
+    "split-Byron/Byron-5.csv",
+    "split-Byron/Byron-6.csv",
+    "Demo1/7-unredacted-boulder-2023-plusByron-7.csv"
+  ],
+  "MANIFESTS": [
+    "Demo1/1-adams-plusByron-1-manifest.csv",
+    "Demo1/2-alamosa-plusByron-2-manifest.csv",
+    "split-Byron/Byron-3-manifest.csv",
+    "NewSouthWales21/Kempsey_Mayoral.manifest.csv",
+    "split-Byron/Byron-5-manifest.csv",
+    "split-Byron/Byron-6-manifest.csv",
+    "Demo1/7-unredacted-Boulder-IRV-Manifest.csv"
+  ],
+  "CANONICAL_LIST": "src/test/resources/CSVs/Demo1/demo1-canonical-list.csv",
+  "TARGETS": {
+    "City of Longmont - Mayor": "COUNTY_WIDE_CONTEST",
+    "Byron Mayoral": "STATE_WIDE_CONTEST",
+    "Kempsey Mayoral": "COUNTY_WIDE_CONTEST"
+  },
+  "DILUTED_MARGINS": {
+    "City of Longmont - Mayor": 0.09078192,
+    "Byron Mayoral": 0.00684644,
+    "Kempsey Mayoral": 0.02200739
+  },
+  "EXPECTED_SAMPLES": {
+    "City of Longmont - Mayor": 81,
+    "Byron Mayoral": 1065,
+    "Kempsey Mayoral": 332
+  },
+  "FINAL_EXPECTED_AUDITED_BALLOTS": {
+    "City of Longmont - Mayor": 81,
+    "Byron Mayoral": 1065,
+    "Kempsey Mayoral": 332
+  },
+  "IRV_CONTESTS": [
+    "Byron Mayoral",
+    "Kempsey Mayoral"
+  ],
+  "EXPECTED_ROUNDS": 1,
+  "PHANTOM_BALLOTS": {
+  },
+  "DISAGREEMENTS": {
+  },
+  "DISCREPANT_AUDITED_BALLOT_CHOICES": {
+  },
+  "REAUDITS": {
+  },
+  "CONTEST_RESULTS": {
+    "1": {
+      "Regent of the University of Colorado - At Large": {
+        "one_over_count": 0,
+        "two_over_count": 0,
+        "one_under_count": 0,
+        "two_under_count": 0,
+        "other_count": 0
+      },
+      "Byron Mayoral": {
+        "one_over_count": 0,
+        "two_over_count": 0,
+        "one_under_count": 0,
+        "two_under_count": 0,
+        "other_count": 0
+      }
+    },
+    "4": {
+      "Kempsey Mayoral": {
+        "one_over_count": 0,
+        "two_over_count": 0,
+        "one_under_count": 0,
+        "two_under_count": 0,
+        "other_count": 0
+      },
+      "Byron Mayoral": {
+        "one_over_count": 0,
+        "two_over_count": 0,
+        "one_under_count": 0,
+        "two_under_count": 0,
+        "other_count": 0
+      }
+    },
+    "7": {
+      "Regent of the University of Colorado - At Large": {
+        "one_over_count": 0,
+        "two_over_count": 0,
+        "one_under_count": 0,
+        "two_under_count": 0,
+        "other_count": 0
+      },
+      "Byron Mayoral": {
+        "one_over_count": 0,
+        "two_over_count": 0,
+        "one_under_count": 0,
+        "two_under_count": 0,
+        "other_count": 0
+      },
+      "City of Boulder Mayoral Candidates": {
+        "one_over_count": 0,
+        "two_over_count": 0,
+        "one_under_count": 0,
+        "two_under_count": 0,
+        "other_count": 0
+      }
+    }
+  }
+}
