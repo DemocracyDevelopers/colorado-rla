@@ -202,7 +202,6 @@ public abstract class Workflow  {
     main(propertiesFile);
   }
 
-
   /**
    * Transform a simple map of strings into a JSONObject.
    * @param data Data to be transformed into JSONObject.

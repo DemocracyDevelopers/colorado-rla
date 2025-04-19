@@ -81,16 +81,22 @@ public class WorkflowRunnerWithRaire extends Workflow {
    * phantoms, which ballots to treat as phantoms, expected diluted margins and sample sizes,
    * which ballots to simulate discrepancies for, and expected end of round states ...), run
    * the test audit and verify that the expected outcomes arise.
+   * TODO Override or refactor Workflow::setup() so that it reads the location of the colorado-rla
+   * server from test.properties.
    * @throws InterruptedException
    */
   @Parameters("workflowFile")
   @Test
   public void runInstance(String workflowFile) throws InterruptedException {
-    final Path pathToInstance = Paths.get(workflowFile);
     final String prefix = "[runInstance] ";
-    LOGGER.info(String.format("%s %s %s.", prefix, "running workflow", pathToInstance));
+
+    if(workflowFile == null) {System.out.println("workflowfile is null");}
+    if(workflowFile.isEmpty()) {System.out.println("workflowfile is empty");}
 
     try {
+      final Path pathToInstance = Paths.get(workflowFile);
+      LOGGER.info(String.format("%s %s %s.", prefix, "running workflow", pathToInstance));
+
       runMainAndInitializeDB("Workflow with raire", Optional.empty());
 
       // Convert data in the JSON workflow file to a workflow Instance.
@@ -317,6 +323,8 @@ public class WorkflowRunnerWithRaire extends Workflow {
       // Not necessary for existing database.
       // postgres.stop();
     }
+    // TODO print out a useful error message for command-line execution.
+    // catch InvalidPathException and warn appropriately.
     catch(IOException e){
       final String msg = prefix + " " + e.getMessage();
       LOGGER.error(msg);
