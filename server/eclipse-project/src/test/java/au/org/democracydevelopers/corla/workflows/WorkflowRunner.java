@@ -226,13 +226,7 @@ public class WorkflowRunner extends Workflow {
       int rounds = 0;
 
       // Keep track of last executed rounds' discrepancy counts
-      Map<String,Integer> lastDiscrepancyCounts = new HashMap<>();
-      lastDiscrepancyCounts.put(ONE_OVER, 0);
-      lastDiscrepancyCounts.put(TWO_OVER, 0);
-      lastDiscrepancyCounts.put(ONE_UNDER, 0);
-      lastDiscrepancyCounts.put(TWO_UNDER, 0);
-      lastDiscrepancyCounts.put(OTHER, 0);
-      lastDiscrepancyCounts.put(DISAGREEMENTS, 0);
+      Map<String,Map<String,Integer>> lastDiscrepancyCounts = new HashMap<>();
 
       while(auditNotFinished) {
 
@@ -311,12 +305,20 @@ public class WorkflowRunner extends Workflow {
 
             // Record so that we can cross-check the reports against what should be the
             // final discrepancy counts.
-            lastDiscrepancyCounts.put(ONE_OVER, oneOverCount);
-            lastDiscrepancyCounts.put(TWO_OVER, twoOverCount);
-            lastDiscrepancyCounts.put(ONE_UNDER, oneUnderCount);
-            lastDiscrepancyCounts.put(TWO_UNDER, twoUnderCount);
-            lastDiscrepancyCounts.put(OTHER, otherCount);
-            lastDiscrepancyCounts.put(DISAGREEMENTS, disagreementCount);
+            final boolean mapContainsContest = lastDiscrepancyCounts.containsKey(contestName);
+            Map<String,Integer> countMap =  mapContainsContest ?
+                lastDiscrepancyCounts.get(contestName) : new HashMap<>();
+
+            countMap.put(ONE_OVER, oneOverCount);
+            countMap.put(TWO_OVER, twoOverCount);
+            countMap.put(ONE_UNDER, oneUnderCount);
+            countMap.put(TWO_UNDER, twoUnderCount);
+            countMap.put(OTHER, otherCount);
+            countMap.put(DISAGREEMENTS, disagreementCount);
+
+            if(!mapContainsContest) {
+              lastDiscrepancyCounts.put(contestName, countMap);
+            }
           }
         }
 
@@ -377,7 +379,7 @@ public class WorkflowRunner extends Workflow {
       checkSummarizeIRVReport(getReportAsCSV("summarize_IRV"), instance);
 
       // Check the contest report
-      //checkContestReport(getReportAsCSV("contest"), instance, lastDiscrepancyCounts);
+      checkContestReport(getReportAsCSV("contest"), instance, lastDiscrepancyCounts);
 
       // Check the contests_by_county report
       checkContestsByCountyReport(getReportAsCSV("contest_by_county"), instance);

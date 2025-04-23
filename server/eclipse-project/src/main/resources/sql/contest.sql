@@ -21,9 +21,8 @@ SELECT
    ca.one_vote_under_count,
    ca.two_vote_under_count,
    ca.disagreement_count,
-   ca.other_count,
    ca.gamma,
-   ROUND(ca.overstatements, 0) AS overstatements,
+   ROUND(ca.one_vote_over_count+ca.two_vote_over_count, 0) AS overstatements,
    ca.optimistic_samples_to_audit,
    ca.estimated_samples_to_audit
 FROM 

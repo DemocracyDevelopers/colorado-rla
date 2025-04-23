@@ -57,6 +57,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
@@ -1130,14 +1131,14 @@ public class Workflow  {
    * @param lastDiscrepancyCounts What we expect the final discrepancy counts to be for the contest.
    */
   protected void checkContestReport(final List<String> lines, final Instance instance,
-      final Map<String,Integer> lastDiscrepancyCounts)
-  {
+      final Map<String,Map<String,Integer>> lastDiscrepancyCounts) {
     // This represents what we expect the final optimistic sample count to be for each
     // targeted contest.
-    final Map<String,Integer> expectedAuditedBallots = instance.getExpectedAuditedBallots();
+    final Map<String, Integer> expectedAuditedBallots = instance.getExpectedAuditedBallots();
 
-    assertEquals(1 + instance.getTargetedContests().size(), lines.size());
-    for(int i = 1; i < lines.size(); ++i) {
+    final int numContests = ContestResultQueries.count();
+    assertEquals(1 + numContests, lines.size());
+    for (int i = 1; i < lines.size(); ++i) {
       final List<String> tokens = Arrays.stream(lines.get(i).split(",")).toList();
 
       // There are at least 20 columns in this report
@@ -1150,45 +1151,62 @@ public class Workflow  {
       // optimistic number of samples to audit.
       final String targetReason = tokens.get(1);
       final String auditStatus = tokens.get(2);
-      final String winnersAllowed = tokens.get(3);
-      final String winner = tokens.get(6);
-      final Integer minMargin = Integer.parseInt(tokens.get(7));
-      final Integer twoVoteOverCount = Integer.parseInt(tokens.get(10));
-      final Integer oneVoteOverCount = Integer.parseInt(tokens.get(11));
-      final Integer oneVoteUnderCount = Integer.parseInt(tokens.get(12));
-      final Integer twoVoteUnderCount = Integer.parseInt(tokens.get(13));
-      final Integer disagreementCount = Integer.parseInt(tokens.get(14));
-      final Integer otherDiscrepancyCount = Integer.parseInt(tokens.get(15));
-      final int overstatementCount = Integer.parseInt(tokens.get(17));
+      final int winnersAllowed = Integer.parseInt(tokens.get(3));
+      List<String> winners = new ArrayList<>();
+      for(int j = 6; j < 6 + winnersAllowed; ++j){
+        winners.add(tokens.get(j));
+      }
+      final String winner = StringUtils.join(winners, ",");
+      final Integer minMargin = Integer.parseInt(tokens.get(6+winnersAllowed));
+      final Integer twoVoteOverCount = Integer.parseInt(tokens.get(9+winnersAllowed));
+      final Integer oneVoteOverCount = Integer.parseInt(tokens.get(10+winnersAllowed));
+      final Integer zeroDiscrepancyCount = Integer.parseInt(tokens.get(11+winnersAllowed));
+      final Integer oneVoteUnderCount = Integer.parseInt(tokens.get(12+winnersAllowed));
+      final Integer twoVoteUnderCount = Integer.parseInt(tokens.get(13+winnersAllowed));
+      final Integer disagreementCount = Integer.parseInt(tokens.get(14+winnersAllowed));
 
-      final Integer optimisticSamples = Integer.parseInt(tokens.get(19));
+      final int overstatementCount = Integer.parseInt(tokens.get(16+winnersAllowed));
 
-      // Check that the winner is correct, as specified in the instance.
-      assertEquals(instance.getTargetedContestWinner(contestName), winner.replace("\"", ""));
-      // Check that the audit reason is correct, as specified in the instance.
-      assertEquals(instance.getTargetedContestReason(contestName).toLowerCase(), targetReason.toLowerCase());
-      // Audit status should be risk limit achieved for all successful workflows
-      assertEquals(auditStatus.toLowerCase(), Workflow.RISK_LIMIT_ACHIEVED.toLowerCase());
-      // Winners allowed will always be 1 for Plurality and IRV
-      assertEquals(winnersAllowed, "1");
+      final int optimisticSamples = Integer.parseInt(tokens.get(17+winnersAllowed));
+
+      Map<String, Integer> countMap = Map.of(ONE_OVER, 0, TWO_OVER, 0,
+          ONE_UNDER, 0, TWO_UNDER, 0, OTHER, 0, DISAGREEMENTS, 0);
+
+      if (instance.getTargetedContests().containsKey(contestName)) {
+        // Check that the winner is correct, as specified in the instance.
+        assertEquals(instance.getTargetedContestWinner(contestName), winner.replace("\"", ""));
+        // Audit status should be risk limit achieved for all successful workflows
+        assertEquals(auditStatus.toLowerCase(), Workflow.RISK_LIMIT_ACHIEVED.toLowerCase());
+        // Check that the audit reason is correct, as specified in the instance.
+        assertEquals(instance.getTargetedContestReason(contestName).toLowerCase(),
+            targetReason.toLowerCase());
+
+        // TODO: decide on whether we should add final expected optimistic sample count to
+        // the workflow instance.
+        // Verify final expected optimistic samples count. If there were no understatements, then
+        // the final computed optimistic sample count should at least be equal to the expected number
+        // of ballots to be sampled. (Note: understatements may result in the final optimistic
+        // sample count being smaller than the number of ballots actually sampled).
+        if(oneVoteUnderCount + twoVoteUnderCount == 0) {
+          assertTrue(optimisticSamples >= expectedAuditedBallots.get(contestName));
+        }
+
+        // TODO verify minimum margin for targeted contests.
+
+        countMap = lastDiscrepancyCounts.get(contestName);
+      }
 
       // Verify expected discrepancy counts
-      assertEquals(twoVoteOverCount, lastDiscrepancyCounts.get(Workflow.TWO_OVER));
-      assertEquals(oneVoteOverCount, lastDiscrepancyCounts.get(Workflow.ONE_OVER));
-      assertEquals(twoVoteUnderCount, lastDiscrepancyCounts.get(Workflow.TWO_UNDER));
-      assertEquals(oneVoteUnderCount, lastDiscrepancyCounts.get(Workflow.ONE_UNDER));
-      assertEquals(otherDiscrepancyCount, lastDiscrepancyCounts.get(Workflow.OTHER));
-      assertEquals(disagreementCount, lastDiscrepancyCounts.get(Workflow.DISAGREEMENTS));
+      final int expectedOverstatements = countMap.get(TWO_OVER) + countMap.get(ONE_OVER);
 
-      final int expectedOverstatements = lastDiscrepancyCounts.get(Workflow.TWO_OVER) +
-          lastDiscrepancyCounts.get(Workflow.ONE_OVER);
+      assertEquals(twoVoteOverCount, countMap.get(TWO_OVER));
+      assertEquals(oneVoteOverCount, countMap.get(ONE_OVER));
+      assertEquals(twoVoteUnderCount, countMap.get(TWO_UNDER));
+      assertEquals(oneVoteUnderCount, countMap.get(ONE_UNDER));
+      assertEquals(zeroDiscrepancyCount, countMap.get(OTHER));
+      assertEquals(disagreementCount, countMap.get(DISAGREEMENTS));
 
       assertEquals(overstatementCount, expectedOverstatements);
-
-      // Verify final expected optimistic samples count
-      assertEquals(optimisticSamples, expectedAuditedBallots.get(contestName));
-
-      // TODO verify minimum margin
     }
   }
 
