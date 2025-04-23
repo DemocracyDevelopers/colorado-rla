@@ -129,6 +129,7 @@ class EstimateSampleSizesPage extends React.Component<EstimateSampleSizesPagePro
             this.setState({generatingEstimatedSampleSizes: false});
             this.setState({generationSucceeded: true});
         } catch (error) {
+            this.setState({generatingEstimatedSampleSizes: false});
             this.setState({generationFailed: true});
         }
     }
