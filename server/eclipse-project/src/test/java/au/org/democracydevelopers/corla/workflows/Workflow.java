@@ -958,7 +958,7 @@ public class Workflow  {
    * @return A mapping between contest name (all contests, not just those targeted) and its
    * database record ID (as a string).
    */
-  protected Map<String,String> targetContests(final Map<String, Map<String,String>> targetedContestsWithReasons) {
+  protected Map<String,String> targetContests(final Map<String, String> targetedContestsWithReasons) {
     // Login as state admin.
     final SessionFilter filter = doLogin("stateadmin1");
 
@@ -981,7 +981,7 @@ public class Workflow  {
       // If this contest's name is one of the targeted ones...
       if(targetedContestsWithReasons.containsKey(contestName)) {
         // add it to the selections.
-        final String reason = targetedContestsWithReasons.get(contestName).get(REASON);
+        final String reason = targetedContestsWithReasons.get(contestName);
         final JSONObject contestSelection = new JSONObject();
 
         contestSelection.put(AUDIT, COMPARISON.toString());
@@ -1132,9 +1132,6 @@ public class Workflow  {
    */
   protected void checkContestReport(final List<String> lines, final Instance instance,
       final Map<String,Map<String,Integer>> lastDiscrepancyCounts) {
-    // This represents what we expect the final optimistic sample count to be for each
-    // targeted contest.
-    final Map<String, Integer> expectedAuditedBallots = instance.getExpectedAuditedBallots();
 
     final int numContests = ContestResultQueries.count();
     assertEquals(1 + numContests, lines.size());
@@ -1156,7 +1153,7 @@ public class Workflow  {
       for(int j = 6; j < 6 + winnersAllowed; ++j){
         winners.add(tokens.get(j));
       }
-      final String winner = StringUtils.join(winners, ",");
+      final String winner = StringUtils.join(winners, ",").replace("\"","");
       final Integer minMargin = Integer.parseInt(tokens.get(6+winnersAllowed));
       final Integer twoVoteOverCount = Integer.parseInt(tokens.get(9+winnersAllowed));
       final Integer oneVoteOverCount = Integer.parseInt(tokens.get(10+winnersAllowed));
@@ -1167,31 +1164,20 @@ public class Workflow  {
 
       final int overstatementCount = Integer.parseInt(tokens.get(16+winnersAllowed));
 
-      final int optimisticSamples = Integer.parseInt(tokens.get(17+winnersAllowed));
-
       Map<String, Integer> countMap = Map.of(ONE_OVER, 0, TWO_OVER, 0,
           ONE_UNDER, 0, TWO_UNDER, 0, OTHER, 0, DISAGREEMENTS, 0);
 
+      final Optional<Integer> expectedRawMargin = instance.getRawMargin(contestName);
+      expectedRawMargin.ifPresent(m -> assertEquals(m, minMargin));
+
+      final Optional<String> expectedWinner = instance.getWinner(contestName);
+      expectedWinner.ifPresent(s -> assertEquals(s, winner));
+      final Optional<String> expectedReason = instance.getTargetedContestReason(contestName);
+      expectedReason.ifPresent(s -> assertEquals(s.toLowerCase(), targetReason.toLowerCase()));
+
       if (instance.getTargetedContests().containsKey(contestName)) {
-        // Check that the winner is correct, as specified in the instance.
-        assertEquals(instance.getTargetedContestWinner(contestName), winner.replace("\"", ""));
         // Audit status should be risk limit achieved for all successful workflows
         assertEquals(auditStatus.toLowerCase(), Workflow.RISK_LIMIT_ACHIEVED.toLowerCase());
-        // Check that the audit reason is correct, as specified in the instance.
-        assertEquals(instance.getTargetedContestReason(contestName).toLowerCase(),
-            targetReason.toLowerCase());
-
-        // TODO: decide on whether we should add final expected optimistic sample count to
-        // the workflow instance.
-        // Verify final expected optimistic samples count. If there were no understatements, then
-        // the final computed optimistic sample count should at least be equal to the expected number
-        // of ballots to be sampled. (Note: understatements may result in the final optimistic
-        // sample count being smaller than the number of ballots actually sampled).
-        if(oneVoteUnderCount + twoVoteUnderCount == 0) {
-          assertTrue(optimisticSamples >= expectedAuditedBallots.get(contestName));
-        }
-
-        // TODO verify minimum margin for targeted contests.
 
         countMap = lastDiscrepancyCounts.get(contestName);
       }
@@ -1207,6 +1193,11 @@ public class Workflow  {
       assertEquals(disagreementCount, countMap.get(DISAGREEMENTS));
 
       assertEquals(overstatementCount, expectedOverstatements);
+
+      final int optimisticSamples = Integer.parseInt(tokens.get(17+winnersAllowed));
+      final int estimatedSamples = Integer.parseInt(tokens.get(18+winnersAllowed));
+
+      // TODO: verify final optimistic/estimated sample counts
     }
   }
 
@@ -1232,13 +1223,10 @@ public class Workflow  {
       final String contestName = tokens.get(1);
       final int minMargin = Integer.parseInt(tokens.get(0));
 
-      if(instance.getTargetedContests().containsKey(contestName)) {
-        // The number of ballots selected in this contest's sample should be at least
-        // as much as the final optimistic sample count.
-        final int selected = tokens.size() - 2;
-        assertTrue(selected >= expectedAuditedBallots.get(contestName));
-      }
-      // TODO: check min margin
+      final Optional<Integer> expectedAudited = instance.getExpectedAuditedBallots(contestName);
+      expectedAudited.ifPresent(s -> assertTrue(s <= tokens.size() - 2));
+      final Optional<Integer> expectedRawMargin = instance.getRawMargin(contestName);
+      expectedRawMargin.ifPresent(m -> assertEquals(m.intValue(), minMargin));
     }
   }
 
@@ -1276,6 +1264,16 @@ public class Workflow  {
   }
 
   /**
+   * Verify that the "tabulate_county_plurality" report, when downloaded as a CSV, contains the correct
+   * data for the given instance.
+   * @param lines      Lines of the CSV report, as Strings.
+   * @param instance   Workload instance being run.
+   */
+  protected void checkTabulateCountyPluralityReport(final List<String> lines, final Instance instance){
+    // TODO
+  }
+
+  /**
    * Verify that the "summarize_IRV" report, when downloaded as a CSV, contains the correct
    * data for the given instance.
    * @param lines      Lines of the CSV report, as Strings.
@@ -1296,13 +1294,10 @@ public class Workflow  {
       // Check that the contest *is* an IRV contest, as specified in the instance.
       assertTrue(instance.getIRVContests().contains(contestName));
 
-      if(instance.getTargetedContests().containsKey(contestName)) {
-        // Check that the winner is correct, as specified in the instance.
-        assertEquals(instance.getTargetedContestWinner(contestName), winner);
-
-        // Check that the target reason is correct, as specified in the instance.
-        assertEquals(instance.getTargetedContestReason(contestName), targetReason);
-      }
+      final Optional<String> expectedWinner = instance.getWinner(contestName);
+      expectedWinner.ifPresent(s -> assertEquals(s, winner));
+      final Optional<String> expectedReason = instance.getTargetedContestReason(contestName);
+      expectedReason.ifPresent(s -> assertEquals(s, targetReason));
     }
   }
 

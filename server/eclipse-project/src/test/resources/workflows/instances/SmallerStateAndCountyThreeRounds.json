@@ -33,14 +33,18 @@
   },
 
   "TARGETS" : {
-    "Richmond Valley Mayoral" : {
-      "reason" : "STATE_WIDE_CONTEST",
-      "winner" : "MUSTOW Robert"
-    },
-    "City of Wollongong Mayoral" : {
-      "reason" : "COUNTY_WIDE_CONTEST",
-      "winner" : "BRADBERY Gordon"
-    }
+    "Richmond Valley Mayoral" :  "STATE_WIDE_CONTEST",
+    "City of Wollongong Mayoral" : "COUNTY_WIDE_CONTEST"
+  },
+
+  "WINNERS" : {
+    "Richmond Valley Mayoral" : "MUSTOW Robert",
+    "City of Wollongong Mayoral" : "BRADBERY Gordon"
+  },
+
+  "RAW_MARGINS" : {
+    "Richmond Valley Mayoral" : 5821,
+    "City of Wollongong Mayoral" : 2666
   },
 
   "IRV_CONTESTS" : [

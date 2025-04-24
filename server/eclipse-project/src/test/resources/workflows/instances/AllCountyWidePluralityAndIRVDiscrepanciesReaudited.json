@@ -69,22 +69,24 @@
   },
 
   "TARGETS" : {
-    "Regent of the University of Colorado" : {
-      "reason" : "COUNTY_WIDE_CONTEST",
-      "winner" : "Distant Winner"
-    },
-    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : {
-      "reason" : "COUNTY_WIDE_CONTEST",
-      "winner" : "Jeff Baker"
-    },
-    "Wollondilly Mayoral" : {
-      "reason" : "COUNTY_WIDE_CONTEST",
-      "winner" : "GOULD Matt"
-    },
-    "Burwood Mayoral" : {
-      "reason" : "COUNTY_WIDE_CONTEST",
-      "winner" : "FAKER John"
-    }
+    "Regent of the University of Colorado" : "COUNTY_WIDE_CONTEST",
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : "COUNTY_WIDE_CONTEST",
+    "Wollondilly Mayoral" : "COUNTY_WIDE_CONTEST",
+    "Burwood Mayoral" : "COUNTY_WIDE_CONTEST"
+  },
+
+  "WINNERS" : {
+    "Regent of the University of Colorado" : "Distant Winner",
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : "Jeff Baker",
+    "Wollondilly Mayoral" : "GOULD Matt",
+    "Burwood Mayoral" : "FAKER John"
+  },
+
+  "RAW_MARGINS" : {
+    "Regent of the University of Colorado" : 108,
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : 37,
+    "Wollondilly Mayoral" : 1285,
+    "Burwood Mayoral" : 7043
   },
 
   "DILUTED_MARGINS" : {

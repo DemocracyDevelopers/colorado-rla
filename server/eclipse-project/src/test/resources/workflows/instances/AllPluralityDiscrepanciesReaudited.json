@@ -34,18 +34,21 @@
   },
 
   "TARGETS" : {
-    "Regent of the University of Colorado" : {
-      "reason" : "STATE_WIDE_CONTEST",
-      "winner" : "Distant Winner"
-    },
-    "Adams COUNTY COMMISSIONER DISTRICT 3" : {
-      "reason" : "COUNTY_WIDE_CONTEST",
-      "winner" : "Jeff Baker"
-    },
-    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : {
-      "reason" : "COUNTY_WIDE_CONTEST",
-      "winner" : "Jeff Baker"
-    }
+    "Regent of the University of Colorado" : "STATE_WIDE_CONTEST",
+    "Adams COUNTY COMMISSIONER DISTRICT 3" : "COUNTY_WIDE_CONTEST",
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : "COUNTY_WIDE_CONTEST"
+  },
+
+  "WINNERS" : {
+    "Regent of the University of Colorado" : "Distant Winner",
+    "Adams COUNTY COMMISSIONER DISTRICT 3" : "Jeff Baker",
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : "Jeff Baker"
+  },
+
+  "RAW_MARGINS" : {
+    "Regent of the University of Colorado" : 216,
+    "Adams COUNTY COMMISSIONER DISTRICT 3" : 42,
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : 37
   },
 
   "DILUTED_MARGINS" : {

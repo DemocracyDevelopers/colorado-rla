@@ -156,18 +156,21 @@
   },
 
   "TARGETS" : {
-    "City of Longmont - Mayor" : {
-      "reason" : "COUNTY_WIDE_CONTEST",
-      "winner" : "Joan Peck"
-    },
-    "Byron Mayoral" : {
-      "reason" : "STATE_WIDE_CONTEST",
-      "winner" : "LYON Michael"
-    },
-    "Uralla Mayoral" : {
-      "reason" : "COUNTY_WIDE_CONTEST",
-      "winner" : "BELL Robert"
-    }
+    "City of Longmont - Mayor" :  "COUNTY_WIDE_CONTEST",
+    "Byron Mayoral" : "STATE_WIDE_CONTEST",
+    "Uralla Mayoral" : "COUNTY_WIDE_CONTEST"
+  },
+
+  "WINNERS" : {
+    "City of Longmont - Mayor" : "Joan Peck",
+    "Byron Mayoral" : "LYON Michael",
+    "Uralla Mayoral" : "BELL Robert"
+  },
+
+  "RAW_MARGINS" : {
+    "City of Longmont - Mayor" : 10773,
+    "Byron Mayoral" : 1060,
+    "Uralla Mayoral" : 2320
   },
 
   "DILUTED_MARGINS" : {

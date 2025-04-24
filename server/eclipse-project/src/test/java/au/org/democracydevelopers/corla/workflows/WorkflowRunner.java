@@ -186,7 +186,7 @@ public class WorkflowRunner extends Workflow {
 
       // Check that the right number of IRV contests are present
       final List<String> irvContests = instance.getIRVContests();
-      final Map<String,Map<String,String>> targets = instance.getTargetedContests();
+      final Map<String,String> targets = instance.getTargetedContests();
       assertEquals(irvContests.size(), dashboard.getList("generate_assertions_summaries").size());
 
       // Choose targeted contests for audit as specified in the Instance.
@@ -391,10 +391,10 @@ public class WorkflowRunner extends Workflow {
       checkSeedReport(getReportAsCSV("seed"), instance);
 
       // Check the tabulate_plurality report
-      //checkTabulatePluralityReport(getReportAsCSV("tabulate_plurality"), instance);
+      checkTabulatePluralityReport(getReportAsCSV("tabulate_plurality"), instance);
 
       // Check the tabulate_county_plurality report
-      //checkTabulateCountyPluralityReport(getReportAsCSV("tabulate_county_plurality"), instance);
+      checkTabulateCountyPluralityReport(getReportAsCSV("tabulate_county_plurality"), instance);
 
       postgres.stop();
     }

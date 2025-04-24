@@ -111,11 +111,23 @@ public class Instance {
   private Map<String,Map<String,String>> candidateNameChanges;
 
   /**
-   * Contests targeted for audit, map between contest name and a map that identifies the
-   * audit reason (eg. contest type) and winner.
+   * Contests targeted for audit, map between contest name and audit reason.
    */
   @JsonProperty("TARGETS")
-  private Map<String,Map<String,String>> targets;
+  private Map<String,String> targets;
+
+  /**
+   * Map between contest name (selected contests) and their winner(s) (as a String). Used for
+   * testing reports.
+   */
+  @JsonProperty("WINNERS")
+  private Map<String,String> winners;
+
+  /**
+   * Map between contest name (selected contests) and their raw margin. Used for testing reports.
+   */
+  @JsonProperty("RAW_MARGINS")
+  private Map<String,Integer> rawMargins;
 
   /**
    * Expected diluted margins for targeted contests.
@@ -230,6 +242,8 @@ public class Instance {
     riskLimit = BigDecimal.ONE;
     seed = "";
     targets = new HashMap<>();
+    winners = new HashMap<>();
+    rawMargins = new HashMap<>();
     canonicalList = "";
     contestNameChanges = new HashMap<>();
     candidateNameChanges = new HashMap<>();
@@ -310,11 +324,27 @@ public class Instance {
   public String getSeed() { return seed;}
 
   /**
-   * @return Unmodifiable map of targeted contests (contest name key and value is a map identifying
-   * audit reason and contest winner).
+   * @return Unmodifiable map of targeted contests (contest name key and value is audit reason).
    */
-  public Map<String,Map<String,String>> getTargetedContests(){
+  public Map<String,String> getTargetedContests(){
     return Collections.unmodifiableMap(targets);
+  }
+
+  /**
+   * @param contest Contest whose winner we want returned.
+   * @return Winner for given contest, if we have that record, and empty optional otherwise.
+   */
+  public Optional<String> getWinner(final String contest){
+    return winners.containsKey(contest) ?
+        Optional.of(winners.get(contest).replace("\"","")) : Optional.empty();
+  }
+
+  /**
+   * @param contest Contest whose raw margin we want returned.
+   * @return Raw margin for given contest, if we have that record, and empty optional otherwise.
+   */
+  public Optional<Integer> getRawMargin(final String contest){
+    return rawMargins.containsKey(contest) ? Optional.of(rawMargins.get(contest)) : Optional.empty();
   }
 
   /**
@@ -323,25 +353,11 @@ public class Instance {
   public List<String> getIRVContests(){ return Collections.unmodifiableList(irvContests); }
 
   /**
-   * @return Winner of the given targeted contest, and an empty String if that contest is not present
-   * in the instances records.
+   * @return Audit reason of the given targeted contest, and an empty optional if that contest is
+   * not present in the instances records.
    */
-  public String getTargetedContestWinner(final String contest){
-    if(targets.containsKey(contest)){
-      return targets.get(contest).get(Workflow.WINNER);
-    }
-    return "";
-  }
-
-  /**
-   * @return Audit reason of the given targeted contest, and an empty String if that contest is not present
-   * in the instances records.
-   */
-  public String getTargetedContestReason(final String contest){
-    if(targets.containsKey(contest)){
-      return targets.get(contest).get(Workflow.REASON);
-    }
-    return "";
+  public Optional<String> getTargetedContestReason(final String contest){
+    return targets.containsKey(contest) ? Optional.of(targets.get(contest)) : Optional.empty();
   }
 
   /**
@@ -364,6 +380,17 @@ public class Instance {
    */
   public Map<String,Integer> getExpectedAuditedBallots(){
     return Collections.unmodifiableMap(finalExpectedSamples);
+  }
+
+  /**
+   * For a given contest, return expected final audited samples count (if we have a record for
+   * that, and an optional empty otherwise).
+   * @param contest Contest name
+   * @return Optional Integer audited sample count for given contest if we have the record.
+   */
+  public Optional<Integer> getExpectedAuditedBallots(final String contest){
+    return finalExpectedSamples.containsKey(contest) ?
+        Optional.of(finalExpectedSamples.get(contest)) : Optional.empty();
   }
 
   /**

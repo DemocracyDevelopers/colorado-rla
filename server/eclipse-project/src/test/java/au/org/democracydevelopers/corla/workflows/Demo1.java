@@ -38,6 +38,8 @@ import us.freeandfair.corla.persistence.Persistence;
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
+import static us.freeandfair.corla.model.AuditReason.COUNTY_WIDE_CONTEST;
+import static us.freeandfair.corla.model.AuditReason.STATE_WIDE_CONTEST;
 
 /**
  * A demonstration workflow that uploads CVRs and ballot manifests for all 64 counties.
@@ -135,10 +137,9 @@ public class Demo1 extends Workflow {
     assertEquals(4, dashboard.getList("generate_assertions_summaries").size());
 
     // 5. Choose targeted contests for audit.
-    final Map<String,Map<String,String>> targets = Map.of("City of Longmont - Mayor",
-        Map.of(Workflow.REASON, "COUNTY_WIDE_CONTEST", Workflow.WINNER, ""),
-        "Byron Mayoral", Map.of(Workflow.REASON, "STATE_WIDE_CONTEST", Workflow.WINNER, ""),
-        "Kempsey Mayoral", Map.of(Workflow.REASON, "COUNTY_WIDE_CONTEST", Workflow.WINNER, ""));
+    final Map<String,String> targets = Map.of("City of Longmont - Mayor",
+        COUNTY_WIDE_CONTEST.toString(), "Byron Mayoral",STATE_WIDE_CONTEST.toString(),
+        "Kempsey Mayoral", COUNTY_WIDE_CONTEST.toString());
     final List<String> irvContests = List.of("Byron Mayoral", "Kempsey Mayoral");
     targetContests(targets);
 
