@@ -55,7 +55,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import us.freeandfair.corla.query.ContestQueries;
 
 /**
  * This workflow runner is designed to execute all JSON workflows present in a specified
@@ -173,7 +172,6 @@ public class WorkflowRunner extends Workflow {
       assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
       canonicalise(instance, true);
-      dashboard = getDoSDashBoardRefreshResponse();
 
       // Load additional SQL data (this is data that we want to add after we have
       // CVRs, manifests, etc loaded for each county). This will mostly be used to load

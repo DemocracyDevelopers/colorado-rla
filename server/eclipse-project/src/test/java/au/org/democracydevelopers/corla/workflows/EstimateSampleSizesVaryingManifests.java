@@ -70,8 +70,6 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   public void runManifestVaryingDemo() throws InterruptedException {
     testUtils.log(LOGGER, "runManifestVaryingDemo");
 
-    PostgreSQLContainer<?> postgres = setupIndividualTestDatabase("EstimateSampleSizesVaryingManifests");
-
     final String margin2Contest = "PluralityMargin2";
     final String margin10Contest = "PluralityMargin10";
 

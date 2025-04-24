@@ -127,7 +127,6 @@ public class Workflow  {
   protected static final String AUDIT = "audit";
   protected static final String AUDIT_INFO = "audit_info";
   protected static final String CONTEST = "contest";
-  protected static final String WINNER = "winner";
   protected static final String CONTESTID = "contestId";
   protected static final String CANONICAL_CHOICES = "canonicalChoices";
   protected static final String CANONICAL_CONTESTS = "canonicalContests";
@@ -1069,7 +1068,6 @@ public class Workflow  {
     }
 
     final SessionFilter filter = doLogin("stateadmin1");
-    final String request = canonicaliseContests.toString();
 
     // Post the set contest names request (canonicalise contest names)
     given()
@@ -1208,10 +1206,6 @@ public class Workflow  {
    * @param instance   Workload instance being run.
    */
   protected void checkContestSelectionReport(final List<String> lines, final Instance instance){
-    // This represents what we expect the final optimistic sample count to be for each
-    // targeted contest.
-    final Map<String,Integer> expectedAuditedBallots = instance.getExpectedAuditedBallots();
-
     final int numContests = ContestResultQueries.count();
     assertEquals(1 + numContests, lines.size());
     for(int i = 1; i < lines.size(); ++i) {
