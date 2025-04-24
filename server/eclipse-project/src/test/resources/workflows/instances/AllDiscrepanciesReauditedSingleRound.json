@@ -191,6 +191,18 @@
     "Kempsey Mayoral" : 332
    },
 
+  "FINAL_EXPECTED_OPTIMISTIC_SAMPLES" : {
+    "City of Longmont - Mayor" : 81,
+    "Byron Mayoral" : 1065,
+    "Kempsey Mayoral" : 332
+  },
+
+  "FINAL_EXPECTED_ESTIMATED_SAMPLES" : {
+    "City of Longmont - Mayor" : 81,
+    "Byron Mayoral" : 1065,
+    "Kempsey Mayoral" : 332
+  },
+
   "IRV_CONTESTS" : [
     "Byron Mayoral",
     "Kempsey Mayoral",

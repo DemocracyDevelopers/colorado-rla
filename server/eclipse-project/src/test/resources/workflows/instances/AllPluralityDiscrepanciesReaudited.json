@@ -69,6 +69,18 @@
     "Alamosa COUNTY COMMISSIONER DISTRICT 3" : 33
   },
 
+  "FINAL_EXPECTED_OPTIMISTIC_SAMPLES" : {
+    "Regent of the University of Colorado" : 12,
+    "Adams COUNTY COMMISSIONER DISTRICT 3" : 29,
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : 33
+  },
+
+  "FINAL_EXPECTED_ESTIMATED_SAMPLES" : {
+    "Regent of the University of Colorado" : 12,
+    "Adams COUNTY COMMISSIONER DISTRICT 3" : 29,
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : 33
+  },
+
   "IRV_CONTESTS" : [
   ],
 

@@ -191,6 +191,18 @@
     "Uralla Mayoral" : 15
   },
 
+  "FINAL_EXPECTED_OPTIMISTIC_SAMPLES" : {
+    "City of Longmont - Mayor" : 81,
+    "Byron Mayoral" : 1065,
+    "Uralla Mayoral" : 15
+  },
+
+  "FINAL_EXPECTED_ESTIMATED_SAMPLES" : {
+    "City of Longmont - Mayor" : 81,
+    "Byron Mayoral" : 1065,
+    "Uralla Mayoral" : 16
+  },
+
   "IRV_CONTESTS" : [
     "Byron Mayoral",
     "Uralla Mayoral",

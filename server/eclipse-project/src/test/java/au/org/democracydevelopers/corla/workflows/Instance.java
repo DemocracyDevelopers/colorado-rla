@@ -148,6 +148,18 @@ public class Instance {
   private Map<String,Integer> finalExpectedSamples;
 
   /**
+   * Expected final optimistic sample count for selected contests, after all rounds.
+   */
+  @JsonProperty("FINAL_EXPECTED_OPTIMISTIC_SAMPLES")
+  private Map<String,Integer> finalExpectedOptimistic;
+
+  /**
+   * Expected final estimated sample count for selected contests, after all rounds.
+   */
+  @JsonProperty("FINAL_EXPECTED_ESTIMATED_SAMPLES")
+  private Map<String,Integer> finalExpectedEstimated;
+
+  /**
    * Subset of contests targeted for audit that are IRV contests.
    */
   @JsonProperty("IRV_CONTESTS")
@@ -261,6 +273,8 @@ public class Instance {
     reaudits = new HashMap<>();
     expectedRounds = null;
     contestsByCounty = new HashMap<>();
+    finalExpectedOptimistic = new HashMap<>();
+    finalExpectedEstimated = new HashMap<>();
   }
 
   /**
@@ -386,11 +400,33 @@ public class Instance {
    * For a given contest, return expected final audited samples count (if we have a record for
    * that, and an optional empty otherwise).
    * @param contest Contest name
-   * @return Optional Integer audited sample count for given contest if we have the record.
+   * @return Optional Integer final audited sample count for given contest if we have the record.
    */
   public Optional<Integer> getExpectedAuditedBallots(final String contest){
     return finalExpectedSamples.containsKey(contest) ?
         Optional.of(finalExpectedSamples.get(contest)) : Optional.empty();
+  }
+
+  /**
+   * For a given contest, return expected final optimistic samples count (if we have a record for
+   * that, and an optional empty otherwise).
+   * @param contest Contest name
+   * @return Optional Integer final optimistic sample count for given contest if we have the record.
+   */
+  public Optional<Integer> getExpectedOptimisticSamples(final String contest){
+    return finalExpectedOptimistic.containsKey(contest) ?
+        Optional.of(finalExpectedOptimistic.get(contest)) : Optional.empty();
+  }
+
+  /**
+   * For a given contest, return expected final estimated samples count (if we have a record for
+   * that, and an optional empty otherwise).
+   * @param contest Contest name
+   * @return Optional Integer final estimated sample count for given contest if we have the record.
+   */
+  public Optional<Integer> getExpectedEstimatedSamples(final String contest){
+    return finalExpectedEstimated.containsKey(contest) ?
+        Optional.of(finalExpectedEstimated.get(contest)) : Optional.empty();
   }
 
   /**

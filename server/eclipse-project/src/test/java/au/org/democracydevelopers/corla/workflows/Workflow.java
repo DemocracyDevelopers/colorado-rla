@@ -1195,7 +1195,10 @@ public class Workflow  {
       final int optimisticSamples = Integer.parseInt(tokens.get(17+winnersAllowed));
       final int estimatedSamples = Integer.parseInt(tokens.get(18+winnersAllowed));
 
-      // TODO: verify final optimistic/estimated sample counts
+      final Optional<Integer> expectedFinalOptimistic = instance.getExpectedOptimisticSamples(contestName);
+      expectedFinalOptimistic.ifPresent(m -> assertTrue(m <= optimisticSamples));
+      final Optional<Integer> expectedFinalEstimated = instance.getExpectedEstimatedSamples(contestName);
+      expectedFinalEstimated.ifPresent(m -> assertTrue(m <= estimatedSamples));
     }
   }
 

@@ -26,7 +26,6 @@ import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;

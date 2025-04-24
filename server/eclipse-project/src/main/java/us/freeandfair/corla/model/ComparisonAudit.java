@@ -507,7 +507,8 @@ public class ComparisonAudit implements PersistentEntity {
    * participating counties.
    */
   public BigDecimal getOverstatements() {
-    return this.overstatements; // FIXME
+    return BigDecimal.valueOf(this.my_one_vote_over_count + this.my_two_vote_over_count);
+    //this.overstatements; // FIXME
   }
 
   /** the number of ballots audited  **/

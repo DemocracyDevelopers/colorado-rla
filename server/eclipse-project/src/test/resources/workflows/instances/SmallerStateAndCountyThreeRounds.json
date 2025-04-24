@@ -67,6 +67,16 @@
     "City of Wollongong Mayoral" : 739
   },
 
+  "FINAL_EXPECTED_OPTIMISTIC_SAMPLES" : {
+    "Richmond Valley Mayoral" : 17,
+    "City of Wollongong Mayoral" : 739
+  },
+
+  "FINAL_EXPECTED_ESTIMATED_SAMPLES" : {
+    "Richmond Valley Mayoral" : 17,
+    "City of Wollongong Mayoral" : 741
+  },
+
   "EXPECTED_ROUNDS" : 3,
 
   "PHANTOM_BALLOTS" : {

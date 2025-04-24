@@ -110,6 +110,20 @@
     "Burwood Mayoral" : 36
   },
 
+  "FINAL_EXPECTED_OPTIMISTIC_SAMPLES" : {
+    "Regent of the University of Colorado" : 12,
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : 33,
+    "Wollondilly Mayoral" : 178,
+    "Burwood Mayoral" : 19
+  },
+
+  "FINAL_EXPECTED_ESTIMATED_SAMPLES" : {
+    "Regent of the University of Colorado" : 12,
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : 33,
+    "Wollondilly Mayoral" : 178,
+    "Burwood Mayoral" : 19
+  },
+
   "IRV_CONTESTS" : [
     "Wollondilly Mayoral",
     "Canada Bay Mayoral",
