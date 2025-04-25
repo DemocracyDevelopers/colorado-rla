@@ -192,12 +192,11 @@ public class WorkflowRunner extends Workflow {
       final Map<String,String> contestToDBID = targetContests(targets);
 
       // Set the seed (as specified in the Instance).
-      System.out.println("Setting seed as "+instance.getSeed());
       setSeed(instance.getSeed());
 
       // The ASM state for the dashboard should be COMPLETE_AUDIT_INFO_SET.
       dashboard = getDoSDashBoardRefreshResponse();
-      assertEquals(dashboard.get(AUDIT_INFO + "." + SEED), defaultSeed);
+      assertEquals(dashboard.get(AUDIT_INFO + "." + SEED), instance.getSeed());
       assertEquals(dashboard.get(ASM_STATE), COMPLETE_AUDIT_INFO_SET.toString());
 
       // Estimate sample sizes; and then verify that they are as expected.

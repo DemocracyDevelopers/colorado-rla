@@ -1105,7 +1105,6 @@ public abstract class Workflow  {
    * @param instance   Workload instance being run.
    */
   protected void checkSeedReport(final List<String> lines, final Instance instance){
-    System.out.println(String.format("Checking seed report: instance seed = %s; report says %s", instance.getSeed(), lines.get(1).strip()));
     assertEquals(lines.size(), 2);
     assertEquals(lines.get(1).strip(), instance.getSeed());
   }
