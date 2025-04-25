@@ -1308,7 +1308,7 @@ public abstract class Workflow  {
    * @param username Username for the user to authenticate
    * @return The user's session, to be interacted with in later testing.
    */
-  private SessionFilter doLogin(final String username) {
+  protected SessionFilter doLogin(final String username) {
     final SessionFilter filter = new SessionFilter();
     authenticate(filter, username,"",1);
     authenticate(filter, username,"s d f",2);

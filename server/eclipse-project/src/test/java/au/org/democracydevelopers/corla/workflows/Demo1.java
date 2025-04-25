@@ -30,14 +30,18 @@ import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.model.AuditReason;
 import us.freeandfair.corla.persistence.Persistence;
 
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
+import static us.freeandfair.corla.model.AuditReason.COUNTY_WIDE_CONTEST;
+import static us.freeandfair.corla.model.AuditReason.STATE_WIDE_CONTEST;
 
 /**
  * A demonstration workflow that uploads CVRs and ballot manifests for all 64 counties.
@@ -63,7 +67,8 @@ public class Demo1 extends Workflow {
   public void runDemo1() throws InterruptedException {
     testUtils.log(LOGGER, "Demo1");
 
-    PostgreSQLContainer<?> postgres = setupIndividualTestDatabase("Demo1");
+    final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
+    runMainAndInitializeDB("runManifestVaryingDemo", Optional.of(postgres));
 
     // Empty workflow instance
     final Instance instance = new Instance();
@@ -202,4 +207,30 @@ public class Demo1 extends Workflow {
     LOGGER.info("Successfully completed Demo1 (First round audit; No Discrepancies).");
   }
 
+  /**
+   * Currently identical to the one in WorkflowRunner.
+   * @param testName the name of the test.
+   * @param postgresOpt the container where the test DB is found.
+   *                 FIXME get testName to be the full path of the config file.
+   */
+  @Override
+  protected void runMainAndInitializeDB(String testName, Optional<PostgreSQLContainer<?>> postgresOpt) {
+    assertTrue(postgresOpt.isPresent());
+    final PostgreSQLContainer<?> postgres = postgresOpt.get();
+
+    Properties config = loadProperties();
+    postgres.start();
+    config.setProperty("hibernate.url", postgres.getJdbcUrl());
+    Persistence.setProperties(config);
+    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
+
+    runMain(config, testName);
+
+    Persistence.beginTransaction();
+  }
+
+  @Override
+  protected void makeAssertionData(Optional<PostgreSQLContainer<?>> postgres, List<String> SQLfiles) {
+
+  }
 }
