@@ -192,6 +192,7 @@ public class WorkflowRunner extends Workflow {
       final Map<String,String> contestToDBID = targetContests(targets);
 
       // Set the seed (as specified in the Instance).
+      System.out.println("Setting seed as "+instance.getSeed());
       setSeed(instance.getSeed());
 
       // The ASM state for the dashboard should be COMPLETE_AUDIT_INFO_SET.

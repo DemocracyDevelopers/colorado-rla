@@ -3,7 +3,7 @@
   "RISK_LIMIT": 0.03,
   "SEED": "23987213984712389471238947129384128974",
   "SQLS": [
-    "SQL/TinyIRV-assertions.sql"
+    "SQL/tiny-irv-assertions.sql"
   ],
   "CVRS": [
     "src/test/resources/CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotesPlusTiedPlurality.csv",
