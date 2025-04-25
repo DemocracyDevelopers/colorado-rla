@@ -26,7 +26,6 @@ import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
@@ -70,7 +69,7 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   public void runManifestVaryingDemo() throws InterruptedException {
     testUtils.log(LOGGER, "runManifestVaryingDemo");
 
-    PostgreSQLContainer<?> postgres = setupIndividualTestDatabase("EstimateSampleSizesVaryingManifests");
+    setupIndividualTestDatabase("runManifestVaryingDemo");
 
     final String margin2Contest = "PluralityMargin2";
     final String margin10Contest = "PluralityMargin10";
@@ -135,9 +134,10 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     // Target the margin-2 contests in every county.
     targetContests(Map.of(
         margin2Contest, COUNTY_WIDE_CONTEST.toString(),
-        margin2Contest + suffixes[1], COUNTY_WIDE_CONTEST.toString(),
-        margin2Contest + suffixes[2], COUNTY_WIDE_CONTEST.toString()
-    ));
+        margin2Contest + suffixes[1],
+        COUNTY_WIDE_CONTEST.toString(),
+        margin2Contest + suffixes[2],
+        COUNTY_WIDE_CONTEST.toString()));
 
     // Get contest lists again. Now this should be non-empty regardless of whether manifests are
     // ignored.

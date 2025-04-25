@@ -21,7 +21,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
-import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -31,13 +30,12 @@ import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import us.freeandfair.corla.persistence.Persistence;
 
-import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
+import static us.freeandfair.corla.model.AuditReason.COUNTY_WIDE_CONTEST;
+import static us.freeandfair.corla.model.AuditReason.STATE_WIDE_CONTEST;
 
 /**
  * A demonstration workflow that uploads CVRs and ballot manifests for all 64 counties.
@@ -135,9 +133,9 @@ public class Demo1 extends Workflow {
     assertEquals(4, dashboard.getList("generate_assertions_summaries").size());
 
     // 5. Choose targeted contests for audit.
-    final Map<String,String> targets = Map.of("City of Longmont - Mayor","COUNTY_WIDE_CONTEST",
-        "Byron Mayoral", "STATE_WIDE_CONTEST",
-        "Kempsey Mayoral", "COUNTY_WIDE_CONTEST");
+    final Map<String,String> targets = Map.of("City of Longmont - Mayor",
+        COUNTY_WIDE_CONTEST.toString(), "Byron Mayoral",STATE_WIDE_CONTEST.toString(),
+        "Kempsey Mayoral", COUNTY_WIDE_CONTEST.toString());
     final List<String> irvContests = List.of("Byron Mayoral", "Kempsey Mayoral");
     targetContests(targets);
 

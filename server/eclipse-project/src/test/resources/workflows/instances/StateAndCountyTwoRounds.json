@@ -145,10 +145,32 @@
 
   "CANONICAL_LIST" : "src/test/resources/CSVs/Demo2/demo2-canonical-list.csv",
 
+  "CONTEST_NAME_CHANGE" : {
+    "City of Boulder Mayoral" : "City of Boulder Mayoral Candidates"
+  },
+
+  "CANDIDATE_NAME_CHANGE" : {
+  },
+
+  "CONTESTS_BY_SELECTED_COUNTIES" : {
+  },
+
   "TARGETS" : {
-    "City of Longmont - Mayor" : "COUNTY_WIDE_CONTEST",
+    "City of Longmont - Mayor" :  "COUNTY_WIDE_CONTEST",
     "Byron Mayoral" : "STATE_WIDE_CONTEST",
     "Uralla Mayoral" : "COUNTY_WIDE_CONTEST"
+  },
+
+  "WINNERS" : {
+    "City of Longmont - Mayor" : "Joan Peck",
+    "Byron Mayoral" : "LYON Michael",
+    "Uralla Mayoral" : "BELL Robert"
+  },
+
+  "RAW_MARGINS" : {
+    "City of Longmont - Mayor" : 10773,
+    "Byron Mayoral" : 1060,
+    "Uralla Mayoral" : 2320
   },
 
   "DILUTED_MARGINS" : {
@@ -169,11 +191,23 @@
     "Uralla Mayoral" : 12
   },
 
+  "FINAL_EXPECTED_OPTIMISTIC_SAMPLES" : {
+    "City of Longmont - Mayor" : 81,
+    "Byron Mayoral" : 1154,
+    "Uralla Mayoral" : 12
+  },
+
+  "FINAL_EXPECTED_ESTIMATED_SAMPLES" : {
+    "City of Longmont - Mayor" : 81,
+    "Byron Mayoral" : 1154,
+    "Uralla Mayoral" : 12
+  },
+
   "IRV_CONTESTS" : [
     "Byron Mayoral",
     "Uralla Mayoral",
     "Tied_IRV",
-    "City of Boulder Mayoral"
+    "City of Boulder Mayoral Candidates"
   ],
 
   "EXPECTED_ROUNDS" : 2,
@@ -265,21 +299,24 @@
         "two_over_count" : 1,
         "one_under_count" : 1,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 1
       },
       "City of Longmont - Mayor" : {
         "one_over_count" : 0,
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       },
       "Uralla Mayoral" : {
         "one_over_count" : 0,
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       }
     },
     "2" : {
@@ -288,21 +325,24 @@
         "two_over_count" : 1,
         "one_under_count" : 1,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 1
       },
       "City of Longmont - Mayor" : {
         "one_over_count" : 0,
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       },
       "Uralla Mayoral" : {
         "one_over_count" : 0,
         "two_over_count" : 0,
         "one_under_count" : 0,
         "two_under_count" : 0,
-        "other_count" : 0
+        "other_count" : 0,
+        "disagreements" : 0
       }
     }
   }
