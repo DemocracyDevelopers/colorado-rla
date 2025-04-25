@@ -90,10 +90,44 @@ public class Instance {
   private String canonicalList;
 
   /**
-   * Contests targeted for audit, map between contest name and contest type.
+   *  Map between old contest names and their new ones -- for use in canonicalisation.
+   *   "CONTEST_NAME_CHANGE" : {
+   *     "Regent of the University of Colorado - At Large" : "Regent of the University of Colorado"
+   *   },
+   */
+  @JsonProperty("CONTEST_NAME_CHANGE")
+  private Map<String,String> contestNameChanges;
+
+  /**
+   * Map between contest names (after canonicalisation of contest names) and old candidate names
+   * with their new values -- for use in canonicalisation.
+   * "CANDIDATE_NAME_CHANGE" : {
+   *   "Regent of the University of Colorado" : {
+   *      "Clear Winner" : "Distant Winner"
+   *   }
+   * },
+   */
+  @JsonProperty("CANDIDATE_NAME_CHANGE")
+  private Map<String,Map<String,String>> candidateNameChanges;
+
+  /**
+   * Contests targeted for audit, map between contest name and audit reason.
    */
   @JsonProperty("TARGETS")
   private Map<String,String> targets;
+
+  /**
+   * Map between contest name (selected contests) and their winner(s) (as a String). Used for
+   * testing reports.
+   */
+  @JsonProperty("WINNERS")
+  private Map<String,String> winners;
+
+  /**
+   * Map between contest name (selected contests) and their raw margin. Used for testing reports.
+   */
+  @JsonProperty("RAW_MARGINS")
+  private Map<String,Integer> rawMargins;
 
   /**
    * Expected diluted margins for targeted contests.
@@ -112,6 +146,18 @@ public class Instance {
    */
   @JsonProperty("FINAL_EXPECTED_AUDITED_BALLOTS")
   private Map<String,Integer> finalExpectedSamples;
+
+  /**
+   * Expected final optimistic sample count for selected contests, after all rounds.
+   */
+  @JsonProperty("FINAL_EXPECTED_OPTIMISTIC_SAMPLES")
+  private Map<String,Integer> finalExpectedOptimistic;
+
+  /**
+   * Expected final estimated sample count for selected contests, after all rounds.
+   */
+  @JsonProperty("FINAL_EXPECTED_ESTIMATED_SAMPLES")
+  private Map<String,Integer> finalExpectedEstimated;
 
   /**
    * Subset of contests targeted for audit that are IRV contests.
@@ -191,6 +237,14 @@ public class Instance {
   @JsonProperty("REAUDITS")
   private Map<String,Map<String,List<Map<String,ReAuditDetails>>>> reaudits;
 
+  /**
+   * Names of contests present in selected counties, when verifying the reports after
+   * conclusion of the audit, the contests identified for these counties will be checked
+   * against what is expected. Map between county name and the list of contests for that county.
+   */
+  @JsonProperty("CONTESTS_BY_SELECTED_COUNTIES")
+  private Map<String,List<String>> contestsByCounty;
+
 
   /**
    * Constructs an empty workflow instance.
@@ -200,7 +254,11 @@ public class Instance {
     riskLimit = BigDecimal.ONE;
     seed = "";
     targets = new HashMap<>();
+    winners = new HashMap<>();
+    rawMargins = new HashMap<>();
     canonicalList = "";
+    contestNameChanges = new HashMap<>();
+    candidateNameChanges = new HashMap<>();
     manifests = new ArrayList<>();
     cvrs = new ArrayList<>();
     sqls = new ArrayList<>();
@@ -214,6 +272,9 @@ public class Instance {
     disagreements = new HashMap<>();
     reaudits = new HashMap<>();
     expectedRounds = null;
+    contestsByCounty = new HashMap<>();
+    finalExpectedOptimistic = new HashMap<>();
+    finalExpectedEstimated = new HashMap<>();
   }
 
   /**
@@ -256,22 +317,61 @@ public class Instance {
   }
 
   /**
+   * @return Mapping between old contest names and the new names for those contests
+   * that should be applied during canonicalisation, as an unmodifiable map.
+   */
+  public Map<String,String> getContestNameChanges() {
+    return Collections.unmodifiableMap(contestNameChanges);
+  }
+
+  /**
+   * @return Mapping between contest names, and a map of candidate name changes to be
+   * applied during canonicalisation, as an unmodifiable map.
+   */
+  public Map<String,Map<String,String>> getCandidateNameChanges(){
+    return Collections.unmodifiableMap(candidateNameChanges);
+  }
+
+  /**
    * @return Seed for the test audit (as a string).
    */
   public String getSeed() { return seed;}
 
   /**
-   * @return Unmodifiable map of targeted contests (contest name key and contest type value).
+   * @return Unmodifiable map of targeted contests (contest name key and value is audit reason).
    */
   public Map<String,String> getTargetedContests(){
     return Collections.unmodifiableMap(targets);
   }
 
   /**
+   * @param contest Contest whose winner we want returned.
+   * @return Winner for given contest, if we have that record, and empty optional otherwise.
+   */
+  public Optional<String> getWinner(final String contest){
+    return winners.containsKey(contest) ?
+        Optional.of(winners.get(contest).replace("\"","")) : Optional.empty();
+  }
+
+  /**
+   * @param contest Contest whose raw margin we want returned.
+   * @return Raw margin for given contest, if we have that record, and empty optional otherwise.
+   */
+  public Optional<Integer> getRawMargin(final String contest){
+    return rawMargins.containsKey(contest) ? Optional.of(rawMargins.get(contest)) : Optional.empty();
+  }
+
+  /**
    * @return Unmodifiable list of IRV contests among those targeted for audit.
    */
-  public List<String> getIRVContests(){
-    return Collections.unmodifiableList(irvContests);
+  public List<String> getIRVContests(){ return Collections.unmodifiableList(irvContests); }
+
+  /**
+   * @return Audit reason of the given targeted contest, and an empty optional if that contest is
+   * not present in the instances records.
+   */
+  public Optional<String> getTargetedContestReason(final String contest){
+    return targets.containsKey(contest) ? Optional.of(targets.get(contest)) : Optional.empty();
   }
 
   /**
@@ -294,6 +394,39 @@ public class Instance {
    */
   public Map<String,Integer> getExpectedAuditedBallots(){
     return Collections.unmodifiableMap(finalExpectedSamples);
+  }
+
+  /**
+   * For a given contest, return expected final audited samples count (if we have a record for
+   * that, and an optional empty otherwise).
+   * @param contest Contest name
+   * @return Optional Integer final audited sample count for given contest if we have the record.
+   */
+  public Optional<Integer> getExpectedAuditedBallots(final String contest){
+    return finalExpectedSamples.containsKey(contest) ?
+        Optional.of(finalExpectedSamples.get(contest)) : Optional.empty();
+  }
+
+  /**
+   * For a given contest, return expected final optimistic samples count (if we have a record for
+   * that, and an optional empty otherwise).
+   * @param contest Contest name
+   * @return Optional Integer final optimistic sample count for given contest if we have the record.
+   */
+  public Optional<Integer> getExpectedOptimisticSamples(final String contest){
+    return finalExpectedOptimistic.containsKey(contest) ?
+        Optional.of(finalExpectedOptimistic.get(contest)) : Optional.empty();
+  }
+
+  /**
+   * For a given contest, return expected final estimated samples count (if we have a record for
+   * that, and an optional empty otherwise).
+   * @param contest Contest name
+   * @return Optional Integer final estimated sample count for given contest if we have the record.
+   */
+  public Optional<Integer> getExpectedEstimatedSamples(final String contest){
+    return finalExpectedEstimated.containsKey(contest) ?
+        Optional.of(finalExpectedEstimated.get(contest)) : Optional.empty();
   }
 
   /**
@@ -410,5 +543,12 @@ public class Instance {
       }
     }
     return Optional.empty();
+  }
+
+  /**
+   * @return Map between selected county names and the full list of contests for that county.
+   */
+  public Map<String,List<String>> getContestsByCounty(){
+    return Collections.unmodifiableMap(contestsByCounty);
   }
 }

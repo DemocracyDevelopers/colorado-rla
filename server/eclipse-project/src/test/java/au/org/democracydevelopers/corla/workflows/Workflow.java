@@ -26,6 +26,7 @@ import static io.restassured.RestAssured.given;
 import static java.util.Collections.min;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 import static us.freeandfair.corla.Main.main;
 import static us.freeandfair.corla.auth.AuthenticationInterface.USERNAME;
 import static us.freeandfair.corla.auth.AuthenticationStage.SECOND_FACTOR_AUTHENTICATED;
@@ -56,6 +57,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
@@ -67,6 +69,7 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.model.UploadedFile;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
+import us.freeandfair.corla.query.ContestResultQueries;
 import wiremock.net.minidev.json.JSONArray;
 import wiremock.net.minidev.json.JSONObject;
 
@@ -124,10 +127,14 @@ public abstract class Workflow  {
   protected static final String AUDIT = "audit";
   protected static final String AUDIT_INFO = "audit_info";
   protected static final String CONTEST = "contest";
+  protected static final String CONTESTID = "contestId";
   protected static final String CANONICAL_CHOICES = "canonicalChoices";
   protected static final String CANONICAL_CONTESTS = "canonicalContests";
   protected static final String COUNTY_STATUS = "county_status";
   protected static final String COUNTYID = "countyId";
+  protected static final String CHOICES = "choices";
+  protected static final String OLDNAME = "oldName";
+  protected static final String NEWNAME = "newName";
   protected static final String CVR_FILETYPE = "cvr-export";
   protected static final String CVR_JSON = "cvr_export_file";
   protected static final String ESTIMATED_BALLOTS = "estimated_ballots_to_audit";
@@ -143,6 +150,7 @@ public abstract class Workflow  {
   protected static final String PUBLIC_MEETING_DATE = "public_meeting_date";
   protected static final String REASON = "reason";
   protected static final String RISK_LIMIT_JSON = "risk_limit";
+  protected static final String RISK_LIMIT_ACHIEVED = "risk_limit_achieved";
   protected static final String SEED = "seed";
   protected static final String STATUS = "status";
   protected static final String BALLOTS_REMAINING = "ballots_remaining_in_round";
@@ -152,6 +160,7 @@ public abstract class Workflow  {
   protected static final String TWO_OVER_COUNT = "two_over_count";
   protected static final String TWO_UNDER_COUNT = "two_under_count";
   protected static final String OTHER_COUNT = "other_count";
+  protected static final String DISAGREEMENTS = "disagreements";
   protected static final String ONE_OVER = "1";
   protected static final String ONE_UNDER = "-1";
   protected static final String OTHER = "0";
@@ -204,6 +213,7 @@ public abstract class Workflow  {
     }
     main(propertiesFile);
   }
+
 
   /**
    * Transform a simple map of strings into a JSONObject.
@@ -851,6 +861,11 @@ public abstract class Workflow  {
    */
   protected abstract void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgres, final List<String> SQLfiles);
 
+  protected void generateAssertions(final PostgreSQLContainer<?> postgres, final String sqlPath, final double timeLimitSeconds)
+  {
+    TestClassWithDatabase.runSQLSetupScript(postgres, sqlPath);
+  }
+
   /**
    * Verify that some assertions are present for the given contest, that the minimum diluted
    * margin across these assertions is correct, and that the estimated sample size for the contest
@@ -945,15 +960,15 @@ public abstract class Workflow  {
 
     // Find the IDs of the ones we want to target.
     for(int i=0 ; i < contests.getList("").size() ; i++) {
-
       final String contestName = contests.getString("[" + i + "]." + NAME);
-      // If this contest's name is one of the targeted ones...
-      final String reason = targetedContestsWithReasons.get(contestName);
+
       final Integer contestId = contests.getInt("[" + i + "]." + ID);
       contestToDBID.put(contestName, contestId.toString());
 
-      if(reason != null) {
+      // If this contest's name is one of the targeted ones...
+      if(targetedContestsWithReasons.containsKey(contestName)) {
         // add it to the selections.
+        final String reason = targetedContestsWithReasons.get(contestName);
         final JSONObject contestSelection = new JSONObject();
 
         contestSelection.put(AUDIT, COMPARISON.toString());
@@ -1003,6 +1018,67 @@ public abstract class Workflow  {
   }
 
   /**
+   * Given a workflow instance, perform cononicalisation of candidate and contest names.
+   * @param instance           Workflow instance
+   * @param ignoreManifests
+   */
+  protected void canonicalise(final Instance instance, boolean ignoreManifests){
+    final JsonPath contests = getContests(ignoreManifests);
+
+    final Map<String,String> contestNameChanges = instance.getContestNameChanges();
+    final Map<String, Map<String,String>> candNameChanges = instance.getCandidateNameChanges();
+
+    final JSONArray canonicaliseContests = new JSONArray();
+    final JSONArray canonicaliseCandidates = new JSONArray();
+
+    // Find the IDs of the ones we want to target.
+    for(int i=0 ; i < contests.getList("").size() ; i++) {
+      final String contestName = contests.getString("[" + i + "]." + NAME);
+      final Integer contestId = contests.getInt("[" + i + "]." + ID);
+      final Integer countyId = contests.getInt("[" + i + "]." + COUNTY_ID);
+
+      final String newName = contestNameChanges.getOrDefault(contestName, contestName);
+
+      if(contestNameChanges.containsKey(contestName)){
+        canonicaliseContests.add(Map.of(CONTESTID, contestId, COUNTYID,
+            countyId, NAME, contestNameChanges.get(contestName)));
+      }
+
+      if(candNameChanges.containsKey(newName)){
+        JSONArray candChanges = new JSONArray();
+        for(Map.Entry<String,String> change : candNameChanges.get(newName).entrySet()){
+          candChanges.add(createBody(Map.of(OLDNAME, change.getKey(),
+              NEWNAME, change.getValue())));
+        }
+        canonicaliseCandidates.add(createBody(Map.of(CONTESTID, contestId,
+            COUNTYID, countyId, CHOICES, candChanges)));
+      }
+    }
+
+    final SessionFilter filter = doLogin("stateadmin1");
+
+    // Post the set contest names request (canonicalise contest names)
+    given()
+        .filter(filter)
+        .header("Content-Type", "application/json")
+        .body(canonicaliseContests.toString())
+        .post("/set-contest-names")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
+
+    // Post the set contest names request (canonicalise candidate names)
+    given()
+        .filter(filter)
+        .header("Content-Type", "application/json")
+        .body(canonicaliseCandidates.toString())
+        .post("/set-contest-names")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
+  }
+
+  /**
    * Set the seed for the audit.
    */
   protected void setSeed(final String seed) {
@@ -1020,6 +1096,194 @@ public abstract class Workflow  {
         .then()
         .assertThat()
         .statusCode(HttpStatus.SC_OK);
+  }
+
+  /**
+   * Verify that the "seed" report, when downloaded as a CSV, contains the correct data for
+   * the given instance.
+   * @param lines      Lines of the CSV report, as Strings.
+   * @param instance   Workload instance being run.
+   */
+  protected void checkSeedReport(final List<String> lines, final Instance instance){
+    assertEquals(lines.size(), 2);
+    assertEquals(lines.get(1).strip(), instance.getSeed());
+  }
+
+  /**
+   * Verify that the "contest" report, when downloaded as a CSV, contains the correct data for
+   * the given instance.
+   * @param lines      Lines of the CSV report, as Strings.
+   * @param instance   Workload instance being run.
+   * @param lastDiscrepancyCounts What we expect the final discrepancy counts to be for the contest.
+   */
+  protected void checkContestReport(final List<String> lines, final Instance instance,
+      final Map<String,Map<String,Integer>> lastDiscrepancyCounts) {
+
+    final int numContests = ContestResultQueries.count();
+    assertEquals(1 + numContests, lines.size());
+    for (int i = 1; i < lines.size(); ++i) {
+      final List<String> tokens = Arrays.stream(lines.get(i).split(",")).toList();
+
+      // There are at least 20 columns in this report
+      assertTrue(tokens.size() >= 20);
+
+      final String contestName = tokens.get(0);
+
+      // For the given contest, check: the audit reason; the winner; that the risk limit was
+      // achieved; the minimum margin; discrepancy counts; overstatements count; and final
+      // optimistic number of samples to audit.
+      final String targetReason = tokens.get(1);
+      final String auditStatus = tokens.get(2);
+      final int winnersAllowed = Integer.parseInt(tokens.get(3));
+      List<String> winners = new ArrayList<>();
+      for(int j = 6; j < 6 + winnersAllowed; ++j){
+        winners.add(tokens.get(j));
+      }
+      final String winner = StringUtils.join(winners, ",").replace("\"","");
+      final Integer minMargin = Integer.parseInt(tokens.get(6+winnersAllowed));
+      final Integer twoVoteOverCount = Integer.parseInt(tokens.get(9+winnersAllowed));
+      final Integer oneVoteOverCount = Integer.parseInt(tokens.get(10+winnersAllowed));
+      final Integer zeroDiscrepancyCount = Integer.parseInt(tokens.get(11+winnersAllowed));
+      final Integer oneVoteUnderCount = Integer.parseInt(tokens.get(12+winnersAllowed));
+      final Integer twoVoteUnderCount = Integer.parseInt(tokens.get(13+winnersAllowed));
+      final Integer disagreementCount = Integer.parseInt(tokens.get(14+winnersAllowed));
+
+      final int overstatementCount = Integer.parseInt(tokens.get(16+winnersAllowed));
+
+      Map<String, Integer> countMap = Map.of(ONE_OVER, 0, TWO_OVER, 0,
+          ONE_UNDER, 0, TWO_UNDER, 0, OTHER, 0, DISAGREEMENTS, 0);
+
+      final Optional<Integer> expectedRawMargin = instance.getRawMargin(contestName);
+      expectedRawMargin.ifPresent(m -> assertEquals(m, minMargin));
+
+      final Optional<String> expectedWinner = instance.getWinner(contestName);
+      expectedWinner.ifPresent(s -> assertEquals(s, winner));
+      final Optional<String> expectedReason = instance.getTargetedContestReason(contestName);
+      expectedReason.ifPresent(s -> assertEquals(s.toLowerCase(), targetReason.toLowerCase()));
+
+      if (instance.getTargetedContests().containsKey(contestName)) {
+        // Audit status should be risk limit achieved for all successful workflows
+        assertEquals(auditStatus.toLowerCase(), Workflow.RISK_LIMIT_ACHIEVED.toLowerCase());
+
+        countMap = lastDiscrepancyCounts.get(contestName);
+      }
+
+      // Verify expected discrepancy counts
+      final int expectedOverstatements = countMap.get(TWO_OVER) + countMap.get(ONE_OVER);
+
+      assertEquals(twoVoteOverCount, countMap.get(TWO_OVER));
+      assertEquals(oneVoteOverCount, countMap.get(ONE_OVER));
+      assertEquals(twoVoteUnderCount, countMap.get(TWO_UNDER));
+      assertEquals(oneVoteUnderCount, countMap.get(ONE_UNDER));
+      assertEquals(zeroDiscrepancyCount, countMap.get(OTHER));
+      assertEquals(disagreementCount, countMap.get(DISAGREEMENTS));
+
+      assertEquals(overstatementCount, expectedOverstatements);
+
+      final int optimisticSamples = Integer.parseInt(tokens.get(17+winnersAllowed));
+      final int estimatedSamples = Integer.parseInt(tokens.get(18+winnersAllowed));
+
+      final Optional<Integer> expectedFinalOptimistic = instance.getExpectedOptimisticSamples(contestName);
+      expectedFinalOptimistic.ifPresent(m -> assertTrue(m <= optimisticSamples));
+      final Optional<Integer> expectedFinalEstimated = instance.getExpectedEstimatedSamples(contestName);
+      expectedFinalEstimated.ifPresent(m -> assertTrue(m <= estimatedSamples));
+    }
+  }
+
+  /**
+   * Verify that the "contest_selection" report, when downloaded as a CSV, contains the correct
+   * data for the given instance.
+   * @param lines      Lines of the CSV report, as Strings.
+   * @param instance   Workload instance being run.
+   */
+  protected void checkContestSelectionReport(final List<String> lines, final Instance instance){
+    final int numContests = ContestResultQueries.count();
+    assertEquals(1 + numContests, lines.size());
+    for(int i = 1; i < lines.size(); ++i) {
+      final List<String> tokens = Arrays.stream(lines.get(i).split(",")).toList();
+
+      // There are at least 3 columns in this report
+      assertTrue(tokens.size() >= 3);
+
+      final String contestName = tokens.get(1);
+      final int minMargin = Integer.parseInt(tokens.get(0));
+
+      final Optional<Integer> expectedAudited = instance.getExpectedAuditedBallots(contestName);
+      expectedAudited.ifPresent(s -> assertTrue(s <= tokens.size() - 2));
+      final Optional<Integer> expectedRawMargin = instance.getRawMargin(contestName);
+      expectedRawMargin.ifPresent(m -> assertEquals(m.intValue(), minMargin));
+    }
+  }
+
+  /**
+   * Verify that the "contests_by_county" report, when downloaded as a CSV, contains the correct
+   * data for the given instance. Note, the instance may only specify the contests for a
+   * selected subset of counties (rather than all of them).
+   * @param lines      Lines of the CSV report, as Strings.
+   * @param instance   Workload instance being run.
+   */
+  protected void checkContestsByCountyReport(final List<String> lines, final Instance instance){
+    final Map<String,List<String>> contestsByCounty = instance.getContestsByCounty();
+
+    for(int i = 1; i < lines.size(); ++i) {
+      final List<String> tokens = Arrays.stream(lines.get(i).split(",")).toList();
+
+      assertTrue(tokens.size() >= 3);
+      final String countyName = tokens.get(0);
+      final String contestName = tokens.get(1);
+
+      if(contestsByCounty.containsKey(countyName)){
+        assertTrue(contestsByCounty.get(countyName).contains(contestName));
+      }
+    }
+  }
+
+  /**
+   * Verify that the "tabulate_plurality" report, when downloaded as a CSV, contains the correct
+   * data for the given instance.
+   * @param lines      Lines of the CSV report, as Strings.
+   * @param instance   Workload instance being run.
+   */
+  protected void checkTabulatePluralityReport(final List<String> lines, final Instance instance){
+    // TODO
+  }
+
+  /**
+   * Verify that the "tabulate_county_plurality" report, when downloaded as a CSV, contains the correct
+   * data for the given instance.
+   * @param lines      Lines of the CSV report, as Strings.
+   * @param instance   Workload instance being run.
+   */
+  protected void checkTabulateCountyPluralityReport(final List<String> lines, final Instance instance){
+    // TODO
+  }
+
+  /**
+   * Verify that the "summarize_IRV" report, when downloaded as a CSV, contains the correct
+   * data for the given instance.
+   * @param lines      Lines of the CSV report, as Strings.
+   * @param instance   Workload instance being run.
+   */
+  protected void checkSummarizeIRVReport(final List<String> lines, final Instance instance){
+    for(int i = 1; i < lines.size(); ++i) {
+      final List<String> tokens = Arrays.stream(lines.get(i).split(",")).toList();
+
+      // There are more columns in this report, but we are going to verify the first three
+      // for each entry: contest_name; target_reason; winner.
+      assertTrue(tokens.size() >= 3);
+
+      final String contestName = tokens.get(0);
+      final String targetReason = tokens.get(1);
+      final String winner = tokens.get(2);
+
+      // Check that the contest *is* an IRV contest, as specified in the instance.
+      assertTrue(instance.getIRVContests().contains(contestName));
+
+      final Optional<String> expectedWinner = instance.getWinner(contestName);
+      expectedWinner.ifPresent(s -> assertEquals(s, winner));
+      final Optional<String> expectedReason = instance.getTargetedContestReason(contestName);
+      expectedReason.ifPresent(s -> assertEquals(s, targetReason));
+    }
   }
 
   /**
@@ -1044,7 +1308,7 @@ public abstract class Workflow  {
    * @param username Username for the user to authenticate
    * @return The user's session, to be interacted with in later testing.
    */
-  SessionFilter doLogin(final String username) {
+  private SessionFilter doLogin(final String username) {
     final SessionFilter filter = new SessionFilter();
     authenticate(filter, username,"",1);
     authenticate(filter, username,"s d f",2);

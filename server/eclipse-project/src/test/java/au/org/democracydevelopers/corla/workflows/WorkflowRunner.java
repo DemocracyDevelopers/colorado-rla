@@ -40,7 +40,13 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -169,6 +175,9 @@ public class WorkflowRunner extends Workflow {
       assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
       assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
+      canonicalise(instance, true);
+
+      // Either call raire (if using) or load assertions in from SQL script.
       makeAssertionData(Optional.of(postgres), instance.getSQLs());
 
       dashboard = getDoSDashBoardRefreshResponse();
@@ -213,6 +222,9 @@ public class WorkflowRunner extends Workflow {
       // for the Instance.
       boolean auditNotFinished = true;
       int rounds = 0;
+
+      // Keep track of last executed rounds' discrepancy counts
+      Map<String,Map<String,Integer>> lastDiscrepancyCounts = new HashMap<>();
 
       while(auditNotFinished) {
 
@@ -276,6 +288,7 @@ public class WorkflowRunner extends Workflow {
             final int twoOverCount = contestResult.get(TWO_OVER_COUNT);
             final int twoUnderCount = contestResult.get(TWO_UNDER_COUNT);
             final int otherCount = contestResult.get(OTHER_COUNT);
+            final int disagreementCount = contestResult.get(DISAGREEMENTS);
 
             if(!discrepancies.containsKey(dbID)){
               throw new RuntimeException("Likely incorrectly specified contest name (" +
@@ -287,6 +300,23 @@ public class WorkflowRunner extends Workflow {
             assertEquals(contestDiscrepancies.get(OTHER).intValue(), otherCount);
             assertEquals(contestDiscrepancies.get(TWO_OVER).intValue(), twoOverCount);
             assertEquals(contestDiscrepancies.get(TWO_UNDER).intValue(), twoUnderCount);
+
+            // Record so that we can cross-check the reports against what should be the
+            // final discrepancy counts.
+            final boolean mapContainsContest = lastDiscrepancyCounts.containsKey(contestName);
+            Map<String,Integer> countMap =  mapContainsContest ?
+                lastDiscrepancyCounts.get(contestName) : new HashMap<>();
+
+            countMap.put(ONE_OVER, oneOverCount);
+            countMap.put(TWO_OVER, twoOverCount);
+            countMap.put(ONE_UNDER, oneUnderCount);
+            countMap.put(TWO_UNDER, twoUnderCount);
+            countMap.put(OTHER, otherCount);
+            countMap.put(DISAGREEMENTS, disagreementCount);
+
+            if(!mapContainsContest) {
+              lastDiscrepancyCounts.put(contestName, countMap);
+            }
           }
         }
 
@@ -341,6 +371,28 @@ public class WorkflowRunner extends Workflow {
           }
         }
       }
+
+      // Verify contents of selected reports that are downloadable as CSV.
+      // Check the summarize_IRV report.
+      checkSummarizeIRVReport(getReportAsCSV("summarize_IRV"), instance);
+
+      // Check the contest report
+      checkContestReport(getReportAsCSV("contest"), instance, lastDiscrepancyCounts);
+
+      // Check the contests_by_county report
+      checkContestsByCountyReport(getReportAsCSV("contest_by_county"), instance);
+
+      // Check the contest_selection report
+      checkContestSelectionReport(getReportAsCSV("contest_selection"), instance);
+
+      // Check the seed report
+      checkSeedReport(getReportAsCSV("seed"), instance);
+
+      // Check the tabulate_plurality report
+      checkTabulatePluralityReport(getReportAsCSV("tabulate_plurality"), instance);
+
+      // Check the tabulate_county_plurality report
+      checkTabulateCountyPluralityReport(getReportAsCSV("tabulate_county_plurality"), instance);
 
       postgres.stop();
     }
