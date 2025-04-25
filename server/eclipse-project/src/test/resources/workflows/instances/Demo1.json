@@ -24,6 +24,12 @@
     "Demo1/7-unredacted-Boulder-IRV-Manifest.csv"
   ],
   "CANONICAL_LIST": "src/test/resources/CSVs/Demo1/demo1-canonical-list.csv",
+  "CONTEST_NAME_CHANGE" : {
+  },
+  "CANDIDATE_NAME_CHANGE" : {
+  },
+  "CONTESTS_BY_SELECTED_COUNTIES" : {
+  },
   "TARGETS": {
     "City of Longmont - Mayor": "COUNTY_WIDE_CONTEST",
     "Byron Mayoral": "STATE_WIDE_CONTEST",

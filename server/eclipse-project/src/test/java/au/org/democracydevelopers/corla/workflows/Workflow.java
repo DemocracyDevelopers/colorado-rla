@@ -180,6 +180,7 @@ public abstract class Workflow  {
    * to raire.
    * @param testName the name of the test.
    * @param postgres the container where the test DB is found.
+   *                 FIXME get testName to be the full path of the config file.
    */
   protected abstract void runMainAndInitializeDB(final String testName, final Optional<PostgreSQLContainer<?>> postgres);
 
@@ -187,6 +188,8 @@ public abstract class Workflow  {
    * Create properties files for use when running main, and then runs main. Main can take (database)
    * properties as a CLI, but only as a file, so we need to make the file and then tell main to read it.
    * @param testFileName the name of the test file - must be different for each test.
+   *                     FIXME put this into the workflow runner, together with the temp config path. Possibly it should
+   *                     be joined into runMainAndInitializeDB.
    */
   protected static void runMain(final Properties config, final String testFileName) {
     final String propertiesFile = tempConfigPath + testFileName + "-test.properties";

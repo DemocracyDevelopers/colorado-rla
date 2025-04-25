@@ -90,8 +90,14 @@ public class WorkflowRunnerWithRaire extends Workflow {
   public void runInstance(String workflowFile) throws InterruptedException {
     final String prefix = "[runInstance] ";
 
-    if(workflowFile == null) {System.out.println("workflowfile is null");}
-    if(workflowFile.isEmpty()) {System.out.println("workflowfile is empty");}
+    if(workflowFile == null || workflowFile.isEmpty()) {
+      System.out.println("Usage example, from eclipse-project directory: " +
+          "mvn -Dtest=\"*WorkflowRunnerWithRaire\" " +
+          "-DworkflowFile=\"src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json\" test");
+      // Return without running the test. This also means that when included in automated workflows
+      // without command-line arguments, this test always passes.
+      return;
+    }
 
     try {
       final Path pathToInstance = Paths.get(workflowFile);
@@ -357,6 +363,8 @@ public class WorkflowRunnerWithRaire extends Workflow {
    * Run everything with the database and raire url set up in test.properties. FIXME check whether
    * we need the sql setup script. I guess it depends on what's already in the database.
    * This loads in the properties in resources/test.properties.
+   * FIXME get testName to be the full (relative) path of the config file. Then this can be used
+   * for either src/test/resources/test.properties or src/main/resources/us/freeandfair/corla/default.properties
    * @param testName not used.
    * @param postgres not used.
    */
