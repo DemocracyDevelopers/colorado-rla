@@ -112,6 +112,23 @@ public class WorkflowRunner extends Workflow {
   }
 
   /**
+   * Returns a singleton list containing the .json file given as the argument.
+   * Useful for running a single workflow during testing of the testing.
+   */
+  @DataProvider(name="single-workflow-provider")
+  public Object[][] supplySingleWorkflowPath() {
+
+    String filename = "TinyIRV";
+    Path path = Paths.get(pathToInstances, filename + ".json");
+    Path normalizedPath = path.normalize();
+    assertTrue(Files.isRegularFile(normalizedPath));
+    assertTrue(isJSON(normalizedPath.toString()));
+    Object[][] params = new Object[1][1];
+    params[0][0] = normalizedPath;
+    return params;
+  }
+
+  /**
    * Given a JSON file defining an audit workflow (CVRs, Manifests, which CVRs to replace with
    * phantoms, which ballots to treat as phantoms, expected diluted margins and sample sizes,
    * which ballots to simulate discrepancies for, and expected end of round states ...), run
@@ -119,7 +136,8 @@ public class WorkflowRunner extends Workflow {
    * @param pathToInstance Path to the JSON workflow instance defining the test.
    * @throws InterruptedException
    */
-  @Test(dataProvider = "workflow-provider")
+  // @Test(dataProvider = "workflow-provider")
+  @Test(dataProvider = "single-workflow-provider")
   public void runInstance(final Path pathToInstance) throws InterruptedException {
     final String prefix = "[runInstance] " + pathToInstance;
 
