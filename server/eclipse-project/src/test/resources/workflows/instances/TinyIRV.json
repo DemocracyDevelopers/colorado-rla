@@ -25,17 +25,29 @@
     "TinyExample1" : {
       "A" : "Aaron",
       "B" : "Bernice",
-      "C" :  "Cherry",
+      "C" : "Cherry",
       "D" : "Dinh"
     }
   },
   "CONTESTS_BY_SELECTED_COUNTIES" : {
   },
   "TARGETS": {
-    "TinyExample1": "STATE_WIDE_CONTEST",
-    "Example3": "COUNTY_WIDE_CONTEST"
+    "TinyExample1" : "STATE_WIDE_CONTEST",
+    "Example3" : "COUNTY_WIDE_CONTEST"
+  },
+  "RAW_MARGINS" : {
+    "TinyExample1" : 12,
+    "Example3" : 25,
+    "Tied_IRV" : 0,
+    "PluralityTiedExample" : 0,
+    "PluralityExample2" : 1
   },
   "DILUTED_MARGINS": {
+    "TinyExample1" : 0.6,
+    "Example3" : 0.11111111,
+    "Tied_IRV" : 0.0,
+    "PluralityTiedExample" : 0.0,
+    "PluralityExample2" : 0.1
   },
   "EXPECTED_SAMPLES": {
     "TinyExample1": 13,
@@ -45,15 +57,23 @@
     "TinyExample1": 13,
     "Example3": 66
   },
+  "FINAL_EXPECTED_OPTIMISTIC_SAMPLES": {
+    "TinyExample1": 0,
+    "Example3": 189
+  },
+  "FINAL_EXPECTED_ESTIMATED_SAMPLES": {
+    "TinyExample1": 0,
+    "Example3": 189
+  },
   "IRV_CONTESTS": [
     "TinyExample1",
     "Example3",
-    "TiedIRV"
+    "Tied_IRV"
   ],
-  "EXPECTED_ROUNDS": 1,
+  "EXPECTED_ROUNDS": 2,
   "PHANTOM_BALLOTS": {
   },
-  "DISAGREEMENTS": {
+  "DISAGREEMENTS" : {
   },
   "DISCREPANT_AUDITED_BALLOT_CHOICES": {
     "4": {

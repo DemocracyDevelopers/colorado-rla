@@ -23,6 +23,7 @@ To run the complete demo, execute the following:
 - `county-2-Alamosa-do-audit.http`
 
 The first 4 can run in any order, but they can take a while - make sure they're finished before running `demo1_defineAudit` and then `county-2-Alamosa-do-audit`.
+The total number of CVRs in Demo1 is 154939.
 
 ## Examining the output.
 `demo1-defineAudit` prints into the console a list of 'ballots remaining in round' for all contests. Counties 4 and 7 should have hundreds of ballots to audit; the rest should have a range of values from 0 to about 6.

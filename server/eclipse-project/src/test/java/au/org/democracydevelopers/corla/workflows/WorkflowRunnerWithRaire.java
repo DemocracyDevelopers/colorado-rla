@@ -62,6 +62,8 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
  * For example, to run the AllPluralityTwoVoteOverstatementTwoRounds workflow, enter
  * `mvn -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json" test`
  * This test is skipped when the tests are run with empty parameters, i.e. during normal testing.
+ * TODO At the moment, it assumes that main is _not_ running, and fails if it is. But perhaps it
+ * would make more sense to assume that main and the raire-service are both running.
  */
 @Test(enabled=true)
 public class WorkflowRunnerWithRaire extends Workflow {
@@ -153,6 +155,8 @@ public class WorkflowRunnerWithRaire extends Workflow {
       assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
       assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
+      canonicalise(instance, true);
+
       makeAssertionData(Optional.empty(), instance.getSQLs());
 
       dashboard = getDoSDashBoardRefreshResponse();
@@ -170,7 +174,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
 
       // The ASM state for the dashboard should be COMPLETE_AUDIT_INFO_SET.
       dashboard = getDoSDashBoardRefreshResponse();
-      assertEquals(dashboard.get(AUDIT_INFO + "." + SEED), defaultSeed);
+      assertEquals(dashboard.get(AUDIT_INFO + "." + SEED), instance.getSeed());
       assertEquals(dashboard.get(ASM_STATE), COMPLETE_AUDIT_INFO_SET.toString());
 
       // Estimate sample sizes; and then verify that they are as expected.
@@ -197,6 +201,9 @@ public class WorkflowRunnerWithRaire extends Workflow {
       // for the Instance.
       boolean auditNotFinished = true;
       int rounds = 0;
+
+      // Keep track of last executed rounds' discrepancy counts
+      Map<String,Map<String,Integer>> lastDiscrepancyCounts = new HashMap<>();
 
       while(auditNotFinished) {
 
@@ -260,6 +267,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
             final int twoOverCount = contestResult.get(TWO_OVER_COUNT);
             final int twoUnderCount = contestResult.get(TWO_UNDER_COUNT);
             final int otherCount = contestResult.get(OTHER_COUNT);
+            final int disagreementCount = contestResult.get(DISAGREEMENTS);
 
             if(!discrepancies.containsKey(dbID)){
               throw new RuntimeException("Likely incorrectly specified contest name (" +
@@ -271,6 +279,23 @@ public class WorkflowRunnerWithRaire extends Workflow {
             assertEquals(contestDiscrepancies.get(OTHER).intValue(), otherCount);
             assertEquals(contestDiscrepancies.get(TWO_OVER).intValue(), twoOverCount);
             assertEquals(contestDiscrepancies.get(TWO_UNDER).intValue(), twoUnderCount);
+
+            // Record so that we can cross-check the reports against what should be the
+            // final discrepancy counts.
+            final boolean mapContainsContest = lastDiscrepancyCounts.containsKey(contestName);
+            Map<String,Integer> countMap =  mapContainsContest ?
+                lastDiscrepancyCounts.get(contestName) : new HashMap<>();
+
+            countMap.put(ONE_OVER, oneOverCount);
+            countMap.put(TWO_OVER, twoOverCount);
+            countMap.put(ONE_UNDER, oneUnderCount);
+            countMap.put(TWO_UNDER, twoUnderCount);
+            countMap.put(OTHER, otherCount);
+            countMap.put(DISAGREEMENTS, disagreementCount);
+
+            if(!mapContainsContest) {
+              lastDiscrepancyCounts.put(contestName, countMap);
+            }
           }
         }
 
@@ -325,6 +350,28 @@ public class WorkflowRunnerWithRaire extends Workflow {
           }
         }
       }
+
+      // Verify contents of selected reports that are downloadable as CSV.
+      // Check the summarize_IRV report.
+      checkSummarizeIRVReport(getReportAsCSV("summarize_IRV"), instance);
+
+      // Check the contest report
+      checkContestReport(getReportAsCSV("contest"), instance, lastDiscrepancyCounts);
+
+      // Check the contests_by_county report
+      checkContestsByCountyReport(getReportAsCSV("contest_by_county"), instance);
+
+      // Check the contest_selection report
+      checkContestSelectionReport(getReportAsCSV("contest_selection"), instance);
+
+      // Check the seed report
+      checkSeedReport(getReportAsCSV("seed"), instance);
+
+      // Check the tabulate_plurality report
+      checkTabulatePluralityReport(getReportAsCSV("tabulate_plurality"), instance);
+
+      // Check the tabulate_county_plurality report
+      checkTabulateCountyPluralityReport(getReportAsCSV("tabulate_county_plurality"), instance);
 
       // Not necessary for existing database.
       // postgres.stop();

@@ -165,8 +165,8 @@ public class WorkflowRunner extends Workflow {
       // Provide a risk limit, canonicalisation file, and seed as defined in the Instance.
       updateAuditInfo(instance.getCanonicalisationFile(), instance.getRiskLimit());
       dashboard = getDoSDashBoardRefreshResponse();
-      assertEquals(0, instance.getRiskLimit()
-          .compareTo(new BigDecimal(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON).toString())));
+      assertEquals(instance.getRiskLimit()
+          .compareTo(new BigDecimal(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON).toString())), 0);
 
       // There should be canonical contests for each county.
       assertEquals(countyCount,
