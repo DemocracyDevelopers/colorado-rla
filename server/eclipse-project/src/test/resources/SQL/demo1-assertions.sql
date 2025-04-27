@@ -82,4 +82,4 @@ INSERT INTO public.assertion_assumed_continuing (id, assumed_continuing) VALUES 
 INSERT INTO public.generate_assertions_summary (id, contest_name, error, message, version, warning, winner) VALUES (1, 'Tied_IRV', 'TIED_WINNERS', 'Tied winners: Alice, Chuan.', 0, '', '');
 INSERT INTO public.generate_assertions_summary (id, contest_name, error, message, version, warning, winner) VALUES (2, 'Byron Mayoral', '', '', 0, '', 'LYON Michael');
 INSERT INTO public.generate_assertions_summary (id, contest_name, error, message, version, warning, winner) VALUES (3, 'Kempsey Mayoral', '', '', 0, '', 'HAUVILLE Leo');
-INSERT INTO public.generate_assertions_summary (id, contest_name, error, message, version, warning, winner) VALUES (4, 'City of Boulder Mayoral Candidates', '', '', 0, '', 'Aaron Brockett');
+INSERT INTO public.generate_assertions_summary (id, contest_name, error, message, version, warning, winner) VALUES (4, 'City of Boulder Mayoral', '', '', 0, '', 'Aaron Brockett');

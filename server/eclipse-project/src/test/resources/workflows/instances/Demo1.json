@@ -139,6 +139,7 @@
   ],
   "CANONICAL_LIST": "src/test/resources/CSVs/Demo1/demo1-canonical-list.csv",
   "CONTEST_NAME_CHANGE" : {
+    "City of Boulder Mayoral Candidates" : "City of Boulder Mayoral"
   },
   "CANDIDATE_NAME_CHANGE" : {
   },
@@ -150,8 +151,8 @@
     "Kempsey Mayoral": "COUNTY_WIDE_CONTEST"
   },
   "RAW_MARGINS": {
-    "City of Longmont - Mayor": 10872,
-    "Byron Mayoral": 1061,
+    "City of Longmont - Mayor": 10773,
+    "Byron Mayoral": 1060,
     "Kempsey Mayoral": 387
   },
   "DILUTED_MARGINS": {
@@ -181,7 +182,7 @@
   },
   "IRV_CONTESTS": [
     "Tied_IRV",
-    "Boulder Mayoral",
+    "City of Boulder Mayoral",
     "Byron Mayoral",
     "Kempsey Mayoral"
   ],
@@ -203,9 +204,7 @@
         "two_under_count": 0,
         "other_count": 0,
         "disagreements" : 0
-      }
-    },
-    "4": {
+      },
       "Kempsey Mayoral": {
         "one_over_count": 0,
         "two_over_count": 0,
@@ -214,38 +213,12 @@
         "other_count": 0,
         "disagreements" : 0
       },
-      "Byron Mayoral": {
-        "one_over_count": 0,
-        "two_over_count": 0,
-        "one_under_count": 0,
-        "two_under_count": 0,
-        "other_count": 0,
-        "disagreements" : 0
-      }
-    },
-    "7": {
-      "City of Longmont - Mayor": {
-        "one_over_count": 0,
-        "two_over_count": 0,
-        "one_under_count": 0,
-        "two_under_count": 0,
-        "other_count": 0,
-        "disagreements" : 0
-      },
-      "Byron Mayoral": {
-        "one_over_count": 0,
-        "two_over_count": 0,
-        "one_under_count": 0,
-        "two_under_count": 0,
-        "other_count": 0,
-        "disagreements" : 0
-      },
-      "City of Boulder Mayoral Candidates": {
-        "one_over_count": 0,
-        "two_over_count": 0,
-        "one_under_count": 0,
-        "two_under_count": 0,
-        "other_count": 0,
+      "City of Longmont - Mayor" : {
+        "one_over_count" : 0,
+        "two_over_count" : 0,
+        "one_under_count" : 0,
+        "two_under_count" : 0,
+        "other_count" : 0,
         "disagreements" : 0
       }
     }

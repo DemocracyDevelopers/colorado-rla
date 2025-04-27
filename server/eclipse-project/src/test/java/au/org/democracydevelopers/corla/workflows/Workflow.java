@@ -1154,12 +1154,12 @@ public abstract class Workflow  {
           ONE_UNDER, 0, TWO_UNDER, 0, OTHER, 0, DISAGREEMENTS, 0);
 
       final Optional<Integer> expectedRawMargin = instance.getRawMargin(contestName);
-      expectedRawMargin.ifPresent(m -> assertEquals(m, minMargin));
+      expectedRawMargin.ifPresent(m -> assertEquals(minMargin, m));
 
       final Optional<String> expectedWinner = instance.getWinner(contestName);
-      expectedWinner.ifPresent(s -> assertEquals(s, winner));
+      expectedWinner.ifPresent(s -> assertEquals(winner, s));
       final Optional<String> expectedReason = instance.getTargetedContestReason(contestName);
-      expectedReason.ifPresent(s -> assertEquals(s.toLowerCase(), targetReason.toLowerCase()));
+      expectedReason.ifPresent(s -> assertEquals(targetReason.toLowerCase(), s.toLowerCase()));
 
       if (instance.getTargetedContests().containsKey(contestName)) {
         // Audit status should be risk limit achieved for all successful workflows
