@@ -118,7 +118,7 @@ public class WorkflowRunner extends Workflow {
   @DataProvider(name="single-workflow-provider")
   public Object[][] supplySingleWorkflowPath() {
 
-    String filename = "TinyIRV";
+    String filename = "Demo1";
     Path path = Paths.get(pathToInstances, filename + ".json");
     Path normalizedPath = path.normalize();
     assertTrue(Files.isRegularFile(normalizedPath));
@@ -296,7 +296,8 @@ public class WorkflowRunner extends Workflow {
             if(!contestToDBID.containsKey(contestName)){
               throw new RuntimeException("When verifying round results, the contest name "
                   + contestName + " does not exist in contest-database ID map. " +
-                  "Likely incorrectly specified contest name in workflow JSON.");
+                  "Likely incorrectly specified contest name in workflow JSON. You cannot check discrepancies " +
+                  "for non-targeted contests.");
             }
 
             final String dbID = contestToDBID.get(contestName);
