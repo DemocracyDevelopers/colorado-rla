@@ -123,14 +123,6 @@
         "other_count": 0,
         "disagreements" : 0
       },
-      "PluralityTiedExample": {
-        "one_over_count": 0,
-        "two_over_count": 0,
-        "one_under_count": 0,
-        "two_under_count": 0,
-        "other_count": 0,
-        "disagreements" : 0
-      },
       "Example3": {
         "one_over_count": 0,
         "two_over_count": 1,

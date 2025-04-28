@@ -419,7 +419,7 @@ public abstract class Workflow  {
     if(info.contest().description().equals(ContestType.IRV.toString())){
       // The contest is an IRV contest.
       final List<IRVBallotInterpretation> interpretations = TestOnlyQueries.matching(
-          cvrNumber, info.contest().name(), imprintedId, RecordType.UPLOADED);
+          cvrNumber, info.contest().id(), imprintedId, RecordType.UPLOADED);
 
       if(interpretations.isEmpty()){
         List<String> rawChoices = new ArrayList<>();

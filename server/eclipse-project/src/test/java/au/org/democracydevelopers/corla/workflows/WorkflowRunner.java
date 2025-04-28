@@ -312,7 +312,8 @@ public class WorkflowRunner extends Workflow {
 
             if(!discrepancies.containsKey(dbID)){
               throw new RuntimeException("Likely incorrectly specified contest name (" +
-                  contestName + ") in workflow JSON.");
+                  contestName + ") in workflow JSON. You cannot check discrepancies" +
+                  "for non-targeted contests - they should all be zero.");
             }
             final Map<String, Integer> contestDiscrepancies = discrepancies.get(dbID);
             assertEquals(contestDiscrepancies.get(ONE_OVER).intValue(), oneOverCount);
