@@ -263,6 +263,7 @@ public class DoSDashboardRefreshResponse {
 
     // Find out which county each contest is in; fill in 'Multiple' if there is more than one.
     for (GenerateAssertionsSummary summary : generate_assertions_list) {
+      final String cn = summary.getContestName();
       final Optional<ContestResult> cr = ContestResultQueries.find(summary.getContestName());
       String countyName = "";
       if (cr.isEmpty() || cr.get().getCounties().isEmpty()) {

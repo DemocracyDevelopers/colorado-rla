@@ -17,12 +17,12 @@
     "src/test/resources/CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_Manifest.csv",
     "src/test/resources/CSVs/Tiny-IRV-Examples/GuideToRAIREExample3-manifest.csv"
   ],
-  "CANONICAL_LIST": "src/test/resources/CSVs/Tiny-IRV-Examples/Tiny_IRV_Demo_Canonical_List.csv",
+  "CANONICAL_LIST": "src/test/resources/CSVs/Tiny-IRV-Examples/Tiny_IRV_Demo_Canonical_List_From_County_1.csv",
   "CONTEST_NAME_CHANGE" : {
     "TinyInvalidExample1" : "TinyExample1"
   },
   "CANDIDATE_NAME_CHANGE" : {
-    "TinyExample1" : {
+    "Example3" : {
       "A" : "Aaron",
       "B" : "Bernice",
       "C" : "Cherry",
@@ -30,6 +30,20 @@
     }
   },
   "CONTESTS_BY_SELECTED_COUNTIES" : {
+    "Adams" : [
+      "TinyExample1",
+      "PluralityTiedExample",
+      "PluralityExample2"
+    ],
+    "Alamosa" : [
+      "TinyExample1"
+    ],
+    "Arapahoe" : [
+      "Tied_IRV"
+    ],
+    "Archuleta" : [
+      "Example3"
+    ]
   },
   "TARGETS": {
     "TinyExample1" : "STATE_WIDE_CONTEST",
@@ -70,7 +84,7 @@
     "Example3",
     "Tied_IRV"
   ],
-  "EXPECTED_ROUNDS": 2,
+  "EXPECTED_ROUNDS": 1,
   "PHANTOM_BALLOTS": {
   },
   "DISAGREEMENTS" : {
@@ -79,12 +93,15 @@
     "4": {
       "1-1-4": {
         "Example3": [
-          "Aaron(1),Dinh(2)"
+          "Aaron(1)",
+          "Dinh(2)"
         ]
       },
       "1-1-8": {
         "Example3": [
-          "Cherry(1),Bernice(2),Dinh(3)"
+          "Cherry(1)",
+          "Bernice(2)",
+          "Dinh(3)"
         ]
       }
     }
@@ -108,27 +125,7 @@
         "two_under_count": 0,
         "other_count": 0,
         "disagreements" : 0
-      }
-    },
-    "2": {
-      "TinyExample1": {
-        "one_over_count": 0,
-        "two_over_count": 0,
-        "one_under_count": 0,
-        "two_under_count": 0,
-        "other_count": 0,
-        "disagreements" : 0
       },
-      "PluralityTiedExample": {
-        "one_over_count": 0,
-        "two_over_count": 0,
-        "one_under_count": 0,
-        "two_under_count": 0,
-        "other_count": 0,
-        "disagreements" : 0
-      }
-    },
-    "4": {
       "Example3": {
         "one_over_count": 0,
         "two_over_count": 1,
