@@ -118,7 +118,7 @@ public class WorkflowRunner extends Workflow {
   @DataProvider(name="single-workflow-provider")
   public Object[][] supplySingleWorkflowPath() {
 
-    String filename = "Demo1";
+    String filename = "TinyIRV";
     Path path = Paths.get(pathToInstances, filename + ".json");
     Path normalizedPath = path.normalize();
     assertTrue(Files.isRegularFile(normalizedPath));
@@ -136,8 +136,8 @@ public class WorkflowRunner extends Workflow {
    * @param pathToInstance Path to the JSON workflow instance defining the test.
    * @throws InterruptedException
    */
-  @Test(dataProvider = "workflow-provider")
-  // @Test(dataProvider = "single-workflow-provider")
+  // @Test(dataProvider = "workflow-provider")
+  @Test(dataProvider = "single-workflow-provider")
   public void runInstance(final Path pathToInstance) throws InterruptedException {
     final String prefix = "[runInstance] " + pathToInstance;
 
@@ -297,7 +297,7 @@ public class WorkflowRunner extends Workflow {
               throw new RuntimeException("When verifying round results, the contest name "
                   + contestName + " does not exist in contest-database ID map. " +
                   "Likely incorrectly specified contest name in workflow JSON. You cannot check discrepancies " +
-                  "for non-targeted contests.");
+                  "for non-targeted contests - they should all be zero.");
             }
 
             final String dbID = contestToDBID.get(contestName);

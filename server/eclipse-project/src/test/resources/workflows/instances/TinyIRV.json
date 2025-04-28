@@ -49,6 +49,11 @@
     "TinyExample1" : "STATE_WIDE_CONTEST",
     "Example3" : "COUNTY_WIDE_CONTEST"
   },
+  "WINNERS": {
+    "TinyExample1" : "Alice",
+    "Example3" : "Cherry"
+
+  },
   "RAW_MARGINS" : {
     "TinyExample1" : 12,
     "Example3" : 25,
