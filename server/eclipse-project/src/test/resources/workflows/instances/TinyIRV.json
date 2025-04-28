@@ -96,20 +96,18 @@
   },
   "DISCREPANT_AUDITED_BALLOT_CHOICES": {
     "4": {
-      "1" : {
-        "1-1-4": {
-          "Example3": [
-            "Aaron(1)",
-            "Dinh(2)"
-          ]
-        },
-        "1-1-8": {
-          "Example3": [
-            "Cherry(1)",
-            "Bernice(2)",
-            "Dinh(3)"
-          ]
-        }
+      "1-1-4": {
+        "Example3": [
+          "Aaron(1)",
+          "Dinh(2)"
+        ]
+      },
+      "1-1-8": {
+        "Example3": [
+          "Cherry(1)",
+          "Bernice(2)",
+          "Dinh(3)"
+        ]
       }
     }
   },
@@ -123,7 +121,15 @@
         "one_under_count": 0,
         "two_under_count": 0,
         "other_count": 0,
-        "disagreements": 0
+        "disagreements" : 0
+      },
+      "PluralityTiedExample": {
+        "one_over_count": 0,
+        "two_over_count": 0,
+        "one_under_count": 0,
+        "two_under_count": 0,
+        "other_count": 0,
+        "disagreements" : 0
       },
       "Example3": {
         "one_over_count": 0,
@@ -131,26 +137,24 @@
         "one_under_count": 0,
         "two_under_count": 0,
         "other_count": 1,
-        "disagreements": 0
+        "disagreements" : 0
       }
     },
-    "2": {
-      "TinyExample1": {
-        "one_over_count": 0,
-        "two_over_count": 0,
-        "one_under_count": 0,
-        "two_under_count": 0,
-        "other_count": 0,
-        "disagreements": 0
-      },
-      "Example3": {
-        "one_over_count": 0,
-        "two_over_count": -1,
-        "one_under_count": 0,
-        "two_under_count": 0,
-        "other_count": 1,
-        "disagreements": 0
-      }
+    "2" : {
+      "one_over_count": 0,
+      "two_over_count": 0,
+      "one_under_count": 0,
+      "two_under_count": 0,
+      "other_count": 0,
+      "disagreements" : 0
+    },
+    "Example3": {
+      "one_over_count": 0,
+      "two_over_count": 1,
+      "one_under_count": 0,
+      "two_under_count": 0,
+      "other_count": 1,
+      "disagreements" : 0
     }
   }
 }
