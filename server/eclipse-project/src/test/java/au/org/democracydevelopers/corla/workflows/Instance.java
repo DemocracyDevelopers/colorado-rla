@@ -508,25 +508,26 @@ public class Instance {
    * to simply use what is on the CVR (ie. the raw choices that were on the CVR), then this method
    * will return an empty Optional. This method is used for the first auditing of a ballot, and
    * not for reaudits.
-   * @param round           The round (starts from 1).
-   * @param countyID        County ID for the CVR as a string.
-   * @param imprintedId     Imprinted ID of the CVR that we want to create a choice list for.
-   * @param contest         Contest of interest on the CVR.
+   *
+   * @param countyID    County ID for the CVR as a string.
+   * @param rnd         The round (starts from 1).
+   * @param imprintedId Imprinted ID of the CVR that we want to create a choice list for.
+   * @param contest     Contest of interest on the CVR.
    * @return An Optional list of strings representing the actual choices to be used for a given
    * contest on an ACVR. If the Optional is empty, it indicates that we should use the CVR choices.
    */
-  public Optional<List<String>> getActualChoices(final int round, final String countyID, final String imprintedId,
-      final String contest){
-    final String rnd = Integer.toString(round);
+  public Optional<List<String>> getActualChoices(final String countyID, final int rnd, final String imprintedId,
+                                                 final String contest) {
+    final String round = Integer.toString(rnd);
 
-    if(actualChoices.containsKey(countyID)) {
-      if (actualChoices.get(countyID).containsKey(rnd)) {
-        if (actualChoices.get(countyID).get(rnd).containsKey(imprintedId)) {
-        if (actualChoices.get(countyID).get(rnd).get(imprintedId).containsKey(contest)) {
-          return Optional.of(
-              Collections.unmodifiableList(actualChoices.get(countyID).get(rnd).get(imprintedId).get(contest)));
+    if (actualChoices.containsKey(countyID)) {
+      if (actualChoices.get(countyID).containsKey(round)) {
+        if (actualChoices.get(countyID).get(round).containsKey(imprintedId)) {
+          if (actualChoices.get(countyID).get(round).get(imprintedId).containsKey(contest)) {
+            return Optional.of(
+                Collections.unmodifiableList(actualChoices.get(countyID).get(round).get(imprintedId).get(contest)));
+          }
         }
-      }
       }
     }
     return Optional.empty();
