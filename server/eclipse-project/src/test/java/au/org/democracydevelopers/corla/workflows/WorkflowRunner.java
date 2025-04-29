@@ -28,6 +28,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_COMPLETE;
+import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_UNDERWAY;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.COMPLETE_AUDIT_INFO_SET;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.PARTIAL_AUDIT_INFO_SET;
@@ -120,7 +121,7 @@ public class WorkflowRunner extends Workflow {
   @DataProvider(name = "single-workflow-provider")
   public Object[][] supplySingleWorkflowPath() {
 
-    String filename = "TinyIRV.json";
+    String filename = "StateAndCountyUnbalanced.json";
     Path path = Paths.get(pathToInstances, filename);
     Path normalizedPath = path.normalize();
     assertTrue(Files.isRegularFile(normalizedPath));
@@ -263,11 +264,15 @@ public class WorkflowRunner extends Workflow {
         for (final int cty : countyIDs) {
           final String ctyID = String.valueOf(cty);
           final String asmState = roundStartStatus.get(ctyID).get(ASM_STATE).toString();
-          if (asmState.equalsIgnoreCase(COUNTY_AUDIT_COMPLETE.toString()))
-            continue;
+          // Check that the county's state is appropriate for starting the audit. There are several
+          // different states, som eof them quite unintuitive. For example, a county with no ballots
+          // to audit initially is in the WAITING_FOR_ROUND_SIGNOFF state.
+          // Note that I'm not certain about ROUND_IN_PROGRESS - think that state shouldn't occur here.
+          if (asmState.equalsIgnoreCase(COUNTY_AUDIT_UNDERWAY.toString())) {
+            sessions.add(countyAuditInitialise(cty));
+            countiesWithAudits.add(ctyID);
+          }
 
-          sessions.add(countyAuditInitialise(cty));
-          countiesWithAudits.add(ctyID);
         }
 
         // ACVR uploads for each county. Cannot run in parallel as corla does not like
