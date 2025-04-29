@@ -95,18 +95,20 @@
       }
     }
   },
-  "REAUDITS" : {
-    "1" : {
-      "1-587-10" : [
-        {
-          "City of Wollongong Mayoral": {
-            "choices" : [
-              "BROWN Tania(1)"
-            ],
-            "consensus" : "YES"
+  "REAUDITS": {
+    "1": {
+      "1": {
+        "1-587-10": [
+          {
+            "City of Wollongong Mayoral": {
+              "choices": [
+                "BROWN Tania(1)"
+              ],
+              "consensus": "YES"
+            }
           }
-        }
-      ]
+        ]
+      }
     }
   },
 
