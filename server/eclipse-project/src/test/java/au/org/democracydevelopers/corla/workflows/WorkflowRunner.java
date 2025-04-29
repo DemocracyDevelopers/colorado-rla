@@ -118,8 +118,8 @@ public class WorkflowRunner extends Workflow {
   @DataProvider(name="single-workflow-provider")
   public Object[][] supplySingleWorkflowPath() {
 
-    String filename = "TinyIRV";
-    Path path = Paths.get(pathToInstances, filename + ".json");
+    String filename = "TinyIRV.INFINITE";
+    Path path = Paths.get(pathToInstances, filename);
     Path normalizedPath = path.normalize();
     assertTrue(Files.isRegularFile(normalizedPath));
     assertTrue(isJSON(normalizedPath.toString()));
