@@ -590,7 +590,7 @@ public abstract class Workflow  {
    * For the given county number, collect the set of CVRs to audit for the given round, and
    * upload the audit CVRs.
    * @param round   Audit round.
-   * @param session  TestAuditSession capturing the audit session for a county.
+   * @param session TestAuditSession capturing the audit session for a county.
    */
   protected void auditCounty(final int round, final TestAuditSession session, final Instance instance){
 

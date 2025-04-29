@@ -143,6 +143,7 @@
 
   "DISCREPANT_AUDITED_BALLOT_CHOICES" : {
     "1" : {
+      "1" : {
       "1-16-45" : {
         "Wollondilly Mayoral" : [
           "HANNAN Judy(1)"
@@ -157,33 +158,38 @@
         ]
       }
     }
+    }
   },
 
   "REAUDITS" : {
     "1": {
-      "1-16-45": [
-        {
-          "Wollondilly Mayoral": {
-            "choices": [
-              "KHAN Robert(1)"
-            ],
-            "consensus": "YES"
+      "1": {
+        "1-16-45": [
+          {
+            "Wollondilly Mayoral": {
+              "choices": [
+                "KHAN Robert(1)"
+              ],
+              "consensus": "YES"
+            }
           }
-        }
-      ]
+        ]
+      }
     },
     "5": {
-      "1-17-56": [
-        {
-          "Burwood Mayoral": {
-            "choices": [
-              "FAKER John(1)",
-              "HULL David(2)"
-            ],
-            "consensus": "YES"
+      "1": {
+        "1-17-56": [
+          {
+            "Burwood Mayoral": {
+              "choices": [
+                "FAKER John(1)",
+                "HULL David(2)"
+              ],
+              "consensus": "YES"
+            }
           }
-        }
-      ]
+        ]
+      }
     }
   },
 

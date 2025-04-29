@@ -35,6 +35,7 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.PARTIAL_AUDIT_
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import io.restassured.path.json.JsonPath;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -51,6 +52,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -67,7 +69,7 @@ import us.freeandfair.corla.persistence.Persistence;
  * uploading audited ballots; reauditing ballots; and executing rounds until there are no further
  * ballots to sample. The workflow ends when the audit ends. Reporting is not tested in these workflows.
  */
-@Test(enabled=true)
+@Test(enabled = true)
 public class WorkflowRunner extends Workflow {
 
   /**
@@ -84,10 +86,11 @@ public class WorkflowRunner extends Workflow {
   /**
    * Returns a list of parameter lists to supply to the runWorkflow test method in this class.
    * Each parameter list contains one element -- a path to the workflow JSON instance to run.
+   *
    * @return A list of test parameter lists as a 2D array of objects.
    */
-  @DataProvider(name="workflow-provider")
-  public Object[][] supplyWorkflowPaths(){
+  @DataProvider(name = "workflow-provider")
+  public Object[][] supplyWorkflowPaths() {
     final String prefix = "[supplyWorkflowPaths]";
     List<Path> pathList;
 
@@ -96,8 +99,7 @@ public class WorkflowRunner extends Workflow {
           .filter(Files::isRegularFile)
           .filter(p -> isJSON(p.toString()))
           .collect(Collectors.toList());
-    }
-    catch(IOException e) {
+    } catch (IOException e) {
       final String msg = prefix + " " + e.getMessage();
       LOGGER.error(msg);
       throw new RuntimeException(msg);
@@ -105,7 +107,7 @@ public class WorkflowRunner extends Workflow {
 
     // Convert list of paths into an array of parameter arrays
     Object[][] params = new Object[pathList.size()][1];
-    for(int i = 0; i < pathList.size(); ++i){
+    for (int i = 0; i < pathList.size(); ++i) {
       params[i][0] = pathList.get(i);
     }
     return params;
@@ -115,10 +117,10 @@ public class WorkflowRunner extends Workflow {
    * Returns a singleton list containing the .json file given as the argument.
    * Useful for running a single workflow during testing of the testing.
    */
-  @DataProvider(name="single-workflow-provider")
+  @DataProvider(name = "single-workflow-provider")
   public Object[][] supplySingleWorkflowPath() {
 
-    String filename = "SmallerStateAndCountyDiscrepanciesTwoRounds.json";
+    String filename = "TinyIRV.json";
     Path path = Paths.get(pathToInstances, filename);
     Path normalizedPath = path.normalize();
     assertTrue(Files.isRegularFile(normalizedPath));
@@ -133,6 +135,7 @@ public class WorkflowRunner extends Workflow {
    * phantoms, which ballots to treat as phantoms, expected diluted margins and sample sizes,
    * which ballots to simulate discrepancies for, and expected end of round states ...), run
    * the test audit and verify that the expected outcomes arise.
+   *
    * @param pathToInstance Path to the JSON workflow instance defining the test.
    * @throws InterruptedException
    */
@@ -156,18 +159,18 @@ public class WorkflowRunner extends Workflow {
 
       assertEquals(cvrs.size(), manifests.size());
 
-      for(int i = 0; i < manifests.size(); ++i){
-        uploadCounty(i+1, MANIFEST_FILETYPE, manifests.get(i), manifests.get(i) + ".sha256sum");
+      for (int i = 0; i < manifests.size(); ++i) {
+        uploadCounty(i + 1, MANIFEST_FILETYPE, manifests.get(i), manifests.get(i) + ".sha256sum");
       }
 
       // Upload all the CVRs. The order is important because it's an error to try to import a
       // manifest while the CVRs are being read.
-      for(int i = 0; i < cvrs.size()  ; ++i){
-        uploadCounty(i+1, CVR_FILETYPE, cvrs.get(i), cvrs.get(i) + ".sha256sum");
+      for (int i = 0; i < cvrs.size(); ++i) {
+        uploadCounty(i + 1, CVR_FILETYPE, cvrs.get(i), cvrs.get(i) + ".sha256sum");
       }
 
       final int countyCount = cvrs.size();
-      final Set<Integer> countyIDs = IntStream.rangeClosed(1,countyCount).boxed().collect(Collectors.toSet());
+      final Set<Integer> countyIDs = IntStream.rangeClosed(1, countyCount).boxed().collect(Collectors.toSet());
 
       // Wait while the CVRs (and manifests) are uploaded.
       assertTrue(uploadSuccessfulWithin(600, countyIDs, CVR_JSON));
@@ -176,7 +179,7 @@ public class WorkflowRunner extends Workflow {
       // Get the DoSDashboard refresh response; sanity check for initial state.
       JsonPath dashboard = getDoSDashBoardRefreshResponse();
       assertEquals(dashboard.get(ASM_STATE), DOS_INITIAL_STATE.toString());
-      assertEquals(dashboard.getMap(AUDIT_INFO+"."+CANONICAL_CHOICES).toString(), "{}");
+      assertEquals(dashboard.getMap(AUDIT_INFO + "." + CANONICAL_CHOICES).toString(), "{}");
       assertNull(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON));
       assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
 
@@ -203,11 +206,11 @@ public class WorkflowRunner extends Workflow {
 
       // Check that the right number of IRV contests are present
       final List<String> irvContests = instance.getIRVContests();
-      final Map<String,String> targets = instance.getTargetedContests();
+      final Map<String, String> targets = instance.getTargetedContests();
       assertEquals(irvContests.size(), dashboard.getList("generate_assertions_summaries").size());
 
       // Choose targeted contests for audit as specified in the Instance.
-      final Map<String,String> contestToDBID = targetContests(targets);
+      final Map<String, String> contestToDBID = targetContests(targets);
 
       // Set the seed (as specified in the Instance).
       setSeed(instance.getSeed());
@@ -223,10 +226,10 @@ public class WorkflowRunner extends Workflow {
       Map<String, EstimateSampleSizes.EstimateData> sampleSizes = getSampleSizeEstimates();
       assertFalse(sampleSizes.isEmpty());
 
-      final Map<String,Integer> expectedSamples = instance.getExpectedSamples();
-      final Map<String,Double> expectedMargins = instance.getDilutedMargins();
-      for(final String c : targets.keySet()) {
-        if(!sampleSizes.containsKey(c)){
+      final Map<String, Integer> expectedSamples = instance.getExpectedSamples();
+      final Map<String, Double> expectedMargins = instance.getDilutedMargins();
+      for (final String c : targets.keySet()) {
+        if (!sampleSizes.containsKey(c)) {
           throw new RuntimeException("When verifying sample sizes, the targeted contest name "
               + c + " does not exist in sample sizes data structure returned by CORLA. " +
               "Likely incorrectly specified contest name in workflow JSON.");
@@ -243,16 +246,16 @@ public class WorkflowRunner extends Workflow {
       int rounds = 0;
 
       // Keep track of last executed rounds' discrepancy counts
-      Map<String,Map<String,Integer>> lastDiscrepancyCounts = new HashMap<>();
+      Map<String, Map<String, Integer>> lastDiscrepancyCounts = new HashMap<>();
 
-      while(auditNotFinished) {
+      while (auditNotFinished) {
 
         // Start Audit Round
         startAuditRound();
 
         dashboard = getDoSDashBoardRefreshResponse();
 
-        final Map<String, Map<String,Object>> roundStartStatus = dashboard.get(COUNTY_STATUS);
+        final Map<String, Map<String, Object>> roundStartStatus = dashboard.get(COUNTY_STATUS);
 
         // Log in as each county whose audit is not yet complete, and audit all ballots in sample.
         List<String> countiesWithAudits = new ArrayList<>();
@@ -260,7 +263,7 @@ public class WorkflowRunner extends Workflow {
         for (final int cty : countyIDs) {
           final String ctyID = String.valueOf(cty);
           final String asmState = roundStartStatus.get(ctyID).get(ASM_STATE).toString();
-          if(asmState.equalsIgnoreCase(COUNTY_AUDIT_COMPLETE.toString()))
+          if (asmState.equalsIgnoreCase(COUNTY_AUDIT_COMPLETE.toString()))
             continue;
 
           sessions.add(countyAuditInitialise(cty));
@@ -270,7 +273,7 @@ public class WorkflowRunner extends Workflow {
         // ACVR uploads for each county. Cannot run in parallel as corla does not like
         // simultaneous database accesses.
         for (final TestAuditSession entry : sessions) {
-          auditCounty(rounds+1, entry, instance);
+          auditCounty(rounds + 1, entry, instance);
         }
 
         // Audit board sign off for each county.
@@ -280,20 +283,20 @@ public class WorkflowRunner extends Workflow {
 
         // Check that there are no more ballots to sample across all counties
         dashboard = getDoSDashBoardRefreshResponse();
-        final Map<String,Integer> statusOptBallotsToAudit = dashboard.get(OPTIMISTIC_BALLOTS);
-        final Map<String, Map<String,Integer>> discrepancies = dashboard.get(DISCREPANCY_COUNT);
+        final Map<String, Integer> statusOptBallotsToAudit = dashboard.get(OPTIMISTIC_BALLOTS);
+        final Map<String, Map<String, Integer>> discrepancies = dashboard.get(DISCREPANCY_COUNT);
 
         auditNotFinished = false;
 
         // Verify that the result of this round is what we expected in terms of number of
         // estimated and optimistic ballots to audit for each contest mentioned in the associated
         // field in the instance. Also test that the resulting discrepancy counts are as expected.
-        final Optional<Map<String,Map<String,Integer>>> results = instance.getRoundContestResult(rounds+1);
-        if(results.isPresent()) {
+        final Optional<Map<String, Map<String, Integer>>> results = instance.getRoundContestResult(rounds + 1);
+        if (results.isPresent()) {
           final Map<String, Map<String, Integer>> roundResults = results.get();
 
           for (final String contestName : roundResults.keySet()) {
-            if(!contestToDBID.containsKey(contestName)){
+            if (!contestToDBID.containsKey(contestName)) {
               throw new RuntimeException("When verifying round results, the contest name "
                   + contestName + " does not exist in contest-database ID map. " +
                   "Likely incorrectly specified contest name in workflow JSON. You cannot check discrepancies " +
@@ -310,7 +313,7 @@ public class WorkflowRunner extends Workflow {
             final int otherCount = contestResult.get(OTHER_COUNT);
             final int disagreementCount = contestResult.get(DISAGREEMENTS);
 
-            if(!discrepancies.containsKey(dbID)){
+            if (!discrepancies.containsKey(dbID)) {
               throw new RuntimeException("Likely incorrectly specified contest name (" +
                   contestName + ") in workflow JSON. You cannot check discrepancies" +
                   "for non-targeted contests - they should all be zero.");
@@ -325,7 +328,7 @@ public class WorkflowRunner extends Workflow {
             // Record so that we can cross-check the reports against what should be the
             // final discrepancy counts.
             final boolean mapContainsContest = lastDiscrepancyCounts.containsKey(contestName);
-            Map<String,Integer> countMap =  mapContainsContest ?
+            Map<String, Integer> countMap = mapContainsContest ?
                 lastDiscrepancyCounts.get(contestName) : new HashMap<>();
 
             countMap.put(ONE_OVER, oneOverCount);
@@ -335,7 +338,7 @@ public class WorkflowRunner extends Workflow {
             countMap.put(OTHER, otherCount);
             countMap.put(DISAGREEMENTS, disagreementCount);
 
-            if(!mapContainsContest) {
+            if (!mapContainsContest) {
               lastDiscrepancyCounts.put(contestName, countMap);
             }
           }
@@ -343,17 +346,17 @@ public class WorkflowRunner extends Workflow {
 
         final int maxOptimistic = Collections.max(statusOptBallotsToAudit.values());
 
-        final Map<String, Map<String,Object>> status = dashboard.get(COUNTY_STATUS);
-        final Optional<Map<String,Map<String,Integer>>> countyResults = instance.getRoundCountyResult(rounds+1);
+        final Map<String, Map<String, Object>> status = dashboard.get(COUNTY_STATUS);
+        final Optional<Map<String, Map<String, Integer>>> countyResults = instance.getRoundCountyResult(rounds + 1);
 
         int maxBallotsRemaining = 0;
-        if(countyResults.isPresent()){
-          for(final Map.Entry<String, Map<String, Integer>> entry : countyResults.get().entrySet()){
-            if(!countiesWithAudits.contains(entry.getKey()))
+        if (countyResults.isPresent()) {
+          for (final Map.Entry<String, Map<String, Integer>> entry : countyResults.get().entrySet()) {
+            if (!countiesWithAudits.contains(entry.getKey()))
               continue;
 
-            final Map<String,Integer> expStatus = entry.getValue();
-            final Map<String,Object> countyStatus = status.get(entry.getKey());
+            final Map<String, Integer> expStatus = entry.getValue();
+            final Map<String, Object> countyStatus = status.get(entry.getKey());
 
             final int ballotsRemaining = Integer.parseInt(countyStatus.get(BALLOTS_REMAINING).toString());
             final int estimatedBallots = Integer.parseInt(countyStatus.get(ESTIMATED_BALLOTS).toString());
@@ -365,7 +368,7 @@ public class WorkflowRunner extends Workflow {
           }
         }
 
-        if(maxOptimistic > 0 || maxBallotsRemaining > 0){
+        if (maxOptimistic > 0 || maxBallotsRemaining > 0) {
           auditNotFinished = true;
         }
 
@@ -375,19 +378,19 @@ public class WorkflowRunner extends Workflow {
       // Check that the number of rounds completed is as expected. Note that this may
       // not be specified in the instance.
       final Integer expectedRounds = instance.getExpectedRounds();
-      if(expectedRounds != null){
+      if (expectedRounds != null) {
         assertEquals(expectedRounds.intValue(), rounds);
       }
 
       // Check that the number of audited ballots for targeted contests meets expectations.
-      final Map<String,Integer> expectedAuditedBallots = instance.getExpectedAuditedBallots();
+      final Map<String, Integer> expectedAuditedBallots = instance.getExpectedAuditedBallots();
       final List<String> content = getReportAsCSV("contest");
-      for(final String line : content){
+      for (final String line : content) {
         final String[] tokens = line.split(",");
-        for(final String contest : targets.keySet()){
-          if(tokens[0].equalsIgnoreCase(contest)){
+        for (final String contest : targets.keySet()) {
+          if (tokens[0].equalsIgnoreCase(contest)) {
             final int expected = expectedAuditedBallots.get(contest);
-            assert(Integer.parseInt(tokens[9]) >= expected);
+            assert (Integer.parseInt(tokens[9]) >= expected);
             break;
           }
         }
@@ -416,8 +419,7 @@ public class WorkflowRunner extends Workflow {
       checkTabulateCountyPluralityReport(getReportAsCSV("tabulate_county_plurality"), instance);
 
       postgres.stop();
-    }
-    catch(IOException e){
+    } catch (IOException e) {
       final String msg = prefix + " " + e.getMessage();
       LOGGER.error(msg);
       throw new RuntimeException(msg);
@@ -425,7 +427,8 @@ public class WorkflowRunner extends Workflow {
   }
 
 
-  /** Load additional SQL data (this is data that we want to add after we have
+  /**
+   * Load additional SQL data (this is data that we want to add after we have
    * CVRs, manifests, etc loaded for each county). This will mostly be used to load
    * assertion data into the database, simulating a call to the raire-service.
    */
@@ -441,7 +444,8 @@ public class WorkflowRunner extends Workflow {
    * load the colorado-rla init script into the database.
    * This loads in the properties in resources/test.properties, then overwrites the database
    * location with the one in the newly-created test container.
-   * @param testName Name of test instance.
+   *
+   * @param testName    Name of test instance.
    * @param postgresOpt The PostgreSQL container to use.
    */
   @Override
@@ -462,10 +466,11 @@ public class WorkflowRunner extends Workflow {
 
   /**
    * Utility that returns true if the given file path represents a JSON file.
+   *
    * @param filePath Path to the file (as a string).
    * @return true if the given file is a JSON file.
    */
-  private static boolean isJSON(final String filePath){
+  private static boolean isJSON(final String filePath) {
     return filePath.toLowerCase().endsWith(".json");
   }
 }
