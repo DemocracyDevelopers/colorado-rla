@@ -355,6 +355,7 @@ public abstract class Workflow  {
   /**
    * Given a vote in a specific contest, return the raw choices to be used in creating the
    * ACVR containing the vote.
+   * @param round The round (starts from 1).
    * @param countyID ID of the county to which the CVR belongs, as a string.
    * @param cvrNumber CVR number for the CVR containing the given vote.
    * @param info Details of the vote for the relevant contest.
@@ -362,11 +363,11 @@ public abstract class Workflow  {
    * @param instance Details of the workflow instance being run.
    * @return The list of original choices on the pre-interpreted CVR with the given imprinted ID.
    */
-  private List<String> translateToRawChoices(final String countyID, final int cvrNumber,
+  private List<String> translateToRawChoices(final int round, final String countyID, final int cvrNumber,
       final CVRContestInfo info, final String imprintedId, final Instance instance){
 
     // Check if the CVR's imprinted Id is present in the workflow instance
-    final Optional<List<String>> choices = instance.getActualChoices(countyID, imprintedId,
+    final Optional<List<String>> choices = instance.getActualChoices(round, countyID, imprintedId,
         info.contest().name());
 
     if(choices.isPresent()){
@@ -380,6 +381,7 @@ public abstract class Workflow  {
   /**
    * Given a vote in a specific contest (on a CVR that is being reaudited), return the raw choices
    * to be used in creating the ACVR containing the vote.
+   * @param round The round (starts from 1).
    * @param cvrNumber CVR number for the CVR containing the given vote.
    * @param info Details of the vote for the relevant contest.
    * @param imprintedId Imprinted identifier of the CVR containing the given vote.
@@ -388,7 +390,8 @@ public abstract class Workflow  {
    *              should return the choices as they are defined on the CVR.
    * @return The list of original choices on the pre-interpreted CVR with the given imprinted ID.
    */
-  private List<String> translateToRawChoicesReAudit(final int cvrNumber, final CVRContestInfo info,
+  // FIXME VT: Update for rounds.
+  private List<String> translateToRawChoicesReAudit(final int round, final int cvrNumber, final CVRContestInfo info,
       final String imprintedId, final Map<String,ReAuditDetails> entry){
 
     final String contestName = info.contest().name();
@@ -647,7 +650,7 @@ public abstract class Workflow  {
       // from there. Otherwise, we recreate the raw choices from info.choices().
       final List<String> disagreements = instance.getDisagreements(rec.imprintedID(), rec.countyID());
       final List<Map<String, Object>> contest_info = rec.contestInfo().stream().map(info ->
-          Map.of("choices", translateToRawChoices(rec.countyID().toString(), rec.cvrNumber(),
+          Map.of("choices", translateToRawChoices(round, rec.countyID().toString(), rec.cvrNumber(),
                   info, rec.imprintedID(), instance), "comment", "", "consensus",
               disagreements.contains(info.contest().name()) ? "NO" : "YES",
               "contest", info.contest().id())).toList();
@@ -666,7 +669,7 @@ public abstract class Workflow  {
           reaudited_cvr.put("reaudit", true);
 
           final List<Map<String, Object>> new_contest_info = rec.contestInfo().stream().map(info ->
-              Map.of("choices", translateToRawChoicesReAudit(rec.cvrNumber(), info,
+              Map.of("choices", translateToRawChoicesReAudit(round, rec.cvrNumber(), info,
                       rec.imprintedID(), entry), "comment", "", "consensus",
                   entry.containsKey(info.contest().name()) ? entry.get(info.contest().name()).consensus() :
                       "YES", "contest", info.contest().id())).toList();

@@ -118,7 +118,7 @@ public class WorkflowRunner extends Workflow {
   @DataProvider(name="single-workflow-provider")
   public Object[][] supplySingleWorkflowPath() {
 
-    String filename = "TinyIRV.INFINITE";
+    String filename = "SmallerStateAndCountyDiscrepanciesTwoRounds.json";
     Path path = Paths.get(pathToInstances, filename);
     Path normalizedPath = path.normalize();
     assertTrue(Files.isRegularFile(normalizedPath));
@@ -136,8 +136,8 @@ public class WorkflowRunner extends Workflow {
    * @param pathToInstance Path to the JSON workflow instance defining the test.
    * @throws InterruptedException
    */
-  @Test(dataProvider = "workflow-provider")
-  // @Test(dataProvider = "single-workflow-provider")
+  // @Test(dataProvider = "workflow-provider")
+  @Test(dataProvider = "single-workflow-provider")
   public void runInstance(final Path pathToInstance) throws InterruptedException {
     final String prefix = "[runInstance] " + pathToInstance;
 
