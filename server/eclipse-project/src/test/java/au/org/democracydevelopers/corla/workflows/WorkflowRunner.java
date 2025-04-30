@@ -28,7 +28,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static us.freeandfair.corla.asm.ASMState.AuditBoardDashboardState.WAITING_FOR_ROUND_SIGN_OFF;
-import static us.freeandfair.corla.asm.ASMState.AuditBoardDashboardState.WAITING_FOR_ROUND_START;
+import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_COMPLETE;
 import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_UNDERWAY;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.COMPLETE_AUDIT_INFO_SET;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
@@ -95,6 +95,7 @@ public class WorkflowRunner extends Workflow {
   /**
    * Returns a list of parameter lists to supply to the runWorkflow test method in this class.
    * Each parameter list contains one element -- a path to the workflow JSON instance to run.
+   *
    * @return A list of test parameter lists as a 2D array of objects.
    */
   @DataProvider(name = "workflow-provider")
@@ -147,8 +148,8 @@ public class WorkflowRunner extends Workflow {
    * @param pathToInstance Path to the JSON workflow instance defining the test.
    * @throws InterruptedException
    */
-  @Test(dataProvider = "workflow-provider")
-  // @Test(dataProvider = "single-workflow-provider")
+  // @Test(dataProvider = "workflow-provider")
+  @Test(dataProvider = "single-workflow-provider")
   public void runInstance(final Path pathToInstance) throws InterruptedException {
     final String prefix = "[runInstance] " + pathToInstance;
 
