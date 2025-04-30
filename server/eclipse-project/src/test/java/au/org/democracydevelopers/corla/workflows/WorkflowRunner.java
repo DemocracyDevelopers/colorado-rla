@@ -27,6 +27,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
+import static us.freeandfair.corla.asm.ASMState.AuditBoardDashboardState.WAITING_FOR_ROUND_SIGN_OFF;
 import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_COMPLETE;
 import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_UNDERWAY;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.COMPLETE_AUDIT_INFO_SET;
@@ -260,29 +261,49 @@ public class WorkflowRunner extends Workflow {
 
         // Log in as each county whose audit is not yet complete, and audit all ballots in sample.
         List<String> countiesWithAudits = new ArrayList<>();
-        List<TestAuditSession> sessions = new ArrayList<>();
+        List<TestAuditSession> sessionsForAudit = new ArrayList<>();
+        List<TestAuditSession> sessionsForSignOffOnly = new ArrayList<>();
         for (final int cty : countyIDs) {
           final String ctyID = String.valueOf(cty);
           final String asmState = roundStartStatus.get(ctyID).get(ASM_STATE).toString();
+          final String auditBoardAsmState = roundStartStatus.get(ctyID).get(AUDIT_BOARD_ASM_STATE).toString();
           // Check that the county's state is appropriate for starting the audit. There are several
-          // different states, som eof them quite unintuitive. For example, a county with no ballots
-          // to audit initially is in the WAITING_FOR_ROUND_SIGNOFF state.
+          // different states, some of them quite unintuitive.
           // Note that I'm not certain about ROUND_IN_PROGRESS - think that state shouldn't occur here.
           if (asmState.equalsIgnoreCase(COUNTY_AUDIT_UNDERWAY.toString())) {
-            sessions.add(countyAuditInitialise(cty));
-            countiesWithAudits.add(ctyID);
+            // Everyone has to initialize their session, regardless of whether they're actually auditing
+            // ballots or only signing off.
+            TestAuditSession session = countyAuditInitialise(cty);
+            // If the county has no actual ballot samples, the audit board still has to sign off on that.
+            if (auditBoardAsmState.equalsIgnoreCase(WAITING_FOR_ROUND_SIGN_OFF.toString())) {
+              sessionsForSignOffOnly.add(session);
+            } else {
+              // If they're not waiting for round sign-off, they have real auditing to do.
+              sessionsForAudit.add(session);
+              countiesWithAudits.add(ctyID);
+            }
           }
-
         }
+
+        dashboard = getDoSDashBoardRefreshResponse();
 
         // ACVR uploads for each county. Cannot run in parallel as corla does not like
         // simultaneous database accesses.
-        for (final TestAuditSession entry : sessions) {
+        for (final TestAuditSession entry : sessionsForAudit) {
           auditCounty(rounds + 1, entry, instance);
+          countySignOffLogout(entry);
         }
 
-        // Audit board sign off for each county.
-        for (final TestAuditSession entry : sessions) {
+        dashboard = getDoSDashBoardRefreshResponse();
+
+        // Audit board sign off for each county that did an audit.
+        /*
+        for (final TestAuditSession entry : sessionsForAudit) {
+          countySignOffLogout(entry);
+        } */
+
+        // Audit board sign off for each county that had zero audited ballots but has to sign off anyway.
+        for (final TestAuditSession entry : sessionsForSignOffOnly) {
           countySignOffLogout(entry);
         }
 
@@ -424,7 +445,7 @@ public class WorkflowRunner extends Workflow {
       checkTabulateCountyPluralityReport(getReportAsCSV("tabulate_county_plurality"), instance);
 
       postgres.stop();
-    } catch (IOException e) {
+    } catch(IOException e){
       final String msg = prefix + " " + e.getMessage();
       LOGGER.error(msg);
       throw new RuntimeException(msg);

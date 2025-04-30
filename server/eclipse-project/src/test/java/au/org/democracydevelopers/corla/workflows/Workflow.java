@@ -119,10 +119,21 @@ public abstract class Workflow  {
   protected static final String dataPath = "src/test/resources/CSVs/";
 
   /**
+   * Default audit board names.
+   */
+  private final List<Map<String,String>> auditBoard = List.of(
+      Map.of("first_name","V", "last_name","T",
+          "political_party","Unaffiliated"),
+      Map.of("first_name","M", "last_name","B",
+          "political_party","Unaffiliated")
+  );
+
+  /**
    * Strings for colorado-rla JSON structures.
    */
   protected static final String ASM_STATE = "asm_state";
   protected static final String AUDIT = "audit";
+  protected static final String AUDIT_BOARD_ASM_STATE = "audit_board_asm_state";
   protected static final String AUDIT_INFO = "audit_info";
   protected static final String CONTEST = "contest";
   protected static final String CONTESTID = "contestId";
@@ -314,10 +325,14 @@ public abstract class Workflow  {
     final JSONObject params = createBody(Map.of("audit_board",
         session.auditBoard, "index", session.index()));
 
-    given().filter(session.filter())
-        .header("Content-Type", "application/json")
-        .body(params.toJSONString())
-        .post("/audit-board-sign-in");
+      given().filter(session.filter())
+          .header("Content-Type", "application/json")
+          .body(params.toJSONString())
+          .post("/audit-board-sign-in");
+      // FIXME This sometimes doesn't work, possibly because of contention.
+      //     .then()
+      //    .assertThat()
+      //    .statusCode(HttpStatus.SC_OK);
   }
 
   /**
@@ -333,9 +348,23 @@ public abstract class Workflow  {
     given().filter(session.filter())
         .header("Content-Type", "application/json")
         .body(params.toJSONString())
-        .post("/sign-off-audit-round");
+        .post("/sign-off-audit-round")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
   }
 
+  /**
+   * Intended for audit boards that have to do nothing other than sign off. Log in, sign off on the
+   * (empty) audit, then sign out.
+   */
+  protected void countyLogInSignOffLogout(final int countyID) {
+    final String user = "countyadmin" + countyID;
+    final SessionFilter filter = doLogin(user);
+
+    TestAuditSession session = new TestAuditSession(filter, auditBoard, 0, countyID);
+    countySignOffLogout(session);
+  }
   /**
    * Sign off the current audit round for the given county, and logout of the session.
    * @param session TestAuditSession capturing an audit session for a given county.
@@ -387,7 +416,6 @@ public abstract class Workflow  {
    *              should return the choices as they are defined on the CVR.
    * @return The list of original choices on the pre-interpreted CVR with the given imprinted ID.
    */
-  // FIXME VT: Update for rounds.
   private List<String> translateToRawChoicesReAudit(final int cvrNumber, final CVRContestInfo info,
       final String imprintedId, final Map<String,ReAuditDetails> entry){
 
@@ -462,14 +490,21 @@ public abstract class Workflow  {
         .body(createBody(Map.of("count", 1)).toJSONString())
         .post("/set-audit-board-count");
 
-    final List<Map<String,String>> auditBoard = List.of(
-        Map.of("first_name","V", "last_name","T",
-            "political_party","Unaffiliated"),
-        Map.of("first_name","M", "last_name","B",
-            "political_party","Unaffiliated")
-    );
+    // Get the audit board ASM state
+    final JsonPath auditBoardASMState = given().filter(filter)
+        .header("Content-Type", "application/json")
+        .get("/audit-board-asm-state")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK)
+        .extract()
+        .body()
+        .jsonPath();
 
-    // Sign in the audit board
+    LOGGER.info(String.format("Audit board ASM state for County %d: %s.",
+        number, auditBoardASMState.get("current_state")));
+
+    // Sign in the default audit board
     final TestAuditSession session = new TestAuditSession(filter, auditBoard, 0, number);
     auditBoardSignIn(session);
 
