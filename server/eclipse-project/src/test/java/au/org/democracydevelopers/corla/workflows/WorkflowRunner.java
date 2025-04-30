@@ -27,7 +27,9 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
+import static us.freeandfair.corla.asm.ASMState.AuditBoardDashboardState.WAITING_FOR_ROUND_SIGN_OFF;
 import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_COMPLETE;
+import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_UNDERWAY;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.COMPLETE_AUDIT_INFO_SET;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.PARTIAL_AUDIT_INFO_SET;
@@ -67,7 +69,7 @@ import us.freeandfair.corla.persistence.Persistence;
  * uploading audited ballots; reauditing ballots; and executing rounds until there are no further
  * ballots to sample. The workflow ends when the audit ends. Reporting is not tested in these workflows.
  */
-@Test(enabled=true)
+@Test(enabled = true)
 public class WorkflowRunner extends Workflow {
 
   /**
@@ -95,7 +97,7 @@ public class WorkflowRunner extends Workflow {
       pathList = stream.map(Path::normalize)
           .filter(Files::isRegularFile)
           .filter(p -> isJSON(p.toString()))
-          .collect(Collectors.toList());
+          .toList();
     } catch (IOException e) {
       final String msg = prefix + " " + e.getMessage();
       LOGGER.error(msg);
@@ -117,7 +119,7 @@ public class WorkflowRunner extends Workflow {
   @DataProvider(name = "single-workflow-provider")
   public Object[][] supplySingleWorkflowPath() {
 
-    String filename = "SmallerStateAndCountyDiscrepanciesTwoRounds.json";
+    String filename = "TinyIRV.json";
     Path path = Paths.get(pathToInstances, filename);
     Path normalizedPath = path.normalize();
     assertTrue(Files.isRegularFile(normalizedPath));
@@ -132,6 +134,7 @@ public class WorkflowRunner extends Workflow {
    * phantoms, which ballots to treat as phantoms, expected diluted margins and sample sizes,
    * which ballots to simulate discrepancies for, and expected end of round states ...), run
    * the test audit and verify that the expected outcomes arise.
+   *
    * @param pathToInstance Path to the JSON workflow instance defining the test.
    * @throws InterruptedException
    */
@@ -155,14 +158,14 @@ public class WorkflowRunner extends Workflow {
 
       assertEquals(cvrs.size(), manifests.size());
 
-      for(int i = 0; i < manifests.size(); ++i){
-        uploadCounty(i+1, MANIFEST_FILETYPE, manifests.get(i), manifests.get(i) + ".sha256sum");
+      for (int i = 0; i < manifests.size(); ++i) {
+        uploadCounty(i + 1, MANIFEST_FILETYPE, manifests.get(i), manifests.get(i) + ".sha256sum");
       }
 
       // Upload all the CVRs. The order is important because it's an error to try to import a
       // manifest while the CVRs are being read.
-      for(int i = 0; i < cvrs.size()  ; ++i){
-        uploadCounty(i+1, CVR_FILETYPE, cvrs.get(i), cvrs.get(i) + ".sha256sum");
+      for (int i = 0; i < cvrs.size(); ++i) {
+        uploadCounty(i + 1, CVR_FILETYPE, cvrs.get(i), cvrs.get(i) + ".sha256sum");
       }
 
       final int countyCount = cvrs.size();
@@ -251,29 +254,51 @@ public class WorkflowRunner extends Workflow {
 
         dashboard = getDoSDashBoardRefreshResponse();
 
-        final Map<String, Map<String,Object>> roundStartStatus = dashboard.get(COUNTY_STATUS);
+        final Map<String, Map<String, Object>> roundStartStatus = dashboard.get(COUNTY_STATUS);
 
         // Log in as each county whose audit is not yet complete, and audit all ballots in sample.
         List<String> countiesWithAudits = new ArrayList<>();
-        List<TestAuditSession> sessions = new ArrayList<>();
+        List<TestAuditSession> sessionsForAudit = new ArrayList<>();
+        List<TestAuditSession> sessionsForSignOffOnly = new ArrayList<>();
         for (final int cty : countyIDs) {
           final String ctyID = String.valueOf(cty);
           final String asmState = roundStartStatus.get(ctyID).get(ASM_STATE).toString();
-          if (asmState.equalsIgnoreCase(COUNTY_AUDIT_COMPLETE.toString()))
-            continue;
-
-          sessions.add(countyAuditInitialise(cty));
-          countiesWithAudits.add(ctyID);
+          final String auditBoardAsmState = roundStartStatus.get(ctyID).get(AUDIT_BOARD_ASM_STATE).toString();
+          // Check that the county's state is appropriate for starting the audit. There are several
+          // different states, some of them quite unintuitive.
+          // Note that I'm not certain about ROUND_IN_PROGRESS - think that state shouldn't occur here.
+          if (asmState.equalsIgnoreCase(COUNTY_AUDIT_UNDERWAY.toString())) {
+            // Everyone has to initialize their session, regardless of whether they're actually auditing
+            // ballots or only signing off.
+            TestAuditSession session = countyAuditInitialise(cty);
+            // If the county has no actual ballot samples, the audit board still has to sign off on that.
+            if (auditBoardAsmState.equalsIgnoreCase(WAITING_FOR_ROUND_SIGN_OFF.toString())) {
+              sessionsForSignOffOnly.add(session);
+            } else {
+              // If they're not waiting for round sign-off, they have real auditing to do.
+              sessionsForAudit.add(session);
+              countiesWithAudits.add(ctyID);
+            }
+          }
         }
 
         // ACVR uploads for each county. Cannot run in parallel as corla does not like
         // simultaneous database accesses.
-        for (final TestAuditSession entry : sessions) {
+        for (final TestAuditSession entry : sessionsForAudit) {
           auditCounty(rounds + 1, entry, instance);
+          countySignOffLogout(entry);
         }
 
-        // Audit board sign off for each county.
-        for (final TestAuditSession entry : sessions) {
+        dashboard = getDoSDashBoardRefreshResponse();
+
+        // Audit board sign off for each county that did an audit.
+        /*
+        for (final TestAuditSession entry : sessionsForAudit) {
+          countySignOffLogout(entry);
+        } */
+
+        // Audit board sign off for each county that had zero audited ballots but has to sign off anyway.
+        for (final TestAuditSession entry : sessionsForSignOffOnly) {
           countySignOffLogout(entry);
         }
 
@@ -309,7 +334,7 @@ public class WorkflowRunner extends Workflow {
             final int otherCount = contestResult.get(OTHER_COUNT);
             final int disagreementCount = contestResult.get(DISAGREEMENTS);
 
-            if(!discrepancies.containsKey(dbID)){
+            if (!discrepancies.containsKey(dbID)) {
               throw new RuntimeException("Likely incorrectly specified contest name (" +
                   contestName + ") in workflow JSON. You cannot check discrepancies" +
                   "for non-targeted contests - they should all be zero.");
@@ -324,7 +349,7 @@ public class WorkflowRunner extends Workflow {
             // Record so that we can cross-check the reports against what should be the
             // final discrepancy counts.
             final boolean mapContainsContest = lastDiscrepancyCounts.containsKey(contestName);
-            Map<String,Integer> countMap =  mapContainsContest ?
+            Map<String, Integer> countMap = mapContainsContest ?
                 lastDiscrepancyCounts.get(contestName) : new HashMap<>();
 
             countMap.put(ONE_OVER, oneOverCount);
@@ -334,7 +359,7 @@ public class WorkflowRunner extends Workflow {
             countMap.put(OTHER, otherCount);
             countMap.put(DISAGREEMENTS, disagreementCount);
 
-            if(!mapContainsContest) {
+            if (!mapContainsContest) {
               lastDiscrepancyCounts.put(contestName, countMap);
             }
           }
@@ -346,9 +371,9 @@ public class WorkflowRunner extends Workflow {
         final Optional<Map<String, Map<String, Integer>>> countyResults = instance.getRoundCountyResult(rounds + 1);
 
         int maxBallotsRemaining = 0;
-        if(countyResults.isPresent()){
-          for(final Map.Entry<String, Map<String, Integer>> entry : countyResults.get().entrySet()){
-            if(!countiesWithAudits.contains(entry.getKey()))
+        if (countyResults.isPresent()) {
+          for (final Map.Entry<String, Map<String, Integer>> entry : countyResults.get().entrySet()) {
+            if (!countiesWithAudits.contains(entry.getKey()))
               continue;
 
             final Map<String,Integer> expStatus = entry.getValue();
@@ -364,7 +389,7 @@ public class WorkflowRunner extends Workflow {
           }
         }
 
-        if(maxOptimistic > 0 || maxBallotsRemaining > 0){
+        if (maxOptimistic > 0 || maxBallotsRemaining > 0) {
           auditNotFinished = true;
         }
 
@@ -374,19 +399,19 @@ public class WorkflowRunner extends Workflow {
       // Check that the number of rounds completed is as expected. Note that this may
       // not be specified in the instance.
       final Integer expectedRounds = instance.getExpectedRounds();
-      if(expectedRounds != null){
+      if (expectedRounds != null) {
         assertEquals(expectedRounds.intValue(), rounds);
       }
 
       // Check that the number of audited ballots for targeted contests meets expectations.
-      final Map<String,Integer> expectedAuditedBallots = instance.getExpectedAuditedBallots();
+      final Map<String, Integer> expectedAuditedBallots = instance.getExpectedAuditedBallots();
       final List<String> content = getReportAsCSV("contest");
-      for(final String line : content){
+      for (final String line : content) {
         final String[] tokens = line.split(",");
-        for(final String contest : targets.keySet()){
-          if(tokens[0].equalsIgnoreCase(contest)){
+        for (final String contest : targets.keySet()) {
+          if (tokens[0].equalsIgnoreCase(contest)) {
             final int expected = expectedAuditedBallots.get(contest);
-            assert(Integer.parseInt(tokens[9]) >= expected);
+            assert (Integer.parseInt(tokens[9]) >= expected);
             break;
           }
         }
@@ -415,8 +440,7 @@ public class WorkflowRunner extends Workflow {
       checkTabulateCountyPluralityReport(getReportAsCSV("tabulate_county_plurality"), instance);
 
       postgres.stop();
-    }
-    catch(IOException e){
+    } catch (IOException e) {
       final String msg = prefix + " " + e.getMessage();
       LOGGER.error(msg);
       throw new RuntimeException(msg);
