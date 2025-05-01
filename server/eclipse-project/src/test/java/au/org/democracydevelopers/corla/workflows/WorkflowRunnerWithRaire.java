@@ -21,36 +21,26 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
-import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
 import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
-import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.testng.annotations.Parameters;
 import us.freeandfair.corla.persistence.Persistence;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static io.restassured.RestAssured.given;
-import static java.lang.Math.max;
 import static org.testng.Assert.*;
-import static us.freeandfair.corla.Main.main;
-import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_COMPLETE;
-import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
 
 /**
  * This workflow runner is designed to run in a UAT environment in which the raire service, colorado-rla
@@ -110,282 +100,13 @@ public class WorkflowRunnerWithRaire extends Workflow {
     try {
       final Path pathToInstance = Paths.get(workflowFile);
       LOGGER.info(String.format("%s %s %s.", prefix, "running workflow", pathToInstance));
-
       runMainAndInitializeDB("Workflow with raire", Optional.empty());
 
-      // Convert data in the JSON workflow file to a workflow Instance.
-      ObjectMapper toJson = new ObjectMapper();
-      final Instance instance = toJson.readValue(pathToInstance.toFile(), Instance.class);
+      // Do the workflow.
+      doWorkflow(pathToInstance, Optional.empty());
 
-      // Upload all the manifests and CVRs as defined in the Instance.
-      final List<String> cvrs = instance.getCVRs();
-      final List<String> manifests = instance.getManifests();
-
-      assertEquals(cvrs.size(), manifests.size());
-
-      for(int i = 0; i < manifests.size(); ++i){
-        uploadCounty(i+1, MANIFEST_FILETYPE, manifests.get(i), manifests.get(i) + ".sha256sum");
-      }
-
-      // Upload all the CVRs. The order is important because it's an error to try to import a
-      // manifest while the CVRs are being read.
-      for(int i = 0; i < cvrs.size()  ; ++i){
-        uploadCounty(i+1, CVR_FILETYPE, cvrs.get(i), cvrs.get(i) + ".sha256sum");
-      }
-
-      final int countyCount = cvrs.size();
-      final Set<Integer> countyIDs = IntStream.rangeClosed(1,countyCount).boxed().collect(Collectors.toSet());
-
-      // Wait while the CVRs (and manifests) are uploaded.
-      assertTrue(uploadSuccessfulWithin(600, countyIDs, CVR_JSON));
-      assertTrue(uploadSuccessfulWithin(20, countyIDs, MANIFEST_JSON));
-
-      // Get the DoSDashboard refresh response; sanity check for initial state.
-      JsonPath dashboard = getDoSDashBoardRefreshResponse();
-      assertEquals(dashboard.get(ASM_STATE), DOS_INITIAL_STATE.toString());
-      assertEquals(dashboard.getMap(AUDIT_INFO+"."+CANONICAL_CHOICES).toString(), "{}");
-      assertNull(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON));
-      assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
-
-      // Provide a risk limit, canonicalisation file, and seed as defined in the Instance.
-      updateAuditInfo(instance.getCanonicalisationFile(), instance.getRiskLimit());
-      dashboard = getDoSDashBoardRefreshResponse();
-      assertEquals(instance.getRiskLimit()
-          .compareTo(new BigDecimal(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON).toString())), 0);
-
-      // There should be canonical contests for each county.
-      assertEquals(countyCount,
-          dashboard.getMap(AUDIT_INFO + "." + CANONICAL_CONTESTS).values().size());
-
-      // Check that the seed is still null.
-      assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
-      assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
-
-      canonicalise(instance, true);
-
-      makeAssertionData(Optional.empty(), instance.getSQLs());
-
-      dashboard = getDoSDashBoardRefreshResponse();
-
-      // Check that the right number of IRV contests are present
-      final List<String> irvContests = instance.getIRVContests();
-      final Map<String,String> targets = instance.getTargetedContests();
-      assertEquals(irvContests.size(), dashboard.getList("generate_assertions_summaries").size());
-
-      // Choose targeted contests for audit as specified in the Instance.
-      final Map<String,String> contestToDBID = targetContests(targets);
-
-      // Set the seed (as specified in the Instance).
-      setSeed(instance.getSeed());
-
-      // The ASM state for the dashboard should be COMPLETE_AUDIT_INFO_SET.
-      dashboard = getDoSDashBoardRefreshResponse();
-      assertEquals(dashboard.get(AUDIT_INFO + "." + SEED), instance.getSeed());
-      assertEquals(dashboard.get(ASM_STATE), COMPLETE_AUDIT_INFO_SET.toString());
-
-      // Estimate sample sizes; and then verify that they are as expected.
-      // For each targeted IRV contest, check that the set of assertions: (i) is not empty; (ii) has
-      // the correct minimum diluted margin; and (ii) has resulted in the correct sample size estimate.
-      Map<String, EstimateSampleSizes.EstimateData> sampleSizes = getSampleSizeEstimates();
-      assertFalse(sampleSizes.isEmpty());
-
-      final Map<String,Integer> expectedSamples = instance.getExpectedSamples();
-      final Map<String,Double> expectedMargins = instance.getDilutedMargins();
-      for(final String c : targets.keySet()) {
-        if(!sampleSizes.containsKey(c)){
-          throw new RuntimeException("When verifying sample sizes, the targeted contest name "
-              + c + " does not exist in sample sizes data structure returned by CORLA. " +
-              "Likely incorrectly specified contest name in workflow JSON.");
-        }
-        verifySampleSize(c, expectedMargins.get(c), sampleSizes.get(c).estimatedSamples(),
-            expectedSamples.get(c), irvContests.contains(c));
-      }
-
-      // Run audit rounds until the number of expected samples required for each targeted
-      // contest is zero. Check that the number of rounds completed is as expected for the
-      // Instance, and that the end of round state for targeted contests is as expected
-      // for the Instance.
-      boolean auditNotFinished = true;
-      int rounds = 0;
-
-      // Keep track of last executed rounds' discrepancy counts
-      Map<String,Map<String,Integer>> lastDiscrepancyCounts = new HashMap<>();
-
-      while(auditNotFinished) {
-
-        // Start Audit Round
-        startAuditRound();
-
-        dashboard = getDoSDashBoardRefreshResponse();
-
-        final Map<String, Map<String,Object>> roundStartStatus = dashboard.get(COUNTY_STATUS);
-
-        // Log in as each county whose audit is not yet complete, and audit all ballots in sample.
-        List<String> countiesWithAudits = new ArrayList<>();
-        List<TestAuditSession> sessions = new ArrayList<>();
-        for (final int cty : countyIDs) {
-          final String ctyID = String.valueOf(cty);
-          final String asmState = roundStartStatus.get(ctyID).get(ASM_STATE).toString();
-          if(asmState.equalsIgnoreCase(COUNTY_AUDIT_COMPLETE.toString()))
-            continue;
-
-          sessions.add(countyAuditInitialise(cty));
-          countiesWithAudits.add(ctyID);
-        }
-
-        // ACVR uploads for each county. Cannot run in parallel as corla does not like
-        // simultaneous database accesses.
-        for (final TestAuditSession entry : sessions) {
-          auditCounty(rounds+1, entry, instance);
-        }
-
-        // Audit board sign off for each county.
-        for (final TestAuditSession entry : sessions) {
-          countySignOffLogout(entry);
-        }
-
-        // Check that there are no more ballots to sample across all counties
-        dashboard = getDoSDashBoardRefreshResponse();
-        final Map<String,Integer> statusOptBallotsToAudit = dashboard.get(OPTIMISTIC_BALLOTS);
-        final Map<String, Map<String,Integer>> discrepancies = dashboard.get(DISCREPANCY_COUNT);
-
-        auditNotFinished = false;
-
-        // Verify that the result of this round is what we expected in terms of number of
-        // estimated and optimistic ballots to audit for each contest mentioned in the associated
-        // field in the instance. Also test that the resulting discrepancy counts are as expected.
-        final Optional<Map<String,Map<String,Integer>>> results = instance.getRoundContestResult(rounds+1);
-        if(results.isPresent()) {
-          final Map<String, Map<String, Integer>> roundResults = results.get();
-
-          for (final String contestName : roundResults.keySet()) {
-            if(!contestToDBID.containsKey(contestName)){
-              throw new RuntimeException("When verifying round results, the contest name "
-                  + contestName + " does not exist in contest-database ID map. " +
-                  "Likely incorrectly specified contest name in workflow JSON.");
-            }
-
-            final String dbID = contestToDBID.get(contestName);
-            final Map<String, Integer> contestResult = roundResults.get(contestName);
-
-            final int oneOverCount = contestResult.get(ONE_OVER_COUNT);
-            final int oneUnderCount = contestResult.get(ONE_UNDER_COUNT);
-            final int twoOverCount = contestResult.get(TWO_OVER_COUNT);
-            final int twoUnderCount = contestResult.get(TWO_UNDER_COUNT);
-            final int otherCount = contestResult.get(OTHER_COUNT);
-            final int disagreementCount = contestResult.get(DISAGREEMENTS);
-
-            if(!discrepancies.containsKey(dbID)){
-              throw new RuntimeException("Likely incorrectly specified contest name (" +
-                  contestName + ") in workflow JSON.");
-            }
-            final Map<String, Integer> contestDiscrepancies = discrepancies.get(dbID);
-            assertEquals(contestDiscrepancies.get(ONE_OVER).intValue(), oneOverCount);
-            assertEquals(contestDiscrepancies.get(ONE_UNDER).intValue(), oneUnderCount);
-            assertEquals(contestDiscrepancies.get(OTHER).intValue(), otherCount);
-            assertEquals(contestDiscrepancies.get(TWO_OVER).intValue(), twoOverCount);
-            assertEquals(contestDiscrepancies.get(TWO_UNDER).intValue(), twoUnderCount);
-
-            // Record so that we can cross-check the reports against what should be the
-            // final discrepancy counts.
-            final boolean mapContainsContest = lastDiscrepancyCounts.containsKey(contestName);
-            Map<String,Integer> countMap =  mapContainsContest ?
-                lastDiscrepancyCounts.get(contestName) : new HashMap<>();
-
-            countMap.put(ONE_OVER, oneOverCount);
-            countMap.put(TWO_OVER, twoOverCount);
-            countMap.put(ONE_UNDER, oneUnderCount);
-            countMap.put(TWO_UNDER, twoUnderCount);
-            countMap.put(OTHER, otherCount);
-            countMap.put(DISAGREEMENTS, disagreementCount);
-
-            if(!mapContainsContest) {
-              lastDiscrepancyCounts.put(contestName, countMap);
-            }
-          }
-        }
-
-        final int maxOptimistic = Collections.max(statusOptBallotsToAudit.values());
-
-        final Map<String, Map<String,Object>> status = dashboard.get(COUNTY_STATUS);
-        final Optional<Map<String,Map<String,Integer>>> countyResults = instance.getRoundCountyResult(rounds+1);
-
-        int maxBallotsRemaining = 0;
-        if(countyResults.isPresent()){
-          for(final Map.Entry<String, Map<String, Integer>> entry : countyResults.get().entrySet()){
-            if(!countiesWithAudits.contains(entry.getKey()))
-              continue;
-
-            final Map<String,Integer> expStatus = entry.getValue();
-            final Map<String,Object> countyStatus = status.get(entry.getKey());
-
-            final int ballotsRemaining = Integer.parseInt(countyStatus.get(BALLOTS_REMAINING).toString());
-            final int estimatedBallots = Integer.parseInt(countyStatus.get(ESTIMATED_BALLOTS).toString());
-
-            assertEquals(ballotsRemaining, expStatus.get(BALLOTS_REMAINING).intValue());
-            assertEquals(estimatedBallots, expStatus.get(ESTIMATED_BALLOTS).intValue());
-
-            maxBallotsRemaining = max(ballotsRemaining, maxBallotsRemaining);
-          }
-        }
-
-        if(maxOptimistic > 0 || maxBallotsRemaining > 0){
-          auditNotFinished = true;
-        }
-
-        rounds += 1;
-      }
-
-      // Check that the number of rounds completed is as expected. Note that this may
-      // not be specified in the instance.
-      final Integer expectedRounds = instance.getExpectedRounds();
-      if(expectedRounds != null){
-        assertEquals(expectedRounds.intValue(), rounds);
-      }
-
-      // Check that the number of audited ballots for targeted contests meets expectations.
-      final Map<String,Integer> expectedAuditedBallots = instance.getExpectedAuditedBallots();
-      final List<String> content = getReportAsCSV("contest");
-      for(final String line : content){
-        final String[] tokens = line.split(",");
-        for(final String contest : targets.keySet()){
-          if(tokens[0].equalsIgnoreCase(contest)){
-            final int expected = expectedAuditedBallots.get(contest);
-            assert(Integer.parseInt(tokens[9]) >= expected);
-            break;
-          }
-        }
-      }
-
-      // Verify contents of selected reports that are downloadable as CSV.
-      // Check the summarize_IRV report.
-      checkSummarizeIRVReport(getReportAsCSV("summarize_IRV"), instance);
-
-      // Check the contest report
-      checkContestReport(getReportAsCSV("contest"), instance, lastDiscrepancyCounts);
-
-      // Check the contests_by_county report
-      checkContestsByCountyReport(getReportAsCSV("contest_by_county"), instance);
-
-      // Check the contest_selection report
-      checkContestSelectionReport(getReportAsCSV("contest_selection"), instance);
-
-      // Check the seed report
-      checkSeedReport(getReportAsCSV("seed"), instance);
-
-      // Check the tabulate_plurality report
-      checkTabulatePluralityReport(getReportAsCSV("tabulate_plurality"), instance);
-
-      // Check the tabulate_county_plurality report
-      checkTabulateCountyPluralityReport(getReportAsCSV("tabulate_county_plurality"), instance);
-
-      // Not necessary for existing database.
-      // postgres.stop();
-    }
-    // TODO print out a useful error message for command-line execution.
-    // catch InvalidPathException and warn appropriately.
-    catch(IOException e){
-      final String msg = prefix + " " + e.getMessage();
+    } catch(IOException e){
+      final String msg = prefix + " " + e.getMessage() + ". Check that the path and filename are correct.";
       LOGGER.error(msg);
       throw new RuntimeException(msg);
     }
@@ -432,12 +153,4 @@ public class WorkflowRunnerWithRaire extends Workflow {
     Persistence.beginTransaction();
   }
 
-  /**
-   * Utility that returns true if the given file path represents a JSON file.
-   * @param filePath Path to the file (as a string).
-   * @return true if the given file is a JSON file.
-   */
-  private static boolean isJSON(final String filePath){
-    return filePath.toLowerCase().endsWith(".json");
-  }
 }
