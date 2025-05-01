@@ -649,17 +649,6 @@ public abstract class Workflow  {
   }
 
   /**
-   * Intended for audit boards that have to do nothing other than sign off. Log in, sign off on the
-   * (empty) audit, then sign out.
-   */
-  protected void countyLogInSignOffLogout(final int countyID) {
-    final String user = "countyadmin" + countyID;
-    final SessionFilter filter = doLogin(user);
-
-    TestAuditSession session = new TestAuditSession(filter, auditBoard, 0, countyID);
-    countySignOffLogout(session);
-  }
-  /**
    * Sign off the current audit round for the given county, and logout of the session.
    * @param session TestAuditSession capturing an audit session for a given county.
    */
