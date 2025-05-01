@@ -115,8 +115,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
   /**
    * Connect to the raire service and tell it to generate the assertions.
    * @param postgres The database (expected to be the same one raire uses).
-   * @param SQLfiles Not used. FIXME it's possible we'll still want to load some sql,
-   *                 e.g. for auth init.
+   * @param SQLfiles Not used.
    */
   protected void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgres, final List<String> SQLfiles) {
     // This should not be called with 'useRaire' true in this workflow.
@@ -134,8 +133,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
   }
 
   /**
-   * Run everything with the database and raire url set up in test.properties. FIXME check whether
-   * we need the sql setup script. I guess it depends on what's already in the database.
+   * Run everything with the database and raire url set up in test.properties.
    * This loads in the properties in resources/test.properties.
    * FIXME get testName to be the full (relative) path of the config file. Then this can be used
    * for either src/test/resources/test.properties or src/main/resources/us/freeandfair/corla/default.properties
