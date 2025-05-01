@@ -36,16 +36,14 @@ import us.freeandfair.corla.persistence.Persistence;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
+import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static io.restassured.RestAssured.given;
-import static io.restassured.RestAssured.post;
 import static java.lang.Math.max;
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.Main.main;
@@ -419,7 +417,10 @@ public class WorkflowRunnerWithRaire extends Workflow {
   protected void runMainAndInitializeDB(String testName, Optional<PostgreSQLContainer<?>> postgres) {
     assertTrue(postgres.isEmpty());
     testUtils.log(LOGGER, "[runMainAndInitializeDB] running workflow " + testName + ".");
-    main("src/test/resources/test.properties");
+    // Don't need to start main because we assume it's already running.
+    // main("src/test/resources/test.properties");
+    Properties config = loadProperties();
+    Persistence.setProperties(config);
     Persistence.beginTransaction();
   }
 

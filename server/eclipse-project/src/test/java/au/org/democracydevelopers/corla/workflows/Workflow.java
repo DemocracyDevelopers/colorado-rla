@@ -188,6 +188,7 @@ public abstract class Workflow  {
 
   @BeforeClass
   public void setup() {
+    // FIXME read from config.
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
   }
