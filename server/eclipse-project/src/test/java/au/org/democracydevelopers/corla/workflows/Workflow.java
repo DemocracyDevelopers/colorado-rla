@@ -355,17 +355,6 @@ public abstract class Workflow  {
   }
 
   /**
-   * Intended for audit boards that have to do nothing other than sign off. Log in, sign off on the
-   * (empty) audit, then sign out.
-   */
-  protected void countyLogInSignOffLogout(final int countyID) {
-    final String user = "countyadmin" + countyID;
-    final SessionFilter filter = doLogin(user);
-
-    TestAuditSession session = new TestAuditSession(filter, auditBoard, 0, countyID);
-    countySignOffLogout(session);
-  }
-  /**
    * Sign off the current audit round for the given county, and logout of the session.
    * @param session TestAuditSession capturing an audit session for a given county.
    */
@@ -488,7 +477,10 @@ public abstract class Workflow  {
     given().filter(filter)
         .header("Content-Type", "application/json")
         .body(createBody(Map.of("count", 1)).toJSONString())
-        .post("/set-audit-board-count");
+        .post("/set-audit-board-count")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
 
     // Get the audit board ASM state
     final JsonPath auditBoardASMState = given().filter(filter)
@@ -598,7 +590,10 @@ public abstract class Workflow  {
     given().filter(filter)
         .header("Content-Type", "application/json")
         .body(params.toJSONString())
-        .post("/upload-audit-cvr");
+        .post("/upload-audit-cvr")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
   }
 
   /**
@@ -895,11 +890,6 @@ public abstract class Workflow  {
    * calling raire or by retrieving assertions and related data from an sql file.
    */
   protected abstract void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgres, final List<String> SQLfiles);
-
-  protected void generateAssertions(final PostgreSQLContainer<?> postgres, final String sqlPath, final double timeLimitSeconds)
-  {
-    TestClassWithDatabase.runSQLSetupScript(postgres, sqlPath);
-  }
 
   /**
    * Verify that some assertions are present for the given contest, that the minimum diluted

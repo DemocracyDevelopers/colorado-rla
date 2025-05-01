@@ -28,7 +28,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static us.freeandfair.corla.asm.ASMState.AuditBoardDashboardState.WAITING_FOR_ROUND_SIGN_OFF;
-import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_COMPLETE;
+import static us.freeandfair.corla.asm.ASMState.AuditBoardDashboardState.WAITING_FOR_ROUND_START;
 import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_UNDERWAY;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.COMPLETE_AUDIT_INFO_SET;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
@@ -100,7 +100,7 @@ public class WorkflowRunner extends Workflow {
       pathList = stream.map(Path::normalize)
           .filter(Files::isRegularFile)
           .filter(p -> isJSON(p.toString()))
-          .collect(Collectors.toList());
+          .toList();
     } catch (IOException e) {
       final String msg = prefix + " " + e.getMessage();
       LOGGER.error(msg);
@@ -141,8 +141,8 @@ public class WorkflowRunner extends Workflow {
    * @param pathToInstance Path to the JSON workflow instance defining the test.
    * @throws InterruptedException
    */
-  // @Test(dataProvider = "workflow-provider")
-  @Test(dataProvider = "single-workflow-provider")
+  @Test(dataProvider = "workflow-provider")
+  // @Test(dataProvider = "single-workflow-provider")
   public void runInstance(final Path pathToInstance) throws InterruptedException {
     final String prefix = "[runInstance] " + pathToInstance;
 
@@ -193,7 +193,7 @@ public class WorkflowRunner extends Workflow {
 
       // There should be canonical contests for each county.
       assertEquals(countyCount,
-          dashboard.getMap(AUDIT_INFO + "." + CANONICAL_CONTESTS).values().size());
+          dashboard.getMap(AUDIT_INFO + "." + CANONICAL_CONTESTS).size());
 
       // Check that the seed is still null.
       assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
@@ -277,15 +277,18 @@ public class WorkflowRunner extends Workflow {
             // If the county has no actual ballot samples, the audit board still has to sign off on that.
             if (auditBoardAsmState.equalsIgnoreCase(WAITING_FOR_ROUND_SIGN_OFF.toString())) {
               sessionsForSignOffOnly.add(session);
-            } else {
-              // If they're not waiting for round sign-off, they have real auditing to do.
+
+              // The rather unintuitive state {COUNTY_AUDIT_UNDERWAY; WAITING_FOR_ROUND_START} seems to occur sometimes
+              // when a county has completed its audit, and has no more ballots to audit now, but is participating in a
+              // statewide contest that may cause further auditing to be required later.
+            } else if (!auditBoardAsmState.equalsIgnoreCase(WAITING_FOR_ROUND_START.toString())) {
+              // If they're not waiting for round sign-off, and not waiting for the next round to start (which they might
+              // be if they'd already signed off on the last of the audits they had), then they have real auditing to do.
               sessionsForAudit.add(session);
               countiesWithAudits.add(ctyID);
             }
           }
         }
-
-        dashboard = getDoSDashBoardRefreshResponse();
 
         // ACVR uploads for each county. Cannot run in parallel as corla does not like
         // simultaneous database accesses.
@@ -293,14 +296,6 @@ public class WorkflowRunner extends Workflow {
           auditCounty(rounds + 1, entry, instance);
           countySignOffLogout(entry);
         }
-
-        dashboard = getDoSDashBoardRefreshResponse();
-
-        // Audit board sign off for each county that did an audit.
-        /*
-        for (final TestAuditSession entry : sessionsForAudit) {
-          countySignOffLogout(entry);
-        } */
 
         // Audit board sign off for each county that had zero audited ballots but has to sign off anyway.
         for (final TestAuditSession entry : sessionsForSignOffOnly) {
