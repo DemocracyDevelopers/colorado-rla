@@ -23,6 +23,7 @@ package au.org.democracydevelopers.corla.workflows;
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
 import au.org.democracydevelopers.corla.util.testUtils;
+import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
@@ -30,6 +31,7 @@ import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.testng.annotations.Parameters;
 import us.freeandfair.corla.persistence.Persistence;
@@ -51,17 +53,18 @@ import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDI
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
 
 /**
- * This workflow runner is designed to run in a UAT environment in which the database, colorado-rla
- * server and corla database are all set up.
- * Use src/test/resources/test.properties to specify the raire url and the database login credentials.
- * Ensure that maven and java are installed.
+ * This workflow runner is designed to run in a UAT environment in which the raire service, colorado-rla
+ * server and corla database are all set up and running.
+ * Use src/test/resources/test.properties to specify the raire url, database login credentials and
+ * url/port of the main colorado-rla server.
+ * Ensure that maven and java are installed, and that the database is in the initial state - empty
+ * except for setup data such as administrator credentials (which can be loaded from corla-test.credentials.psql,
+ * available from the github repository).
  * From the eclipse-project directory, to run a workflow json file via the command line, enter
  * `mvn -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="[Path to workflow file]" test`
  * For example, to run the AllPluralityTwoVoteOverstatementTwoRounds workflow, enter
  * `mvn -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json" test`
  * This test is skipped when the tests are run with empty parameters, i.e. during normal testing.
- * TODO At the moment, it assumes that main is _not_ running, and fails if it is. But perhaps it
- * would make more sense to assume that main and the raire-service are both running.
  */
 @Test(enabled=true)
 public class WorkflowRunnerWithRaire extends Workflow {
@@ -76,13 +79,18 @@ public class WorkflowRunnerWithRaire extends Workflow {
    */
   private static final int TIME_LIMIT_DEFAULT = 5;
 
+  @BeforeClass
+  public void setup() {
+    config = loadProperties();
+    RestAssured.baseURI = config.getProperty("corla_url");
+    RestAssured.port = Integer.parseInt(config.getProperty("corla_http_port"));
+  }
+
   /**
    * Given a JSON file defining an audit workflow (CVRs, Manifests, which CVRs to replace with
    * phantoms, which ballots to treat as phantoms, expected diluted margins and sample sizes,
    * which ballots to simulate discrepancies for, and expected end of round states ...), run
    * the test audit and verify that the expected outcomes arise.
-   * TODO Override or refactor Workflow::setup() so that it reads the location of the colorado-rla
-   * server from test.properties.
    * @throws InterruptedException
    */
   @Parameters("workflowFile")

@@ -114,6 +114,11 @@ public abstract class Workflow  {
   protected static final String tempConfigPath = "src/test/resources/workflows/temp/";
 
   /**
+   * Properties such as database login and corla & raire urls.
+   */
+  protected Properties config;
+
+  /**
    * Path for all the data files.
    */
   protected static final String dataPath = "src/test/resources/CSVs/";
@@ -184,15 +189,6 @@ public abstract class Workflow  {
   protected static final String RECORD_TYPE = "record_type";
   protected static final String SCANNER_ID = "scanner_id";
   protected static final String TIMESTAMP = "timestamp";
-
-
-  @BeforeClass
-  public void setup() {
-    // FIXME read from config.
-    RestAssured.baseURI = "http://localhost";
-    RestAssured.port = 8888;
-  }
-
 
   /**
    * Abstract to allow for either a simulated setup in a container, or a setup that makes http calls

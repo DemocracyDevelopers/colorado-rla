@@ -36,6 +36,7 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.PARTIAL_AUDIT_
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
+import io.restassured.RestAssured;
 import io.restassured.path.json.JsonPath;
 
 import java.io.IOException;
@@ -59,6 +60,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
@@ -84,6 +86,12 @@ public class WorkflowRunner extends Workflow {
    */
   private static final String pathToInstances = "src/test/resources/workflows/instances";
 
+  @BeforeClass
+  public void setup() {
+    config = loadProperties();
+    RestAssured.baseURI = "http://localhost";
+    RestAssured.port = 8888;
+  }
 
   /**
    * Returns a list of parameter lists to supply to the runWorkflow test method in this class.
@@ -474,7 +482,6 @@ public class WorkflowRunner extends Workflow {
     assertTrue(postgresOpt.isPresent());
     final PostgreSQLContainer<?> postgres = postgresOpt.get();
 
-    Properties config = loadProperties();
     postgres.start();
     config.setProperty("hibernate.url", postgres.getJdbcUrl());
     Persistence.setProperties(config);
