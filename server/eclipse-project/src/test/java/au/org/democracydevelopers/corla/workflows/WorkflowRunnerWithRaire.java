@@ -40,7 +40,11 @@ import java.util.*;
 
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static io.restassured.RestAssured.given;
+import static java.lang.Math.max;
 import static org.testng.Assert.*;
+import static us.freeandfair.corla.Main.main;
+import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_COMPLETE;
+import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
 
 /**
  * This workflow runner is designed to run in a UAT environment in which the raire service, colorado-rla
@@ -148,9 +152,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
     testUtils.log(LOGGER, "[runMainAndInitializeDB] running workflow " + testName + ".");
     // Don't need to start main because we assume it's already running.
     // main("src/test/resources/test.properties");
-    Properties config = loadProperties();
     Persistence.setProperties(config);
     Persistence.beginTransaction();
   }
-
 }
