@@ -666,14 +666,13 @@ public abstract class Workflow  {
    * Given a vote in a specific contest, return the raw choices to be used in creating the
    * ACVR containing the vote.
    * @param countyID ID of the county to which the CVR belongs, as a string.
-   * @param round The round (starts from 1).
    * @param cvrNumber CVR number for the CVR containing the given vote.
    * @param info Details of the vote for the relevant contest.
    * @param imprintedId Imprinted identifier of the CVR containing the given vote.
    * @param instance Details of the workflow instance being run.
    * @return The list of original choices on the pre-interpreted CVR with the given imprinted ID.
    */
-  private List<String> translateToRawChoices(final String countyID, final int round, final int cvrNumber,
+  private List<String> translateToRawChoices(final String countyID, final int cvrNumber,
       final CVRContestInfo info, final String imprintedId, final Instance instance){
 
     // Check if the CVR's imprinted Id is present in the workflow instance
@@ -971,7 +970,7 @@ public abstract class Workflow  {
       // from there. Otherwise, we recreate the raw choices from info.choices().
       final List<String> disagreements = instance.getDisagreements(rec.imprintedID(), rec.countyID());
       final List<Map<String, Object>> contest_info = rec.contestInfo().stream().map(info ->
-          Map.of("choices", translateToRawChoices(rec.countyID().toString(), round, rec.cvrNumber(),
+          Map.of("choices", translateToRawChoices(rec.countyID().toString(), rec.cvrNumber(),
                   info, rec.imprintedID(), instance), "comment", "", "consensus",
               disagreements.contains(info.contest().name()) ? "NO" : "YES",
               "contest", info.contest().id())).toList();
