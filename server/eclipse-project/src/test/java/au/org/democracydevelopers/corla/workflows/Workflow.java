@@ -677,7 +677,7 @@ public abstract class Workflow  {
       final CVRContestInfo info, final String imprintedId, final Instance instance){
 
     // Check if the CVR's imprinted Id is present in the workflow instance
-    final Optional<List<String>> choices = instance.getActualChoices(countyID, round, imprintedId,
+    final Optional<List<String>> choices = instance.getActualChoices(countyID, imprintedId,
         info.contest().name());
 
     if(choices.isPresent()){

@@ -226,7 +226,7 @@ public class Instance {
    *     }
    */
   @JsonProperty("DISCREPANT_AUDITED_BALLOT_CHOICES")
-  private Map<String,Map<String,Map<String,Map<String,List<String>>>>> actualChoices;
+  private Map<String,Map<String,Map<String,List<String>>>> actualChoices;
 
 
   /**
@@ -510,23 +510,18 @@ public class Instance {
    * not for reaudits.
    *
    * @param countyID    County ID for the CVR as a string.
-   * @param rnd         The round (starts from 1).
    * @param imprintedId Imprinted ID of the CVR that we want to create a choice list for.
    * @param contest     Contest of interest on the CVR.
    * @return An Optional list of strings representing the actual choices to be used for a given
    * contest on an ACVR. If the Optional is empty, it indicates that we should use the CVR choices.
    */
-  public Optional<List<String>> getActualChoices(final String countyID, final int rnd, final String imprintedId,
+  public Optional<List<String>> getActualChoices(final String countyID, final String imprintedId,
                                                  final String contest) {
-    final String round = Integer.toString(rnd);
-
-    if (actualChoices.containsKey(countyID)) {
-      if (actualChoices.get(countyID).containsKey(round)) {
-        if (actualChoices.get(countyID).get(round).containsKey(imprintedId)) {
-          if (actualChoices.get(countyID).get(round).get(imprintedId).containsKey(contest)) {
-            return Optional.of(
-                Collections.unmodifiableList(actualChoices.get(countyID).get(round).get(imprintedId).get(contest)));
-          }
+    if(actualChoices.containsKey(countyID)) {
+      if (actualChoices.get(countyID).containsKey(imprintedId)) {
+        if (actualChoices.get(countyID).get(imprintedId).containsKey(contest)) {
+          return Optional.of(
+              Collections.unmodifiableList(actualChoices.get(countyID).get(imprintedId).get(contest)));
         }
       }
     }

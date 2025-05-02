@@ -84,31 +84,28 @@
 
   "DISAGREEMENTS" : {
   },
+
   "DISCREPANT_AUDITED_BALLOT_CHOICES": {
     "1": {
-      "1": {
-        "1-587-10": {
-          "City of Wollongong Mayoral": [
-            "BROWN Tania(1)"
-          ]
-        }
+      "1-587-10": {
+        "City of Wollongong Mayoral": [
+          "BROWN Tania(1)"
+        ]
       }
     }
   },
   "REAUDITS": {
     "1": {
-      "1": {
-        "1-587-10": [
-          {
-            "City of Wollongong Mayoral": {
-              "choices": [
-                "BROWN Tania(1)"
-              ],
-              "consensus": "YES"
-            }
+      "1-587-10": [
+        {
+          "City of Wollongong Mayoral": {
+            "choices": [
+              "BROWN Tania(1)"
+            ],
+            "consensus": "YES"
           }
-        ]
-      }
+        }
+      ]
     }
   },
 
