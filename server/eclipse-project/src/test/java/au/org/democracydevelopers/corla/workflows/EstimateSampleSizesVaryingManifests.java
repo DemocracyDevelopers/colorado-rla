@@ -24,10 +24,12 @@ package au.org.democracydevelopers.corla.workflows;
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
+import io.restassured.RestAssured;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
 
@@ -62,6 +64,13 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
    * Class-wide logger
    */
   private static final Logger LOGGER = LogManager.getLogger(EstimateSampleSizesVaryingManifests.class);
+
+  @BeforeClass
+  public void setup() {
+    config = loadProperties();
+    RestAssured.baseURI = "http://localhost";
+    RestAssured.port = 8888;
+  }
 
   /**
    * This "test" uploads CVRs and ballot manifests.
