@@ -982,7 +982,7 @@ public abstract class Workflow  {
 
       // Check whether we want to reaudit this ballot, and if so, process the reaudits.
       final Optional<List<Map<String, ReAuditDetails>>> reaudits = instance.getReAudits(
-          rec.countyID().toString(), round, rec.imprintedID());
+          rec.countyID().toString(), rec.imprintedID());
 
       if (reaudits.isPresent()) {
         for (final Map<String, ReAuditDetails> entry : reaudits.get()) {

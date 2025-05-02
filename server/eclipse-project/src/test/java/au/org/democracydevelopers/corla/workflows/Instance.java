@@ -230,14 +230,14 @@ public class Instance {
 
 
   /**
-   * Specification of ballots to reaudit. Organised as a map between county ID, round,
+   * Specification of ballots to reaudit. Organised as a map between county ID,
    * and a map between CVR imprinted ID and a list of maps that define the paper
    * ballot choices to upload for selected contests (where we want them to differ
    * from what's on the CVR). These choices, and whether the audit board reached
    * a consensus on those choices, are defined in terms of a ReAuditDetails record.
    */
   @JsonProperty("REAUDITS")
-  private Map<String,Map<String,Map<String,List<Map<String,ReAuditDetails>>>>> reaudits;
+  private Map<String,Map<String,List<Map<String,ReAuditDetails>>>> reaudits;
 
   /**
    * Names of contests present in selected counties, when verifying the reports after
@@ -539,20 +539,15 @@ public class Instance {
    * string) where each map details the actual choices to be entered for given contests (where we
    * want them to differ from what is on the CVR). The number of maps in this list equals the number
    * of times we want the CVR to be reaudited.
-   * @param rnd          The round (starts at 1).
    * @param countyID     County ID for the CVR being reaudited.
    * @param imprintedId  Imprinted ID of the CVR being reaudited.
    * @return An optional list of maps, one for each reaudit of the CVR, detailing the sets of contests
    * whose choices we want to alter from the CVR, and how they should be altered.
    */
-  public Optional<List<Map<String,ReAuditDetails>>> getReAudits(final String countyID, final int rnd, final String imprintedId){
-    final String round = Integer.toString(rnd);
-
-    if(reaudits.containsKey(countyID)) {
-      if (reaudits.get(countyID).containsKey(round)) {
-        if (reaudits.get(countyID).get(round).containsKey(imprintedId)) {
-          return Optional.of(reaudits.get(countyID).get(round).get(imprintedId));
-        }
+  public Optional<List<Map<String,ReAuditDetails>>> getReAudits(final String countyID, final String imprintedId){
+    if(reaudits.containsKey(countyID)){
+      if(reaudits.get(countyID).containsKey(imprintedId)){
+        return Optional.of(reaudits.get(countyID).get(imprintedId));
       }
     }
     return Optional.empty();

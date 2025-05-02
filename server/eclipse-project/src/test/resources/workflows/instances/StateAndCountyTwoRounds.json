@@ -217,90 +217,76 @@
 
   "DISAGREEMENTS" : {
   },
-
-  "DISCREPANT_AUDITED_BALLOT_CHOICES" : {
-    "32" : {
-      "1" : {
-        "1-2-4": {
-          "Byron Mayoral": [
-            "COOREY Cate(1)",
-            "SWIVEL Mark(2)",
-            "PUGH Asren(3)",
-            "LYON Michael(4)",
-            "CLARKE Bruce(5)"
-          ]
-        }
+  "DISCREPANT_AUDITED_BALLOT_CHOICES": {
+    "32": {
+      "1-2-4": {
+        "Byron Mayoral": [
+          "COOREY Cate(1)",
+          "SWIVEL Mark(2)",
+          "PUGH Asren(3)",
+          "LYON Michael(4)",
+          "CLARKE Bruce(5)"
+        ]
       }
     },
-    "64" : {
-      "1" : {
-        "1-3-50": {
-          "Byron Mayoral": [
-            "SWIVEL Mark(1)",
-            "COOREY Cate(2)"
-          ]
-        }
+    "64": {
+      "1-3-50": {
+        "Byron Mayoral": [
+          "SWIVEL Mark(1)",
+          "COOREY Cate(2)"
+        ]
       }
     },
-    "7" : {
-      "1": {
-        "108-1-87": {
-          "Byron Mayoral": [
-            "LYON Michael(1)",
-            "DEY Duncan(2)"
-          ]
-        }
+    "7": {
+      "108-1-87": {
+        "Byron Mayoral": [
+          "LYON Michael(1)",
+          "DEY Duncan(2)"
+        ]
       }
     }
   },
-
-  "REAUDITS" : {
-    "32" : {
-      "1" : {
-        "1-2-4": [
-          {
-            "Byron Mayoral": {
-              "choices": [
-                "COOREY Cate(1)",
-                "SWIVEL Mark(2)",
-                "PUGH Asren(3)",
-                "LYON Michael(4)",
-                "CLARKE Bruce(5)"
-              ],
-              "consensus": "YES"
-            }
+  "REAUDITS": {
+    "32": {
+      "1-2-4": [
+        {
+          "Byron Mayoral": {
+            "choices": [
+              "COOREY Cate(1)",
+              "SWIVEL Mark(2)",
+              "PUGH Asren(3)",
+              "LYON Michael(4)",
+              "CLARKE Bruce(5)"
+            ],
+            "consensus": "YES"
           }
-        ]
-      }
+        }
+      ]
     },
-    "64" : {
-      "1" : {
-        "1-3-50": [
-          {
-            "Byron Mayoral": {
-              "choices": [
-                "SWIVEL Mark(1)"
-              ],
-              "consensus": "NO"
-            }
+    "64": {
+      "1-3-50": [
+        {
+          "Byron Mayoral": {
+            "choices": [
+              "SWIVEL Mark(1)"
+            ],
+            "consensus": "NO"
           }
-        ]
-      }
+        }
+      ]
     },
-    "7" : {
-      "1" : {
-        "108-1-87": [
-          {
-            "Byron Mayoral": {
-              "choices": [
-                "LYON Michael(1)",
-                "DEY Duncan(2)"
-              ],
-              "consensus": "YES"
-            }
+    "7": {
+      "108-1-87": [
+        {
+          "Byron Mayoral": {
+            "choices": [
+              "LYON Michael(1)",
+              "DEY Duncan(2)"
+            ],
+            "consensus": "YES"
           }
-        ]
-      }
+        }
+      ]
     }
   },
 

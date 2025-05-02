@@ -84,93 +84,83 @@
 
   "DISAGREEMENTS" : {
   },
-
-  "DISCREPANT_AUDITED_BALLOT_CHOICES" : {
-    "1" : {
-      "1" : {
-        "1-7-54": {
-          "City of Wollongong Mayoral": [
-            "BROWN Tania(1)",
-            "DORAHY John(2)",
-            "ANTHONY Andrew(3)",
-            "GLYKIS Marie(4)",
-            "BRADBERY Gordon(5)"
-          ],
-          "Richmond Valley Mayoral": [
-            "HAYES Robert(1)"
-          ]
-        },
-        "1-167-63": {
-          "City of Wollongong Mayoral": [
-            "BRADBERY Gordon(1)"
-          ]
-        },
-        "1-27-58": {
-          "City of Wollongong Mayoral": [
-            "DORAHY John(1)"
-          ]
-        }
+  "DISCREPANT_AUDITED_BALLOT_CHOICES": {
+    "1": {
+      "1-7-54": {
+        "City of Wollongong Mayoral": [
+          "BROWN Tania(1)",
+          "DORAHY John(2)",
+          "ANTHONY Andrew(3)",
+          "GLYKIS Marie(4)",
+          "BRADBERY Gordon(5)"
+        ],
+        "Richmond Valley Mayoral": [
+          "HAYES Robert(1)"
+        ]
+      },
+      "1-167-63": {
+        "City of Wollongong Mayoral": [
+          "BRADBERY Gordon(1)"
+        ]
+      },
+      "1-27-58": {
+        "City of Wollongong Mayoral": [
+          "DORAHY John(1)"
+        ]
       }
     },
-    "2" : {
-      "1" : {
-        "1-11-78": {
-          "Richmond Valley Mayoral": [
-            "MUSTOW Robert(1)"
-          ]
-        }
+    "2": {
+      "1-11-78": {
+        "Richmond Valley Mayoral": [
+          "MUSTOW Robert(1)"
+        ]
       }
     }
   },
-
-  "REAUDITS" : {
-    "1" : {
-      "1" : {
-        "1-7-54": [
-          {
-            "City of Wollongong Mayoral": {
-              "choices": [
-                "BROWN Tania(1)",
-                "DORAHY John(2)",
-                "ANTHONY Andrew(3)",
-                "GLYKIS Marie(4)",
-                "BRADBERY Gordon(5)"
-              ],
-              "consensus": "YES"
-            },
-            "Richmond Valley Mayoral": {
-              "choices": [
-                "MUSTOW Robert(1)"
-              ],
-              "consensus": "YES"
-            }
+  "REAUDITS": {
+    "1": {
+      "1-7-54": [
+        {
+          "City of Wollongong Mayoral": {
+            "choices": [
+              "BROWN Tania(1)",
+              "DORAHY John(2)",
+              "ANTHONY Andrew(3)",
+              "GLYKIS Marie(4)",
+              "BRADBERY Gordon(5)"
+            ],
+            "consensus": "YES"
+          },
+          "Richmond Valley Mayoral": {
+            "choices": [
+              "MUSTOW Robert(1)"
+            ],
+            "consensus": "YES"
           }
-        ],
-        "1-27-58": [
-          {
-            "City of Wollongong Mayoral": {
-              "choices": [
-                "GLYKIS Marie(1)"
-              ],
-              "consensus": "YES"
-            }
+        }
+      ],
+      "1-27-58": [
+        {
+          "City of Wollongong Mayoral": {
+            "choices": [
+              "GLYKIS Marie(1)"
+            ],
+            "consensus": "YES"
           }
-        ]
-      }
+        }
+      ]
     },
-    "2" : {
-      "1" : {
-        "1-11-78": [
-          {
-            "Richmond Valley Mayoral": {
-              "choices": [
-                "HAYES Robert(1)"
-              ],
-              "consensus": "YES"
-            }
+    "2": {
+      "1-11-78": [
+        {
+          "Richmond Valley Mayoral": {
+            "choices": [
+              "HAYES Robert(1)"
+            ],
+            "consensus": "YES"
           }
-        ]
-      }
+        }
+      ]
     }
   },
 
