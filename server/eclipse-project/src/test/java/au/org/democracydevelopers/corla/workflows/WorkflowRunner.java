@@ -129,7 +129,7 @@ public class WorkflowRunner extends Workflow {
   @DataProvider(name = "single-workflow-provider")
   public Object[][] supplySingleWorkflowPath() {
 
-    String filename = "StateAndCountyTwoRounds.json";
+    String filename = "StateAndCountyUnbalanced.INFINITE.json";
     Path path = Paths.get(pathToInstances, filename);
     Path normalizedPath = path.normalize();
     assertTrue(Files.isRegularFile(normalizedPath));

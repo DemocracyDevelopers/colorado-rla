@@ -37,6 +37,11 @@ import java.util.Optional;
 public class Instance {
 
   /**
+   * Use -1 to indicate an infinite number of expected rounds.
+   */
+  public static final int INFINITE_ROUNDS = -1;
+
+  /**
    * Specification of reaudit choices and consensus for a specific contest on a CVR.
    * @param choices    Choices, as a list of strings, for the relevant contest/CVR.
    * @param consensus  Whether the audit board reached a consensus on those choices ("YES","NO").
@@ -435,8 +440,8 @@ public class Instance {
    * @return The number of rounds of auditing we expect will take place. Can be null if nothing
    * specified in JSON instance.
    */
-  public Integer getExpectedRounds(){
-    return expectedRounds;
+  public Optional<Integer> getExpectedRounds(){
+    return expectedRounds == null ? Optional.empty() : Optional.of(expectedRounds);
   }
 
   /**

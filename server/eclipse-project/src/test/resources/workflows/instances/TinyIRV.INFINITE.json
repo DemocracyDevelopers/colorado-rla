@@ -89,7 +89,7 @@
     "Example3",
     "Tied_IRV"
   ],
-  "EXPECTED_ROUNDS": 2,
+  "EXPECTED_ROUNDS": -1,
   "PHANTOM_BALLOTS": {
   },
   "DISAGREEMENTS" : {

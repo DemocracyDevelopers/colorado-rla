@@ -21,6 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
+import static au.org.democracydevelopers.corla.workflows.Instance.INFINITE_ROUNDS;
 import static io.restassured.RestAssured.given;
 import static java.lang.Math.max;
 import static java.util.Collections.min;
@@ -446,18 +447,27 @@ public abstract class Workflow  {
         }
       }
 
+      // Audit unfinished; new round.
       if (maxOptimistic > 0 || maxBallotsRemaining > 0) {
         auditNotFinished = true;
+        // We're not finished but we didn't actually audit anything. This means that the audit is
+        // infinite. The audit still isn't finished, but we should break out of this (otherwise
+        // infinite) loop with rounds set to infinite.
+        if(sessionsForAudit.isEmpty()) {
+          rounds = INFINITE_ROUNDS;
+          break;
+        }
       }
 
       rounds += 1;
+
     }
 
     // Check that the number of rounds completed is as expected. Note that this may
     // not be specified in the instance.
-    final Integer expectedRounds = instance.getExpectedRounds();
-    if (expectedRounds != null) {
-      assertEquals(expectedRounds.intValue(), rounds);
+    final Optional<Integer> expectedRounds = instance.getExpectedRounds();
+    if (expectedRounds.isPresent()) {
+      assertEquals(expectedRounds.get().intValue(), rounds);
     }
 
     // Check that the number of audited ballots for targeted contests meets expectations.
@@ -1478,10 +1488,13 @@ public abstract class Workflow  {
       expectedWinner.ifPresent(s -> assertEquals(winner, s));
       final Optional<String> expectedReason = instance.getTargetedContestReason(contestName);
       expectedReason.ifPresent(s -> assertEquals(targetReason.toLowerCase(), s.toLowerCase()));
+      final Optional<Integer> expectedRounds = instance.getExpectedRounds();
 
-      if (instance.getTargetedContests().containsKey(contestName)) {
-        // Audit status should be risk limit achieved for all successful workflows
-        assertEquals(auditStatus.toLowerCase(), Workflow.RISK_LIMIT_ACHIEVED.toLowerCase());
+      if(instance.getTargetedContests().containsKey(contestName)) {
+        // Audit status should be risk limit achieved for all successful workflows, except those that
+        // explicitly expect infinite rounds.
+        assertTrue(auditStatus.equalsIgnoreCase(Workflow.RISK_LIMIT_ACHIEVED) ||
+            (expectedRounds.isPresent() && expectedRounds.get() == INFINITE_ROUNDS));
 
         countMap = lastDiscrepancyCounts.get(contestName);
       }
