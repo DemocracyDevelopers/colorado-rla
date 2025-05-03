@@ -202,7 +202,6 @@ public abstract class Workflow  {
    * to raire.
    * @param testName the name of the test.
    * @param postgres the container where the test DB is found.
-   *                 FIXME get testName to be the full path of the config file.
    */
   protected abstract void runMainAndInitializeDB(final String testName, final Optional<PostgreSQLContainer<?>> postgres);
 
@@ -243,7 +242,7 @@ public abstract class Workflow  {
     assertNull(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON));
     assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
 
-    // Provide a risk limit, canonicalisation file, and seed as defined in the Instance.
+    // Provide a risk limit, canonicalization file, and seed as defined in the Instance.
     updateAuditInfo(instance.getCanonicalisationFile(), instance.getRiskLimit());
     dashboard = getDoSDashBoardRefreshResponse();
     assertEquals(instance.getRiskLimit()
@@ -257,7 +256,7 @@ public abstract class Workflow  {
     assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
     assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
 
-    canonicalise(instance, true);
+    canonicalize(instance, true);
 
     // Either call raire (if using) or load assertions in from SQL script.
     makeAssertionData(optPostGres, instance.getSQLs());
@@ -451,8 +450,8 @@ public abstract class Workflow  {
       if (maxOptimistic > 0 || maxBallotsRemaining > 0) {
         auditNotFinished = true;
         // We're not finished but we didn't actually audit anything. This means that the audit is
-        // infinite. The audit still isn't finished, but we should break out of this (otherwise
-        // infinite) loop with rounds set to infinite.
+        // infinite. The audit isn't finished, but we should break out of this (otherwise infinite)
+        // loop with rounds set to infinite.
         if(sessionsForAudit.isEmpty()) {
           rounds = INFINITE_ROUNDS;
           break;
@@ -1321,7 +1320,9 @@ public abstract class Workflow  {
 
   /**
    * Hit the /contests endpoint, to learn all the contests.
-   * @param ignoreManifests
+   * @param ignoreManifests whether the absence of manifests should be ignored (usually false unless
+   *                        you are particularly trying to test what happens when manifest-absence
+   *                        is ignored).
    * @return the response, as a JsonPath.
    */
   protected JsonPath getContests(boolean ignoreManifests) {
@@ -1346,18 +1347,19 @@ public abstract class Workflow  {
   }
 
   /**
-   * Given a workflow instance, perform cononicalisation of candidate and contest names.
-   * @param instance           Workflow instance
-   * @param ignoreManifests
+   * Given a workflow instance, perform canonicalization of candidate and contest names.
+   * @param instance        Workflow instance
+   * @param ignoreManifests Whether to ignore (the absence of) manifests. Usually false unless you
+   *                        are specifically testing whether manifest-absence is properly dealt with.
    */
-  protected void canonicalise(final Instance instance, boolean ignoreManifests){
+  protected void canonicalize(final Instance instance, boolean ignoreManifests){
     final JsonPath contests = getContests(ignoreManifests);
 
     final Map<String,String> contestNameChanges = instance.getContestNameChanges();
     final Map<String, Map<String,String>> candNameChanges = instance.getCandidateNameChanges();
 
-    final JSONArray canonicaliseContests = new JSONArray();
-    final JSONArray canonicaliseCandidates = new JSONArray();
+    final JSONArray canonicalizeContests = new JSONArray();
+    final JSONArray canonicalizeCandidates = new JSONArray();
 
     // Find the IDs of the ones we want to target.
     for(int i=0 ; i < contests.getList("").size() ; i++) {
@@ -1368,7 +1370,7 @@ public abstract class Workflow  {
       final String newName = contestNameChanges.getOrDefault(contestName, contestName);
 
       if(contestNameChanges.containsKey(contestName)){
-        canonicaliseContests.add(Map.of(CONTESTID, contestId, COUNTYID,
+        canonicalizeContests.add(Map.of(CONTESTID, contestId, COUNTYID,
             countyId, NAME, contestNameChanges.get(contestName)));
       }
 
@@ -1378,18 +1380,18 @@ public abstract class Workflow  {
           candChanges.add(createBody(Map.of(OLDNAME, change.getKey(),
               NEWNAME, change.getValue())));
         }
-        canonicaliseCandidates.add(createBody(Map.of(CONTESTID, contestId,
+        canonicalizeCandidates.add(createBody(Map.of(CONTESTID, contestId,
             COUNTYID, countyId, CHOICES, candChanges)));
       }
     }
 
     final SessionFilter filter = doLogin("stateadmin1");
 
-    // Post the set contest names request (canonicalise contest names)
+    // Post the set contest names request (canonicalize contest names)
     given()
         .filter(filter)
         .header("Content-Type", "application/json")
-        .body(canonicaliseContests.toString())
+        .body(canonicalizeContests.toString())
         .post("/set-contest-names")
         .then()
         .assertThat()
@@ -1399,7 +1401,7 @@ public abstract class Workflow  {
     given()
         .filter(filter)
         .header("Content-Type", "application/json")
-        .body(canonicaliseCandidates.toString())
+        .body(canonicalizeCandidates.toString())
         .post("/set-contest-names")
         .then()
         .assertThat()

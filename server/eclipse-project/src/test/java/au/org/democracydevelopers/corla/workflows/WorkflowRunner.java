@@ -22,43 +22,21 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.workflows;
 
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
-import static java.lang.Math.max;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
-import static us.freeandfair.corla.asm.ASMState.AuditBoardDashboardState.WAITING_FOR_ROUND_SIGN_OFF;
-import static us.freeandfair.corla.asm.ASMState.AuditBoardDashboardState.WAITING_FOR_ROUND_START;
-import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_UNDERWAY;
-import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.COMPLETE_AUDIT_INFO_SET;
-import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
-import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.PARTIAL_AUDIT_INFO_SET;
 
-import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import io.restassured.RestAssured;
-import io.restassured.path.json.JsonPath;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -146,7 +124,7 @@ public class WorkflowRunner extends Workflow {
    * the test audit and verify that the expected outcomes arise.
    *
    * @param pathToInstance Path to the JSON workflow instance defining the test.
-   * @throws InterruptedException
+   * @throws InterruptedException if there is a problem with the CVR and Manifest upload.
    */
   @Test(dataProvider = "workflow-provider")
   // @Test(dataProvider = "single-workflow-provider")
@@ -154,7 +132,6 @@ public class WorkflowRunner extends Workflow {
     final String prefix = "[runInstance] " + pathToInstance;
 
     try {
-      // PostgreSQLContainer<?> postgres = setupDatabaseAndRunMain(pathToInstance.getFileName().toString());
       final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
       runMainAndInitializeDB(pathToInstance.getFileName().toString(), Optional.of(postgres));
 
