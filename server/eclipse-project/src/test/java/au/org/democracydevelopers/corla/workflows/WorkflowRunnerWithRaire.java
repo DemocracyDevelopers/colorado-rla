@@ -40,21 +40,22 @@ import java.util.*;
 
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static io.restassured.RestAssured.given;
-import static java.lang.Math.max;
 import static org.testng.Assert.*;
-import static us.freeandfair.corla.Main.main;
-import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_COMPLETE;
-import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.*;
 
 /**
  * This workflow runner is designed to run in a UAT environment in which the raire service, colorado-rla
  * server and corla database are all set up and running.
- * Use src/test/resources/test.properties to specify the raire url, database login credentials and
+ * 1. You will need a copy of the colorado-rla code, which you can either clone with
+ * `git clone https://github.com/DemocracyDevelopers/colorado-rla.git`
+ * `git clone git@github.com:DemocracyDevelopers/colorado-rla.git`
+ * or download as a zip from
+ * https://github.com/DemocracyDevelopers/colorado-rla/archive/refs/heads/main.zip
+ * 2. Use src/test/resources/test.properties to specify the raire url, database login credentials and
  * url/port of the main colorado-rla server.
- * Ensure that maven and java are installed, and that the database is in the initial state - empty
- * except for setup data such as administrator credentials (which can be loaded from corla-test.credentials.psql,
- * available from the github repository).
- * From the eclipse-project directory, to run a workflow json file via the command line, enter
+ * 3. Ensure that maven and java are installed.
+ * 4. Ensure that the database is in the initial state - empty except for setup data such as administrator credentials,
+ * which can be loaded from colorado-rla/test/corla-test.credentials.psql.
+ * 5. From the eclipse-project directory, to run a workflow json file via the command line, enter
  * `mvn -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="[Path to workflow file]" test`
  * For example, to run the AllPluralityTwoVoteOverstatementTwoRounds workflow, enter
  * `mvn -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json" test`
