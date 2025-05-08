@@ -90,7 +90,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
    */
   @Parameters("workflowFile")
   @Test
-  public void runInstance(String workflowFile) throws InterruptedException {
+  public void runInstance(final String workflowFile) throws InterruptedException {
     final String prefix = "[runInstance] ";
 
     if(workflowFile == null || workflowFile.isEmpty()) {
@@ -119,12 +119,13 @@ public class WorkflowRunnerWithRaire extends Workflow {
 
   /**
    * Connect to the raire service and tell it to generate the assertions.
-   * @param postgres The database (expected to be the same one raire uses).
-   * @param SQLfiles Not used.
+   * @param postgres Not used. This version communicates with the database via http and should not be
+   *                 called with a testcontainer.
+   * @param SQLfiles Not used. This version communicates with Raire and does not load data in from
+   *                 SQL files.
    */
   protected void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgres, final List<String> SQLfiles) {
-    // This should not be called with 'useRaire' true in this workflow.
-    assertTrue(postgres.isEmpty());
+    assertTrue(postgres.isEmpty() && SQLfiles.isEmpty());
 
     // Login as state admin.
     final SessionFilter filter = doLogin("stateadmin1");
@@ -147,7 +148,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
    * @param postgres not used.
    */
   @Override
-  protected void runMainAndInitializeDB(String testName, Optional<PostgreSQLContainer<?>> postgres) {
+  protected void runMainAndInitializeDB(final String testName, final Optional<PostgreSQLContainer<?>> postgres) {
     assertTrue(postgres.isEmpty());
     testUtils.log(LOGGER, "[runMainAndInitializeDB] running workflow " + testName + ".");
     // Don't need to start main because we assume it's already running.

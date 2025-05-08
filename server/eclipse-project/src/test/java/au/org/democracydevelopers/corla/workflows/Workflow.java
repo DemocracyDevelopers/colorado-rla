@@ -1520,7 +1520,7 @@ public abstract class Workflow  {
    * @param testName Name of test instance.
    * @param postgresOpt The PostgreSQL container to use.
    */
-  protected void runMainAndInitializeDB(String testName, Optional<PostgreSQLContainer<?>> postgresOpt) {
+  protected void runMainAndInitializeDB(final String testName, final Optional<PostgreSQLContainer<?>> postgresOpt) {
     assertTrue(postgresOpt.isPresent());
     final PostgreSQLContainer<?> postgres = postgresOpt.get();
 
