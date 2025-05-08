@@ -147,7 +147,6 @@ public class WorkflowRunner extends Workflow {
     }
   }
 
-
   /**
    * Load additional SQL data (this is data that we want to add after we have
    * CVRs, manifests, etc loaded for each county). This will mostly be used to load
@@ -158,29 +157,6 @@ public class WorkflowRunner extends Workflow {
     for (final String s : SQLfiles) {
       TestClassWithDatabase.runSQLSetupScript(postgresOpt.get(), s);
     }
-  }
-
-  /**
-   * Set up main's configuration file to match the given postgres container, then run main and
-   * load the colorado-rla init script into the database.
-   * This loads in the properties in resources/test.properties, then overwrites the database
-   * location with the one in the newly-created test container.
-   * @param testName Name of test instance.
-   * @param postgresOpt The PostgreSQL container to use.
-   */
-  @Override
-  protected void runMainAndInitializeDB(String testName, Optional<PostgreSQLContainer<?>> postgresOpt) {
-    assertTrue(postgresOpt.isPresent());
-    final PostgreSQLContainer<?> postgres = postgresOpt.get();
-
-    postgres.start();
-    config.setProperty("hibernate.url", postgres.getJdbcUrl());
-    Persistence.setProperties(config);
-    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
-
-    runMain(config, testName);
-
-    Persistence.beginTransaction();
   }
 
   /**

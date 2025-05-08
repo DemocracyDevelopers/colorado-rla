@@ -106,28 +106,7 @@ public class UploadAndDeleteIRVCVRs extends Workflow {
     assertEquals(ivrBallotInterpretations.size(), 1);
   }
 
-  /**
-   * Identical to corresponding function in WorkflowRunner. Should be deleted when this is turned
-   * into a standard workflow.
-   */
-  @Override
-  protected void runMainAndInitializeDB(String testName, Optional<PostgreSQLContainer<?>> postgresOpt) {
-
-    assertTrue(postgresOpt.isPresent());
-    final PostgreSQLContainer<?> postgres = postgresOpt.get();
-
-    Properties config = loadProperties();
-    postgres.start();
-    config.setProperty("hibernate.url", postgres.getJdbcUrl());
-    Persistence.setProperties(config);
-    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
-
-    runMain(config, testName);
-
-    Persistence.beginTransaction();
-  }
-
-  /** Not used. Can be removed when this is transformed into a standard workflow.
+  /** Not used.
    */
   @Override
   protected void makeAssertionData(Optional<PostgreSQLContainer<?>> postgres, List<String> SQLfiles) {

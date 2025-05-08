@@ -183,26 +183,6 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   }
 
   /**
-   * Identical to corresponding function in WorkflowRunner. Can be deleted when this is converted
-   * into a standard workflow.
-   */
-  @Override
-  protected void runMainAndInitializeDB(String testName, Optional<PostgreSQLContainer<?>> postgresOpt) {
-    assertTrue(postgresOpt.isPresent());
-    final PostgreSQLContainer<?> postgres = postgresOpt.get();
-
-    Properties config = loadProperties();
-    postgres.start();
-    config.setProperty("hibernate.url", postgres.getJdbcUrl());
-    Persistence.setProperties(config);
-    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
-
-    runMain(config, testName);
-
-    Persistence.beginTransaction();
-  }
-
-  /**
    * Not used. Can be removed when this is transformed into a standard workflow.
    */
   @Override

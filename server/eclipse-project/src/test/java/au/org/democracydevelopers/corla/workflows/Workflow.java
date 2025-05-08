@@ -47,6 +47,7 @@ import au.org.democracydevelopers.corla.model.assertion.Assertion;
 import au.org.democracydevelopers.corla.model.vote.IRVBallotInterpretation;
 import au.org.democracydevelopers.corla.query.AssertionQueries;
 import au.org.democracydevelopers.corla.util.DoubleComparator;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.TestOnlyQueries;
 import au.org.democracydevelopers.corla.workflows.Instance.ReAuditDetails;
 import io.restassured.filter.session.SessionFilter;
@@ -73,6 +74,7 @@ import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.model.UploadedFile;
+import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.query.ContestResultQueries;
 import wiremock.net.minidev.json.JSONArray;
@@ -196,15 +198,6 @@ public abstract class Workflow  {
   protected static final String RECORD_TYPE = "record_type";
   protected static final String SCANNER_ID = "scanner_id";
   protected static final String TIMESTAMP = "timestamp";
-
-  /**
-   * Abstract to allow for either a simulated setup in a container, or a setup that makes http calls
-   * to raire.
-   * @param testName the name of the test.
-   * @param postgres the container where the test DB is found.
-   */
-  protected abstract void runMainAndInitializeDB(final String testName, final Optional<PostgreSQLContainer<?>> postgres);
-
 
   protected void doWorkflow(Path pathToInstance, Optional<PostgreSQLContainer<?>> optPostGres) throws IOException, InterruptedException {
 
@@ -1521,6 +1514,30 @@ public abstract class Workflow  {
       final Optional<Integer> expectedFinalEstimated = instance.getExpectedEstimatedSamples(contestName);
       expectedFinalEstimated.ifPresent(m -> assertTrue(m <= estimatedSamples));
     }
+  }
+
+  /**
+   * Set up main's configuration file to match the given postgres container, then run main and
+   * load the colorado-rla init script into the database.
+   * This loads in the properties in resources/test.properties, then overwrites the database
+   * location with the one in the newly-created test container.
+   * This is used as is in all the workflows except WorkflowRunnerWithRaire, which overrides it
+   * because it doesn't need to run main or initialize the DB.
+   * @param testName Name of test instance.
+   * @param postgresOpt The PostgreSQL container to use.
+   */
+  protected void runMainAndInitializeDB(String testName, Optional<PostgreSQLContainer<?>> postgresOpt) {
+    assertTrue(postgresOpt.isPresent());
+    final PostgreSQLContainer<?> postgres = postgresOpt.get();
+
+    postgres.start();
+    config.setProperty("hibernate.url", postgres.getJdbcUrl());
+    Persistence.setProperties(config);
+    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
+
+    runMain(config, testName);
+
+    Persistence.beginTransaction();
   }
 
   /**
