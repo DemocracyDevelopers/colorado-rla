@@ -141,25 +141,24 @@
   "DISAGREEMENTS" : {
   },
 
-  "DISCREPANT_AUDITED_BALLOT_CHOICES" : {
-    "1" : {
-      "1-16-45" : {
-        "Wollondilly Mayoral" : [
+  "DISCREPANT_AUDITED_BALLOT_CHOICES": {
+    "1": {
+      "1-16-45": {
+        "Wollondilly Mayoral": [
           "HANNAN Judy(1)"
         ]
       }
     },
-    "5" : {
-      "1-17-56" : {
-        "Burwood Mayoral" : [
+    "5": {
+      "1-17-56": {
+        "Burwood Mayoral": [
           "HULL David(1)",
           "FAKER John(2)"
         ]
       }
     }
   },
-
-  "REAUDITS" : {
+  "REAUDITS": {
     "1": {
       "1-16-45": [
         {

@@ -1,4 +1,6 @@
-### This loads all 32 CVRs for NSW (in alphabetical order) in CO's first 32 counties.
+### This loads CVRs for the TinyIRV example. See README.md for details.
+### Differs slightly from the .json workflow because it loads them into counties 33-36
+### rather than 1-4, but this shouldn't make any difference to the data.
 
 ### 1. Lake County, with TinyExample1 (IRV) and a tied and non-tied plurality contest.
 ### POST request with basic login.
@@ -10,7 +12,7 @@ Content-Type: application/json
   "password":""
 }
 > {%
-  import {authSanityCheck} from 'testScripts/testUtils';
+  import {authSanityCheck} from 'workflows/IntelliJ-http-workflows/testScripts/testUtils';
   authSanityCheck("countyadmin33", 1, 'TRADITIONALLY_AUTHENTICATED');
 %}
 
@@ -24,7 +26,7 @@ Content-Type: application/json
 }
 
 > {%
-  import {authSanityCheck} from 'testScripts/testUtils';
+  import {authSanityCheck} from 'workflows/IntelliJ-http-workflows/testScripts/testUtils';
   authSanityCheck("countyadmin33", 2, 'SECOND_FACTOR_AUTHENTICATED');
  %}
 
@@ -39,13 +41,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="ThreeCandidatesTenVotesPlusTiedPlurality.csv"
 Content-Type: text/csv
 
-< ../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotesPlusTiedPlurality.csv
+< ../../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotesPlusTiedPlurality.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotesPlusTiedPlurality.csv.sha256sum
+< ../../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotesPlusTiedPlurality.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -99,13 +101,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="ThreeCandidatesTenInvalidVotes.csv"
 Content-Type: text/csv
 
-< ../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenInvalidVotes.csv
+< ../../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenInvalidVotes.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenInvalidVotes.csv.sha256sum
+< ../../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenInvalidVotes.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -157,13 +159,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="ThreeCandidatesTenVotes_TiedIRV.csv"
 Content-Type: text/csv
 
-< ../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_TiedIRV.csv
+< ../../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_TiedIRV.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_TiedIRV.csv.sha256sum
+< ../../CSVs/Tiny-IRV-Examples/ThreeCandidatesTenVotes_TiedIRV.csv.sha256sum
 --TheBoundary--
 
 > {%
@@ -216,13 +218,13 @@ Content-Type: multipart/form-data; boundary=TheBoundary
 Content-Disposition: form-data; name="file"; filename="GuideToRAIREExample3.csv"
 Content-Type: text/csv
 
-< ../CSVs/Tiny-IRV-Examples/GuideToRAIREExample3.csv
+< ../../CSVs/Tiny-IRV-Examples/GuideToRAIREExample3.csv
 
 --TheBoundary
 Content-Disposition: form-data; name="hash"
 Content-Type: text/csv
 
-< ../CSVs/Tiny-IRV-Examples/GuideToRAIREExample3.csv.sha256sum
+< ../../CSVs/Tiny-IRV-Examples/GuideToRAIREExample3.csv.sha256sum
 --TheBoundary--
 
 > {%

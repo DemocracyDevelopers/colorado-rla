@@ -37,6 +37,11 @@ import java.util.Optional;
 public class Instance {
 
   /**
+   * Use -1 to indicate an infinite number of expected rounds.
+   */
+  public static final int INFINITE_ROUNDS = -1;
+
+  /**
    * Specification of reaudit choices and consensus for a specific contest on a CVR.
    * @param choices    Choices, as a list of strings, for the relevant contest/CVR.
    * @param consensus  Whether the audit board reached a consensus on those choices ("YES","NO").
@@ -208,19 +213,19 @@ public class Instance {
   /**
    * Audited ballot choices for select CVR Ids and contests. The instance JSON records only the
    * ones we want to be different to what is on the CVR. Example map element (below). We are
-   * specifying discrepant choices for ballot 108-1-87 in county 7 for the contest Byron Mayoral.
+   * specifying discrepant choices for ballot 108-1-87 in county 7, for the contest Byron Mayoral.
    *     "7" : {
-   *       "108-1-87": [
-   *         {
-   *           "Byron Mayoral": {
-   *             "choices" : [
-   *               "LYON Michael(1)",
-   *               "DEY Duncan(2)"
-   *             ],
-   *             "consensus" : "YES"
+   *         "108-1-87": [
+   *           {
+   *             "Byron Mayoral": {
+   *               "choices" : [
+   *                 "LYON Michael(1)",
+   *                 "DEY Duncan(2)"
+   *               ],
+   *               "consensus" : "YES"
+   *             }
    *           }
-   *         }
-   *       ]
+   *         ]
    *     }
    */
   @JsonProperty("DISCREPANT_AUDITED_BALLOT_CHOICES")
@@ -430,11 +435,11 @@ public class Instance {
   }
 
   /**
-   * @return The number of rounds of auditing we expect will take place. Can be null if nothing
-   * specified in JSON instance.
+   * @return The number of rounds of auditing we expect will take place, wrapped in an Optional<>
+   * that is empty if nothing is specified in the JSON instance.
    */
-  public Integer getExpectedRounds(){
-    return expectedRounds;
+  public Optional<Integer> getExpectedRounds(){
+    return expectedRounds == null ? Optional.empty() : Optional.of(expectedRounds);
   }
 
   /**
@@ -506,14 +511,15 @@ public class Instance {
    * to simply use what is on the CVR (ie. the raw choices that were on the CVR), then this method
    * will return an empty Optional. This method is used for the first auditing of a ballot, and
    * not for reaudits.
-   * @param countyID        County ID for the CVR as a string.
-   * @param imprintedId     Imprinted ID of the CVR that we want to create a choice list for.
-   * @param contest         Contest of interest on the CVR.
+   *
+   * @param countyID    County ID for the CVR as a string.
+   * @param imprintedId Imprinted ID of the CVR that we want to create a choice list for.
+   * @param contest     Contest of interest on the CVR.
    * @return An Optional list of strings representing the actual choices to be used for a given
    * contest on an ACVR. If the Optional is empty, it indicates that we should use the CVR choices.
    */
   public Optional<List<String>> getActualChoices(final String countyID, final String imprintedId,
-      final String contest){
+                                                 final String contest) {
     if(actualChoices.containsKey(countyID)) {
       if (actualChoices.get(countyID).containsKey(imprintedId)) {
         if (actualChoices.get(countyID).get(imprintedId).containsKey(contest)) {

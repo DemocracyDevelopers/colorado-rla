@@ -21,14 +21,22 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
+import io.restassured.RestAssured;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.persistence.Persistence;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 
+import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.*;
 
 /**
@@ -52,6 +60,13 @@ public class UploadAndDeleteIRVCVRs extends Workflow {
    */
   private static final Logger LOGGER = LogManager.getLogger(UploadAndDeleteIRVCVRs.class);
 
+  @BeforeClass
+  public void setup() {
+    config = loadProperties();
+    RestAssured.baseURI = "http://localhost";
+    RestAssured.port = 8888;
+  }
+
   /**
    * This "test" uploads CVRs and ballot manifests.
    */
@@ -59,7 +74,8 @@ public class UploadAndDeleteIRVCVRs extends Workflow {
   public void runUploadAndDeleteCVRs() throws InterruptedException {
     testUtils.log(LOGGER, "runUploadAndDeleteIRVCVRs");
 
-    setupIndividualTestDatabase("UploadAndDeleteIRVCVRs");
+    final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
+    runMainAndInitializeDB("UploadAndDeleteIRVCVRs", Optional.of(postgres));
 
     // Upload CSVs with 10 invalid IRV votes, for counties 1 and 2.
     final String CVRFile = dataPath + "ThreeCandidatesTenInvalidVotes";
@@ -89,5 +105,4 @@ public class UploadAndDeleteIRVCVRs extends Workflow {
     ivrBallotInterpretations = getReportAsCSV("ranked_ballot_interpretation");
     assertEquals(ivrBallotInterpretations.size(), 1);
   }
-
 }

@@ -95,48 +95,47 @@
 
   "DISCREPANT_AUDITED_BALLOT_CHOICES" : {
     "1" : {
-      "1-167-63": {
-        "City of Wollongong Mayoral": [
-          "BRADBERY Gordon(1)"
-        ]
-      }
+        "1-167-63": {
+          "City of Wollongong Mayoral": [
+            "BRADBERY Gordon(1)"
+          ]
+        }
     }
   },
-
-  "REAUDITS" : {
-     "1" : {
-       "1-7-54": [
-         {
-           "City of Wollongong Mayoral": {
-             "choices": [
-               "BROWN Tania(1)",
-               "DORAHY John(2)",
-               "ANTHONY Andrew(3)",
-               "COX Mithra(4)",
-               "GLYKIS Marie(5)",
-               "BRADBERY Gordon(6)"
-             ],
-             "consensus": "YES"
-           },
-           "Richmond Valley Mayoral": {
-             "choices": [
-               "MUSTOW Robert(1)"
-             ],
-             "consensus": "YES"
-           }
-         }
-       ],
-       "1-167-63" : [
-         {
-           "City of Wollongong Mayoral": {
-             "choices": [
-               "DORAHY John(1)"
-             ],
-             "consensus": "NO"
-           }
-         }
-       ]
-     }
+  "REAUDITS": {
+    "1": {
+      "1-7-54": [
+        {
+          "City of Wollongong Mayoral": {
+            "choices": [
+              "BROWN Tania(1)",
+              "DORAHY John(2)",
+              "ANTHONY Andrew(3)",
+              "COX Mithra(4)",
+              "GLYKIS Marie(5)",
+              "BRADBERY Gordon(6)"
+            ],
+            "consensus": "YES"
+          },
+          "Richmond Valley Mayoral": {
+            "choices": [
+              "MUSTOW Robert(1)"
+            ],
+            "consensus": "YES"
+          }
+        }
+      ],
+      "1-167-63": [
+        {
+          "City of Wollongong Mayoral": {
+            "choices": [
+              "DORAHY John(1)"
+            ],
+            "consensus": "NO"
+          }
+        }
+      ]
+    }
   },
 
   "CONTEST_RESULTS" : {

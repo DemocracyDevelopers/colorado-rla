@@ -55,7 +55,7 @@ Content-Type: text/plain
 ### in the request.
 ### TODO: Introduce errors into candidate names in the InvalidIRV contest.
 < {%
-    import {getContestIDsWithCounties} from 'testScripts/testUtils';
+    import {getContestIDsWithCounties} from 'workflows/IntelliJ-http-workflows/testScripts/testUtils';
     const contestIDData = getContestIDsWithCounties(client.global.get("contestTinyIRVJsonData"));
     console.log("contestTinyIRVJsonData = "+client.global.get("contestTinyIRVJsonData"));
     // Canonicalize TinyInvalidExample1 to TinyExample1
@@ -70,7 +70,7 @@ Content-Type: application/json
 
 ### Canonicalize candidate names.
 < {%
-    import {getContestIDsWithCounties} from 'testScripts/testUtils';
+    import {getContestIDsWithCounties} from 'workflows/IntelliJ-http-workflows/testScripts/testUtils';
     const contestIDData = getContestIDsWithCounties(client.global.get("contestTinyIRVJsonData"));
     client.global.set("TinyExample1ID", contestIDData.get("TinyExample1")[0][0]);
     client.global.set("Example3ID", contestIDData.get("Example3")[0][0]);
@@ -154,14 +154,14 @@ GET http://localhost:8888/dos-dashboard
 GET localhost:8888/get-assertions
 
 # Save them to a file.
->>! demo-stored-data/nsw-assertions-json.zip
+>>! demo-stored-data/tiny-irv-assertions-json.zip
 
 ### Get the assertions as csv.
 GET http://localhost:8888/get-assertions?format=csv
 Content-Type: application/x-www-form-urlencoded
 
 # Save them to a file.
->>! demo-stored-data/nsw-assertions-csv.zip
+>>! demo-stored-data/tiny-irv-assertions-csv.zip
 
 ### Log out
 POST http://localhost:8888/unauthenticate

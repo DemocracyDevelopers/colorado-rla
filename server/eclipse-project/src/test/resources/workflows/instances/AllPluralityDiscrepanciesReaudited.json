@@ -92,8 +92,8 @@
   "DISAGREEMENTS" : {
   },
 
-  "DISCREPANT_AUDITED_BALLOT_CHOICES" : {
-    "1" : {
+  "DISCREPANT_AUDITED_BALLOT_CHOICES": {
+    "1": {
       "3-800-1": {
         "Regent of the University of Colorado": [
           "Distant Loser"
@@ -107,7 +107,7 @@
     }
   },
 
-  "REAUDITS" : {
+  "REAUDITS": {
     "1": {
       "3-800-1": [
         {

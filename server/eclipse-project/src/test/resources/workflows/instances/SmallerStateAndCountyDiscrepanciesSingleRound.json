@@ -85,10 +85,10 @@
   "DISAGREEMENTS" : {
   },
 
-  "DISCREPANT_AUDITED_BALLOT_CHOICES" : {
-    "1" : {
-      "1-7-54" : {
-        "City of Wollongong Mayoral" : [
+  "DISCREPANT_AUDITED_BALLOT_CHOICES": {
+    "1": {
+      "1-7-54": {
+        "City of Wollongong Mayoral": [
           "BROWN Tania(1)",
           "DORAHY John(2)",
           "ANTHONY Andrew(3)",
@@ -96,8 +96,8 @@
           "BRADBERY Gordon(5)"
         ]
       },
-      "1-27-58" : {
-        "City of Wollongong Mayoral" : [
+      "1-27-58": {
+        "City of Wollongong Mayoral": [
           "DORAHY John(1)"
         ]
       }

@@ -21,13 +21,21 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
-import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
+import static au.org.democracydevelopers.corla.workflows.Instance.INFINITE_ROUNDS;
 import static io.restassured.RestAssured.given;
+import static java.lang.Math.max;
 import static java.util.Collections.min;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertNull;
 import static us.freeandfair.corla.Main.main;
+import static us.freeandfair.corla.asm.ASMState.AuditBoardDashboardState.WAITING_FOR_ROUND_SIGN_OFF;
+import static us.freeandfair.corla.asm.ASMState.AuditBoardDashboardState.WAITING_FOR_ROUND_START;
+import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.COMPLETE_AUDIT_INFO_SET;
+import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_UNDERWAY;
+import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
+import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.PARTIAL_AUDIT_INFO_SET;
 import static us.freeandfair.corla.auth.AuthenticationInterface.USERNAME;
 import static us.freeandfair.corla.auth.AuthenticationStage.SECOND_FACTOR_AUTHENTICATED;
 import static us.freeandfair.corla.auth.AuthenticationStage.TRADITIONALLY_AUTHENTICATED;
@@ -42,7 +50,6 @@ import au.org.democracydevelopers.corla.util.DoubleComparator;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.TestOnlyQueries;
 import au.org.democracydevelopers.corla.workflows.Instance.ReAuditDetails;
-import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
@@ -62,7 +69,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testng.annotations.BeforeClass;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
@@ -77,7 +84,7 @@ import wiremock.net.minidev.json.JSONObject;
  * Base class for an API test workflow designed to run through a sequence of steps involving
  * a sequence of endpoint accesses.
  */
-public class Workflow  {
+public abstract class Workflow  {
 
   /**
    * A collection of data representing an audit session for a county.
@@ -116,15 +123,31 @@ public class Workflow  {
   protected static final String tempConfigPath = "src/test/resources/workflows/temp/";
 
   /**
+   * Properties such as database login and corla & raire urls.
+   */
+  protected Properties config;
+
+  /**
    * Path for all the data files.
    */
   protected static final String dataPath = "src/test/resources/CSVs/";
+
+  /**
+   * Default audit board names.
+   */
+  private final List<Map<String,String>> auditBoard = List.of(
+      Map.of("first_name","V", "last_name","T",
+          "political_party","Unaffiliated"),
+      Map.of("first_name","M", "last_name","B",
+          "political_party","Unaffiliated")
+  );
 
   /**
    * Strings for colorado-rla JSON structures.
    */
   protected static final String ASM_STATE = "asm_state";
   protected static final String AUDIT = "audit";
+  protected static final String AUDIT_BOARD_ASM_STATE = "audit_board_asm_state";
   protected static final String AUDIT_INFO = "audit_info";
   protected static final String CONTEST = "contest";
   protected static final String CONTESTID = "contestId";
@@ -176,32 +199,305 @@ public class Workflow  {
   protected static final String SCANNER_ID = "scanner_id";
   protected static final String TIMESTAMP = "timestamp";
 
+  protected void doWorkflow(Path pathToInstance, Optional<PostgreSQLContainer<?>> optPostGres) throws IOException, InterruptedException {
 
-  @BeforeClass
-  public void setup() {
-    RestAssured.baseURI = "http://localhost";
-    RestAssured.port = 8888;
-  }
+    // Convert data in the JSON workflow file to a workflow Instance.
+    ObjectMapper toJson = new ObjectMapper();
+    final Instance instance = toJson.readValue(pathToInstance.toFile(), Instance.class);
 
-  /**
-   * Set up and return a new test database for use when running an individual workflow instance.
-   * @param testName Name of test instance.
-   * @return Postgres test database to use when running the instance.
-   */
-  protected static PostgreSQLContainer<?> setupIndividualTestDatabase(final String testName){
-    PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
-    Properties config = loadProperties();
+    // Upload all the manifests and CVRs as defined in the Instance.
+    final List<String> cvrs = instance.getCVRs();
+    final List<String> manifests = instance.getManifests();
 
-    postgres.start();
-    config.setProperty("hibernate.url", postgres.getJdbcUrl());
-    Persistence.setProperties(config);
-    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
+    assertEquals(cvrs.size(), manifests.size());
 
-    runMain(config, testName);
+    for (int i = 0; i < manifests.size(); ++i) {
+      uploadCounty(i + 1, MANIFEST_FILETYPE, manifests.get(i), manifests.get(i) + ".sha256sum");
+    }
 
-    Persistence.beginTransaction();
+    // Upload all the CVRs. The order is important because it's an error to try to import a
+    // manifest while the CVRs are being read.
+    for (int i = 0; i < cvrs.size(); ++i) {
+      uploadCounty(i + 1, CVR_FILETYPE, cvrs.get(i), cvrs.get(i) + ".sha256sum");
+    }
 
-    return postgres;
+    final int countyCount = cvrs.size();
+    final Set<Integer> countyIDs = IntStream.rangeClosed(1, countyCount).boxed().collect(Collectors.toSet());
+
+    // Wait while the CVRs (and manifests) are uploaded.
+    assertTrue(uploadSuccessfulWithin(600, countyIDs, CVR_JSON));
+    assertTrue(uploadSuccessfulWithin(20, countyIDs, MANIFEST_JSON));
+
+    // Get the DoSDashboard refresh response; sanity check for initial state.
+    JsonPath dashboard = getDoSDashBoardRefreshResponse();
+    assertEquals(dashboard.get(ASM_STATE), DOS_INITIAL_STATE.toString());
+    assertEquals(dashboard.getMap(AUDIT_INFO + "." + CANONICAL_CHOICES).toString(), "{}");
+    assertNull(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON));
+    assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
+
+    // Provide a risk limit, canonicalization file, and seed as defined in the Instance.
+    updateAuditInfo(instance.getCanonicalisationFile(), instance.getRiskLimit());
+    dashboard = getDoSDashBoardRefreshResponse();
+    assertEquals(instance.getRiskLimit()
+        .compareTo(new BigDecimal(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON).toString())), 0);
+
+    // There should be canonical contests for each county.
+    assertEquals(countyCount,
+        dashboard.getMap(AUDIT_INFO + "." + CANONICAL_CONTESTS).size());
+
+    // Check that the seed is still null.
+    assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
+    assertEquals(dashboard.get(ASM_STATE), PARTIAL_AUDIT_INFO_SET.toString());
+
+    canonicalize(instance, true);
+
+    // Either call raire (if using) or load assertions in from SQL script.
+    makeAssertionData(optPostGres, instance.getSQLs());
+
+    dashboard = getDoSDashBoardRefreshResponse();
+
+    // Check that the right number of IRV contests are present
+    final List<String> irvContests = instance.getIRVContests();
+    final Map<String, String> targets = instance.getTargetedContests();
+    assertEquals(irvContests.size(), dashboard.getList("generate_assertions_summaries").size());
+
+    // Choose targeted contests for audit as specified in the Instance.
+    final Map<String, String> contestToDBID = targetContests(targets);
+
+    // Set the seed (as specified in the Instance).
+    setSeed(instance.getSeed());
+
+    // The ASM state for the dashboard should be COMPLETE_AUDIT_INFO_SET.
+    dashboard = getDoSDashBoardRefreshResponse();
+    assertEquals(dashboard.get(AUDIT_INFO + "." + SEED), instance.getSeed());
+    assertEquals(dashboard.get(ASM_STATE), COMPLETE_AUDIT_INFO_SET.toString());
+
+    // Estimate sample sizes; and then verify that they are as expected.
+    // For each targeted IRV contest, check that the set of assertions: (i) is not empty; (ii) has
+    // the correct minimum diluted margin; and (ii) has resulted in the correct sample size estimate.
+    Map<String, EstimateSampleSizes.EstimateData> sampleSizes = getSampleSizeEstimates();
+    assertFalse(sampleSizes.isEmpty());
+
+    final Map<String, Integer> expectedSamples = instance.getExpectedSamples();
+    final Map<String, Double> expectedMargins = instance.getDilutedMargins();
+    for (final String c : targets.keySet()) {
+      if (!sampleSizes.containsKey(c)) {
+        throw new RuntimeException("When verifying sample sizes, the targeted contest name "
+            + c + " does not exist in sample sizes data structure returned by CORLA. " +
+            "Likely incorrectly specified contest name in workflow JSON.");
+      }
+      verifySampleSize(c, expectedMargins.get(c), sampleSizes.get(c).estimatedSamples(),
+          expectedSamples.get(c), irvContests.contains(c));
+    }
+
+    // Run audit rounds until the number of expected samples required for each targeted
+    // contest is zero. Check that the number of rounds completed is as expected for the
+    // Instance, and that the end of round state for targeted contests is as expected
+    // for the Instance.
+    boolean auditNotFinished = true;
+    int rounds = 0;
+
+    // Keep track of last executed rounds' discrepancy counts
+    Map<String, Map<String, Integer>> lastDiscrepancyCounts = new HashMap<>();
+
+    while (auditNotFinished) {
+
+      // Start Audit Round
+      startAuditRound();
+
+      dashboard = getDoSDashBoardRefreshResponse();
+
+      final Map<String, Map<String, Object>> roundStartStatus = dashboard.get(COUNTY_STATUS);
+
+      // Log in as each county whose audit is not yet complete, and audit all ballots in sample.
+      List<String> countiesWithAudits = new ArrayList<>();
+      List<TestAuditSession> sessionsForAudit = new ArrayList<>();
+      List<TestAuditSession> sessionsForSignOffOnly = new ArrayList<>();
+      for (final int cty : countyIDs) {
+        final String ctyID = String.valueOf(cty);
+        final String asmState = roundStartStatus.get(ctyID).get(ASM_STATE).toString();
+        final String auditBoardAsmState = roundStartStatus.get(ctyID).get(AUDIT_BOARD_ASM_STATE).toString();
+        // Check that the county's state is appropriate for starting the audit. There are several
+        // different states, some of them quite unintuitive.
+        // Note that I'm not certain about ROUND_IN_PROGRESS - think that state shouldn't occur here.
+        if (asmState.equalsIgnoreCase(COUNTY_AUDIT_UNDERWAY.toString())) {
+          // Everyone has to initialize their session, regardless of whether they're actually auditing
+          // ballots or only signing off.
+          TestAuditSession session = countyAuditInitialise(cty);
+          // If the county has no actual ballot samples, the audit board still has to sign off on that.
+          if (auditBoardAsmState.equalsIgnoreCase(WAITING_FOR_ROUND_SIGN_OFF.toString())) {
+            sessionsForSignOffOnly.add(session);
+
+            // The rather unintuitive state {COUNTY_AUDIT_UNDERWAY; WAITING_FOR_ROUND_START} seems to occur sometimes
+            // when a county has completed its audit, and has no more ballots to audit now, but is participating in a
+            // statewide contest that may cause further auditing to be required later.
+          } else if (!auditBoardAsmState.equalsIgnoreCase(WAITING_FOR_ROUND_START.toString())) {
+            // If they're not waiting for round sign-off, and not waiting for the next round to start (which they might
+            // be if they'd already signed off on the last of the audits they had), then they have real auditing to do.
+            sessionsForAudit.add(session);
+            countiesWithAudits.add(ctyID);
+          }
+        }
+      }
+
+      // ACVR uploads for each county. Cannot run in parallel as corla does not like
+      // simultaneous database accesses.
+      for (final TestAuditSession entry : sessionsForAudit) {
+        auditCounty(rounds + 1, entry, instance);
+        countySignOffLogout(entry);
+      }
+
+      // Audit board sign off for each county that had zero audited ballots but has to sign off anyway.
+      for (final TestAuditSession entry : sessionsForSignOffOnly) {
+        countySignOffLogout(entry);
+      }
+
+      // Check that there are no more ballots to sample across all counties
+      dashboard = getDoSDashBoardRefreshResponse();
+      final Map<String, Integer> statusOptBallotsToAudit = dashboard.get(OPTIMISTIC_BALLOTS);
+      final Map<String, Map<String, Integer>> discrepancies = dashboard.get(DISCREPANCY_COUNT);
+
+      auditNotFinished = false;
+
+      // Verify that the result of this round is what we expected in terms of number of
+      // estimated and optimistic ballots to audit for each contest mentioned in the associated
+      // field in the instance. Also test that the resulting discrepancy counts are as expected.
+      final Optional<Map<String, Map<String, Integer>>> results = instance.getRoundContestResult(rounds + 1);
+      if (results.isPresent()) {
+        final Map<String, Map<String, Integer>> roundResults = results.get();
+
+        for (final String contestName : roundResults.keySet()) {
+          if (!contestToDBID.containsKey(contestName)) {
+            throw new RuntimeException("When verifying round results, the contest name "
+                + contestName + " does not exist in contest-database ID map. " +
+                "Likely incorrectly specified contest name in workflow JSON. You cannot check discrepancies " +
+                "for non-targeted contests - they should all be zero.");
+          }
+
+          final String dbID = contestToDBID.get(contestName);
+          final Map<String, Integer> contestResult = roundResults.get(contestName);
+
+          final int oneOverCount = contestResult.get(ONE_OVER_COUNT);
+          final int oneUnderCount = contestResult.get(ONE_UNDER_COUNT);
+          final int twoOverCount = contestResult.get(TWO_OVER_COUNT);
+          final int twoUnderCount = contestResult.get(TWO_UNDER_COUNT);
+          final int otherCount = contestResult.get(OTHER_COUNT);
+          final int disagreementCount = contestResult.get(DISAGREEMENTS);
+
+          if (!discrepancies.containsKey(dbID)) {
+            throw new RuntimeException("Likely incorrectly specified contest name (" +
+                contestName + ") in workflow JSON. You cannot check discrepancies" +
+                "for non-targeted contests - they should all be zero.");
+          }
+          final Map<String, Integer> contestDiscrepancies = discrepancies.get(dbID);
+          assertEquals(contestDiscrepancies.get(ONE_OVER).intValue(), oneOverCount);
+          assertEquals(contestDiscrepancies.get(ONE_UNDER).intValue(), oneUnderCount);
+          assertEquals(contestDiscrepancies.get(OTHER).intValue(), otherCount);
+          assertEquals(contestDiscrepancies.get(TWO_OVER).intValue(), twoOverCount);
+          assertEquals(contestDiscrepancies.get(TWO_UNDER).intValue(), twoUnderCount);
+
+          // Record so that we can cross-check the reports against what should be the
+          // final discrepancy counts.
+          final boolean mapContainsContest = lastDiscrepancyCounts.containsKey(contestName);
+          Map<String, Integer> countMap = mapContainsContest ?
+              lastDiscrepancyCounts.get(contestName) : new HashMap<>();
+
+          countMap.put(ONE_OVER, oneOverCount);
+          countMap.put(TWO_OVER, twoOverCount);
+          countMap.put(ONE_UNDER, oneUnderCount);
+          countMap.put(TWO_UNDER, twoUnderCount);
+          countMap.put(OTHER, otherCount);
+          countMap.put(DISAGREEMENTS, disagreementCount);
+
+          if (!mapContainsContest) {
+            lastDiscrepancyCounts.put(contestName, countMap);
+          }
+        }
+      }
+
+      final int maxOptimistic = Collections.max(statusOptBallotsToAudit.values());
+
+      final Map<String, Map<String, Object>> status = dashboard.get(COUNTY_STATUS);
+      final Optional<Map<String, Map<String, Integer>>> countyResults = instance.getRoundCountyResult(rounds + 1);
+
+      int maxBallotsRemaining = 0;
+      if (countyResults.isPresent()) {
+        for (final Map.Entry<String, Map<String, Integer>> entry : countyResults.get().entrySet()) {
+          if (!countiesWithAudits.contains(entry.getKey()))
+            continue;
+
+          final Map<String, Integer> expStatus = entry.getValue();
+          final Map<String, Object> countyStatus = status.get(entry.getKey());
+
+          final int ballotsRemaining = Integer.parseInt(countyStatus.get(BALLOTS_REMAINING).toString());
+          final int estimatedBallots = Integer.parseInt(countyStatus.get(ESTIMATED_BALLOTS).toString());
+
+          assertEquals(ballotsRemaining, expStatus.get(BALLOTS_REMAINING).intValue());
+          assertEquals(estimatedBallots, expStatus.get(ESTIMATED_BALLOTS).intValue());
+
+          maxBallotsRemaining = max(ballotsRemaining, maxBallotsRemaining);
+        }
+      }
+
+      // Audit unfinished; new round.
+      if (maxOptimistic > 0 || maxBallotsRemaining > 0) {
+        auditNotFinished = true;
+        // We're not finished but we didn't actually audit anything. This means that the audit is
+        // infinite. The audit isn't finished, but we should break out of this (otherwise infinite)
+        // loop with rounds set to infinite.
+        if(sessionsForAudit.isEmpty()) {
+          rounds = INFINITE_ROUNDS;
+          break;
+        }
+      }
+
+      rounds += 1;
+
+    }
+
+    // Check that the number of rounds completed is as expected. Note that this may
+    // not be specified in the instance.
+    final Optional<Integer> expectedRounds = instance.getExpectedRounds();
+    if (expectedRounds.isPresent()) {
+      assertEquals(expectedRounds.get().intValue(), rounds);
+    }
+
+    // Check that the number of audited ballots for targeted contests meets expectations.
+    final Map<String, Integer> expectedAuditedBallots = instance.getExpectedAuditedBallots();
+    final List<String> content = getReportAsCSV("contest");
+    for (final String line : content) {
+      final String[] tokens = line.split(",");
+      for (final String contest : targets.keySet()) {
+        if (tokens[0].equalsIgnoreCase(contest)) {
+          final int expected = expectedAuditedBallots.get(contest);
+          assert (Integer.parseInt(tokens[9]) >= expected);
+          break;
+        }
+      }
+    }
+
+    // Verify contents of selected reports that are downloadable as CSV.
+    // Check the summarize_IRV report.
+    checkSummarizeIRVReport(getReportAsCSV("summarize_IRV"), instance);
+
+    // Check the contest report
+    checkContestReport(getReportAsCSV("contest"), instance, lastDiscrepancyCounts);
+
+    // Check the contests_by_county report
+    checkContestsByCountyReport(getReportAsCSV("contest_by_county"), instance);
+
+    // Check the contest_selection report
+    checkContestSelectionReport(getReportAsCSV("contest_selection"), instance);
+
+    // Check the seed report
+    checkSeedReport(getReportAsCSV("seed"), instance);
+
+    // Check the tabulate_plurality report
+    checkTabulatePluralityReport(getReportAsCSV("tabulate_plurality"), instance);
+
+    // Check the tabulate_county_plurality report
+    checkTabulateCountyPluralityReport(getReportAsCSV("tabulate_county_plurality"), instance);
+
   }
 
   /**
@@ -325,10 +621,14 @@ public class Workflow  {
     final JSONObject params = createBody(Map.of("audit_board",
         session.auditBoard, "index", session.index()));
 
-    given().filter(session.filter())
-        .header("Content-Type", "application/json")
-        .body(params.toJSONString())
-        .post("/audit-board-sign-in");
+      given().filter(session.filter())
+          .header("Content-Type", "application/json")
+          .body(params.toJSONString())
+          .post("/audit-board-sign-in");
+      // FIXME This sometimes doesn't work, possibly because of contention.
+      //     .then()
+      //    .assertThat()
+      //    .statusCode(HttpStatus.SC_OK);
   }
 
   /**
@@ -344,7 +644,10 @@ public class Workflow  {
     given().filter(session.filter())
         .header("Content-Type", "application/json")
         .body(params.toJSONString())
-        .post("/sign-off-audit-round");
+        .post("/sign-off-audit-round")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
   }
 
   /**
@@ -428,7 +731,7 @@ public class Workflow  {
     if(info.contest().description().equals(ContestType.IRV.toString())){
       // The contest is an IRV contest.
       final List<IRVBallotInterpretation> interpretations = TestOnlyQueries.matching(
-          cvrNumber, info.contest().name(), imprintedId, RecordType.UPLOADED);
+          cvrNumber, info.contest().id(), imprintedId, RecordType.UPLOADED);
 
       if(interpretations.isEmpty()){
         List<String> rawChoices = new ArrayList<>();
@@ -469,16 +772,26 @@ public class Workflow  {
     given().filter(filter)
         .header("Content-Type", "application/json")
         .body(createBody(Map.of("count", 1)).toJSONString())
-        .post("/set-audit-board-count");
+        .post("/set-audit-board-count")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
 
-    final List<Map<String,String>> auditBoard = List.of(
-        Map.of("first_name","V", "last_name","T",
-            "political_party","Unaffiliated"),
-        Map.of("first_name","M", "last_name","B",
-            "political_party","Unaffiliated")
-    );
+    // Get the audit board ASM state
+    final JsonPath auditBoardASMState = given().filter(filter)
+        .header("Content-Type", "application/json")
+        .get("/audit-board-asm-state")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK)
+        .extract()
+        .body()
+        .jsonPath();
 
-    // Sign in the audit board
+    LOGGER.info(String.format("Audit board ASM state for County %d: %s.",
+        number, auditBoardASMState.get("current_state")));
+
+    // Sign in the default audit board
     final TestAuditSession session = new TestAuditSession(filter, auditBoard, 0, number);
     auditBoardSignIn(session);
 
@@ -572,7 +885,10 @@ public class Workflow  {
     given().filter(filter)
         .header("Content-Type", "application/json")
         .body(params.toJSONString())
-        .post("/upload-audit-cvr");
+        .post("/upload-audit-cvr")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
   }
 
   /**
@@ -599,7 +915,7 @@ public class Workflow  {
    * For the given county number, collect the set of CVRs to audit for the given round, and
    * upload the audit CVRs.
    * @param round   Audit round.
-   * @param session  TestAuditSession capturing the audit session for a county.
+   * @param session TestAuditSession capturing the audit session for a county.
    */
   protected void auditCounty(final int round, final TestAuditSession session, final Instance instance){
 
@@ -865,20 +1181,6 @@ public class Workflow  {
   }
 
   /**
-   * Generate assertions (for IRV contests). At the moment, rather than call raire-service, we
-   * are mocking that functionality. To do so, we take the path to a file containing SQL insert
-   * statements for all assertion related content that would have been created by the raire-service,
-   * and inserted into the database, and insert it into the database here.
-   * Note that it is problematic to call the RAIRE service in this test context, because it will be
-   * reading the wrong database.
-   * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/218">...</a>
-   */
-  protected void generateAssertions(final PostgreSQLContainer<?> postgres, final String sqlPath, final double timeLimitSeconds)
-  {
-    TestClassWithDatabase.runSQLSetupScript(postgres, sqlPath);
-  }
-
-  /**
    * Verify that some assertions are present for the given contest, that the minimum diluted
    * margin across these assertions is correct, and that the estimated sample size for the contest
    * is correct.
@@ -1005,7 +1307,9 @@ public class Workflow  {
 
   /**
    * Hit the /contests endpoint, to learn all the contests.
-   * @param ignoreManifests
+   * @param ignoreManifests whether the absence of manifests should be ignored (usually false unless
+   *                        you are particularly trying to test what happens when manifest-absence
+   *                        is ignored).
    * @return the response, as a JsonPath.
    */
   protected JsonPath getContests(boolean ignoreManifests) {
@@ -1030,18 +1334,19 @@ public class Workflow  {
   }
 
   /**
-   * Given a workflow instance, perform cononicalisation of candidate and contest names.
-   * @param instance           Workflow instance
-   * @param ignoreManifests
+   * Given a workflow instance, perform canonicalization of candidate and contest names.
+   * @param instance        Workflow instance
+   * @param ignoreManifests Whether to ignore (the absence of) manifests. Usually false unless you
+   *                        are specifically testing whether manifest-absence is properly dealt with.
    */
-  protected void canonicalise(final Instance instance, boolean ignoreManifests){
+  protected void canonicalize(final Instance instance, boolean ignoreManifests){
     final JsonPath contests = getContests(ignoreManifests);
 
     final Map<String,String> contestNameChanges = instance.getContestNameChanges();
     final Map<String, Map<String,String>> candNameChanges = instance.getCandidateNameChanges();
 
-    final JSONArray canonicaliseContests = new JSONArray();
-    final JSONArray canonicaliseCandidates = new JSONArray();
+    final JSONArray canonicalizeContests = new JSONArray();
+    final JSONArray canonicalizeCandidates = new JSONArray();
 
     // Find the IDs of the ones we want to target.
     for(int i=0 ; i < contests.getList("").size() ; i++) {
@@ -1052,7 +1357,7 @@ public class Workflow  {
       final String newName = contestNameChanges.getOrDefault(contestName, contestName);
 
       if(contestNameChanges.containsKey(contestName)){
-        canonicaliseContests.add(Map.of(CONTESTID, contestId, COUNTYID,
+        canonicalizeContests.add(Map.of(CONTESTID, contestId, COUNTYID,
             countyId, NAME, contestNameChanges.get(contestName)));
       }
 
@@ -1062,18 +1367,18 @@ public class Workflow  {
           candChanges.add(createBody(Map.of(OLDNAME, change.getKey(),
               NEWNAME, change.getValue())));
         }
-        canonicaliseCandidates.add(createBody(Map.of(CONTESTID, contestId,
+        canonicalizeCandidates.add(createBody(Map.of(CONTESTID, contestId,
             COUNTYID, countyId, CHOICES, candChanges)));
       }
     }
 
     final SessionFilter filter = doLogin("stateadmin1");
 
-    // Post the set contest names request (canonicalise contest names)
+    // Post the set contest names request (canonicalize contest names)
     given()
         .filter(filter)
         .header("Content-Type", "application/json")
-        .body(canonicaliseContests.toString())
+        .body(canonicalizeContests.toString())
         .post("/set-contest-names")
         .then()
         .assertThat()
@@ -1083,7 +1388,7 @@ public class Workflow  {
     given()
         .filter(filter)
         .header("Content-Type", "application/json")
-        .body(canonicaliseCandidates.toString())
+        .body(canonicalizeCandidates.toString())
         .post("/set-contest-names")
         .then()
         .assertThat()
@@ -1166,16 +1471,19 @@ public class Workflow  {
           ONE_UNDER, 0, TWO_UNDER, 0, OTHER, 0, DISAGREEMENTS, 0);
 
       final Optional<Integer> expectedRawMargin = instance.getRawMargin(contestName);
-      expectedRawMargin.ifPresent(m -> assertEquals(m, minMargin));
+      expectedRawMargin.ifPresent(m -> assertEquals(minMargin, m));
 
       final Optional<String> expectedWinner = instance.getWinner(contestName);
-      expectedWinner.ifPresent(s -> assertEquals(s, winner));
+      expectedWinner.ifPresent(s -> assertEquals(winner, s));
       final Optional<String> expectedReason = instance.getTargetedContestReason(contestName);
-      expectedReason.ifPresent(s -> assertEquals(s.toLowerCase(), targetReason.toLowerCase()));
+      expectedReason.ifPresent(s -> assertEquals(targetReason.toLowerCase(), s.toLowerCase()));
+      final Optional<Integer> expectedRounds = instance.getExpectedRounds();
 
-      if (instance.getTargetedContests().containsKey(contestName)) {
-        // Audit status should be risk limit achieved for all successful workflows
-        assertEquals(auditStatus.toLowerCase(), Workflow.RISK_LIMIT_ACHIEVED.toLowerCase());
+      if(instance.getTargetedContests().containsKey(contestName)) {
+        // Audit status should be risk limit achieved for all successful workflows, except those that
+        // explicitly expect infinite rounds.
+        assertTrue(auditStatus.equalsIgnoreCase(Workflow.RISK_LIMIT_ACHIEVED) ||
+            (expectedRounds.isPresent() && expectedRounds.get() == INFINITE_ROUNDS));
 
         countMap = lastDiscrepancyCounts.get(contestName);
       }
@@ -1199,6 +1507,47 @@ public class Workflow  {
       expectedFinalOptimistic.ifPresent(m -> assertTrue(m <= optimisticSamples));
       final Optional<Integer> expectedFinalEstimated = instance.getExpectedEstimatedSamples(contestName);
       expectedFinalEstimated.ifPresent(m -> assertTrue(m <= estimatedSamples));
+    }
+  }
+
+  /**
+   * Set up main's configuration file to match the given postgres container, then run main and
+   * load the colorado-rla init script into the database.
+   * This loads in the properties in resources/test.properties, then overwrites the database
+   * location with the one in the newly-created test container.
+   * This is used as is in all the workflows except WorkflowRunnerWithRaire, which overrides it
+   * because it doesn't need to run main or initialize the DB.
+   * @param testName Name of test instance.
+   * @param postgresOpt The PostgreSQL container to use.
+   */
+  protected void runMainAndInitializeDB(final String testName, final Optional<PostgreSQLContainer<?>> postgresOpt) {
+    assertTrue(postgresOpt.isPresent());
+    final PostgreSQLContainer<?> postgres = postgresOpt.get();
+
+    postgres.start();
+    config.setProperty("hibernate.url", postgres.getJdbcUrl());
+    Persistence.setProperties(config);
+    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
+
+    runMain(config, testName);
+
+    Persistence.beginTransaction();
+  }
+
+  /**
+   * Load additional SQL data (this is data that we want to add after we have
+   * CVRs, manifests, etc loaded for each county). This will mostly be used to load
+   * assertion data into the database, simulating a call to the raire-service.
+   * This is overridden in WorkflowRunnerWithRaire, which does _not_ use either sql scripts or a
+   * test container, but instead communicatees with raire and the corla database.
+   * @param postgresOpt The postgres container which is expected to be present, and into which
+   *                    assertions should be stored.
+   * @param SQLfiles    The sql files which, if non-empty, the data should be read from.
+   */
+  protected void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgresOpt, final List<String> SQLfiles) {
+    assertTrue(postgresOpt.isPresent());
+    for (final String s : SQLfiles) {
+      TestClassWithDatabase.runSQLSetupScript(postgresOpt.get(), s);
     }
   }
 
@@ -1320,7 +1669,7 @@ public class Workflow  {
    * @param username Username for the user to authenticate
    * @return The user's session, to be interacted with in later testing.
    */
-  private SessionFilter doLogin(final String username) {
+  protected SessionFilter doLogin(final String username) {
     final SessionFilter filter = new SessionFilter();
     authenticate(filter, username,"",1);
     authenticate(filter, username,"s d f",2);

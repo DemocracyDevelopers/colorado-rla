@@ -157,6 +157,10 @@
 				<version>2.22.2</version>
 				<configuration>
 					<excludedGroups>${corla.test.excludedGroups}</excludedGroups>
+					<suiteXmlFiles>
+						<!-- used to allow file name to be passed as a parameter to the workflow test. -->
+						<suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
+					</suiteXmlFiles>
 				</configuration>
 			</plugin>
 

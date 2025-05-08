@@ -23,6 +23,7 @@ To run the complete demo, execute the following:
 - `county-2-Alamosa-do-audit.http`
 
 The first 4 can run in any order, but they can take a while - make sure they're finished before running `demo1_defineAudit` and then `county-2-Alamosa-do-audit`.
+The total number of CVRs in Demo1 is 154939.
 
 ## Examining the output.
 `demo1-defineAudit` prints into the console a list of 'ballots remaining in round' for all contests. Counties 4 and 7 should have hundreds of ballots to audit; the rest should have a range of values from 0 to about 6.
@@ -103,8 +104,7 @@ also contains it in a file called `x.y.sha256sum`.
    9. Launch the audit. I see 5 remaining ballots to audit in Lake and La Plata Counties and 57 in Las Animas, but you will
      see different numbers if you chose a different risk limit or seed. (Technical note: 5 + 5 < 13, so it might seem
      as if we are going to audit fewer ballots than the expected sample size, but this can happen - especially in small 
-     contests - 
-     because an audit ballot can be repeated in the sample.)
+     contests - because an audit ballot can be repeated in the sample.)
 
 Alternatively, all these steps can be done without manifests, in which case the CDOS audit sequence
 blocks after sample size estimation. For this data, the sample size estimates should be the same
@@ -198,10 +198,10 @@ You can paste the .json assertions into the (Assertion Explainer)[https://democr
 
 For TinyExample1, you should see
 
-![Two trees](expected-outputs/TinyIRV/TinyExample1Assertions.png)
+![Two trees](../expected-outputs/TinyIRV/TinyExample1Assertions.png)
 
 For Example3, you should see
-![img.png](expected-outputs/TinyIRV/Example3Assertions.png)
+![img.png](../expected-outputs/TinyIRV/Example3Assertions.png)
 
 ### sample-sizes csv
 The sample sizes should match the Estimated samples to audit from the assertion .csv files.

@@ -22,21 +22,23 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.workflows;
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
+import io.restassured.RestAssured;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
 import static us.freeandfair.corla.model.AuditReason.COUNTY_WIDE_CONTEST;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A demonstration workflow that tests sample size estimation with and without manifests, comparing
@@ -62,6 +64,13 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
    */
   private static final Logger LOGGER = LogManager.getLogger(EstimateSampleSizesVaryingManifests.class);
 
+  @BeforeClass
+  public void setup() {
+    config = loadProperties();
+    RestAssured.baseURI = "http://localhost";
+    RestAssured.port = 8888;
+  }
+
   /**
    * This "test" uploads CVRs and ballot manifests.
    */
@@ -69,7 +78,8 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   public void runManifestVaryingDemo() throws InterruptedException {
     testUtils.log(LOGGER, "runManifestVaryingDemo");
 
-    setupIndividualTestDatabase("runManifestVaryingDemo");
+    final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
+    runMainAndInitializeDB("runManifestVaryingDemo", Optional.of(postgres));
 
     final String margin2Contest = "PluralityMargin2";
     final String margin10Contest = "PluralityMargin10";
@@ -134,10 +144,9 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     // Target the margin-2 contests in every county.
     targetContests(Map.of(
         margin2Contest, COUNTY_WIDE_CONTEST.toString(),
-        margin2Contest + suffixes[1],
-        COUNTY_WIDE_CONTEST.toString(),
-        margin2Contest + suffixes[2],
-        COUNTY_WIDE_CONTEST.toString()));
+        margin2Contest + suffixes[1], COUNTY_WIDE_CONTEST.toString(),
+        margin2Contest + suffixes[2], COUNTY_WIDE_CONTEST.toString()
+    ));
 
     // Get contest lists again. Now this should be non-empty regardless of whether manifests are
     // ignored.
@@ -171,5 +180,4 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     // CVR export - see <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/217">...</a>
     // int test = dashboard.getInt("county_status.3.estimated_ballots_to_audit");
   }
-
 }
