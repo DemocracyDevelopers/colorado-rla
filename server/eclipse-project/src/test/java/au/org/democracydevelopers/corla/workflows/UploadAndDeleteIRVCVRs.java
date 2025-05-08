@@ -105,11 +105,4 @@ public class UploadAndDeleteIRVCVRs extends Workflow {
     ivrBallotInterpretations = getReportAsCSV("ranked_ballot_interpretation");
     assertEquals(ivrBallotInterpretations.size(), 1);
   }
-
-  /** Not used.
-   */
-  @Override
-  protected void makeAssertionData(Optional<PostgreSQLContainer<?>> postgres, List<String> SQLfiles) {
-
-  }
 }

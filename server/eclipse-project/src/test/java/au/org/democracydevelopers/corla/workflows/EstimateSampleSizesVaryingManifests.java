@@ -31,7 +31,6 @@ import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import us.freeandfair.corla.persistence.Persistence;
 
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.*;
@@ -180,13 +179,5 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     // TODO - Verify how colorado-rla deals with the case where the manifest has fewer votes than the
     // CVR export - see <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/217">...</a>
     // int test = dashboard.getInt("county_status.3.estimated_ballots_to_audit");
-  }
-
-  /**
-   * Not used. Can be removed when this is transformed into a standard workflow.
-   */
-  @Override
-  protected void makeAssertionData(Optional<PostgreSQLContainer<?>> postgres, List<String> SQLfiles) {
-    return;
   }
 }

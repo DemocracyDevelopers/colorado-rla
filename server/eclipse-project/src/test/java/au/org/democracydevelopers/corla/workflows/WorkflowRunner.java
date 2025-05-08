@@ -40,7 +40,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import us.freeandfair.corla.persistence.Persistence;
 
 /**
  * This workflow runner is designed to execute all JSON workflows present in a specified
@@ -147,17 +146,6 @@ public class WorkflowRunner extends Workflow {
     }
   }
 
-  /**
-   * Load additional SQL data (this is data that we want to add after we have
-   * CVRs, manifests, etc loaded for each county). This will mostly be used to load
-   * assertion data into the database, simulating a call to the raire-service.
-   */
-  protected void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgresOpt, final List<String> SQLfiles) {
-    assertTrue(postgresOpt.isPresent());
-    for (final String s : SQLfiles) {
-      TestClassWithDatabase.runSQLSetupScript(postgresOpt.get(), s);
-    }
-  }
 
   /**
    * Utility that returns true if the given file path represents a JSON file.

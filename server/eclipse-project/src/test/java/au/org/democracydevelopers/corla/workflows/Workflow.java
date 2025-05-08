@@ -1181,12 +1181,6 @@ public abstract class Workflow  {
   }
 
   /**
-   * This abstract version allows descendents to make the assertions in their own way, either by
-   * calling raire or by retrieving assertions and related data from an sql file.
-   */
-  protected abstract void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgres, final List<String> SQLfiles);
-
-  /**
    * Verify that some assertions are present for the given contest, that the minimum diluted
    * margin across these assertions is correct, and that the estimated sample size for the contest
    * is correct.
@@ -1538,6 +1532,23 @@ public abstract class Workflow  {
     runMain(config, testName);
 
     Persistence.beginTransaction();
+  }
+
+  /**
+   * Load additional SQL data (this is data that we want to add after we have
+   * CVRs, manifests, etc loaded for each county). This will mostly be used to load
+   * assertion data into the database, simulating a call to the raire-service.
+   * This is overridden in WorkflowRunnerWithRaire, which does _not_ use either sql scripts or a
+   * test container, but instead communicatees with raire and the corla database.
+   * @param postgresOpt The postgres container which is expected to be present, and into which
+   *                    assertions should be stored.
+   * @param SQLfiles    The sql files which, if non-empty, the data should be read from.
+   */
+  protected void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgresOpt, final List<String> SQLfiles) {
+    assertTrue(postgresOpt.isPresent());
+    for (final String s : SQLfiles) {
+      TestClassWithDatabase.runSQLSetupScript(postgresOpt.get(), s);
+    }
   }
 
   /**

@@ -213,9 +213,8 @@ public class Instance {
   /**
    * Audited ballot choices for select CVR Ids and contests. The instance JSON records only the
    * ones we want to be different to what is on the CVR. Example map element (below). We are
-   * specifying discrepant choices for ballot 108-1-87 in round 2, county 7, for the contest Byron Mayoral.
+   * specifying discrepant choices for ballot 108-1-87 in county 7, for the contest Byron Mayoral.
    *     "7" : {
-   *       "2" : {
    *         "108-1-87": [
    *           {
    *             "Byron Mayoral": {
@@ -227,7 +226,6 @@ public class Instance {
    *             }
    *           }
    *         ]
-   *       }
    *     }
    */
   @JsonProperty("DISCREPANT_AUDITED_BALLOT_CHOICES")
@@ -437,8 +435,8 @@ public class Instance {
   }
 
   /**
-   * @return The number of rounds of auditing we expect will take place. Can be null if nothing
-   * specified in JSON instance.
+   * @return The number of rounds of auditing we expect will take place, wrapped in an Optional<>
+   * that is empty if nothing is specified in the JSON instance.
    */
   public Optional<Integer> getExpectedRounds(){
     return expectedRounds == null ? Optional.empty() : Optional.of(expectedRounds);
