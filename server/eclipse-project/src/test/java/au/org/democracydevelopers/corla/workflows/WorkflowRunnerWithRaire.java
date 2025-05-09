@@ -69,10 +69,6 @@ public class WorkflowRunnerWithRaire extends Workflow {
    */
   private static final Logger LOGGER = LogManager.getLogger(WorkflowRunnerWithRaire.class);
 
-  /**
-   * Default time limit for raire call.
-   */
-  private static final int TIME_LIMIT_DEFAULT = 5;
 
   @BeforeClass
   public void setup() {
@@ -86,6 +82,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
    * phantoms, which ballots to treat as phantoms, expected diluted margins and sample sizes,
    * which ballots to simulate discrepancies for, and expected end of round states ...), run
    * the test audit and verify that the expected outcomes arise.
+   * @param workflowFile Path to JSON workflow instance to execute.
    * @throws InterruptedException
    */
   @Parameters("workflowFile")
@@ -115,27 +112,6 @@ public class WorkflowRunnerWithRaire extends Workflow {
       LOGGER.error(msg);
       throw new RuntimeException(msg);
     }
-  }
-
-  /**
-   * Connect to the raire service and tell it to generate the assertions.
-   * @param postgres Not used. This version communicates with the database via http and should not be
-   *                 called with a testcontainer.
-   * @param SQLfiles Not used. This version communicates with Raire and does not load data in from
-   *                 SQL files.
-   */
-  protected void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgres, final List<String> SQLfiles) {
-    assertTrue(postgres.isEmpty() && SQLfiles.isEmpty());
-
-    // Login as state admin.
-    final SessionFilter filter = doLogin("stateadmin1");
-    given()
-        .filter(filter)
-        .header("Content-Type", "application/x-www-form-urlencoded")
-        .get("/generate-assertions?timeLimitSeconds="+TIME_LIMIT_DEFAULT)
-        .then()
-        .assertThat()
-        .statusCode(HttpStatus.SC_OK);
   }
 
   /**

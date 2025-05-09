@@ -128,11 +128,6 @@ public abstract class Workflow  {
   protected Properties config;
 
   /**
-   * Path for all the data files.
-   */
-  protected static final String dataPath = "src/test/resources/CSVs/";
-
-  /**
    * Default audit board names.
    */
   private final List<Map<String,String>> auditBoard = List.of(
@@ -199,7 +194,19 @@ public abstract class Workflow  {
   protected static final String SCANNER_ID = "scanner_id";
   protected static final String TIMESTAMP = "timestamp";
 
-  protected void doWorkflow(Path pathToInstance, Optional<PostgreSQLContainer<?>> optPostGres) throws IOException, InterruptedException {
+  /**
+   * Default time limit for a raire service call.
+   */
+  private static final int TIME_LIMIT_DEFAULT = 5;
+
+  /**
+   * Runs a specified audit workflow which will either interact with the RAIRE service to
+   * generate assertions, or load assertions from an SQL file, depending on whether a test
+   * database has been provided as input (ie. if optPostGres is not empty).
+   * @param pathToInstance Path to workflow JSON specifying the audit configuration.
+   * @param optPostGres Optional test database (for when we are testing with a mocked RAIRE service).
+   */
+  protected void doWorkflow(final Path pathToInstance, final Optional<PostgreSQLContainer<?>> optPostGres) throws IOException, InterruptedException {
 
     // Convert data in the JSON workflow file to a workflow Instance.
     ObjectMapper toJson = new ObjectMapper();
@@ -503,7 +510,8 @@ public abstract class Workflow  {
   /**
    * Create properties files for use when running main, and then runs main. Main can take (database)
    * properties as a CLI, but only as a file, so we need to make the file and then tell main to read it.
-   * @param testFileName the name of the test file - must be different for each test.
+   * @param config Properties configuration to be updated for the given test name.
+   * @param testFileName the name of the test properties file to be created, must be different for each test.
    */
   protected static void runMain(final Properties config, final String testFileName) {
     final String propertiesFile = tempConfigPath + testFileName + "-test.properties";
@@ -1545,9 +1553,21 @@ public abstract class Workflow  {
    * @param SQLfiles    The sql files which, if non-empty, the data should be read from.
    */
   protected void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgresOpt, final List<String> SQLfiles) {
-    assertTrue(postgresOpt.isPresent());
-    for (final String s : SQLfiles) {
-      TestClassWithDatabase.runSQLSetupScript(postgresOpt.get(), s);
+    if(postgresOpt.isPresent()) {
+      for (final String s : SQLfiles) {
+        TestClassWithDatabase.runSQLSetupScript(postgresOpt.get(), s);
+      }
+    }
+    else{
+      // Login as state admin.
+      final SessionFilter filter = doLogin("stateadmin1");
+      given()
+          .filter(filter)
+          .header("Content-Type", "application/x-www-form-urlencoded")
+          .get("/generate-assertions?timeLimitSeconds="+TIME_LIMIT_DEFAULT)
+          .then()
+          .assertThat()
+          .statusCode(HttpStatus.SC_OK);
     }
   }
 

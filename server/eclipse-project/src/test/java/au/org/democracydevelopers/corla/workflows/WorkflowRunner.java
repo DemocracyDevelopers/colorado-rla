@@ -100,13 +100,13 @@ public class WorkflowRunner extends Workflow {
   }
 
   /**
-   * Returns a singleton list containing the .json file given as the argument.
+   * Returns a singleton list containing a hardcoded .json file representing a single
+   * workflow instance.
    * Useful for running a single workflow during testing of the testing.
    */
   @DataProvider(name = "single-workflow-provider")
   public Object[][] supplySingleWorkflowPath() {
-
-    String filename = "StateAndCountyUnbalanced.INFINITE.json";
+    final String filename = "StateAndCountyUnbalanced.INFINITE.json";
     Path path = Paths.get(pathToInstances, filename);
     Path normalizedPath = path.normalize();
     assertTrue(Files.isRegularFile(normalizedPath));
