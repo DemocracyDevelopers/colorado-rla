@@ -23,10 +23,8 @@ package au.org.democracydevelopers.corla.workflows;
 
 import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.RestAssured;
-import io.restassured.filter.session.SessionFilter;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.apache.http.HttpStatus;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -39,7 +37,6 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
-import static io.restassured.RestAssured.given;
 import static org.testng.Assert.*;
 
 /**

@@ -102,12 +102,6 @@ public abstract class Workflow  {
   protected static final int numCounties = 64;
 
   /**
-   * Set of all CO counties, by number.
-   */
-  protected static final Set<Integer> allCounties
-      = IntStream.rangeClosed(1,numCounties).boxed().collect(Collectors.toSet());
-
-  /**
    * Default PRNG seed.
    */
   protected static final String defaultSeed = "24098249082409821390482049098";
