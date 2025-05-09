@@ -175,31 +175,31 @@
 
   "DILUTED_MARGINS" : {
     "City of Longmont - Mayor" : 0.09078192,
-    "Byron Mayoral" : 0.00684644,
+    "Byron Mayoral" : 0.007516611,
     "Uralla Mayoral" : 0.613594287
   },
 
   "EXPECTED_SAMPLES" : {
     "City of Longmont - Mayor" : 81,
-    "Byron Mayoral" : 1065,
+    "Byron Mayoral" : 970,
     "Uralla Mayoral" : 12
   },
 
   "FINAL_EXPECTED_AUDITED_BALLOTS" : {
     "City of Longmont - Mayor" : 81,
-    "Byron Mayoral" : 1065,
+    "Byron Mayoral" : 970,
     "Uralla Mayoral" : 15
   },
 
   "FINAL_EXPECTED_OPTIMISTIC_SAMPLES" : {
     "City of Longmont - Mayor" : 81,
-    "Byron Mayoral" : 1065,
+    "Byron Mayoral" : 970,
     "Uralla Mayoral" : 15
   },
 
   "FINAL_EXPECTED_ESTIMATED_SAMPLES" : {
     "City of Longmont - Mayor" : 81,
-    "Byron Mayoral" : 1065,
+    "Byron Mayoral" : 970,
     "Uralla Mayoral" : 16
   },
 
