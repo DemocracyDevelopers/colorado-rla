@@ -102,9 +102,11 @@ public class WorkflowRunnerWithRaire extends Workflow {
       runMainAndInitializeDB("Workflow with raire", Optional.empty());
 
       // Do the workflow.
+      System.out.println(pathToInstance);
       doWorkflow(pathToInstance, Optional.empty());
 
     } catch(IOException e){
+      e.printStackTrace();
       final String msg = prefix + " " + e.getMessage() + ". Check that the path and filename are correct.";
       LOGGER.error(msg);
       throw new RuntimeException(msg);
