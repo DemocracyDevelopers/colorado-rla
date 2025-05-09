@@ -31,6 +31,7 @@ import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.model.CastVoteRecord;
 
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.*;
@@ -175,9 +176,25 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     assertEquals(dashboard.getInt(COUNTY_STATUS + ".1." + ESTIMATED_BALLOTS), county1Estimate);
     assertEquals(dashboard.getInt(COUNTY_STATUS + ".2." + ESTIMATED_BALLOTS), county2Estimate);
 
-    // County 3 should have an error, because the manifest has fewer ballots than the CVR.
-    // TODO - Verify how colorado-rla deals with the case where the manifest has fewer votes than the
-    // CVR export - see <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/217">...</a>
-    // int test = dashboard.getInt("county_status.3.estimated_ballots_to_audit");
+    // FIXME County 3 should have an error, because the manifest has fewer ballots than the CVR.
+    // Unfortunately colorado-rla does not seem to identify this inconsistency correctly.
+    // See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/217">...</a>
+    // Instead it starts the audit and chooses audit ballots only from those listed on the manifest,
+    // not the whole list of CVRs.
+    // So this test is testing a *wrong* behaviour - the proper fix is to throw an error in this case.
+
+    TestAuditSession session = countyAuditInitialise(3);
+    final List<CastVoteRecord> cvrsToAudit = getCvrsToAudit(1, session.filter());
+    // There are 100 CVRs, and 30 are chosen for audit, but only from among the first 50, because those are the only
+    // ones that appear in the manifest. This is obviously not sound.
+    final int CVRCount = dashboard.getInt(COUNTY_STATUS + ".1." + CVR_EXPORT_FILE + "."
+        + APPROXIMATE_RECORD_COUNT);
+    assertTrue(CVRCount >= 100);
+    assertEquals(cvrsToAudit.size(), 30);
+    assertTrue(
+       cvrsToAudit.stream().noneMatch(cvr -> cvr.recordID() > 50)
+    );
+
+
   }
 }
