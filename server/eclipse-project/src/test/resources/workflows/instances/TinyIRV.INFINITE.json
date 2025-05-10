@@ -89,6 +89,13 @@
     "Example3",
     "Tied_IRV"
   ],
+
+  "PLURALITY_TABULATION" : {
+  },
+
+  "PLURALITY_COUNTY_TABULATION" : {
+  },
+
   "EXPECTED_ROUNDS": -1,
   "PHANTOM_BALLOTS": {
   },

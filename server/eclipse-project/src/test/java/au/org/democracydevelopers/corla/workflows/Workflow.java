@@ -97,17 +97,6 @@ public abstract class Workflow  {
                                  int index, int county){}
 
   /**
-   * Number of CO counties
-   */
-  protected static final int numCounties = 64;
-
-  /**
-   * Set of all CO counties, by number.
-   */
-  protected static final Set<Integer> allCounties
-      = IntStream.rangeClosed(1,numCounties).boxed().collect(Collectors.toSet());
-
-  /**
    * Default PRNG seed.
    */
   protected static final String defaultSeed = "24098249082409821390482049098";
@@ -126,11 +115,6 @@ public abstract class Workflow  {
    * Properties such as database login and corla & raire urls.
    */
   protected Properties config;
-
-  /**
-   * Path for all the data files.
-   */
-  protected static final String dataPath = "src/test/resources/CSVs/";
 
   /**
    * Default audit board names.
@@ -199,7 +183,19 @@ public abstract class Workflow  {
   protected static final String SCANNER_ID = "scanner_id";
   protected static final String TIMESTAMP = "timestamp";
 
-  protected void doWorkflow(Path pathToInstance, Optional<PostgreSQLContainer<?>> optPostGres) throws IOException, InterruptedException {
+  /**
+   * Default time limit for a raire service call.
+   */
+  private static final int TIME_LIMIT_DEFAULT = 5;
+
+  /**
+   * Runs a specified audit workflow which will either interact with the RAIRE service to
+   * generate assertions, or load assertions from an SQL file, depending on whether a test
+   * database has been provided as input (ie. if optPostGres is not empty).
+   * @param pathToInstance Path to workflow JSON specifying the audit configuration.
+   * @param optPostGres Optional test database (for when we are testing with a mocked RAIRE service).
+   */
+  protected void doWorkflow(final Path pathToInstance, final Optional<PostgreSQLContainer<?>> optPostGres) throws IOException, InterruptedException {
 
     // Convert data in the JSON workflow file to a workflow Instance.
     ObjectMapper toJson = new ObjectMapper();
@@ -503,7 +499,8 @@ public abstract class Workflow  {
   /**
    * Create properties files for use when running main, and then runs main. Main can take (database)
    * properties as a CLI, but only as a file, so we need to make the file and then tell main to read it.
-   * @param testFileName the name of the test file - must be different for each test.
+   * @param config Properties configuration to be updated for the given test name.
+   * @param testFileName the name of the test properties file to be created, must be different for each test.
    */
   protected static void runMain(final Properties config, final String testFileName) {
     final String propertiesFile = tempConfigPath + testFileName + "-test.properties";
@@ -570,6 +567,20 @@ public abstract class Workflow  {
         .header("Content-Type", "application/json")
         .body(requestParams.toJSONString())
         .post("/unauthenticate");
+  }
+
+  /**
+   * Reset the database. State authorisation is required.
+   */
+  protected void resetDatabase(final String user) {
+    final SessionFilter filter = doLogin(user);
+
+    given()
+        .filter(filter)
+        .post("/reset-database")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
   }
 
   /**
@@ -1545,9 +1556,21 @@ public abstract class Workflow  {
    * @param SQLfiles    The sql files which, if non-empty, the data should be read from.
    */
   protected void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgresOpt, final List<String> SQLfiles) {
-    assertTrue(postgresOpt.isPresent());
-    for (final String s : SQLfiles) {
-      TestClassWithDatabase.runSQLSetupScript(postgresOpt.get(), s);
+    if(postgresOpt.isPresent()) {
+      for (final String s : SQLfiles) {
+        TestClassWithDatabase.runSQLSetupScript(postgresOpt.get(), s);
+      }
+    }
+    else{
+      // Login as state admin.
+      final SessionFilter filter = doLogin("stateadmin1");
+      given()
+          .filter(filter)
+          .header("Content-Type", "application/x-www-form-urlencoded")
+          .get("/generate-assertions?timeLimitSeconds="+TIME_LIMIT_DEFAULT)
+          .then()
+          .assertThat()
+          .statusCode(HttpStatus.SC_OK);
     }
   }
 
@@ -1606,7 +1629,22 @@ public abstract class Workflow  {
    * @param instance   Workload instance being run.
    */
   protected void checkTabulatePluralityReport(final List<String> lines, final Instance instance){
-    // TODO
+    assertEquals(lines.get(0).toLowerCase(), "contest_name,choice,votes");
+    for(int i = 1; i < lines.size(); ++i){
+      final List<String> tokens = Arrays.stream(lines.get(i).split(",")).toList();
+      assertEquals(tokens.size(), 3);
+
+      final String contest = tokens.get(0);
+      final Optional<Map<String,Integer>> tallies = instance.getPluralityTabulation(contest);
+      if(tallies.isPresent()){
+        final String candidate = tokens.get(1);
+        final int votes = Integer.parseInt(tokens.get(2));
+
+        final Map<String, Integer> tallyMap = tallies.get();
+        assertTrue(tallyMap.containsKey(candidate));
+        assertEquals(tallyMap.get(candidate).intValue(), votes);
+      }
+    }
   }
 
   /**
@@ -1616,7 +1654,23 @@ public abstract class Workflow  {
    * @param instance   Workload instance being run.
    */
   protected void checkTabulateCountyPluralityReport(final List<String> lines, final Instance instance){
-    // TODO
+    assertEquals(lines.get(0).toLowerCase(), "county_name,contest_name,choice,votes");
+    for(int i = 1; i < lines.size(); ++i){
+      final List<String> tokens = Arrays.stream(lines.get(i).split(",")).toList();
+      assertEquals(tokens.size(), 4);
+
+      final String county = tokens.get(0);
+      final String contest = tokens.get(1);
+      final Optional<Map<String,Integer>> tallies = instance.getPluralityCountyTabulation(county,contest);
+      if(tallies.isPresent()){
+        final String candidate = tokens.get(2);
+        final int votes = Integer.parseInt(tokens.get(3));
+
+        final Map<String, Integer> tallyMap = tallies.get();
+        assertTrue(tallyMap.containsKey(candidate));
+        assertEquals(tallyMap.get(candidate).intValue(), votes);
+      }
+    }
   }
 
   /**

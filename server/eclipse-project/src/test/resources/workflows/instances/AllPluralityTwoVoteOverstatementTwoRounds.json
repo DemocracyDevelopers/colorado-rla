@@ -86,6 +86,44 @@
 
   "EXPECTED_ROUNDS" : 2,
 
+  "PLURALITY_TABULATION" : {
+    "Adams COUNTY COMMISSIONER DISTRICT 3" : {
+      "Jeff Baker" : 43,
+      "Janet Lee Cook" : 1
+    },
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : {
+      "Jeff Baker" : 38,
+      "Janet Lee Cook" : 1
+    },
+    "Regent of the University of Colorado" : {
+      "Distant Winner" : 244,
+      "Distant Loser" : 28
+    }
+  },
+
+  "PLURALITY_COUNTY_TABULATION" : {
+    "Adams" : {
+      "Adams COUNTY COMMISSIONER DISTRICT 3": {
+        "Jeff Baker": 43,
+        "Janet Lee Cook": 1
+      },
+      "Regent of the University of Colorado" : {
+        "Distant Winner" : 122,
+        "Distant Loser" : 14
+      }
+    },
+    "Alamosa" : {
+      "Alamosa COUNTY COMMISSIONER DISTRICT 3": {
+        "Jeff Baker": 38,
+        "Janet Lee Cook": 1
+      },
+      "Regent of the University of Colorado" : {
+        "Distant Winner" : 122,
+        "Distant Loser" : 14
+      }
+    }
+  },
+
   "PHANTOM_BALLOTS" : {
   },
 

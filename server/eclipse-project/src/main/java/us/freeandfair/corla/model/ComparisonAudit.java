@@ -211,6 +211,11 @@ public class ComparisonAudit implements PersistentEntity {
 
   /**
    * gets incremented
+   * DD: Note, this attribute DOES NOT get incremented during an audit. We (DD) have
+   * implemented a minimal fix by returning the total of the one and two vote
+   * overstatement counts in getOverstatements() rather than returning the value of
+   * this variable. This variable can be removed from ComparisonAudit, and the
+   * database table, in a fuller fix.
    */
   @Column(nullable = true) // true for migration
   private BigDecimal overstatements = BigDecimal.ZERO;
@@ -505,6 +510,12 @@ public class ComparisonAudit implements PersistentEntity {
    *
    * TODO collect the number of 1 and 2 vote overstatements across
    * participating counties.
+   *
+   * DD: We replaced this method with the sum of 1 and 2 vote overstatements as
+   * the 'overstatements' attribute was not being updated throughout an audit. It
+   * was always zero. This was evidently suggested in a prior review of the system.
+   * Note that the overstatements attribute could be removed from the class and
+   * database table if desired.
    */
   public BigDecimal getOverstatements() {
     return BigDecimal.valueOf(this.my_one_vote_over_count + this.my_two_vote_over_count);

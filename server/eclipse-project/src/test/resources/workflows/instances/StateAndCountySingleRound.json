@@ -175,7 +175,7 @@
 
   "DILUTED_MARGINS" : {
     "City of Longmont - Mayor" : 0.09078192,
-    "Byron Mayoral" : 0.00684644,
+    "Byron Mayoral" : 0.0068464395,
     "Kempsey Mayoral" : 0.02200739
   },
 
@@ -201,6 +201,12 @@
     "City of Longmont - Mayor" : 81,
     "Byron Mayoral" : 1065,
     "Kempsey Mayoral" : 332
+  },
+
+  "PLURALITY_TABULATION" : {
+  },
+
+  "PLURALITY_COUNTY_TABULATION" : {
   },
 
   "IRV_CONTESTS" : [
