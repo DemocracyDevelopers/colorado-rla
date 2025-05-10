@@ -72,6 +72,12 @@
     "City of Wollongong Mayoral" : 348
   },
 
+  "PLURALITY_TABULATION" : {
+  },
+
+  "PLURALITY_COUNTY_TABULATION" : {
+  },
+
   "IRV_CONTESTS" : [
     "Richmond Valley Mayoral",
     "City of Wollongong Mayoral"

@@ -203,6 +203,12 @@
     "Uralla Mayoral" : 12
   },
 
+  "PLURALITY_TABULATION" : {
+  },
+
+  "PLURALITY_COUNTY_TABULATION" : {
+  },
+
   "IRV_CONTESTS" : [
     "Byron Mayoral",
     "Uralla Mayoral",

@@ -1629,7 +1629,22 @@ public abstract class Workflow  {
    * @param instance   Workload instance being run.
    */
   protected void checkTabulatePluralityReport(final List<String> lines, final Instance instance){
-    // TODO
+    assertEquals(lines.get(0).toLowerCase(), "contest_name,choice,votes");
+    for(int i = 1; i < lines.size(); ++i){
+      final List<String> tokens = Arrays.stream(lines.get(i).split(",")).toList();
+      assertEquals(tokens.size(), 3);
+
+      final String contest = tokens.get(0);
+      final Optional<Map<String,Integer>> tallies = instance.getPluralityTabulation(contest);
+      if(tallies.isPresent()){
+        final String candidate = tokens.get(1);
+        final int votes = Integer.parseInt(tokens.get(2));
+
+        final Map<String, Integer> tallyMap = tallies.get();
+        assertTrue(tallyMap.containsKey(candidate));
+        assertEquals(tallyMap.get(candidate).intValue(), votes);
+      }
+    }
   }
 
   /**
@@ -1639,7 +1654,23 @@ public abstract class Workflow  {
    * @param instance   Workload instance being run.
    */
   protected void checkTabulateCountyPluralityReport(final List<String> lines, final Instance instance){
-    // TODO
+    assertEquals(lines.get(0).toLowerCase(), "county_name,contest_name,choice,votes");
+    for(int i = 1; i < lines.size(); ++i){
+      final List<String> tokens = Arrays.stream(lines.get(i).split(",")).toList();
+      assertEquals(tokens.size(), 4);
+
+      final String county = tokens.get(0);
+      final String contest = tokens.get(1);
+      final Optional<Map<String,Integer>> tallies = instance.getPluralityCountyTabulation(county,contest);
+      if(tallies.isPresent()){
+        final String candidate = tokens.get(2);
+        final int votes = Integer.parseInt(tokens.get(3));
+
+        final Map<String, Integer> tallyMap = tallies.get();
+        assertTrue(tallyMap.containsKey(candidate));
+        assertEquals(tallyMap.get(candidate).intValue(), votes);
+      }
+    }
   }
 
   /**

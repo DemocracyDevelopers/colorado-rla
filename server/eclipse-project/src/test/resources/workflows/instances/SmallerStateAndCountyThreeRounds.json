@@ -77,6 +77,12 @@
     "City of Wollongong Mayoral" : 741
   },
 
+  "PLURALITY_TABULATION" : {
+  },
+
+  "PLURALITY_COUNTY_TABULATION" : {
+  },
+
   "EXPECTED_ROUNDS" : 3,
 
   "PHANTOM_BALLOTS" : {

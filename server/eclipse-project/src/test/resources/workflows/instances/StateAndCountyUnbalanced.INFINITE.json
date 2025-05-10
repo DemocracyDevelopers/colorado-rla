@@ -208,11 +208,17 @@
     "Kempsey Mayoral" : 268
   },
 
+  "PLURALITY_TABULATION" : {
+  },
+
+  "PLURALITY_COUNTY_TABULATION" : {
+  },
+
   "IRV_CONTESTS" : [
     "Byron Mayoral",
     "Kempsey Mayoral",
     "Tied_IRV",
-    "City of Boulder Mayoral"
+    "City of Boulder Mayoral Candidates"
   ],
 
   "EXPECTED_ROUNDS" : -1,
