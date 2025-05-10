@@ -51,11 +51,18 @@ import static org.testng.Assert.*;
  * url/port of the main colorado-rla server.
  * 3. Ensure that maven and java are installed.
  * 4. Ensure that the database is in the initial state - empty except for setup data such as administrator credentials,
- * which can be loaded from colorado-rla/test/corla-test.credentials.psql.
- * 5. From the eclipse-project directory, to run a workflow json file via the command line, enter
+ * which can be loaded from colorado-rla/test/corla-test.credentials.psql. Note that once these credentials are
+ * in the database, you may execute the command in Step 5 repeatedly without resetting the database. At the start
+ * of running a workflow (with RAIRE), the database is reset.
+ * 5. Ensure that the colorado-rla server and raire-service are running.
+ * 5 [LINUX]. From the eclipse-project directory, to run a workflow json file via the command line, enter
  * `mvn -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="[Path to workflow file]" test`
  * For example, to run the AllPluralityTwoVoteOverstatementTwoRounds workflow, enter
  * `mvn -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json" test`
+ * 5 [MAC OSX]. From the eclipse-project directory, to run a workflow json file via the command line, enter
+ * `mvn package -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="[Path to workflow file]" test`
+ * For example, to run the AllPluralityTwoVoteOverstatementTwoRounds workflow, enter
+ * `mvn package -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json" test`
  * This test is skipped when the tests are run with empty parameters, i.e. during normal testing.
  */
 @Test(enabled=true)
@@ -101,13 +108,12 @@ public class WorkflowRunnerWithRaire extends Workflow {
       LOGGER.info(String.format("%s %s %s.", prefix, "running workflow", pathToInstance));
       runMainAndInitializeDB("Workflow with raire", Optional.empty());
 
-      // Do the workflow.
+      // Do the workflow. Reset the database first.
       resetDatabase("stateadmin1");
-      System.out.println(pathToInstance);
+
       doWorkflow(pathToInstance, Optional.empty());
 
     } catch(IOException e){
-      e.printStackTrace();
       final String msg = prefix + " " + e.getMessage() + ". Check that the path and filename are correct.";
       LOGGER.error(msg);
       throw new RuntimeException(msg);

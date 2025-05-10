@@ -187,19 +187,19 @@
 
   "FINAL_EXPECTED_AUDITED_BALLOTS" : {
     "City of Longmont - Mayor" : 81,
-    "Byron Mayoral" : 1518,
+    "Byron Mayoral" : 1051,
     "Uralla Mayoral" : 12
   },
 
   "FINAL_EXPECTED_OPTIMISTIC_SAMPLES" : {
     "City of Longmont - Mayor" : 81,
-    "Byron Mayoral" : 1518,
+    "Byron Mayoral" : 1051,
     "Uralla Mayoral" : 12
   },
 
   "FINAL_EXPECTED_ESTIMATED_SAMPLES" : {
     "City of Longmont - Mayor" : 81,
-    "Byron Mayoral" : 1518,
+    "Byron Mayoral" : 1054,
     "Uralla Mayoral" : 12
   },
 
@@ -219,7 +219,7 @@
   },
   "DISCREPANT_AUDITED_BALLOT_CHOICES": {
     "32": {
-      "1-2-4": {
+      "1-1-64": {
         "Byron Mayoral": [
           "COOREY Cate(1)",
           "SWIVEL Mark(2)",
@@ -248,7 +248,7 @@
   },
   "REAUDITS": {
     "32": {
-      "1-2-4": [
+      "1-1-64": [
         {
           "Byron Mayoral": {
             "choices": [

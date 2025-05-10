@@ -97,11 +97,6 @@ public abstract class Workflow  {
                                  int index, int county){}
 
   /**
-   * Number of CO counties
-   */
-  protected static final int numCounties = 64;
-
-  /**
    * Default PRNG seed.
    */
   protected static final String defaultSeed = "24098249082409821390482049098";
