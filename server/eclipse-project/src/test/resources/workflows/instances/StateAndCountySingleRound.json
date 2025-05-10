@@ -146,7 +146,7 @@
   "CANONICAL_LIST" : "src/test/resources/CSVs/Demo1/demo1-canonical-list.csv",
 
   "CONTEST_NAME_CHANGE" : {
-    "City of Boulder Mayoral" : "City of Boulder Mayoral Candidates"
+    "City of Boulder Mayoral Candidates" : "City of Boulder Mayoral"
   },
 
   "CANDIDATE_NAME_CHANGE" : {
@@ -213,7 +213,7 @@
     "Byron Mayoral",
     "Kempsey Mayoral",
     "Tied_IRV",
-    "City of Boulder Mayoral Candidates"
+    "City of Boulder Mayoral"
   ],
 
   "EXPECTED_ROUNDS" : 1,
