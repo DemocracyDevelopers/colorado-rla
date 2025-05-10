@@ -575,6 +575,20 @@ public abstract class Workflow  {
   }
 
   /**
+   * Reset the database. State authorisation is required.
+   */
+  protected void resetDatabase(final String user) {
+    final SessionFilter filter = doLogin(user);
+
+    given()
+        .filter(filter)
+        .post("/reset-database")
+        .then()
+        .assertThat()
+        .statusCode(HttpStatus.SC_OK);
+  }
+
+  /**
    * Upload a file and its corresponding hash on behalf of the given county number.
    *
    * @param number   Number of the county uploading the CVR/hash.
@@ -1203,14 +1217,9 @@ public abstract class Workflow  {
           Assertion::getDilutedMargin).toList());
 
       final DoubleComparator comp = new DoubleComparator();
-      System.out.println(contest);
-      System.out.println(actualDilutedMargin.doubleValue());
-      System.out.println(expectedDilutedMargin);
       assertEquals(comp.compare(actualDilutedMargin.doubleValue(), expectedDilutedMargin), 0);
     }
 
-    System.out.println(actualEstimatedSamples);
-    System.out.println(expectedEstimatedSamples);
     assertEquals(actualEstimatedSamples, expectedEstimatedSamples);
   }
 

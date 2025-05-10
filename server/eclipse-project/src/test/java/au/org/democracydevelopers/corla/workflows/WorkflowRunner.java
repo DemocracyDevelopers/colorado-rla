@@ -125,8 +125,8 @@ public class WorkflowRunner extends Workflow {
    * @param pathToInstance Path to the JSON workflow instance defining the test.
    * @throws InterruptedException if there is a problem with the CVR and Manifest upload.
    */
-  //@Test(dataProvider = "workflow-provider")
-  @Test(dataProvider = "single-workflow-provider")
+  @Test(dataProvider = "workflow-provider")
+  //@Test(dataProvider = "single-workflow-provider")
   public void runInstance(final Path pathToInstance) throws InterruptedException {
     final String prefix = "[runInstance] " + pathToInstance;
 

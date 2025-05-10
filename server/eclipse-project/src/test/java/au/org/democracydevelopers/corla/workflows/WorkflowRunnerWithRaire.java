@@ -102,6 +102,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
       runMainAndInitializeDB("Workflow with raire", Optional.empty());
 
       // Do the workflow.
+      resetDatabase("stateadmin1");
       System.out.println(pathToInstance);
       doWorkflow(pathToInstance, Optional.empty());
 
