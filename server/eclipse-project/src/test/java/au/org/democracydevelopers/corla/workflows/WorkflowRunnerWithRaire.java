@@ -23,10 +23,8 @@ package au.org.democracydevelopers.corla.workflows;
 
 import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.RestAssured;
-import io.restassured.filter.session.SessionFilter;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.apache.http.HttpStatus;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -39,7 +37,6 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
-import static io.restassured.RestAssured.given;
 import static org.testng.Assert.*;
 
 /**
@@ -53,12 +50,16 @@ import static org.testng.Assert.*;
  * 2. Use src/test/resources/test.properties to specify the raire url, database login credentials and
  * url/port of the main colorado-rla server.
  * 3. Ensure that maven and java are installed.
- * 4. Ensure that the database is in the initial state - empty except for setup data such as administrator credentials,
- * which can be loaded from colorado-rla/test/corla-test.credentials.psql.
- * 5. From the eclipse-project directory, to run a workflow json file via the command line, enter
- * `mvn -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="[Path to workflow file]" test`
+ * 4. Ensure that the database contains correct setup data such as administrator credentials,
+ * which can be loaded from colorado-rla/test/corla-test.credentials.psql, and the list of Colorado
+ * counties. Note that once these are in the database, you may execute the command in Step 6
+ * repeatedly without resetting the database. At the start of running a workflow (with RAIRE), the
+ * database is reset.
+ * 5. Ensure that the colorado-rla server and raire-service are running.
+ * 6. From the eclipse-project directory, to run a workflow json file via the command line, enter
+ * `mvn test -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="[Path to workflow file]"`
  * For example, to run the AllPluralityTwoVoteOverstatementTwoRounds workflow, enter
- * `mvn -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json" test`
+ * `mvn test -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json"`
  * This test is skipped when the tests are run with empty parameters, i.e. during normal testing.
  */
 @Test(enabled=true)
@@ -69,10 +70,6 @@ public class WorkflowRunnerWithRaire extends Workflow {
    */
   private static final Logger LOGGER = LogManager.getLogger(WorkflowRunnerWithRaire.class);
 
-  /**
-   * Default time limit for raire call.
-   */
-  private static final int TIME_LIMIT_DEFAULT = 5;
 
   @BeforeClass
   public void setup() {
@@ -86,6 +83,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
    * phantoms, which ballots to treat as phantoms, expected diluted margins and sample sizes,
    * which ballots to simulate discrepancies for, and expected end of round states ...), run
    * the test audit and verify that the expected outcomes arise.
+   * @param workflowFile Path to JSON workflow instance to execute.
    * @throws InterruptedException
    */
   @Parameters("workflowFile")
@@ -107,7 +105,9 @@ public class WorkflowRunnerWithRaire extends Workflow {
       LOGGER.info(String.format("%s %s %s.", prefix, "running workflow", pathToInstance));
       runMainAndInitializeDB("Workflow with raire", Optional.empty());
 
-      // Do the workflow.
+      // Do the workflow. Reset the database first.
+      resetDatabase("stateadmin1");
+
       doWorkflow(pathToInstance, Optional.empty());
 
     } catch(IOException e){
@@ -115,27 +115,6 @@ public class WorkflowRunnerWithRaire extends Workflow {
       LOGGER.error(msg);
       throw new RuntimeException(msg);
     }
-  }
-
-  /**
-   * Connect to the raire service and tell it to generate the assertions.
-   * @param postgres Not used. This version communicates with the database via http and should not be
-   *                 called with a testcontainer.
-   * @param SQLfiles Not used. This version communicates with Raire and does not load data in from
-   *                 SQL files.
-   */
-  protected void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgres, final List<String> SQLfiles) {
-    assertTrue(postgres.isEmpty() && SQLfiles.isEmpty());
-
-    // Login as state admin.
-    final SessionFilter filter = doLogin("stateadmin1");
-    given()
-        .filter(filter)
-        .header("Content-Type", "application/x-www-form-urlencoded")
-        .get("/generate-assertions?timeLimitSeconds="+TIME_LIMIT_DEFAULT)
-        .then()
-        .assertThat()
-        .statusCode(HttpStatus.SC_OK);
   }
 
   /**

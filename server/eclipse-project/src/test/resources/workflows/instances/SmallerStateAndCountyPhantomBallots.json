@@ -48,28 +48,34 @@
   },
 
   "DILUTED_MARGINS" : {
-    "Richmond Valley Mayoral" : 0.43424095,
+    "Richmond Valley Mayoral" : 0.04239837,
     "City of Wollongong Mayoral" : 0.02095253
   },
 
   "EXPECTED_SAMPLES" : {
-    "Richmond Valley Mayoral" : 17,
+    "Richmond Valley Mayoral" : 172,
     "City of Wollongong Mayoral" : 348
   },
 
   "FINAL_EXPECTED_AUDITED_BALLOTS" : {
-    "Richmond Valley Mayoral" : 17,
+    "Richmond Valley Mayoral" : 172,
     "City of Wollongong Mayoral" : 413
   },
 
   "FINAL_EXPECTED_OPTIMISTIC_SAMPLES" : {
-    "Richmond Valley Mayoral" : 17,
+    "Richmond Valley Mayoral" : 172,
     "City of Wollongong Mayoral" : 413
   },
 
   "FINAL_EXPECTED_ESTIMATED_SAMPLES" : {
-    "Richmond Valley Mayoral" : 17,
+    "Richmond Valley Mayoral" : 172,
     "City of Wollongong Mayoral" : 414
+  },
+
+  "PLURALITY_TABULATION" : {
+  },
+
+  "PLURALITY_COUNTY_TABULATION" : {
   },
 
   "IRV_CONTESTS" : [

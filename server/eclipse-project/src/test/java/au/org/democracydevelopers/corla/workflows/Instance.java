@@ -231,7 +231,6 @@ public class Instance {
   @JsonProperty("DISCREPANT_AUDITED_BALLOT_CHOICES")
   private Map<String,Map<String,Map<String,List<String>>>> actualChoices;
 
-
   /**
    * Specification of ballots to reaudit. Organised as a map between county ID,
    * and a map between CVR imprinted ID and a list of maps that define the paper
@@ -250,7 +249,56 @@ public class Instance {
   @JsonProperty("CONTESTS_BY_SELECTED_COUNTIES")
   private Map<String,List<String>> contestsByCounty;
 
+  /**
+   *  Record, for selected plurality contests, of the available choices and their tallies.
+   *  Example:
+   *   "PLURALITY_TABULATION" : {
+   *     "Adams COUNTY COMMISSIONER DISTRICT 3" : {
+   *       "Distant Winner" : 122,
+   *       "Distant Loser" : 14
+   *     },
+   *     "Alamosa COUNTY COMMISSIONER DISTRICT 3" : {
+   *       "Distant Winner" : 122,
+   *       "Distant Loser" : 14
+   *     },
+   *     "Regent of the University of Colorado" : {
+   *       "Jeff Baker" : 81,
+   *       "Janet Lee Cook" : 2
+   *     }
+   *   },
+   */
+  @JsonProperty("PLURALITY_TABULATION")
+  private Map<String,Map<String,Integer>> pluralityTabulation;
 
+  /**
+   * Record, for selected counties and plurality contests within those counties, of the available
+   * choices and their tallies (within that county only).
+   * Example:
+   *   "PLURALITY_COUNTY_TABULATION" : {
+   *     "0" : {
+   *       "Adams COUNTY COMMISSIONER DISTRICT 3": {
+   *         "Jeff Baker": 43,
+   *         "Janet Lee Cook": 1
+   *       },
+   *       "Regent of the University of Colorado" : {
+   *         "Distant Winner" : 122,
+   *         "Distant Loser" : 14
+   *       }
+   *     },
+   *     "1" : {
+   *       "Alamosa COUNTY COMMISSIONER DISTRICT 3": {
+   *         "Jeff Baker": 38,
+   *         "Janet Lee Cook": 1
+   *       },
+   *       "Regent of the University of Colorado" : {
+   *         "Distant Winner" : 122,
+   *         "Distant Loser" : 14
+   *       }
+   *     }
+   *   },
+   */
+  @JsonProperty("PLURALITY_COUNTY_TABULATION")
+  private Map<String,Map<String,Map<String,Integer>>> pluralityCountyTabulation;
   /**
    * Constructs an empty workflow instance.
    */
@@ -280,6 +328,8 @@ public class Instance {
     contestsByCounty = new HashMap<>();
     finalExpectedOptimistic = new HashMap<>();
     finalExpectedEstimated = new HashMap<>();
+    pluralityTabulation = new HashMap<>();
+    pluralityCountyTabulation = new HashMap<>();
   }
 
   /**
@@ -556,5 +606,27 @@ public class Instance {
    */
   public Map<String,List<String>> getContestsByCounty(){
     return Collections.unmodifiableMap(contestsByCounty);
+  }
+
+  /**
+   * Returns a mapping between candidate name and their tally for the given contest, if we
+   * have a record of that plurality contest's tallies in the instance. Otherwise, returns an
+   * empty optional.
+   */
+  public Optional<Map<String,Integer>> getPluralityTabulation(final String contest) {
+    return pluralityTabulation.containsKey(contest) ? Optional.of(pluralityTabulation.get(contest)) :
+      Optional.empty();
+  }
+
+  /**
+   * Returns a mapping between candidate name and vote tally for a given county-contest combination,
+   * if we have a record of those tallies in the instance. Otherwise, returns an empty optional.
+   */
+  public Optional<Map<String,Integer>> getPluralityCountyTabulation(final String county, final String contest) {
+    if(pluralityCountyTabulation.containsKey(county) &&
+        pluralityCountyTabulation.get(county).containsKey(contest)){
+      return Optional.of(pluralityCountyTabulation.get(county).get(contest));
+    }
+    return Optional.empty();
   }
 }

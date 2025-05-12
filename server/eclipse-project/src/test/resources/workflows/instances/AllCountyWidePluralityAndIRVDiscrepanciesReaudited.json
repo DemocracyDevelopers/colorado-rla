@@ -124,6 +124,30 @@
     "Burwood Mayoral" : 19
   },
 
+  "PLURALITY_TABULATION" : {
+    "Alamosa COUNTY COMMISSIONER DISTRICT 3" : {
+      "Jeff Baker" : 38,
+      "Janet Lee Cook" : 1
+    },
+    "Regent of the University of Colorado" : {
+      "Distant Winner" : 122,
+      "Distant Loser" : 14
+    }
+  },
+
+  "PLURALITY_COUNTY_TABULATION" : {
+    "Alamosa" : {
+      "Alamosa COUNTY COMMISSIONER DISTRICT 3": {
+        "Jeff Baker": 38,
+        "Janet Lee Cook": 1
+      },
+      "Regent of the University of Colorado" : {
+        "Distant Winner" : 122,
+        "Distant Loser" : 14
+      }
+    }
+  },
+
   "IRV_CONTESTS" : [
     "Wollondilly Mayoral",
     "Canada Bay Mayoral",
