@@ -50,10 +50,11 @@ import static org.testng.Assert.*;
  * 2. Use src/test/resources/test.properties to specify the raire url, database login credentials and
  * url/port of the main colorado-rla server.
  * 3. Ensure that maven and java are installed.
- * 4. Ensure that the database is in the initial state - empty except for setup data such as administrator credentials,
- * which can be loaded from colorado-rla/test/corla-test.credentials.psql. Note that once these credentials are
- * in the database, you may execute the command in Step 5 repeatedly without resetting the database. At the start
- * of running a workflow (with RAIRE), the database is reset.
+ * 4. Ensure that the database contains correct setup data such as administrator credentials,
+ * which can be loaded from colorado-rla/test/corla-test.credentials.psql, and the list of Colorado
+ * counties. Note that once these are in the database, you may execute the command in Step 6
+ * repeatedly without resetting the database. At the start of running a workflow (with RAIRE), the
+ * database is reset.
  * 5. Ensure that the colorado-rla server and raire-service are running.
  * 6. From the eclipse-project directory, to run a workflow json file via the command line, enter
  * `mvn test -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="[Path to workflow file]"`
