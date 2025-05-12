@@ -55,14 +55,10 @@ import static org.testng.Assert.*;
  * in the database, you may execute the command in Step 5 repeatedly without resetting the database. At the start
  * of running a workflow (with RAIRE), the database is reset.
  * 5. Ensure that the colorado-rla server and raire-service are running.
- * 5 [LINUX]. From the eclipse-project directory, to run a workflow json file via the command line, enter
- * `mvn -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="[Path to workflow file]" test`
+ * 6. From the eclipse-project directory, to run a workflow json file via the command line, enter
+ * `mvn test -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="[Path to workflow file]"`
  * For example, to run the AllPluralityTwoVoteOverstatementTwoRounds workflow, enter
- * `mvn -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json" test`
- * 5 [MAC OSX]. From the eclipse-project directory, to run a workflow json file via the command line, enter
- * `mvn package -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="[Path to workflow file]" test`
- * For example, to run the AllPluralityTwoVoteOverstatementTwoRounds workflow, enter
- * `mvn package -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json" test`
+ * `mvn test -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json"`
  * This test is skipped when the tests are run with empty parameters, i.e. during normal testing.
  */
 @Test(enabled=true)
