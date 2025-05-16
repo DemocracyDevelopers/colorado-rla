@@ -36,18 +36,14 @@ import java.util.stream.Collectors;
  * skipped or repeated preferences.
  * The constructor will parse a vote that comes as a comma-separated string of the form
  * "name1(p1),name2(p2), ..." where p1, p2... are (positive integer) ranks. It stores them sorted
- * by rank, with skips or duplicates allowed.
+ * by rank, with skips, overvotes or duplicates allowed.
  * An IRVChoices object may represent an invalid vote, but it implies a unique valid interpretation
- * as specified in Colorado's IRV rules
- * (<a href="https://www.sos.state.co.us/pubs/rule_making/CurrentRules/8CCR1505-1/Rule26.pdf">...</a>)
+ * as specified in Colorado's
+ * (<a href="https://www.sos.state.co.us/pubs/rule_making/CurrentRules/8CCR1505-1/Rule26.pdf">Election Rules [8 CCR 1505-1, Rule 26</a>)
  * which describe how to deal with repeated candidates, or skipped or repeated preferences.
  * The main algorithms in this class implement valid vote interpretation for Colorado's IRV rules.
- * The order of application of the rules follows Colorado's Guide to Voter Intent -
- * Determination of Voter Intent for Colorado Elections, 2023 addendum for Instant Runoff Voting
- * (IRV), available at
- * <a href="https://assets.bouldercounty.gov/wp-content/uploads/2023/11/Voter-Intent-Guide-IRV-Addendum-2023.pdf">...</a>
- * TODO This may be updated soon - updated ref to CDOS rather than Boulder when official CDOS
- * version becomes available.
+ * Rules 26.7.4 specifies that duplicate rankings for a candidate must be removed before removing
+ * overvotes for a rank.
  * Main methods:
  * - isValid(): checks whether the choices are a valid IRV vote (without skipped or repeated
  *   preferences, or repeated candidates).
@@ -74,16 +70,6 @@ public class IRVChoices {
    * allowed. Choices are final and immutable.
    */
   private final List<IRVPreference> choices;
-
-  /**
-   * The number of IRV choices, as given to the constructor, before any duplicates, skipped
-   * preferences or overvotes are removed.
-   *
-   * @return the number of choices in the raw IRV vote.
-   */
-  public int getRawChoicesCount() {
-    return choices.size();
-  }
 
   /**
    * Constructor - takes a list of IRVPreferences (ranked candidates) representing a vote, sorts
@@ -126,7 +112,7 @@ public class IRVChoices {
    * @throws IRVParsingException if one of the comma-separated substrings cannot be parsed as a
    *                             name(rank). This could happen for example if called on a
    *                             plurality vote.
-   * TODO Note we are currently not using this outside tests - it's possible the List<String>
+   * Note we are currently not using this outside tests - it's possible the List<String>
    *   constructor is the only one we need.
    */
   public IRVChoices(String sanitizedChoices) throws IRVParsingException {
@@ -196,14 +182,8 @@ public class IRVChoices {
    * <a href="https://www.sos.state.co.us/pubs/rule_making/CurrentRules/8CCR1505-1/Rule26.pdf">...</a>
    * to produce a valid IRV vote, and returns that valid IRV vote as an ordered list of candidate
    * names, with the highest-preference candidate first.
-   * The order of application of the rules follows Colorado's Guide to Voter Intent -
-   * Determination of Voter Intent for Colorado Elections, 2023 addendum for Instant Runoff Voting
-   * (IRV), available at
-   * <a href="https://assets.bouldercounty.gov/wp-content/uploads/2023/11/Voter-Intent-Guide-IRV-Addendum-2023.pdf">...</a>
-   * TODO This may be updated soon - updated ref to CDOS rather than Boulder when official CDOS
-   * version becomes available.
    * This specifies that candidate duplicates (Rule 26.7.3) should be removed before overvotes
-   * (Rule 26.7.1). The order of skipped preferences (Rule 26.7.2) does not matter.
+   * (Rule 26.7.1).
    * If the IRV vote is already valid, it will be returned as an ordered list of candidate names
    * in preference order (highest preference first).
    *
@@ -215,7 +195,7 @@ public class IRVChoices {
     LOGGER.debug(String.format("%s getting valid interpretation of vote %s.", prefix,
         choices.toString()));
 
-    List<String> valid = this.rule_26_7_3_Duplicates().rule_26_7_1_Overvotes().rule_26_7_2_Skips()
+    List<String> valid = this.rule_26_7_2_Skips().rule_26_7_3_Duplicates().rule_26_7_1_Overvotes()
         .choices.stream().map(c -> c.candidateName).collect(Collectors.toList());
     LOGGER.debug(String.format("%s valid interpretation is %s.", prefix, valid));
     return valid;

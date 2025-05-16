@@ -33,12 +33,9 @@ import static org.testng.Assert.*;
 /**
  * Tests for proper interpretation of IRV choices, including proper interpretation of invalid
  * choices involving repeated candidate names and repeated or skipped preferences.
- * The implementation follows the rules specified in Colorado's Guide to Voter Intent -
- * Determination of Voter Intent for Colorado Elections, 2023 addendum for Instant Runoff Voting
- * (IRV), available at
- * <a href="https://assets.bouldercounty.gov/wp-content/uploads/2023/11/Voter-Intent-Guide-IRV-Addendum-2023.pdf">...</a>
- * TODO This may be updated soon - updated ref to CDOS rather than Boulder when official CDOS
- * version becomes available.
+ * The implementation follows the rules specified in Colorado's
+ * <A HREF="https://www.sos.state.co.us/pubs/rule_making/CurrentRules/8CCR1505-1/Rule26.pdf">
+ *   Election Rules [8 CCR 1505-1] Rule 26</A>
  * Examples are taken directly from the Guide, with example numbers (if given) from there.
  */
 public class IRVChoicesTests {
@@ -58,7 +55,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER, "Example1OvervotesNoValidRankings");
 
     IRVChoices b = new IRVChoices("Candidate A(1),Candidate B(1),Candidate C(1),Candidate C(2),Candidate B(3)");
-    assertEquals(0, b.getValidIntentAsOrderedList().size());
+    assertEquals(b.getValidIntentAsOrderedList().size(), 0);
   }
 
   /**
@@ -136,7 +133,7 @@ public class IRVChoicesTests {
 
     IRVChoices b = new IRVChoices("");
     assertTrue(b.isValid());
-    assertEquals(0, b.getValidIntentAsOrderedList().size());
+    assertEquals(b.getValidIntentAsOrderedList().size(), 0);
   }
 
   /**
@@ -237,7 +234,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeOvervotesTest2");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(2)");
-    assertEquals("Alice",b.getValidIntentAsOrderedList().get(0));
+    assertEquals(b.getValidIntentAsOrderedList().get(0), "Alice");
   }
 
   /**
@@ -250,7 +247,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeOvervotesTest3");
 
     IRVChoices b = new IRVChoices("Alice(1),Bob(2),Chuan(2),Diego(3)");
-    assertEquals("Alice",b.getValidIntentAsOrderedList().get(0));
+    assertEquals(b.getValidIntentAsOrderedList().get(0), "Alice");
   }
 
   /**
@@ -302,7 +299,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeSkipsTest2");
 
     IRVChoices b = new IRVChoices("Bob(2),Chuan(3)");
-    assertEquals(0,b.getValidIntentAsOrderedList().size());
+    assertEquals(b.getValidIntentAsOrderedList().size(), 0);
   }
 
   /**
@@ -328,7 +325,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeSkipsTest4");
 
     IRVChoices b = new IRVChoices("Alice(3),Bob(2),Chuan(4)");
-    assertEquals(0, b.getValidIntentAsOrderedList().size());
+    assertEquals(b.getValidIntentAsOrderedList().size(), 0);
   }
 
   /**
@@ -341,7 +338,7 @@ public class IRVChoicesTests {
     testUtils.log(LOGGER,"removeSkipsTest4");
 
     IRVChoices b = new IRVChoices("Alice(3)");
-    assertEquals(0, b.getValidIntentAsOrderedList().size());
+    assertEquals(b.getValidIntentAsOrderedList().size(), 0);
   }
 
   /**
