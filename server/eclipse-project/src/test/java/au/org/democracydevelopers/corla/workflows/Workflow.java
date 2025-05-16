@@ -129,6 +129,7 @@ public abstract class Workflow  {
   /**
    * Strings for colorado-rla JSON structures.
    */
+  protected static final String APPROXIMATE_RECORD_COUNT = "approximateRecordCount";
   protected static final String ASM_STATE = "asm_state";
   protected static final String AUDIT = "audit";
   protected static final String AUDIT_BOARD_ASM_STATE = "audit_board_asm_state";
@@ -142,6 +143,7 @@ public abstract class Workflow  {
   protected static final String CHOICES = "choices";
   protected static final String OLDNAME = "oldName";
   protected static final String NEWNAME = "newName";
+  protected static final String CVR_EXPORT_FILE = "cvr_export_file";
   protected static final String CVR_FILETYPE = "cvr-export";
   protected static final String CVR_JSON = "cvr_export_file";
   protected static final String ESTIMATED_BALLOTS = "estimated_ballots_to_audit";
