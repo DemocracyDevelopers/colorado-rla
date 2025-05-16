@@ -56,6 +56,8 @@ import java.util.stream.Collectors;
  * - getValidIntentAsOrderedList(): applies Colorado's IRV rules and returns the valid
  *   interpretation, as an ordered list of candidate names with the highest preference first. In
  *   particular, it applies Rule_26_7_3_Duplicates() before Rule_26_7_1_Overvotes() as required.
+ *   (See note in that function about skipped ranks - our implementation is slightly different but
+ *   equivalent to the implementation specified in the regulations.)
  */
 public class IRVChoices {
 
@@ -183,7 +185,10 @@ public class IRVChoices {
    * to produce a valid IRV vote, and returns that valid IRV vote as an ordered list of candidate
    * names, with the highest-preference candidate first.
    * This specifies that candidate duplicates (Rule 26.7.3) should be removed before overvotes
-   * (Rule 26.7.1).
+   * (Rule 26.7.1). Although the regulation specify that skipped preferences should be addressed
+   * first (Rule 26.7.2), we do them last in case skips have been introduced by the application of
+   * Rules 26.7.1 or 26.7.3. This would have to be done anyway, and it makes no difference whether
+   * it is also done at the beginning.
    * If the IRV vote is already valid, it will be returned as an ordered list of candidate names
    * in preference order (highest preference first).
    *
@@ -195,7 +200,7 @@ public class IRVChoices {
     LOGGER.debug(String.format("%s getting valid interpretation of vote %s.", prefix,
         choices.toString()));
 
-    List<String> valid = this.rule_26_7_2_Skips().rule_26_7_3_Duplicates().rule_26_7_1_Overvotes()
+    List<String> valid = this.rule_26_7_3_Duplicates().rule_26_7_1_Overvotes().rule_26_7_2_Skips()
         .choices.stream().map(c -> c.candidateName).collect(Collectors.toList());
     LOGGER.debug(String.format("%s valid interpretation is %s.", prefix, valid));
     return valid;
