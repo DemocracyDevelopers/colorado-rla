@@ -120,3 +120,8 @@ Health. She earned a B.A. in Mathematics from Reed College and an
 M.S. in Computer Science from the University of Lugano, Switzerland,
 where she was a cryptography researcher.
 
+[**Democracy Developers**](https://www.democracydevelopers.org.au/) is an Australian not-for-profit that builds
+open source software for supporting democracy. Lead developers for this project were
+[Michelle Blom](https://aucrest.github.io/people/current/blom-michelle/),
+[Andrew Conway](https://www.andrewconway.org/),
+[Vanessa Teague](https://www.democracydevelopers.org.au/2025/01/22/vanessa-teague/).

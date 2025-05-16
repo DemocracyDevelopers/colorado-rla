@@ -23,6 +23,15 @@ System Documentation
 ====================
 
 Documentation about this project and the Colorado RLA system includes:
+* documentation related to IRV extensions, available at [the Democracy Developers github repository](https://github.com/DemocracyDevelopers/Colorado-irv-rla-educational-materials),
+  - a slide deck summarizing the main ideas,
+  - the Guide To RAIRE, Parts 1 and 2, describing the background theory for IRV auditing,
+  - the Implementation Report, detailing the implementation describing the user workflow
+    changes from plurality-only audits,
+* instructions for running the IRV-extended system, including both colorado-rla and the [raire-service](https://github.com/DemocracyDevelopers/raire-service),
+  in the [raire-service README](https://github.com/DemocracyDevelopers/raire-service/blob/main/README.md).
+ 
+Some older documentation may be somewhat out of date, but useful for non-IRV aspects of colorado-rla:
 * a [User Manual (docx)](docs/user_manual.docx)
   with an overview of the system,
 * a [County Run Book (docx)](docs/county_runbook.docx) and
@@ -43,7 +52,9 @@ Documentation about this project and the Colorado RLA system includes:
 * the [license](LICENSE.md) under which this software is made available,
   and
 * all [contributors](#contributors) to the design and development of
-  this system are listed below.
+  this system are listed below,
+
+  
 
 Contributors
 ============
@@ -65,5 +76,10 @@ Contributors
 * Mike Prasad (CDOS Developer/Architect) Authored enhancements to RLA Tool Client and Server
 * Rich Helton (CDOS Developer) Authored enhancements to RLA Tool Client and Server
 * Dogan Cibiceli (CDOS Developer) Authored enhancements to RLA Tool Client and Server
+* [Democracy Developers](https://www.democracydevelopers.org.au/) 
+  - Michelle Blom
+  - Andrew Conway
+  - Vanessa Teague
+implemented IRV extensions based on original research by Michelle Blom, Peter Stuckey and Vanessa Teague.
 
 More information about our team members [is available](docs/70_team.md).
