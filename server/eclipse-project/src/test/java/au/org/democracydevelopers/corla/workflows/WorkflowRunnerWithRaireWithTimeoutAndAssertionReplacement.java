@@ -27,17 +27,17 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Optional;
 
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertTrue;
 
 /**
  * This workflow runner is designed to run in a UAT environment in which the raire service, colorado-rla
@@ -63,12 +63,12 @@ import static org.testng.Assert.*;
  * This test is skipped when the tests are run with empty parameters, i.e. during normal testing.
  */
 @Test(enabled=true)
-public class WorkflowRunnerWithRaire extends Workflow {
+public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends Workflow {
 
   /**
    * Class-wide logger.
    */
-  private static final Logger LOGGER = LogManager.getLogger(WorkflowRunnerWithRaire.class);
+  private static final Logger LOGGER = LogManager.getLogger(WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement.class);
 
 
   @BeforeClass
