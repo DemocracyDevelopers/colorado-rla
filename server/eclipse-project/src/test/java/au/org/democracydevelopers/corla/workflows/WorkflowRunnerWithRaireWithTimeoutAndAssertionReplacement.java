@@ -45,6 +45,7 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_ST
 /**
  * This workflow runner is designed to run in a UAT environment in which the raire service, colorado-rla
  * server and corla database are all set up and running.
+ * It matches the manual test specified in src/test/java/au/org/democracydevelopers/corla/workflows/manualWorkflowWithTimeoutAndAssertionReplacement.md:w
  * 1. You will need a copy of the colorado-rla code, which you can either clone with
  * `git clone https://github.com/DemocracyDevelopers/colorado-rla.git`
  * `git clone git@github.com:DemocracyDevelopers/colorado-rla.git`
@@ -142,6 +143,11 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
     String message = dashboard.getString(GENERATE_ASSERTIONS_SUMMARIES + "[0].summary.message");
     assertTrue(StringUtils.containsIgnoreCase(message, "Time out finding assertions"));
 
+    // Get the Assertions CSV and check that contains only the timeout error.
+    List<String> assertionsCSV = getReportAsCSV("assertions_csv");
+    assertEquals(assertionsCSV.size(), 1);
+    assertTrue(StringUtils.containsIgnoreCase(assertionsCSV.get(0), "NO_ASSERTIONS_PRESENT"));
+
     // 2. Request assertion generation with a reasonable time limit.
     makeAssertionData(Optional.empty(), List.of(), 5);
 
@@ -157,10 +163,19 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
     message = dashboard.getString(GENERATE_ASSERTIONS_SUMMARIES + "[0].summary.message");
     assertTrue(message.isEmpty());
 
+    // Get the Assertions CSV and check that it contains assertions, including the name of the
+    // substituted winner and not the name of the previous winner.
+    assertionsCSV = getReportAsCSV("assertions_csv");
+    assertTrue(assertionsCSV.size() > 1);
+    assertTrue(assertionsCSV.stream().anyMatch(l -> StringUtils.containsIgnoreCase(l, "LYON Michael")));
+
     // 3. Substitute the CSVs with an equivalent set that has two candidates swapped.
     uploadCounty(1, CVR_FILETYPE, path + "Byron_Mayoral_Swivel_Lyon_Swapped.csv", path + "Byron_Mayoral_Swivel_Lyon_Swapped.csv.sha256sum");
     assertTrue(uploadSuccessfulWithin(600, Set.of(1), CVR_JSON));
 
+    // Wait for 2 seconds to make sure the updated CVRs are available to the raire-service in the DB.
+    // Note: if this test is failing, try increasing this number.
+    Thread.sleep(2000);
     // Request assertion generation with a reasonable time limit.
     makeAssertionData(Optional.empty(), List.of(), 5);
 
@@ -175,6 +190,13 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
     assertTrue(error.isEmpty());
     message = dashboard.getString(GENERATE_ASSERTIONS_SUMMARIES + "[0].summary.message");
     assertTrue(message.isEmpty());
+
+    // Get the Assertions CSV and check that it contains assertions, including the name of the
+    // substituted winner and not the name of the previous winner.
+    assertionsCSV = getReportAsCSV("assertions_csv");
+    assertTrue(assertionsCSV.size() > 1);
+    assertTrue(assertionsCSV.stream().noneMatch(l -> StringUtils.containsIgnoreCase(l, "LYON Michael")));
+    assertTrue(assertionsCSV.stream().anyMatch(l -> StringUtils.containsIgnoreCase(l, "SWIVEL SwappedWithLyon")));
   }
 
   /**

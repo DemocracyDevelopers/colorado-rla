@@ -2,6 +2,7 @@
 This workflow tests that assertions and assertion generation summaries are properly replaced
 - after an assertion generation failure, and
 - after a successful assertion generation, but with changed CVRs.
+It matches the automated test in `src/test/java/au/org/democracydevelopers/corla/workflows/WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement.java`.
 
 ## CSV data upload
 Log in as countyadmin1 and upload the Byron Mayoral CSV and matching manifest:
