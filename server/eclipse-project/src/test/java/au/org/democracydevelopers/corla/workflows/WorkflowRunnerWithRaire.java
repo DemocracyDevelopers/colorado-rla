@@ -60,7 +60,9 @@ import static org.testng.Assert.*;
  * `mvn test -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="[Path to workflow file]"`
  * For example, to run the AllPluralityTwoVoteOverstatementTwoRounds workflow, enter
  * `mvn test -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json"`
- * This test is skipped when the tests are run with empty parameters, i.e. during normal testing.
+ * You can also run the test in your IDE - instructions for IntelliJ are at
+ * <a href="https://www.jetbrains.com/help/idea/work-with-tests-in-maven.html#skip_test">...</a>
+ * This test is skipped when the tests are run with default parameters, i.e. during automated testing.
  */
 @Test(enabled=true)
 public class WorkflowRunnerWithRaire extends Workflow {
@@ -108,7 +110,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
     try {
       final Path pathToInstance = Paths.get(workflowFile);
       LOGGER.info(String.format("%s %s %s.", prefix, "running workflow", pathToInstance));
-      runMainAndInitializeDB("Workflow with raire", Optional.empty());
+      runMainAndInitializeDBIfNeeded("Workflow with raire", Optional.empty());
 
       // Do the workflow. Reset the database first.
       resetDatabase("stateadmin1");
@@ -128,11 +130,12 @@ public class WorkflowRunnerWithRaire extends Workflow {
    * without other data.
    * TODO possibly get testName to be the full (relative) path of the config file. Then this can
    * be used for src/main/resources/us/freeandfair/corla/default.properties
+   * This version does not actually run main, because main is expected to be already running.
    * @param testName not used.
    * @param postgres not used.
    */
   @Override
-  protected void runMainAndInitializeDB(final String testName, final Optional<PostgreSQLContainer<?>> postgres) {
+  protected void runMainAndInitializeDBIfNeeded(final String testName, final Optional<PostgreSQLContainer<?>> postgres) {
     assertTrue(postgres.isEmpty());
     testUtils.log(LOGGER, "[runMainAndInitializeDB] running workflow " + testName + ".");
     // Don't need to start main because we assume it's already running.

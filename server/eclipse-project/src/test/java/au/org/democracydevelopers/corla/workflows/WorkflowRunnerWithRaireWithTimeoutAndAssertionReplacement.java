@@ -23,21 +23,24 @@ package au.org.democracydevelopers.corla.workflows;
 
 import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.RestAssured;
+import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
+import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
 
 /**
  * This workflow runner is designed to run in a UAT environment in which the raire service, colorado-rla
@@ -56,11 +59,11 @@ import static org.testng.Assert.assertTrue;
  * repeatedly without resetting the database. At the start of running a workflow (with RAIRE), the
  * database is reset.
  * 5. Ensure that the colorado-rla server and raire-service are running.
- * 6. From the eclipse-project directory, to run a workflow json file via the command line, enter
- * `mvn test -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="[Path to workflow file]"`
- * For example, to run the AllPluralityTwoVoteOverstatementTwoRounds workflow, enter
- * `mvn test -Dtest="*WorkflowRunnerWithRaire" -DworkflowFile="src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json"`
- * This test is skipped when the tests are run with empty parameters, i.e. during normal testing.
+ * 6. From the eclipse-project directory, to run this test via the command line, enter
+ * `mvn test -Dtest="*WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement" -DworkflowFile=""
+ * You can also run the test in your IDE - instructions for IntelliJ are at
+ * <a href="https://www.jetbrains.com/help/idea/work-with-tests-in-maven.html#skip_test">...</a>
+ * This test is skipped when the tests are run with default parameters, i.e. during automated testing.
  */
 @Test(enabled=true)
 public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends Workflow {
@@ -79,17 +82,19 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
   }
 
   /**
-   * Given a JSON file defining an audit workflow (CVRs, Manifests, which CVRs to replace with
-   * phantoms, which ballots to treat as phantoms, expected diluted margins and sample sizes,
-   * which ballots to simulate discrepancies for, and expected end of round states ...), run
-   * the test audit and verify that the expected outcomes arise.
-   * @param workflowFile Path to JSON workflow instance to execute.
-   * @throws InterruptedException
+   * Run assertion generation test workflow, interacting with raire-service.
+   * 1. Request assertion generation with a very short timeout; check for failure.
+   * 2. Repeat the request, with a longer timeout; check for success and replacement of the summary.
+   * 3. Change the CVRs, repeat assertion generation, and check that the assertions were replaced.
+   * @param workflowFile Only used to check whether the default of "SKIP" is still present.
+   * @throws InterruptedException if something goes wrong with file upload.
    */
   @Parameters("workflowFile")
   @Test
   public void runInstance(final String workflowFile) throws InterruptedException {
     final String prefix = "[runInstance] ";
+    LOGGER.info(String.format("%s %s.", prefix, "running WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement"));
+    final String path = "src/test/resources/CSVs/NewSouthWales21/";
 
     if(workflowFile.equalsIgnoreCase("SKIP")) {
       // Return without running the test. This means that when included in automated workflows
@@ -98,41 +103,76 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
       return;
     }
 
-    if(workflowFile == null || workflowFile.isEmpty()) {
-      System.out.println("Usage example, from eclipse-project directory: " +
-          "mvn -Dtest=\"*WorkflowRunnerWithRaire\" " +
-          "-DworkflowFile=\"src/test/resources/workflows/instances/AllPluralityTwoVoteOverstatementTwoRounds.json\" test");
-      return;
-    }
+    runMainAndInitializeDBIfNeeded("Workflow with raire", Optional.empty());
 
-    try {
-      final Path pathToInstance = Paths.get(workflowFile);
-      LOGGER.info(String.format("%s %s %s.", prefix, "running workflow", pathToInstance));
-      runMainAndInitializeDB("Workflow with raire", Optional.empty());
+    // Reset the database.
+    resetDatabase("stateadmin1");
 
-      // Do the workflow. Reset the database first.
-      resetDatabase("stateadmin1");
+    // Upload the manifest and CSVs for Byron Mayoral, into Adams (county 1).
+    uploadCounty(1, MANIFEST_FILETYPE, path + "Byron_Mayoral.manifest.csv", path + "Byron_Mayoral.manifest.csv.sha256sum");
+    uploadCounty(1, CVR_FILETYPE, path + "Byron_Mayoral.csv", path + "Byron_Mayoral.csv.sha256sum");
 
-      doWorkflow(pathToInstance, Optional.empty());
+    // Wait while CVRs and manifests are uploaded.
+    assertTrue(uploadSuccessfulWithin(600, Set.of(1), CVR_JSON));
+    assertTrue(uploadSuccessfulWithin(20, Set.of(1), MANIFEST_JSON));
 
-    } catch(IOException e){
-      final String msg = prefix + " " + e.getMessage() + ". Check that the path and filename are correct.";
-      LOGGER.error(msg);
-      throw new RuntimeException(msg);
-    }
+    // Get the DoSDashboard refresh response; sanity check for initial state.
+    JsonPath dashboard = getDoSDashBoardRefreshResponse();
+    assertEquals(dashboard.get(ASM_STATE), DOS_INITIAL_STATE.toString());
+    assertEquals(dashboard.getMap(AUDIT_INFO + "." + CANONICAL_CHOICES).toString(), "{}");
+    assertNull(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON));
+    assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
+
+    // Provide a risk limit and (unused) canonicalization file.
+    updateAuditInfo(path + "Ballina_Bellingen_Boulder2023_Test_Canonical_List.csv",
+        BigDecimal.valueOf(0.03));
+
+    // 1. Call raire to request the assertion data, with an extremely small time limit.
+    makeAssertionData(Optional.empty(), List.of(), 0.00001);
+
+    // Get the generate assertions summaries and check for timeout failure.
+    dashboard = getDoSDashBoardRefreshResponse();
+    assertEquals(dashboard.getList(GENERATE_ASSERTIONS_SUMMARIES).size(), 1);
+    String contestName = dashboard.getString(GENERATE_ASSERTIONS_SUMMARIES + "[0].summary.contestName");
+    assertTrue(StringUtils.containsIgnoreCase(contestName, "Byron"));
+    String winner = dashboard.getString(GENERATE_ASSERTIONS_SUMMARIES + "[0].summary.winner");
+    assertTrue(winner.isEmpty());
+    String error = dashboard.getString(GENERATE_ASSERTIONS_SUMMARIES + "[0].summary.error");
+    assertTrue(StringUtils.containsIgnoreCase(error, "TIMEOUT_FINDING_ASSERTIONS"));
+    String message = dashboard.getString(GENERATE_ASSERTIONS_SUMMARIES + "[0].summary.message");
+    assertTrue(StringUtils.containsIgnoreCase(message, "Time out finding assertions"));
+
+    // 2. Request assertion generation with a reasonable time limit.
+    makeAssertionData(Optional.empty(), List.of(), 5);
+
+    // Get the generate assertions summaries and check for success and the correct winner.
+    dashboard = getDoSDashBoardRefreshResponse();
+    assertEquals(dashboard.getList(GENERATE_ASSERTIONS_SUMMARIES).size(), 1);
+    contestName = dashboard.getString(GENERATE_ASSERTIONS_SUMMARIES + "[0].summary.contestName");
+    assertTrue(StringUtils.containsIgnoreCase(contestName, "Byron"));
+    winner = dashboard.getString(GENERATE_ASSERTIONS_SUMMARIES + "[0].summary.winner");
+    assertTrue(StringUtils.containsIgnoreCase(winner, "LYON Michael"));
+    error = dashboard.getString(GENERATE_ASSERTIONS_SUMMARIES + "[0].summary.error");
+    assertTrue(error.isEmpty());
+    message = dashboard.getString(GENERATE_ASSERTIONS_SUMMARIES + "[0].summary.message");
+    assertTrue(message.isEmpty());
+
+    // 2. Request assertion generation with a reasonable time limit.
+    makeAssertionData(Optional.empty(), List.of(), 5);
+
+
   }
 
   /**
-   * Run everything with the database and raire url set up in src/test/resources/test.properties
+   * Set up persistence with the database and raire url set up in src/test/resources/test.properties
    * This assumes the database is in an initial state, with administrator logins and counties but
    * without other data.
-   * TODO possibly get testName to be the full (relative) path of the config file. Then this can
-   * be used for src/main/resources/us/freeandfair/corla/default.properties
+   * This version does not actually run main, because main is expected to be already running.
    * @param testName not used.
    * @param postgres not used.
    */
   @Override
-  protected void runMainAndInitializeDB(final String testName, final Optional<PostgreSQLContainer<?>> postgres) {
+  protected void runMainAndInitializeDBIfNeeded(final String testName, final Optional<PostgreSQLContainer<?>> postgres) {
     assertTrue(postgres.isEmpty());
     testUtils.log(LOGGER, "[runMainAndInitializeDB] running workflow " + testName + ".");
     // Don't need to start main because we assume it's already running.
