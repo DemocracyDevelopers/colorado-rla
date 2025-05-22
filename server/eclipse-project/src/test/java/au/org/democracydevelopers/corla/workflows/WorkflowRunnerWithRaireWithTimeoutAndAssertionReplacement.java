@@ -49,7 +49,7 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_ST
  * `git clone https://github.com/DemocracyDevelopers/colorado-rla.git`
  * `git clone git@github.com:DemocracyDevelopers/colorado-rla.git`
  * or download as a zip from
- * https://github.com/DemocracyDevelopers/colorado-rla/archive/refs/heads/main.zip
+ * <a href="https://github.com/DemocracyDevelopers/colorado-rla/archive/refs/heads/main.zip">...</a>
  * 2. Use src/test/resources/test.properties to specify the raire url, database login credentials and
  * url/port of the main colorado-rla server.
  * 3. Ensure that maven and java are installed.
@@ -157,10 +157,24 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
     message = dashboard.getString(GENERATE_ASSERTIONS_SUMMARIES + "[0].summary.message");
     assertTrue(message.isEmpty());
 
-    // 2. Request assertion generation with a reasonable time limit.
+    // 3. Substitute the CSVs with an equivalent set that has two candidates swapped.
+    uploadCounty(1, CVR_FILETYPE, path + "Byron_Mayoral_Swivel_Lyon_Swapped.csv", path + "Byron_Mayoral_Swivel_Lyon_Swapped.csv.sha256sum");
+    assertTrue(uploadSuccessfulWithin(600, Set.of(1), CVR_JSON));
+
+    // Request assertion generation with a reasonable time limit.
     makeAssertionData(Optional.empty(), List.of(), 5);
 
-
+    // Get the generate assertions summaries and check for success and the substituted winner.
+    dashboard = getDoSDashBoardRefreshResponse();
+    assertEquals(dashboard.getList(GENERATE_ASSERTIONS_SUMMARIES).size(), 1);
+    contestName = dashboard.getString(GENERATE_ASSERTIONS_SUMMARIES + "[0].summary.contestName");
+    assertTrue(StringUtils.containsIgnoreCase(contestName, "Byron"));
+    winner = dashboard.getString(GENERATE_ASSERTIONS_SUMMARIES + "[0].summary.winner");
+    assertTrue(StringUtils.containsIgnoreCase(winner, "SWIVEL SwappedWithLyon"));
+    error = dashboard.getString(GENERATE_ASSERTIONS_SUMMARIES + "[0].summary.error");
+    assertTrue(error.isEmpty());
+    message = dashboard.getString(GENERATE_ASSERTIONS_SUMMARIES + "[0].summary.message");
+    assertTrue(message.isEmpty());
   }
 
   /**
