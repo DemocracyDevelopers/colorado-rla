@@ -23,7 +23,6 @@ package au.org.democracydevelopers.corla.workflows;
 
 import static au.org.democracydevelopers.corla.workflows.Instance.INFINITE_ROUNDS;
 import static io.restassured.RestAssured.given;
-import static java.lang.Math.max;
 import static java.util.Collections.min;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -162,7 +161,6 @@ public abstract class Workflow  {
   protected static final String RISK_LIMIT_ACHIEVED = "risk_limit_achieved";
   protected static final String SEED = "seed";
   protected static final String STATUS = "status";
-  protected static final String BALLOTS_REMAINING = "ballots_remaining_in_round";
   protected static final String DISCREPANCY_COUNT = "discrepancy_count";
   protected static final String ONE_OVER_COUNT = "one_over_count";
   protected static final String ONE_UNDER_COUNT = "one_under_count";
