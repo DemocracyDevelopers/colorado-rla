@@ -172,7 +172,7 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
   }
 
   /**
-   * Simple test that the assertion generation request is made when in
+   * Simple test that the assertion generation request is made to raire when in
    * ASM initial state and ASM PARTIAL_AUDIT_INFO_SET states, and not in later states.
    */
   @Test
