@@ -184,9 +184,21 @@ public class Instance {
 
   /**
    * Round by round results for counties whose statuses we want to test.
+   * Example:
+   *   "COUNTY_RESULTS" : {
+   *     "1" : {
+   *       "32" : {
+   *         "discrepancy_count" : {
+   *           "UNAUDITED_CONTEST" : 1
+   *         }
+   *       }
+   *     }
+   *   },
+   * In the above, the round number is the first key (round 1), and the county number is the key of the
+   * second map (county 32 in the example).
    */
   @JsonProperty("COUNTY_RESULTS")
-  private Map<Integer,Map<String,Map<String,Integer>>> countyResults;
+  private Map<Integer,Map<String,Map<String,Map<String,Integer>>>> countyResults;
 
   /**
    * Imprinted CVR ids that should map to phantom ballots. Organised as a map between county ID
@@ -548,7 +560,7 @@ public class Instance {
    * @return A mapping between county and a map of status type and expected value for that
    * county. Returns an empty Optional if no record for that round is present in our record of results.
    */
-  public Optional<Map<String,Map<String,Integer>>> getRoundCountyResult(final int round){
+  public Optional<Map<String,Map<String,Map<String,Integer>>>> getRoundCountyResult(final int round){
     if(countyResults.containsKey(round)){
       return Optional.of(countyResults.get(round));
     }

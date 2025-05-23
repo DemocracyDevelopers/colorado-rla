@@ -296,6 +296,43 @@
     }
   },
 
+  "COUNTY_RESULTS" : {
+    "1" : {
+      "32" : {
+        "discrepancy_count" : {
+          "AUDITED_CONTEST" : 1
+        }
+      },
+      "64" : {
+        "discrepancy_count" : {
+          "AUDITED_CONTEST" : 1
+        }
+      },
+      "7" : {
+        "discrepancy_count" : {
+          "AUDITED_CONTEST" : 1
+        }
+      }
+    },
+    "2" : {
+      "32" : {
+        "discrepancy_count" : {
+          "AUDITED_CONTEST" : 1
+        }
+      },
+      "64" : {
+        "discrepancy_count" : {
+          "AUDITED_CONTEST" : 1
+        }
+      },
+      "7" : {
+        "discrepancy_count" : {
+          "AUDITED_CONTEST" : 1
+        }
+      }
+    }
+  },
+
   "CONTEST_RESULTS" : {
     "1" : {
       "Byron Mayoral" : {
