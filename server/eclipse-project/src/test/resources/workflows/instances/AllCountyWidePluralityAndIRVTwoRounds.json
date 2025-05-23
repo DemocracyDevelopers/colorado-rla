@@ -185,6 +185,33 @@
   "REAUDITS" : {
   },
 
+  "COUNTY_RESULTS" : {
+    "1" : {
+      "1" : {
+        "discrepancy_count" : {
+          "AUDITED_CONTEST" : 1
+        }
+      },
+      "5" : {
+        "discrepancy_count" : {
+          "AUDITED_CONTEST" : 1
+        }
+      }
+    },
+    "2" : {
+      "1" : {
+        "discrepancy_count" : {
+          "AUDITED_CONTEST" : 1
+        }
+      },
+      "5" : {
+        "discrepancy_count" : {
+          "AUDITED_CONTEST" : 1
+        }
+      }
+    }
+  },
+
   "CONTEST_RESULTS" : {
     "1" : {
       "Regent of the University of Colorado" : {

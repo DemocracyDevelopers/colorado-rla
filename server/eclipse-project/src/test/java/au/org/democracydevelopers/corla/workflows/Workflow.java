@@ -23,7 +23,6 @@ package au.org.democracydevelopers.corla.workflows;
 
 import static au.org.democracydevelopers.corla.workflows.Instance.INFINITE_ROUNDS;
 import static io.restassured.RestAssured.given;
-import static java.lang.Math.max;
 import static java.util.Collections.min;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -163,7 +162,6 @@ public abstract class Workflow  {
   protected static final String RISK_LIMIT_ACHIEVED = "risk_limit_achieved";
   protected static final String SEED = "seed";
   protected static final String STATUS = "status";
-  protected static final String BALLOTS_REMAINING = "ballots_remaining_in_round";
   protected static final String DISCREPANCY_COUNT = "discrepancy_count";
   protected static final String ONE_OVER_COUNT = "one_over_count";
   protected static final String ONE_UNDER_COUNT = "one_under_count";
@@ -309,7 +307,6 @@ public abstract class Workflow  {
       final Map<String, Map<String, Object>> roundStartStatus = dashboard.get(COUNTY_STATUS);
 
       // Log in as each county whose audit is not yet complete, and audit all ballots in sample.
-      List<String> countiesWithAudits = new ArrayList<>();
       List<TestAuditSession> sessionsForAudit = new ArrayList<>();
       List<TestAuditSession> sessionsForSignOffOnly = new ArrayList<>();
       for (final int cty : countyIDs) {
@@ -334,7 +331,6 @@ public abstract class Workflow  {
             // If they're not waiting for round sign-off, and not waiting for the next round to start (which they might
             // be if they'd already signed off on the last of the audits they had), then they have real auditing to do.
             sessionsForAudit.add(session);
-            countiesWithAudits.add(ctyID);
           }
         }
       }
@@ -374,6 +370,12 @@ public abstract class Workflow  {
           }
 
           final String dbID = contestToDBID.get(contestName);
+          if (!discrepancies.containsKey(dbID)) {
+            // We cannot check exact discrepancy type counts for non-targeted contests as
+            // this information is not contained in the dashboard refresh response.
+            continue;
+          }
+
           final Map<String, Integer> contestResult = roundResults.get(contestName);
 
           final int oneOverCount = contestResult.get(ONE_OVER_COUNT);
@@ -383,11 +385,6 @@ public abstract class Workflow  {
           final int otherCount = contestResult.get(OTHER_COUNT);
           final int disagreementCount = contestResult.get(DISAGREEMENTS);
 
-          if (!discrepancies.containsKey(dbID)) {
-            throw new RuntimeException("Likely incorrectly specified contest name (" +
-                contestName + ") in workflow JSON. You cannot check discrepancies" +
-                "for non-targeted contests - they should all be zero.");
-          }
           final Map<String, Integer> contestDiscrepancies = discrepancies.get(dbID);
           assertEquals(contestDiscrepancies.get(ONE_OVER).intValue(), oneOverCount);
           assertEquals(contestDiscrepancies.get(ONE_UNDER).intValue(), oneUnderCount);
@@ -416,30 +413,33 @@ public abstract class Workflow  {
 
       final int maxOptimistic = Collections.max(statusOptBallotsToAudit.values());
 
-      final Map<String, Map<String, Object>> status = dashboard.get(COUNTY_STATUS);
-      final Optional<Map<String, Map<String, Integer>>> countyResults = instance.getRoundCountyResult(rounds + 1);
+      final Map<String, Map<String, Map<String, Object>>> status = dashboard.get(COUNTY_STATUS);
+      final Optional<Map<String, Map<String, Map<String,Integer>>>> countyResults =
+          instance.getRoundCountyResult(rounds + 1);
 
-      int maxBallotsRemaining = 0;
       if (countyResults.isPresent()) {
-        for (final Map.Entry<String, Map<String, Integer>> entry : countyResults.get().entrySet()) {
-          if (!countiesWithAudits.contains(entry.getKey()))
-            continue;
+        for (final Map.Entry<String, Map<String, Map<String,Integer>>> entry : countyResults.get().entrySet()) {
+          final Map<String, Map<String,Integer>> expStatus = entry.getValue();
+          final Map<String, Map<String,Object>> countyStatus = status.get(entry.getKey());
 
-          final Map<String, Integer> expStatus = entry.getValue();
-          final Map<String, Object> countyStatus = status.get(entry.getKey());
+          for(final String key : expStatus.keySet()){
+            assertTrue(countyStatus.containsKey(key));
 
-          final int ballotsRemaining = Integer.parseInt(countyStatus.get(BALLOTS_REMAINING).toString());
-          final int estimatedBallots = Integer.parseInt(countyStatus.get(ESTIMATED_BALLOTS).toString());
+            final Map<String,Integer> expStatusForCounty = expStatus.get(key);
+            final Map<String,Object> actStatusForCounty = countyStatus.get(key);
 
-          assertEquals(ballotsRemaining, expStatus.get(BALLOTS_REMAINING).intValue());
-          assertEquals(estimatedBallots, expStatus.get(ESTIMATED_BALLOTS).intValue());
+            for(final String desc : expStatusForCounty.keySet()){
+              assertTrue(actStatusForCounty.containsKey(desc));
 
-          maxBallotsRemaining = max(ballotsRemaining, maxBallotsRemaining);
+              assertEquals(expStatusForCounty.get(desc).intValue(),
+                  Integer.parseInt(actStatusForCounty.get(desc).toString()));
+            }
+          }
         }
       }
 
       // Audit unfinished; new round.
-      if (maxOptimistic > 0 || maxBallotsRemaining > 0) {
+      if (maxOptimistic > 0) {
         auditNotFinished = true;
         // We're not finished but we didn't actually audit anything. This means that the audit is
         // infinite. The audit isn't finished, but we should break out of this (otherwise infinite)
