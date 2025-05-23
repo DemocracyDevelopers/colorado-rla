@@ -29,11 +29,9 @@ import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import us.freeandfair.corla.persistence.Persistence;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.Set;
 
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
@@ -75,7 +73,7 @@ public class UploadAndDeleteIRVCVRs extends Workflow {
     testUtils.log(LOGGER, "runUploadAndDeleteIRVCVRs");
 
     final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
-    runMainAndInitializeDB("UploadAndDeleteIRVCVRs", Optional.of(postgres));
+    runMainAndInitializeDBIfNeeded("UploadAndDeleteIRVCVRs", Optional.of(postgres));
 
     // Upload CSVs with 10 invalid IRV votes, for counties 1 and 2.
     final String CVRFile = dataPath + "ThreeCandidatesTenInvalidVotes";

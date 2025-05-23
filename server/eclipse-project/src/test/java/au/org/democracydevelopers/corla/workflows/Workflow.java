@@ -151,6 +151,7 @@ public abstract class Workflow  {
   protected static final String ELECTION_DATE = "election_date";
   protected static final String ELECTION_TYPE = "election_type";
   protected static final String FILETYPE = "fileType";
+  protected static final String GENERATE_ASSERTIONS_SUMMARIES = "generate_assertions_summaries";
   protected static final String ID = "id";
   protected static final String IGNORE_MANIFESTS = "ignoreManifests";
   protected static final String MANIFEST_FILETYPE = "ballot-manifest";
@@ -233,7 +234,7 @@ public abstract class Workflow  {
     assertNull(dashboard.get(AUDIT_INFO + "." + RISK_LIMIT_JSON));
     assertNull(dashboard.get(AUDIT_INFO + "." + SEED));
 
-    // Provide a risk limit, canonicalization file, and seed as defined in the Instance.
+    // Provide a risk limit and canonicalization file, as defined in the Instance.
     updateAuditInfo(instance.getCanonicalisationFile(), instance.getRiskLimit());
     dashboard = getDoSDashBoardRefreshResponse();
     assertEquals(instance.getRiskLimit()
@@ -250,14 +251,14 @@ public abstract class Workflow  {
     canonicalize(instance, true);
 
     // Either call raire (if using) or load assertions in from SQL script.
-    makeAssertionData(optPostGres, instance.getSQLs());
+    makeAssertionData(optPostGres, instance.getSQLs(), TIME_LIMIT_DEFAULT);
 
     dashboard = getDoSDashBoardRefreshResponse();
 
     // Check that the right number of IRV contests are present
     final List<String> irvContests = instance.getIRVContests();
     final Map<String, String> targets = instance.getTargetedContests();
-    assertEquals(irvContests.size(), dashboard.getList("generate_assertions_summaries").size());
+    assertEquals(irvContests.size(), dashboard.getList(GENERATE_ASSERTIONS_SUMMARIES).size());
 
     // Choose targeted contests for audit as specified in the Instance.
     final Map<String, String> contestToDBID = targetContests(targets);
@@ -1533,7 +1534,7 @@ public abstract class Workflow  {
    * @param testName Name of test instance.
    * @param postgresOpt The PostgreSQL container to use.
    */
-  protected void runMainAndInitializeDB(final String testName, final Optional<PostgreSQLContainer<?>> postgresOpt) {
+  protected void runMainAndInitializeDBIfNeeded(final String testName, final Optional<PostgreSQLContainer<?>> postgresOpt) {
     assertTrue(postgresOpt.isPresent());
     final PostgreSQLContainer<?> postgres = postgresOpt.get();
 
@@ -1557,7 +1558,7 @@ public abstract class Workflow  {
    *                    assertions should be stored.
    * @param SQLfiles    The sql files which, if non-empty, the data should be read from.
    */
-  protected void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgresOpt, final List<String> SQLfiles) {
+  protected void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgresOpt, final List<String> SQLfiles, double timeLimit) {
     if(postgresOpt.isPresent()) {
       for (final String s : SQLfiles) {
         TestClassWithDatabase.runSQLSetupScript(postgresOpt.get(), s);
@@ -1569,7 +1570,7 @@ public abstract class Workflow  {
       given()
           .filter(filter)
           .header("Content-Type", "application/x-www-form-urlencoded")
-          .get("/generate-assertions?timeLimitSeconds="+TIME_LIMIT_DEFAULT)
+          .get("/generate-assertions?timeLimitSeconds="+timeLimit)
           .then()
           .assertThat()
           .statusCode(HttpStatus.SC_OK);

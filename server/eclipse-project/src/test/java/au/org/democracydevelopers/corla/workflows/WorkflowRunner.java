@@ -132,7 +132,7 @@ public class WorkflowRunner extends Workflow {
 
     try {
       final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
-      runMainAndInitializeDB(pathToInstance.getFileName().toString(), Optional.of(postgres));
+      runMainAndInitializeDBIfNeeded(pathToInstance.getFileName().toString(), Optional.of(postgres));
 
       // Do the workflow.
       doWorkflow(pathToInstance, Optional.of(postgres));

@@ -80,7 +80,7 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     testUtils.log(LOGGER, "runManifestVaryingDemo");
 
     final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
-    runMainAndInitializeDB("runManifestVaryingDemo", Optional.of(postgres));
+    runMainAndInitializeDBIfNeeded("runManifestVaryingDemo", Optional.of(postgres));
 
     final String margin2Contest = "PluralityMargin2";
     final String margin10Contest = "PluralityMargin10";
