@@ -23,10 +23,10 @@ it to fail.
 These instructions are for Firefox, but the same operations are available in Chrome, possibly under
 slightly different names or menus.
 
-Start up the client and log in as countyadmin1.
-In the Adams County Colorado RLA web browser window, open the Developer Tools: for Firefox, click on the main hamburger menu, then
+In the CDOS Dashboard on the Generate Assertions page, open the Developer for Firefox: click on the main hamburger menu, then
 `More Tools` -> `Web Developer Tools`. You need the web browser hamburger menu, not the Colorado RLA hamburger menu.
-(You can also use (Chrome's the equivalent tools)[https://developer.chrome.com/docs/devtools/open].)
+(You can also use (Chrome's the equivalent tools)[https://developer.chrome.com/docs/devtools/open] or Safari's, 
+but the details about how to achieve the required result may be slightly different.)
 
 Select the “Sources” tab, and navigate to Main Thread → localhost:3000 → static → bundle.js.
 Right-click on “bundle.js” and choose “add script override”. You’ll be prompted to save a local copy of the file – the Downloads folder is fine.
