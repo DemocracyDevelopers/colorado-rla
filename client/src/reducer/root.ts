@@ -183,8 +183,8 @@ export default function root(state: AppState, action: Action.App) {
             return 0;
         };
 
-        // Put failed assertion generations at the front of the list
-        nextState.assertionGenerationStatuses = action.data.sort(compareStatus);
+        // Put failed assertion generations at the front of the list.
+        nextState.assertionGenerationStatuses = Array.isArray(action.data) ? action.data.sort(compareStatus) : [];
 
         nextState.generatingAssertions = false;
         nextState.assertionsGenerated = true;
