@@ -46,15 +46,16 @@ import java.util.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.PARTIAL_AUDIT_INFO_SET;
 
 /**
- * The Generate Assertions endpoint. Takes a GenerateAssertionsRequest, and optional parameters
- * specifying a contest and time limit.
- * If no parameters are specified, it generates assertions for all IRV contests with a default time
+ * The Generate Assertions endpoint. Takes optional query parameters specifying a contest and time
  * limit.
- * If a contest is specified, it generates assertions only for that contest.
+ * If no parameters are specified, it generates assertions for all IRV contests with a default time
+ * limit. If the database contains no IRV contests, it does nothing and returns an empty list.
+ * If an IRV contest is specified, it generates assertions only for that contest. If a plurality contest
+ * is specified, it throws an error.
  * If a time limit is specified, it uses that instead of the default.
  * Returns a list of all responses, which are the contest name together with the winner (if one was
  * returned) or an error (if there was one).
- * For example, hitting /generate-assertions?contest="Boulder Mayoral",timeLimitSeconds=5
+ * For example, hitting /generate-assertions?contestName=Boulder Mayoral,timeLimitSeconds=5
  * will, if successful, produce a singleton list with a GenerateAssertionsResponseWithErrors
  * containing "Boulder Mayoral" and the winner.
  * Hitting /generate-assertions with no parameters will produce a list of

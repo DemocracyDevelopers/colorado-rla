@@ -21,6 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
+import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.CONTEST_NAME;
 import static au.org.democracydevelopers.corla.workflows.Instance.INFINITE_ROUNDS;
 import static io.restassured.RestAssured.given;
 import static java.util.Collections.min;
@@ -61,6 +62,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import java.util.zip.ZipInputStream;
 
 import org.apache.commons.lang.StringUtils;
@@ -183,6 +185,7 @@ public abstract class Workflow  {
   protected static final String RECORD_TYPE = "record_type";
   protected static final String SCANNER_ID = "scanner_id";
   protected static final String TIMESTAMP = "timestamp";
+  protected static final String TIME_LIMIT_SECONDS = "timeLimitSeconds";
 
   /**
    * Default time limit for a raire service call.
@@ -554,6 +557,24 @@ public abstract class Workflow  {
     LOGGER.debug("Auth status for login " + user + " stage " + stage + " is " + authStatus);
     assertEquals(authStatus, (stage == 1) ? TRADITIONALLY_AUTHENTICATED.toString()
         : SECOND_FACTOR_AUTHENTICATED.toString(), "Stage " + stage + " auth failed.");
+  }
+
+  /**
+   * Hit the colorado-rla generate-assertions endpoint.
+   * @param filter Session filter to maintain same session across API test.
+   */
+  protected Response generateAssertionsCorla(final SessionFilter filter, Optional<String> contestName,
+                                             Optional<Double> timeLimitSeconds) {
+    final String contestQ = contestName.map(s -> CONTEST_NAME + "=" + s).orElse("");
+    final String timeLimitQ = timeLimitSeconds.map(s -> TIME_LIMIT_SECONDS + "=" + s).orElse("");
+    String queryString = (contestName.isPresent() || timeLimitSeconds.isPresent() ? "?" : "")
+        + String.join(",", Stream.of(contestQ, timeLimitQ).filter(s -> !s.isEmpty()).toList());
+
+    final Response response = given().filter(filter)
+        .header("Content-Type", "application/json")
+        .get("/generate-assertions" + queryString);
+
+    return response;
   }
 
   /**
