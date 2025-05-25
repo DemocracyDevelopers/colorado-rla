@@ -1,7 +1,4 @@
--- This dataset is for testing issues relating to the types of contests. There are three contests:
--- TinyExample1 - consistently IRV
--- PluralityExample1 - consistently plurality
--- PluralityExample2 - mix of plurality and IRV - this should produce errors.
+-- Super-simple dataset with one plurality contest and one IRV contest: TinyExample1 (IRV) and PluralityExample1.
 --
 -- Data for Name: cast_vote_record; Type: TABLE DATA; Schema: public; Owner: corlaadmin
 --
@@ -43,11 +40,11 @@ INSERT INTO public.cast_vote_record (id, audit_board_index, comment, cvr_id, bal
 
 INSERT INTO public.contest (id, description, name, sequence_number, version, votes_allowed, winners_allowed, county_id) VALUES (240503, 'IRV', 'TinyExample1', 0, 0, 3, 1, 1);
 INSERT INTO public.contest (id, description, name, sequence_number, version, votes_allowed, winners_allowed, county_id) VALUES (240505, 'PLURALITY', 'PluralityExample1', 1, 0, 1, 1, 1);
-INSERT INTO public.contest (id, description, name, sequence_number, version, votes_allowed, winners_allowed, county_id) VALUES (240507, 'PLURALITY', 'PluralityExample2', 2, 0, 2, 2, 1);
+-- INSERT INTO public.contest (id, description, name, sequence_number, version, votes_allowed, winners_allowed, county_id) VALUES (240507, 'PLURALITY', 'PluralityExample2', 2, 0, 2, 2, 1);
 INSERT INTO public.contest (id, description, name, sequence_number, version, votes_allowed, winners_allowed, county_id) VALUES (240629, 'IRV', 'TinyExample1', 0, 0, 3, 1, 2);
 INSERT INTO public.contest (id, description, name, sequence_number, version, votes_allowed, winners_allowed, county_id) VALUES (241051, 'IRV', 'TinyExample1', 0, 0, 3, 1, 3);
 INSERT INTO public.contest (id, description, name, sequence_number, version, votes_allowed, winners_allowed, county_id) VALUES (241053, 'PLURALITY', 'PluralityExample1', 1, 0, 1, 1, 3);
-INSERT INTO public.contest (id, description, name, sequence_number, version, votes_allowed, winners_allowed, county_id) VALUES (241055, 'IRV', 'PluralityExample2', 2, 0, 3, 1, 3);
+-- INSERT INTO public.contest (id, description, name, sequence_number, version, votes_allowed, winners_allowed, county_id) VALUES (241055, 'IRV', 'PluralityExample2', 2, 0, 3, 1, 3);
 
 
 --
@@ -60,9 +57,9 @@ INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qu
 INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (240505, '', false, 'Diego', false, 0);
 INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (240505, '', false, 'Eli', false, 1);
 INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (240505, '', false, 'Farhad', false, 2);
-INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (240507, '', false, 'Gertrude', false, 0);
-INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (240507, '', false, 'Ho', false, 1);
-INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (240507, '', false, 'Imogen', false, 2);
+-- INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (240507, '', false, 'Gertrude', false, 0);
+-- INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (240507, '', false, 'Ho', false, 1);
+-- INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (240507, '', false, 'Imogen', false, 2);
 INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (240629, '', false, 'Alice', false, 0);
 INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (240629, '', false, 'Bob', false, 1);
 INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (240629, '', false, 'Chuan', false, 2);
@@ -72,9 +69,9 @@ INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qu
 INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (241053, '', false, 'Diego', false, 0);
 INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (241053, '', false, 'Eli', false, 1);
 INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (241053, '', false, 'Farhad', false, 2);
-INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (241055, '', false, 'Gertrude', false, 0);
-INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (241055, '', false, 'Ho', false, 1);
-INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (241055, '', false, 'Imogen', false, 2);
+-- INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (241055, '', false, 'Gertrude', false, 0);
+-- INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (241055, '', false, 'Ho', false, 1);
+-- INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qualified_write_in, index) VALUES (241055, '', false, 'Imogen', false, 2);
 
 --
 -- Data for Name: county_contest_result; Type: TABLE DATA; Schema: public; Owner: corlaadmin
@@ -82,11 +79,11 @@ INSERT INTO public.contest_choice (contest_id, description, fictitious, name, qu
 
 INSERT INTO public.county_contest_result (id, contest_ballot_count, county_ballot_count, losers, max_margin, min_margin, version, winners, winners_allowed, contest_id, county_id) VALUES (240504, 10, 10, '["Alice","Chuan"]', 0, 0, 1, '["Bob"]', 1, 240503, 1);
 INSERT INTO public.county_contest_result (id, contest_ballot_count, county_ballot_count, losers, max_margin, min_margin, version, winners, winners_allowed, contest_id, county_id) VALUES (240506, 10, 10, '["Eli","Farhad"]', 1, 1, 1, '["Diego"]', 1, 240505, 1);
-INSERT INTO public.county_contest_result (id, contest_ballot_count, county_ballot_count, losers, max_margin, min_margin, version, winners, winners_allowed, contest_id, county_id) VALUES (240508, 10, 10, '["Imogen"]', 7, 6, 1, '["Ho","Gertrude"]', 2, 240507, 1);
+-- INSERT INTO public.county_contest_result (id, contest_ballot_count, county_ballot_count, losers, max_margin, min_margin, version, winners, winners_allowed, contest_id, county_id) VALUES (240508, 10, 10, '["Imogen"]', 7, 6, 1, '["Ho","Gertrude"]', 2, 240507, 1);
 INSERT INTO public.county_contest_result (id, contest_ballot_count, county_ballot_count, losers, max_margin, min_margin, version, winners, winners_allowed, contest_id, county_id) VALUES (240630, 10, 10, '["Alice","Chuan"]', 0, 0, 1, '["Bob"]', 1, 240629, 2);
 INSERT INTO public.county_contest_result (id, contest_ballot_count, county_ballot_count, losers, max_margin, min_margin, version, winners, winners_allowed, contest_id, county_id) VALUES (241052, 10, 10, '["Alice","Chuan"]', 0, 0, 1, '["Bob"]', 1, 241051, 3);
 INSERT INTO public.county_contest_result (id, contest_ballot_count, county_ballot_count, losers, max_margin, min_margin, version, winners, winners_allowed, contest_id, county_id) VALUES (241054, 10, 10, '["Eli","Farhad"]', 1, 1, 1, '["Diego"]', 1, 241053, 3);
-INSERT INTO public.county_contest_result (id, contest_ballot_count, county_ballot_count, losers, max_margin, min_margin, version, winners, winners_allowed, contest_id, county_id) VALUES (241056, 10, 10, '["Ho","Gertrude"]', 0, 0, 1, '["Imogen"]', 1, 241055, 3);
+-- INSERT INTO public.county_contest_result (id, contest_ballot_count, county_ballot_count, losers, max_margin, min_margin, version, winners, winners_allowed, contest_id, county_id) VALUES (241056, 10, 10, '["Ho","Gertrude"]', 0, 0, 1, '["Imogen"]', 1, 241055, 3);
 
 
 --
@@ -99,9 +96,9 @@ INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VAL
 INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (240506, 3, 'Eli');
 INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (240506, 4, 'Diego');
 INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (240506, 3, 'Farhad');
-INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (240508, 2, 'Imogen');
-INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (240508, 8, 'Ho');
-INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (240508, 9, 'Gertrude');
+-- INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (240508, 2, 'Imogen');
+-- INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (240508, 8, 'Ho');
+-- INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (240508, 9, 'Gertrude');
 INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (240630, 10, 'Bob');
 INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (240630, 10, 'Alice');
 INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (240630, 10, 'Chuan');
@@ -111,9 +108,9 @@ INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VAL
 INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (241054, 3, 'Eli');
 INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (241054, 4, 'Diego');
 INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (241054, 3, 'Farhad');
-INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (241056, 10, 'Imogen');
-INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (241056, 10, 'Ho');
-INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (241056, 10, 'Gertrude');
+-- INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (241056, 10, 'Imogen');
+-- INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (241056, 10, 'Ho');
+-- INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VALUES (241056, 10, 'Gertrude');
 
 --
 -- Data for Name: cvr_contest_info; Type: TABLE DATA; Schema: public; Owner: corlaadmin
@@ -121,34 +118,34 @@ INSERT INTO public.county_contest_vote_total (result_id, vote_total, choice) VAL
 
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240509, 1, '["Alice","Bob","Chuan"]', NULL, NULL, 240503, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240509, 1, '["Diego"]', NULL, NULL, 240505, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240509, 1, '["Gertrude","Imogen"]', NULL, NULL, 240507, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240509, 1, '["Gertrude","Imogen"]', NULL, NULL, 240507, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240510, 1, '["Alice","Bob","Chuan"]', NULL, NULL, 240503, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240510, 1, '["Farhad"]', NULL, NULL, 240505, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240510, 1, '["Imogen"]', NULL, NULL, 240507, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240510, 1, '["Imogen"]', NULL, NULL, 240507, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240511, 1, '["Alice","Bob","Chuan"]', NULL, NULL, 240503, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240511, 1, '["Farhad"]', NULL, NULL, 240505, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240511, 1, '["Gertrude","Ho"]', NULL, NULL, 240507, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240511, 1, '["Gertrude","Ho"]', NULL, NULL, 240507, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240512, 1, '["Alice","Chuan","Bob"]', NULL, NULL, 240503, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240512, 1, '["Farhad"]', NULL, NULL, 240505, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240512, 1, '["Gertrude","Ho"]', NULL, NULL, 240507, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240512, 1, '["Gertrude","Ho"]', NULL, NULL, 240507, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240513, 1, '["Alice","Chuan","Bob"]', NULL, NULL, 240503, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240513, 1, '["Diego"]', NULL, NULL, 240505, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240513, 1, '["Gertrude","Ho"]', NULL, NULL, 240507, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240513, 1, '["Gertrude","Ho"]', NULL, NULL, 240507, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240514, 1, '["Alice","Chuan","Bob"]', NULL, NULL, 240503, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240514, 1, '["Diego"]', NULL, NULL, 240505, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240514, 1, '["Gertrude","Ho"]', NULL, NULL, 240507, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240514, 1, '["Gertrude","Ho"]', NULL, NULL, 240507, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240515, 1, '["Bob","Alice","Chuan"]', NULL, NULL, 240503, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240515, 1, '["Diego"]', NULL, NULL, 240505, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240515, 1, '["Gertrude","Ho"]', NULL, NULL, 240507, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240515, 1, '["Gertrude","Ho"]', NULL, NULL, 240507, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240516, 1, '["Chuan","Alice","Bob"]', NULL, NULL, 240503, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240516, 1, '["Eli"]', NULL, NULL, 240505, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240516, 1, '["Gertrude","Ho"]', NULL, NULL, 240507, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240516, 1, '["Gertrude","Ho"]', NULL, NULL, 240507, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240517, 1, '["Chuan","Alice","Bob"]', NULL, NULL, 240503, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240517, 1, '["Eli"]', NULL, NULL, 240505, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240517, 1, '["Gertrude","Ho"]', NULL, NULL, 240507, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240517, 1, '["Gertrude","Ho"]', NULL, NULL, 240507, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240518, 1, '["Chuan","Alice","Bob"]', NULL, NULL, 240503, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240518, 1, '["Eli"]', NULL, NULL, 240505, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240518, 1, '["Gertrude","Ho"]', NULL, NULL, 240507, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240518, 1, '["Gertrude","Ho"]', NULL, NULL, 240507, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240631, 2, '["Alice","Bob","Chuan"]', NULL, NULL, 240629, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240632, 2, '["Alice","Bob","Chuan"]', NULL, NULL, 240629, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240633, 2, '["Alice","Bob","Chuan"]', NULL, NULL, 240629, 0);
@@ -161,34 +158,34 @@ INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consen
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (240640, 2, '["Chuan","Alice","Bob"]', NULL, NULL, 240629, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241057, 3, '["Alice","Bob","Chuan"]', NULL, NULL, 241051, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241057, 3, '["Diego"]', NULL, NULL, 241053, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241057, 3, '["Gertrude","Ho","Imogen"]', NULL, NULL, 241055, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241057, 3, '["Gertrude","Ho","Imogen"]', NULL, NULL, 241055, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241058, 3, '["Alice","Bob","Chuan"]', NULL, NULL, 241051, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241058, 3, '["Farhad"]', NULL, NULL, 241053, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241058, 3, '["Imogen","Ho","Gertrude"]', NULL, NULL, 241055, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241058, 3, '["Imogen","Ho","Gertrude"]', NULL, NULL, 241055, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241059, 3, '["Alice","Bob","Chuan"]', NULL, NULL, 241051, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241059, 3, '["Farhad"]', NULL, NULL, 241053, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241059, 3, '["Ho","Imogen","Gertrude"]', NULL, NULL, 241055, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241059, 3, '["Ho","Imogen","Gertrude"]', NULL, NULL, 241055, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241060, 3, '["Alice","Chuan","Bob"]', NULL, NULL, 241051, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241060, 3, '["Farhad"]', NULL, NULL, 241053, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241060, 3, '["Gertrude","Imogen","Ho"]', NULL, NULL, 241055, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241060, 3, '["Gertrude","Imogen","Ho"]', NULL, NULL, 241055, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241061, 3, '["Alice","Chuan","Bob"]', NULL, NULL, 241051, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241061, 3, '["Diego"]', NULL, NULL, 241053, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241061, 3, '["Gertrude","Imogen","Ho"]', NULL, NULL, 241055, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241061, 3, '["Gertrude","Imogen","Ho"]', NULL, NULL, 241055, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241062, 3, '["Alice","Chuan","Bob"]', NULL, NULL, 241051, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241062, 3, '["Diego"]', NULL, NULL, 241053, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241062, 3, '["Ho","Imogen","Gertrude"]', NULL, NULL, 241055, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241062, 3, '["Ho","Imogen","Gertrude"]', NULL, NULL, 241055, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241063, 3, '["Bob","Alice","Chuan"]', NULL, NULL, 241051, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241063, 3, '["Diego"]', NULL, NULL, 241053, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241063, 3, '["Ho","Imogen","Gertrude"]', NULL, NULL, 241055, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241063, 3, '["Ho","Imogen","Gertrude"]', NULL, NULL, 241055, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241064, 3, '["Chuan","Alice","Bob"]', NULL, NULL, 241051, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241064, 3, '["Eli"]', NULL, NULL, 241053, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241064, 3, '["Ho","Imogen","Gertrude"]', NULL, NULL, 241055, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241064, 3, '["Ho","Imogen","Gertrude"]', NULL, NULL, 241055, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241065, 3, '["Chuan","Alice","Bob"]', NULL, NULL, 241051, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241065, 3, '["Eli"]', NULL, NULL, 241053, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241065, 3, '["Gertrude","Imogen","Ho"]', NULL, NULL, 241055, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241065, 3, '["Gertrude","Imogen","Ho"]', NULL, NULL, 241055, 2);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241066, 3, '["Chuan","Alice","Bob"]', NULL, NULL, 241051, 0);
 INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241066, 3, '["Eli"]', NULL, NULL, 241053, 1);
-INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241066, 3, '["Gertrude","Imogen","Ho"]', NULL, NULL, 241055, 2);
+-- INSERT INTO public.cvr_contest_info (cvr_id, county_id, choices, comment, consensus, contest_id, index) VALUES (241066, 3, '["Gertrude","Imogen","Ho"]', NULL, NULL, 241055, 2);
 
 
 
