@@ -21,10 +21,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.util;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Properties;
 
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -63,7 +59,7 @@ public abstract class TestClassWithDatabase {
   /**
    * The string used to identify the configured port in test.properties.
    */
-  protected final static String generateAssertionsPortNumberString = "generate_assertions_mock_port";
+  public final static String generateAssertionsPortNumberString = "generate_assertions_mock_port";
 
   /**
    * The string used to identify the configured port in test.properties.
@@ -142,23 +138,6 @@ public abstract class TestClassWithDatabase {
     Persistence.setProperties(config);
 
     return new JdbcDatabaseDelegate(postgres, "");
-  }
-
-  /**
-   * Create and return a hibernate properties object for use in testing functionality that
-   * interacts with the database.
-   * @param postgres Postgres test container representing a test version of the database.
-   * @return Hibernate persistence properties.
-   */
-  public static Properties createHibernateProperties(PostgreSQLContainer<?> postgres) {
-    Properties hibernateProperties = new Properties();
-    hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
-    hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
-    hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
-    hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
-    hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
-
-    return hibernateProperties;
   }
 
   /**
