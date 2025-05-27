@@ -21,51 +21,40 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.endpoint;
 
-import au.org.democracydevelopers.corla.util.TestClassWithAuth;
+import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
+import au.org.democracydevelopers.corla.workflows.Workflow;
 import com.github.tomakehurst.wiremock.WireMockServer;
+import io.restassured.RestAssured;
+import io.restassured.filter.session.SessionFilter;
+import io.restassured.response.Response;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import us.freeandfair.corla.Main;
-import us.freeandfair.corla.model.AuditReason;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.util.Properties;
-import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
+import java.util.Optional;
 
 import static au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint.RAIRE_URL;
 import static au.org.democracydevelopers.corla.endpoint.GetAssertions.*;
-import static au.org.democracydevelopers.corla.util.testUtils.*;
+import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
+import static au.org.democracydevelopers.corla.util.TestClassWithDatabase.getAssertionsPortNumberString;
+import static au.org.democracydevelopers.corla.util.TestClassWithDatabase.runSQLSetupScript;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.*;
 
 /**
- * Test the GetAssertions endpoint, both CSV and JSON versions. The response is supposed to be a zip file containing
- * the assertions.
- * Includes tests that AbstractAllIrvEndpoint::getIRVContestResults returns the correct values and
- * throws the correct exceptions.
- * TODO VT: This really isn't a completely comprehensive set of tests yet. We also need:
- * - API testing
- * - Testing for retrieving the data from the zip.
- * - More comprehensive testing of filename sanitization (from contest names).
- * - Testing that the service throws appropriate exceptions if the raire service connection isn't set up properly.
- * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/125">...</a>
+ * Test the GetAssertions endpoint API, both CSV and JSON versions. This mostly tests that it hits
+ * the right endpoint (json or csv) given various (possibly bad) query strings.
+ * It does not re-test bad config or the presence of the right contests in the zip, because they are
+ * tested in GetAssertionsTests.java.
  */
-public class GetAssertionsAPITests extends TestClassWithAuth {
+public class GetAssertionsAPITests extends Workflow {
 
   private static final Logger LOGGER = LogManager.getLogger(GetAssertionsAPITests.class);
 
@@ -87,46 +76,33 @@ public class GetAssertionsAPITests extends TestClassWithAuth {
   private static String baseUrl;
 
   /**
-   * The Properties that will be mocked in Main, specifically for the RAIRE_URL.
-   */
-  private static final Properties mockProperties = new Properties();
-
-  /**
-   * Database init.
+   * Initialise mocked raire service prior to the first test.
    */
   @BeforeClass
-  public static void beforeAllThisClass() {
+  public void initMocksAndMainAndDB() {
 
-    // Load in the counties data, actually just for basic setup such as DoSDashboard.
-    runSQLSetupScript("SQL/co-counties.sql");
-  }
+    config = loadProperties();
+    RestAssured.baseURI = "http://localhost";
+    RestAssured.port = 8888;
 
-  /**
-   * Initialise mocked objects prior to the first test.
-   */
-  @BeforeClass
-  public void initMocks() {
-    MockitoAnnotations.openMocks(this);
-
-    boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    boulderIRVContestResult.setBallotCount(100000L);
-    boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
-    boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
-
-    tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    tinyIRVContestResult.setBallotCount(10L);
-    tinyIRVContestResult.setWinners(Set.of("Alice"));
-    tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
-
-    // Set up a wiremock raire server on the port defined in test.properties.
+    // Set up the mock raire server's port.
     final int rairePort = Integer.parseInt(config.getProperty(getAssertionsPortNumberString, ""));
     wireMockRaireServer = new WireMockServer(rairePort);
     wireMockRaireServer.start();
+
     baseUrl = wireMockRaireServer.baseUrl();
     configureFor("localhost", wireMockRaireServer.port());
-    // Mock the above-initialized URL for the RAIRE_URL property in Main.
-    mockProperties.setProperty(RAIRE_URL, baseUrl);
 
+    // Set the above-initialized URL for the RAIRE_URL property in Main.
+    // This config is used in runMainAndInitializeDBIfNeeded.
+    config.setProperty(RAIRE_URL, baseUrl);
+    final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
+    runMainAndInitializeDBIfNeeded("GetAssertionsAPITests", Optional.of(postgres));
+
+    // Load some IRV contests into the database.
+    runSQLSetupScript(postgres, "SQL/corla-three-candidates-ten-votes-plus-plurality.sql");
+
+    // Mock a proper response for both json and csv.
     stubFor(post(urlEqualTo(raireGetAssertionsEndpoint + "-" + CSV_SUFFIX))
         .willReturn(aResponse()
             .withStatus(HttpStatus.SC_OK)
@@ -137,7 +113,6 @@ public class GetAssertionsAPITests extends TestClassWithAuth {
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
             .withBody("Test json")));
-
   }
 
   @AfterClass
@@ -145,55 +120,51 @@ public class GetAssertionsAPITests extends TestClassWithAuth {
     wireMockRaireServer.stop();
   }
 
-
   /**
-   * Test data for the two valid IRV contests, with json and csv.  This gives the successfully-sanitized version of
-   * the contest names.
+   * Test that the endpoint interprets the format query parameter correctly, selecting csv if a
+   * proper query string "format=csv" is present, and json otherwise.
    */
-  @DataProvider(name = "TwoIRVContests")
-  public static String[][] TwoIRVContests() {
-    return new String[][]{
-        {"CityofBoulderMayoralCandidates", tinyIRV, JSON_SUFFIX},
-        {"CityofBoulderMayoralCandidates", tinyIRV, CSV_SUFFIX}
-    };
-  }
+  @Test
+  public void hitsRightEndpointJsonOrCSV() {
+    testUtils.log(LOGGER, "hitsRightEndpointJsonOrCSV");
 
-  /**
-   * Calls the getAssertions main endpoint function and checks that the right file names are present in the
-   * zip.
-   *
-   * @throws Exception never.
-   */
-  @Test(dataProvider = "TwoIRVContests")
-  public void rightFileNamesInZip(String contestName1, String contestName2, String suffix) throws Exception {
-    testUtils.log(LOGGER, "rightFileNamesInZip");
+    SessionFilter session = doLogin("stateadmin1");
 
-    try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults = Mockito.mockStatic(AbstractAllIrvEndpoint.class);
-         MockedStatic<Main> mockedMain = Mockito.mockStatic(Main.class)) {
+    // Hit the endpoint with no format string - defaults to JSON.
+    Response response = getAssertionsCorla(session, Optional.empty());
+    assertEquals(response.getStatusCode(), HttpStatus.SC_OK);
+    // Check that we hit the right endpoint, which is mocked to return a string with the requested format.
+    assertTrue(StringUtils.containsIgnoreCase(response.getBody().asString(), "json"));
 
-      // Mock IRV contest results
-      mockIRVContestResults.when(AbstractAllIrvEndpoint::getIRVContestResults).thenReturn(mockedIRVContestResults);
+    // Hit the endpoint with format specifying json - should hit json.
+    response = getAssertionsCorla(session, Optional.of("?" + FORMAT_PARAM + "=JSON"));
+    assertEquals(response.getStatusCode(), HttpStatus.SC_OK);
+    // Check that we hit the right endpoint, which is mocked to return a string with the requested format.
+    assertTrue(StringUtils.containsIgnoreCase(response.getBody().asString(), "json"));
 
-      // Mock the RAIRE_URL from main.
-      mockedMain.when(Main::properties).thenReturn(mockProperties);
+    // Hit the endpoint with format specifying json, lowercase - should hit csv.
+    response = getAssertionsCorla(session, Optional.of("?" + FORMAT_PARAM + "=json"));
+    assertEquals(response.getStatusCode(), HttpStatus.SC_OK);
+    // Check that we hit the right endpoint, which is mocked to return a string with the requested format.
+    assertTrue(StringUtils.containsIgnoreCase(response.getBody().asString(), "json"));
 
-      ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-      ZipOutputStream zos = new ZipOutputStream(bytesOut);
-      getAssertions(zos, "", suffix);
-      zos.close();
+    // Hit the endpoint with format specifying csv - should hit csv.
+    response = getAssertionsCorla(session, Optional.of("?" + FORMAT_PARAM + "=CSV"));
+    assertEquals(response.getStatusCode(), HttpStatus.SC_OK);
+    // Check that we hit the right endpoint, which is mocked to return a string with the requested format.
+    assertTrue(StringUtils.containsIgnoreCase(response.getBody().asString(), "csv"));
 
-      byte[] bytes = bytesOut.toByteArray();
-      InputStream bais = new ByteArrayInputStream(bytes);
-      ZipInputStream in = new ZipInputStream(bais);
-      ZipEntry firstEntry = in.getNextEntry();
-      assertNotNull(firstEntry);
-      assertEquals(firstEntry.getName(), contestName1 + "_assertions." + suffix);
-      ZipEntry secondEntry = in.getNextEntry();
-      assertNotNull(secondEntry);
-      assertEquals(secondEntry.getName(), contestName2 + "_assertions." + suffix);
-      ZipEntry thirdEntry = in.getNextEntry();
-      assertNull(thirdEntry);
-    }
+    // Hit the endpoint with format specifying csv, lowercase - should hit csv.
+    response = getAssertionsCorla(session, Optional.of("?" + FORMAT_PARAM + "=csv"));
+    assertEquals(response.getStatusCode(), HttpStatus.SC_OK);
+    // Check that we hit the right endpoint, which is mocked to return a string with the requested format.
+    assertTrue(StringUtils.containsIgnoreCase(response.getBody().asString(), "csv"));
+
+    // Hit the endpoint with bad format string - defaults to JSON.
+    response = getAssertionsCorla(session, Optional.of("?" + "Bad format string"));
+    assertEquals(response.getStatusCode(), HttpStatus.SC_OK);
+    // Check that we hit the right endpoint, which is mocked to return a string with the requested format.
+    assertTrue(StringUtils.containsIgnoreCase(response.getBody().asString(), "json"));
   }
 
   /**
@@ -208,31 +179,6 @@ public class GetAssertionsAPITests extends TestClassWithAuth {
   }
 
   /**
-   * Checks that, when given a bad endpoint, a runtime exception is thrown, for both csv and json.
-   *
-   * @throws Exception always.
-   */
-  @Test(dataProvider = "SampleBadEndpoints", expectedExceptions = RuntimeException.class)
-  public void badEndpointThrowsRuntimeException(String url, String suffix) throws Exception {
-    testUtils.log(LOGGER, "badEndpointThrowsRuntimeException");
-    try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults
-             = Mockito.mockStatic(AbstractAllIrvEndpoint.class);
-         MockedStatic<Main> mockedMain = Mockito.mockStatic(Main.class)) {
-      mockIRVContestResults.when(AbstractAllIrvEndpoint::getIRVContestResults)
-          .thenReturn(mockedIRVContestResults);
-
-      final Properties badURLProperties = new Properties();
-      badURLProperties.setProperty(RAIRE_URL, url);
-      mockedMain.when(Main::properties).thenReturn(badURLProperties);
-
-      ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-      ZipOutputStream zos = new ZipOutputStream(bytesOut);
-      getAssertions(zos, "", suffix);
-      zos.close();
-    }
-  }
-
-  /**
    * Bad urls.
    */
   @DataProvider(name = "SampleBadUrls")
@@ -241,31 +187,5 @@ public class GetAssertionsAPITests extends TestClassWithAuth {
         {"completelyNotAUrl" + "/badUrl", CSV_SUFFIX},
         {"completelyNotAUrl" + "/badUrl", JSON_SUFFIX}
     };
-  }
-
-  /**
-   * Checks that, when given a bad url, an appropriate url-parsing exception is thrown, for both csv and json.
-   *
-   * @throws Exception always.
-   */
-  @Test(dataProvider = "SampleBadUrls", expectedExceptions = MalformedURLException.class)
-  public void badUrlThrowsUrlException(String url, String suffix) throws Exception {
-    testUtils.log(LOGGER, "badUrlThrowsUrlException");
-    try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults
-             = Mockito.mockStatic(AbstractAllIrvEndpoint.class);
-         MockedStatic<Main> mockedMain = Mockito.mockStatic(Main.class)) {
-
-      mockIRVContestResults.when(AbstractAllIrvEndpoint::getIRVContestResults)
-          .thenReturn(mockedIRVContestResults);
-
-      final Properties badURLProperties = new Properties();
-      badURLProperties.setProperty(RAIRE_URL, url);
-      mockedMain.when(Main::properties).thenReturn(badURLProperties);
-
-      ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-      ZipOutputStream zos = new ZipOutputStream(bytesOut);
-      getAssertions(zos, "", suffix);
-      zos.close();
-    }
   }
 }

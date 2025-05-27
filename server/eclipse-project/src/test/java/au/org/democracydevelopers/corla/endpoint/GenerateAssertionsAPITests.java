@@ -21,9 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.endpoint;
 
-import au.org.democracydevelopers.corla.communication.requestToRaire.GenerateAssertionsRequest;
 import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
-import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 import au.org.democracydevelopers.corla.workflows.Workflow;
@@ -35,40 +33,26 @@ import io.restassured.response.Response;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import us.freeandfair.corla.model.*;
-
-import javax.transaction.Transactional;
-import java.math.BigDecimal;
 import java.util.*;
 
 import static au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint.RAIRE_URL;
-import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.CONTEST_NAME;
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static au.org.democracydevelopers.corla.util.TestClassWithDatabase.generateAssertionsPortNumberString;
-import static au.org.democracydevelopers.corla.util.TestClassWithDatabase.runSQLSetupScript;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.*;
-import static us.freeandfair.corla.asm.ASMEvent.DoSDashboardEvent.*;
-import static us.freeandfair.corla.endpoint.Endpoint.AuthorizationType.STATE;
 
 /**
  * Test the GetAssertions endpoint via the API.
- * This currently tests that the assertion generation request is accepted and blocked in the right
- * circumstances. It doesn't exhaustively test _all_ possible states, but it tests that the transition
- * from allowed to blocked is made correctly.
- * This is only the most trivial kind of workflow, but it helps to inherit from Workflow to get access
- * to utility methods for auth etc.
- * TODO This really isn't a completely comprehensive set of tests yet.
- * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/125">...</a>
+ * This runs a series of basic tests for acceptance of valid queries and rejection of invalid ones,
+ * though it does not redo those from GenerateAssertionsTests, only the ones that are relevant to
+ * query processing before the call to GenerateAssertions::generateAllAssertions or
+ * GenerateAssertions::generateAssertionsUpdateWinners.
  */
 public class GenerateAssertionsAPITests extends Workflow {
 
@@ -82,13 +66,6 @@ public class GenerateAssertionsAPITests extends Workflow {
    */
   private final static GenerateAssertionsResponse tinyIRVResponse
       = new GenerateAssertionsResponse(tinyIRV, true, false);
-
-  /**
-   * Request for tinyExample1 contest, intended as a boring request with normal parameters.
-   */
-  private final static GenerateAssertionsRequest tinyIRVRequest
-      = new GenerateAssertionsRequest(tinyIRV, tinyIRVCount, 5,
-      tinyIRVCandidates.stream().map(Choice::name).toList());
 
   /**
    * Raire endpoint for getting assertions.
@@ -153,25 +130,36 @@ public class GenerateAssertionsAPITests extends Workflow {
    * Successful assertion generation for an IRV contest for which we've mocked a RAIRE response.
    * This tests both the case when the tinyIRV example is specifically requested, and also the case
    * where no contest is specified - these should produce the same result because there is only that
-   * one IRV contest in the database.
+   * one IRV contest in the database. It also tests that an explicit time limit doesn't change that
+   * result.
    */
   @Test
-  @Transactional
   void assertionGenerationSucceedsOnRaireMockedIRV() {
+    testUtils.log(LOGGER, "assertionGenerationSucceedsOnRaireMockedIRV");
 
     SessionFilter session = doLogin("stateadmin1");
 
+    // Request with TinyIRVExample1
     Response response = generateAssertionsCorla(session, Optional.of(tinyIRV), Optional.empty());
     assertEquals(response.getStatusCode(), HttpStatus.SC_OK);
     GenerateAssertionsResponse[] gr1 = response.getBody().as(GenerateAssertionsResponse[].class);
     assertEquals(gr1.length, 1);
     assertTrue(gr1[0].succeeded);
 
+    // Request without explicit contest name - should be the same because TinyIRVExample1 is the only
+    // one in the database.
     response = generateAssertionsCorla(session, Optional.empty(), Optional.empty());
     assertEquals(response.getStatusCode(), HttpStatus.SC_OK);
     GenerateAssertionsResponse[] gr2 = response.getBody().as(GenerateAssertionsResponse[].class);
     // Should be the same result as if we'd requested the one contest.
     assertEquals(gson.toJson(gr2[0]), gson.toJson(gr1[0]));
+
+    // Request with a time limit. Nothing changes.
+    response = generateAssertionsCorla(session, Optional.empty(), Optional.of(5.0));
+    assertEquals(response.getStatusCode(), HttpStatus.SC_OK);
+    GenerateAssertionsResponse[] gr3 = response.getBody().as(GenerateAssertionsResponse[].class);
+    // Should be the same result as if we'd requested the one contest.
+    assertEquals(gson.toJson(gr3[0]), gson.toJson(gr1[0]));
 
     logout(session, "stateadmin1");
   }
@@ -181,6 +169,7 @@ public class GenerateAssertionsAPITests extends Workflow {
    */
   @Test
   void assertionGenerationErrorOnPluralityExample() {
+    testUtils.log(LOGGER, "assertionGenerationErrorOnPluralityExample");
 
     SessionFilter session = doLogin("stateadmin1");
 
@@ -198,6 +187,7 @@ public class GenerateAssertionsAPITests extends Workflow {
    */
   @Test
   void assertionGenerationErrorOnNonExistentExample() {
+    testUtils.log(LOGGER, "assertionGenerationErrorOnNonExistentExample");
 
     SessionFilter session = doLogin("stateadmin1");
 
@@ -210,47 +200,53 @@ public class GenerateAssertionsAPITests extends Workflow {
   }
 
   /**
-   * Simple test that the assertion generation request is made to raire when in
-   * ASM initial state and ASM PARTIAL_AUDIT_INFO_SET states, and not in later states.
-   * This does not exhaustively test all later states, just the two after the allowed states.
+   * An error response is returned when the contestName parameter is specified but the value is blank.
    */
   @Test
-  @Transactional
-  void assertionGenerationBlockedWhenInWrongASMState() {
-    testUtils.log(LOGGER, "assertionGenerationBlockedWhenInWrongASMState");
+  void assertionGenerationErrorOnEmptyPresentContestParam() {
+    testUtils.log(LOGGER, "assertionGenerationErrorOnEmptyPresentContestParam");
 
     SessionFilter session = doLogin("stateadmin1");
 
-    // First test: check that the GenerateAssertions endpoint works when in the initial state
-    // (which is set up initially in the database).
+    Response response = generateAssertionsCorla(session, Optional.of(""), Optional.empty());
+    assertEquals(response.getStatusCode(), HttpStatus.SC_NOT_FOUND);
+    String s = response.getBody().asString();
+    assertTrue(StringUtils.containsIgnoreCase(s, "parameter validation failed"));
 
-    // There should be no error when the ASM is in the initial state.
-    Response response = generateAssertionsCorla(session, Optional.empty(), Optional.empty());
-    int status = response.getStatusCode();
-    assertEquals(status, HttpStatus.SC_OK);
+    logout(session, "stateadmin1");
+  }
 
-    // Now set all the audit info - transition to PARTIAL_AUDIT_INFO_SET
-    updateAuditInfo("src/test/resources/CSVs/AdamsAndAlamosa/adams-and-alamosa-canonical-list.csv",
-        BigDecimal.valueOf(0.03));
+  /**
+   * An error response is returned when the timeLimitSeconds parameter is negative.
+   */
+  @Test
+  void assertionGenerationErrorOnNegativeTimeLimit() {
+    testUtils.log(LOGGER, "assertionGenerationErrorOnNegativeTimeLimit");
 
-    // There should be still be no error when the ASM is in the PARTIAL_AUDIT_INFO_SET state.
-    response = generateAssertionsCorla(session, Optional.empty(), Optional.empty());
-    status = response.getStatusCode();
-    assertEquals(status, HttpStatus.SC_OK);
+    SessionFilter session = doLogin("stateadmin1");
 
-    // Now transition to COMPLETE_AUDIT_INFO_SET and other, subsequent, states, in which
-    // assertion generation is expected to throw an error. Check that it does.
-    setSeed("123412341234123412341234");
+    Response response = generateAssertionsCorla(session, Optional.empty(), Optional.of(-1.0));
+    assertEquals(response.getStatusCode(), HttpStatus.SC_NOT_FOUND);
+    String s = response.getBody().asString();
+    assertTrue(StringUtils.containsIgnoreCase(s, "parameter validation failed"));
 
-    // There should now be an error.
-    response = generateAssertionsCorla(session, Optional.empty(), Optional.empty());
-    status = response.getStatusCode();
-    assertEquals(status, HttpStatus.SC_FORBIDDEN);
+    logout(session, "stateadmin1");
+  }
 
-    // Start the audit round, try again; should be another error.
-    response = generateAssertionsCorla(session, Optional.empty(), Optional.empty());
-    status = response.getStatusCode();
-    assertEquals(status, HttpStatus.SC_FORBIDDEN);
+  /**
+   * An error response is returned when the timeLimitSeconds parameter is zero.
+   */
+  @Test
+  void assertionGenerationErrorOnZeroTimeLimit() {
+    testUtils.log(LOGGER, "assertionGenerationErrorOnZeroTimeLimit");
 
+    SessionFilter session = doLogin("stateadmin1");
+
+    Response response = generateAssertionsCorla(session, Optional.empty(), Optional.of(0.0));
+    assertEquals(response.getStatusCode(), HttpStatus.SC_NOT_FOUND);
+    String s = response.getBody().asString();
+    assertTrue(StringUtils.containsIgnoreCase(s, "parameter validation failed"));
+
+    logout(session, "stateadmin1");
   }
 }
