@@ -64,7 +64,7 @@ public abstract class TestClassWithDatabase {
   /**
    * The string used to identify the configured port in test.properties.
    */
-  protected final static String getAssertionsPortNumberString = "get_assertions_mock_port";
+  public final static String getAssertionsPortNumberString = "get_assertions_mock_port";
 
   /**
    * Container for the mock-up database.
@@ -119,25 +119,6 @@ public abstract class TestClassWithDatabase {
         .withUsername(config.getProperty("hibernate.user"))
         .withPassword(config.getProperty("hibernate.pass"))
         .withInitScript("SQL/corla.sql");
-  }
-
-  /**
-   * Do the basic setup common to all the database test containers, which are all the same except for having a different url,
-   * generated at init.
-   * @param postgres the database container.
-   * @return the database delegate.
-   * FIXME possibly no longer needed, though actually the opportunity to configure the setup may be needed for
-   * some DD tests.
-   */
-  protected static JdbcDatabaseDelegate setupContainerStartPostgres(PostgreSQLContainer<?> postgres) {
-    postgres.start();
-
-    // Each class that inherits from TestClassWithDatabase gets a different url for the mocked DB.
-    // Everything else is the same.
-    config.setProperty("hibernate.url", postgres.getJdbcUrl());
-    Persistence.setProperties(config);
-
-    return new JdbcDatabaseDelegate(postgres, "");
   }
 
   /**
