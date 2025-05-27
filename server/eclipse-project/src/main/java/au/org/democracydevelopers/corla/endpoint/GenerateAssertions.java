@@ -344,7 +344,7 @@ public class GenerateAssertions extends AbstractAllIrvEndpoint {
       return false;
     }
 
-    // An absent contest name is OK, but a present null or blank one is invalid.
+    // An absent contest name is OK, but a present null or empty one is invalid.
     final String contestName = the_request.queryParams(CONTEST_NAME);
     return contestName == null || !contestName.isEmpty();
   }

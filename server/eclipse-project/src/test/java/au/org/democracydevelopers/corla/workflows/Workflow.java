@@ -570,11 +570,20 @@ public abstract class Workflow  {
     String queryString = (contestName.isPresent() || timeLimitSeconds.isPresent() ? "?" : "")
         + String.join(",", Stream.of(contestQ, timeLimitQ).filter(s -> !s.isEmpty()).toList());
 
-    final Response response = given().filter(filter)
+    return given().filter(filter)
         .header("Content-Type", "application/json")
         .get("/generate-assertions" + queryString);
+  }
 
-    return response;
+  /**
+   * Hit the colorado-rla get-assertions endpoint, with the stated query string.
+   * @param filter Session filter to maintain same session across API test.
+   */
+  protected Response getAssertionsCorla(final SessionFilter filter, Optional<String> queryString) {
+
+    return given().filter(filter)
+        .header("Content-Type", "application/json")
+        .get("/get-assertions" + queryString.orElse(""));
   }
 
   /**

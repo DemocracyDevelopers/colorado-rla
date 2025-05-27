@@ -55,14 +55,6 @@ import static org.testng.Assert.assertFalse;
  * the assertions.
  * Includes tests that AbstractAllIrvEndpoint::getIRVContestResults returns the correct values and
  * throws the correct exceptions.
- * TODO VT: This really isn't a completely comprehensive set of tests yet. We also need:
- * - API testing
- * - Testing that the service throws appropriate exceptions if the raire service connection isn't set up properly.
- * - More thorough tests of assertion generation for known cases, e.g. examples from NSW and the
- *   Guide to Raire.
- * - Testing of input validity, particularly non-negative time limits, which is done by the endpoint and hence
- *   not included in these tests.
- * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/125">...</a>
  */
 public class GenerateAssertionsTests extends TestClassWithDatabase {
 
