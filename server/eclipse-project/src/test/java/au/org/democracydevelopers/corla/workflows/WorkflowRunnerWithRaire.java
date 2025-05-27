@@ -86,7 +86,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
    * which ballots to simulate discrepancies for, and expected end of round states ...), run
    * the test audit and verify that the expected outcomes arise.
    * @param workflowFile Path to JSON workflow instance to execute.
-   * @throws InterruptedException
+   * @throws InterruptedException if something goes wrong with file I/O.
    */
   @Parameters("workflowFile")
   @Test
@@ -128,8 +128,6 @@ public class WorkflowRunnerWithRaire extends Workflow {
    * Run everything with the database and raire url set up in src/test/resources/test.properties
    * This assumes the database is in an initial state, with administrator logins and counties but
    * without other data.
-   * TODO possibly get testName to be the full (relative) path of the config file. Then this can
-   * be used for src/main/resources/us/freeandfair/corla/default.properties
    * This version does not actually run main, because main is expected to be already running.
    * @param testName not used.
    * @param postgres not used.
