@@ -90,7 +90,7 @@ public class GenerateAssertionsValidStateTest extends Workflow {
   @BeforeClass
   public void initMocksAndMainAndDB() {
 
-    config = loadProperties();
+    // config = loadProperties();
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
 
@@ -108,7 +108,7 @@ public class GenerateAssertionsValidStateTest extends Workflow {
     // Set the above-initialized URL for the RAIRE_URL property in Main.
     // This config is used in runMainAndInitializeDBIfNeeded.
     config.setProperty(RAIRE_URL, baseUrl);
-    final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
+    // final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
     runMainAndInitializeDBIfNeeded("GenerateAssertionsAPITests", Optional.of(postgres));
 
     // Load some IRV contests into the database.

@@ -38,11 +38,12 @@ import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.persistence.Persistence;
+
 import java.util.*;
 
 import static au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint.RAIRE_URL;
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
-import static au.org.democracydevelopers.corla.util.TestClassWithDatabase.generateAssertionsPortNumberString;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.*;
@@ -88,7 +89,9 @@ public class GenerateAssertionsAPITests extends Workflow {
   @BeforeClass
   public void initMocksAndMainAndDB() {
 
-    config = loadProperties();
+    Persistence.beginTransaction();
+    runSQLSetupScript("SQL/co-counties.sql");
+
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
 
@@ -106,7 +109,7 @@ public class GenerateAssertionsAPITests extends Workflow {
     // Set the above-initialized URL for the RAIRE_URL property in Main.
     // This config is used in runMainAndInitializeDBIfNeeded.
     config.setProperty(RAIRE_URL, baseUrl);
-    final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
+    // final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
     runMainAndInitializeDBIfNeeded("GenerateAssertionsAPITests", Optional.of(postgres));
 
     // Load some IRV contests into the database.

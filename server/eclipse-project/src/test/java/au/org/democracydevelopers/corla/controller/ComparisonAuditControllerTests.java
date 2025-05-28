@@ -68,7 +68,7 @@ public class ComparisonAuditControllerTests extends TestClassWithDatabase {
   private static final String tinyMixed = "PluralityExample2";
 
   @BeforeClass
-  public static void beforeAllThisClass() {
+  public void beforeAllThisClass() {
 
     runSQLSetupScript("SQL/co-counties.sql");
     runSQLSetupScript("SQL/corla-three-candidates-ten-votes-inconsistent-types.sql");

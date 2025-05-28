@@ -61,13 +61,11 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
    * Database init.
    */
   @BeforeClass
-  public static void beforeAllThisClass() {
+  public void beforeAllThisClass() {
 
+    Persistence.beginTransaction();
     runSQLSetupScript("SQL/co-counties.sql");
     runSQLSetupScript("SQL/simple-assertions.sql");
-
-    var s = Persistence.openSession();
-    s.beginTransaction();
 
     // Set up the audit info (this is not mocked - the DosDashboard comes from the database).
     doSD = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);

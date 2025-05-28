@@ -21,7 +21,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
-import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.assertTrue;
 
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
@@ -64,7 +63,6 @@ public class WorkflowRunner extends Workflow {
 
   @BeforeClass
   public void setup() {
-    config = loadProperties();
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
   }
@@ -131,7 +129,7 @@ public class WorkflowRunner extends Workflow {
     final String prefix = "[runInstance] " + pathToInstance;
 
     try {
-      final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
+      // final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
       runMainAndInitializeDBIfNeeded(pathToInstance.getFileName().toString(), Optional.of(postgres));
 
       // Do the workflow.
