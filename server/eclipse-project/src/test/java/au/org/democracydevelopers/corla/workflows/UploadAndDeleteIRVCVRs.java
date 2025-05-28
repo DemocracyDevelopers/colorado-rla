@@ -73,7 +73,7 @@ public class UploadAndDeleteIRVCVRs extends Workflow {
     testUtils.log(LOGGER, "runUploadAndDeleteIRVCVRs");
 
     // final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
-    runMainAndInitializeDBIfNeeded("UploadAndDeleteIRVCVRs", Optional.of(postgres));
+    runMain(config, "UploadAndDeleteIRVCVRs");
 
     // Upload CSVs with 10 invalid IRV votes, for counties 1 and 2.
     final String CVRFile = dataPath + "ThreeCandidatesTenInvalidVotes";
