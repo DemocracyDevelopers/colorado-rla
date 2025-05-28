@@ -58,9 +58,9 @@ public abstract class TestClassWithDatabase {
   protected static final Properties blank = new Properties();
 
   /**
-   * Properties derived from test.properties.
+   * Properties derived from test.properties. Not static because some workflows alter this.
    */
-  protected static Properties config = loadProperties();
+  protected Properties config = loadProperties();
 
   /**
    * The string used to identify the configured port in test.properties.
@@ -75,7 +75,7 @@ public abstract class TestClassWithDatabase {
   /**
    * Container for the mock-up database.
    */
-  protected static PostgreSQLContainer<?> postgres = createTestContainer();
+  protected PostgreSQLContainer<?> postgres = createTestContainer();
 
 
   public final static List<Choice> boulderMayoralCandidates = List.of(
@@ -111,23 +111,20 @@ public abstract class TestClassWithDatabase {
       tinyIRVCandidates, 3, 1, 0);
   public final static ContestResult tiedIRVContestResult = new ContestResult(tiedIRV);
 
-  /**
-   * So that all the different instances only initialize all the contest results once between them.
-   */
-  private static boolean alreadyInit = false;
-
   @BeforeClass
-  public static void beforeAll() {
+  public void initDatabase() {
     initContestResults();
     postgres.start();
     // Each class that inherits from TestClassWithDatabase gets a different url for the mocked DB.
     // Everything else is the same.
     config.setProperty("hibernate.url", postgres.getJdbcUrl());
     Persistence.setProperties(config);
+
+    Persistence.openSession();
   }
 
   @AfterClass
-  public static void afterAll() {
+  public void afterAll() {
     postgres.stop();
   }
 
@@ -141,22 +138,20 @@ public abstract class TestClassWithDatabase {
 
   private static void initContestResults() {
 
-    if(!alreadyInit) {
-      boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-      boulderIRVContestResult.setBallotCount(100000L);
-      boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
-      boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
+    boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+    boulderIRVContestResult.setBallotCount(100000L);
+    boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
+    boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
 
-      tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-      tinyIRVContestResult.setBallotCount(10L);
-      tinyIRVContestResult.setWinners(Set.of("Alice"));
-      tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
+    tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+    tinyIRVContestResult.setBallotCount(10L);
+    tinyIRVContestResult.setWinners(Set.of("Alice"));
+    tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
 
-      tiedIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-      tiedIRVContestResult.setBallotCount((long) tinyIRVCount);
-      tiedIRVContestResult.setWinners(Set.of(UNKNOWN_WINNER));
-      tiedIRVContestResult.addContests(Set.of(tiedIRVContest));
-    }
+    tiedIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+    tiedIRVContestResult.setBallotCount((long) tinyIRVCount);
+    tiedIRVContestResult.setWinners(Set.of(UNKNOWN_WINNER));
+    tiedIRVContestResult.addContests(Set.of(tiedIRVContest));
   }
 
   /**
@@ -175,7 +170,7 @@ public abstract class TestClassWithDatabase {
    * interacts with the database.
    * @return a postgres test container representing a test database.
    */
-  public static PostgreSQLContainer<?> createTestContainer() {
+  public PostgreSQLContainer<?> createTestContainer() {
     return new PostgreSQLContainer<>("postgres:15-alpine")
         // None of these actually have to be the same as the real database (except its name),
         // but this makes it easy to match the setup scripts.
@@ -190,7 +185,7 @@ public abstract class TestClassWithDatabase {
    * Interacts with a test database.
    * @param initScriptPath Path to an SQL file containing the SQL script we want to run.
    */
-  protected static void runSQLSetupScript(String initScriptPath) {
+  protected void runSQLSetupScript(String initScriptPath) {
     runSQLSetupScript(postgres, initScriptPath);
   }
 

@@ -368,7 +368,7 @@ public class ACVRUploadTests extends TestClassWithAuth {
    * Database init.
    */
   @BeforeClass
-  public static void beforeAllThisClass() {
+  public void beforeAllThisClass() {
     runSQLSetupScript("SQL/co-counties.sql");
     runSQLSetupScript("SQL/corla-three-candidates-ten-votes-inconsistent-types.sql");
     runSQLSetupScript("SQL/adams-partway-through-audit.sql");

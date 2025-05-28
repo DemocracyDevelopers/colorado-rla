@@ -65,9 +65,13 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
    */
   private static final Logger LOGGER = LogManager.getLogger(EstimateSampleSizesVaryingManifests.class);
 
+  /**
+   * TestNG guarantees that this runs _after_ @BeforeClass methods in the superclass.
+   */
   @BeforeClass
   public void setup() {
-    config = loadProperties();
+    // config = loadProperties();
+    runSQLSetupScript(postgres, "SQL/co-counties.sql");
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
   }
@@ -79,8 +83,9 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   public void runManifestVaryingDemo() throws InterruptedException {
     testUtils.log(LOGGER, "runManifestVaryingDemo");
 
-    final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
+    // final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
     runMainAndInitializeDBIfNeeded("runManifestVaryingDemo", Optional.of(postgres));
+
 
     final String margin2Contest = "PluralityMargin2";
     final String margin10Contest = "PluralityMargin10";

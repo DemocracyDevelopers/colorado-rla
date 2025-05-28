@@ -95,7 +95,7 @@ public class GetAssertionsTests extends TestClassWithDatabase {
    * Database init.
    */
   @BeforeClass
-  public static void beforeAllThisClass() {
+  public void beforeAllThisClass() {
 
     // Load in the counties data, actually just for basic setup such as DoSDashboard.
     runSQLSetupScript("SQL/co-counties.sql");
@@ -107,8 +107,6 @@ public class GetAssertionsTests extends TestClassWithDatabase {
   @BeforeClass
   public void initMocks() {
     MockitoAnnotations.openMocks(this);
-
-
 
     // Set up a wiremock raire server on the port defined in test.properties.
     final int rairePort = Integer.parseInt(config.getProperty(getAssertionsPortNumberString, ""));
