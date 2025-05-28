@@ -171,8 +171,8 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
     // You can instead run the real raire service and set baseUrl accordingly,
     // though the tests of invalid/uninterpretable data will fail, and of course you have to have
     // appropriate contests in the database.
-    final int rairePort = Integer.parseInt(config.getProperty(generateAssertionsPortNumberString, ""));
-    wireMockRaireServer = new WireMockServer(rairePort);
+    final int raireGenerateAssertionsPort = Integer.parseInt(config.getProperty(generateAssertionsPortNumberString, ""));
+    wireMockRaireServer = new WireMockServer(raireGenerateAssertionsPort);
     wireMockRaireServer.start();
     baseUrl = wireMockRaireServer.baseUrl();
     String badUrl = baseUrl + badEndpoint;
