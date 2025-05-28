@@ -110,7 +110,8 @@ public class GenerateAssertionsAPITests extends Workflow {
     // This config is used in runMainAndInitializeDBIfNeeded.
     config.setProperty(RAIRE_URL, baseUrl);
     // final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
-    runMainAndInitializeDBIfNeeded("GenerateAssertionsAPITests", Optional.of(postgres));
+    runMain(config, "GenerateAssertionsAPITests");
+
 
     // Load some IRV contests into the database.
     TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/corla-three-candidates-ten-votes-plus-plurality.sql");

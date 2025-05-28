@@ -134,7 +134,6 @@ public class WorkflowRunnerWithRaire extends Workflow {
    * @param testName not used.
    * @param postgres not used.
    */
-  @Override
   protected void runMainAndInitializeDBIfNeeded(final String testName, final Optional<PostgreSQLContainer<?>> postgres) {
     assertTrue(postgres.isEmpty());
     testUtils.log(LOGGER, "[runMainAndInitializeDB] running workflow " + testName + ".");

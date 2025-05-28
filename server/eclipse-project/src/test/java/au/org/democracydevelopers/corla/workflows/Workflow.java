@@ -1545,30 +1545,6 @@ public abstract class Workflow extends TestClassWithDatabase {
   }
 
   /**
-   * Set up main's configuration file to match the given postgres container, then run main and
-   * load the colorado-rla init script into the database.
-   * This loads in the properties in resources/test.properties, then overwrites the database
-   * location with the one in the newly-created test container.
-   * This is used as is in all the workflows except WorkflowRunnerWithRaire, which overrides it
-   * because it doesn't need to run main or initialize the DB.
-   * @param testName Name of test instance.
-   * @param postgresOpt The PostgreSQL container to use.
-   */
-  protected void runMainAndInitializeDBIfNeeded(final String testName, final Optional<PostgreSQLContainer<?>> postgresOpt) {
-    assertTrue(postgresOpt.isPresent());
-    // final PostgreSQLContainer<?> postgres = postgresOpt.get();
-
-    // postgres.start();
-    // config.setProperty("hibernate.url", postgres.getJdbcUrl());
-    // Persistence.setProperties(config);
-    // runSQLSetupScript(postgres, "SQL/co-counties.sql");
-
-    runMain(config, testName);
-
-    // Persistence.beginTransaction();
-  }
-
-  /**
    * Load additional SQL data (this is data that we want to add after we have
    * CVRs, manifests, etc loaded for each county). This will mostly be used to load
    * assertion data into the database, simulating a call to the raire-service.

@@ -77,6 +77,8 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
 
   @BeforeClass
   public void setup() {
+    // FIXME - we should now not need this. May also not need Persistence stuff in
+    // runMainAndInitializeDBIfNeeded() at all.
     config = loadProperties();
     RestAssured.baseURI = config.getProperty("corla_url");
     RestAssured.port = Integer.parseInt(config.getProperty("corla_http_port"));
@@ -207,7 +209,6 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
    * @param testName not used.
    * @param postgres not used.
    */
-  @Override
   protected void runMainAndInitializeDBIfNeeded(final String testName, final Optional<PostgreSQLContainer<?>> postgres) {
     assertTrue(postgres.isEmpty());
     testUtils.log(LOGGER, "[runMainAndInitializeDB] running workflow " + testName + ".");
