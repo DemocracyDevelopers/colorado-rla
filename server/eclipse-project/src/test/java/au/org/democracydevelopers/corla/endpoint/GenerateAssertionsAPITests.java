@@ -89,12 +89,6 @@ public class GenerateAssertionsAPITests extends Workflow {
   @BeforeClass
   public void initMocksAndMainAndDB() {
 
-    Persistence.beginTransaction();
-    runSQLSetupScript("SQL/co-counties.sql");
-
-    RestAssured.baseURI = "http://localhost";
-    RestAssured.port = 8888;
-
     // Set up default raire server on the port defined in test.properties.
     // You can instead run the real raire service and set baseUrl accordingly,
     // though some tests may fail, depending on whether you have
@@ -109,9 +103,10 @@ public class GenerateAssertionsAPITests extends Workflow {
     // Set the above-initialized URL for the RAIRE_URL property in Main.
     // This config is used in runMainAndInitializeDBIfNeeded.
     config.setProperty(RAIRE_URL, baseUrl);
-    // final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
-    runMain(config, "GenerateAssertionsAPITests");
 
+    runMain(config, "GenerateAssertionsAPITests");
+    Persistence.beginTransaction();
+    runSQLSetupScript("SQL/co-admins.sql");
 
     // Load some IRV contests into the database.
     runSQLSetupScript("SQL/corla-three-candidates-ten-votes-plus-plurality.sql");

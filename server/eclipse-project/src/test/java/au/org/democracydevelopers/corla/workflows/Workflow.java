@@ -50,6 +50,7 @@ import au.org.democracydevelopers.corla.util.DoubleComparator;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.TestOnlyQueries;
 import au.org.democracydevelopers.corla.workflows.Instance.ReAuditDetails;
+import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
@@ -69,13 +70,12 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import org.testng.annotations.BeforeClass;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.model.UploadedFile;
-import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.query.ContestResultQueries;
 import wiremock.net.minidev.json.JSONArray;
@@ -186,6 +186,24 @@ public abstract class Workflow extends TestClassWithDatabase {
    * Default time limit for a raire service call.
    */
   private static final int TIME_LIMIT_DEFAULT = 5;
+
+  /**
+   * Basic restassured setup for the colorado-rla server.
+   */
+  @BeforeClass
+  public void setupRestAssured() {
+    RestAssured.baseURI = "http://localhost";
+    RestAssured.port = 8888;
+  }
+
+  /**
+   * Mock the raire service. Not all workflows use this, but everything that uses this inherits from
+   * Workflow.
+   */
+  @BeforeClass
+  public void setupWiremockRaireService() {
+
+  }
 
   /**
    * Runs a specified audit workflow which will either interact with the RAIRE service to
