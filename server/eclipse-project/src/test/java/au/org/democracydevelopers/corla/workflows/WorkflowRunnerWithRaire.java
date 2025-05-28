@@ -115,7 +115,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
       // Do the workflow. Reset the database first.
       resetDatabase("stateadmin1");
 
-      doWorkflow(pathToInstance, Optional.empty());
+      doWorkflow(pathToInstance, false);
 
     } catch(IOException e){
       final String msg = prefix + " " + e.getMessage() + ". Check that the path and filename are correct.";

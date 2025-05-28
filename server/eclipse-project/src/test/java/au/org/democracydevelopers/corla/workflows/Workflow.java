@@ -191,10 +191,10 @@ public abstract class Workflow extends TestClassWithDatabase {
    * Runs a specified audit workflow which will either interact with the RAIRE service to
    * generate assertions, or load assertions from an SQL file, depending on whether a test
    * database has been provided as input (ie. if optPostGres is not empty).
-   * @param pathToInstance Path to workflow JSON specifying the audit configuration.
-   * @param optPostGres Optional test database (for when we are testing with a mocked RAIRE service).
+   * @param pathToInstance    Path to workflow JSON specifying the audit configuration.
+   * @param useSQLSetupScript boolean used to indicate whether to use an sql script to get the assertions.
    */
-  protected void doWorkflow(final Path pathToInstance, final Optional<PostgreSQLContainer<?>> optPostGres) throws IOException, InterruptedException {
+  protected void doWorkflow(final Path pathToInstance, final boolean useSQLSetupScript) throws IOException, InterruptedException {
 
     // Convert data in the JSON workflow file to a workflow Instance.
     ObjectMapper toJson = new ObjectMapper();
@@ -247,7 +247,7 @@ public abstract class Workflow extends TestClassWithDatabase {
     canonicalize(instance, true);
 
     // Either call raire (if using) or load assertions in from SQL script.
-    makeAssertionData(optPostGres, instance.getSQLs(), TIME_LIMIT_DEFAULT);
+    makeAssertionData(useSQLSetupScript, instance.getSQLs(), TIME_LIMIT_DEFAULT);
 
     dashboard = getDoSDashBoardRefreshResponse();
 
@@ -1550,14 +1550,14 @@ public abstract class Workflow extends TestClassWithDatabase {
    * assertion data into the database, simulating a call to the raire-service.
    * This is overridden in WorkflowRunnerWithRaire, which does _not_ use either sql scripts or a
    * test container, but instead communicatees with raire and the corla database.
-   * @param postgresOpt The postgres container which is expected to be present, and into which
-   *                    assertions should be stored.
-   * @param SQLfiles    The sql files which, if non-empty, the data should be read from.
+   * @param useSQLSetupScript boolean used to indicate whether to use an sql script to get the assertions.
+   *                          when false, this calls the raire endpoint.
+   * @param SQLfiles          The sql files which, if non-empty, the data should be read from.
    */
-  protected void makeAssertionData(final Optional<PostgreSQLContainer<?>> postgresOpt, final List<String> SQLfiles, double timeLimit) {
-    if(postgresOpt.isPresent()) {
+  protected void makeAssertionData(boolean useSQLSetupScript, final List<String> SQLfiles, double timeLimit) {
+    if(useSQLSetupScript) {
       for (final String s : SQLfiles) {
-        TestClassWithDatabase.runSQLSetupScript(postgresOpt.get(), s);
+        runSQLSetupScript(s);
       }
     }
     else{

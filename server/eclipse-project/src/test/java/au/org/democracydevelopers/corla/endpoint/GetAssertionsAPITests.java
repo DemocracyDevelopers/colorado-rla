@@ -102,7 +102,7 @@ public class GetAssertionsAPITests extends Workflow {
     runMain(config, "GetAssertionsAPITests");
 
     // Load some IRV contests into the database.
-    runSQLSetupScript(postgres, "SQL/corla-three-candidates-ten-votes-plus-plurality.sql");
+    runSQLSetupScript("SQL/corla-three-candidates-ten-votes-plus-plurality.sql");
 
     // Mock a proper response for both json and csv.
     stubFor(post(urlEqualTo(raireGetAssertionsEndpoint + "-" + CSV_SUFFIX))

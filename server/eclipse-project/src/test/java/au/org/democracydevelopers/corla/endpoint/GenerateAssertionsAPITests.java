@@ -114,7 +114,7 @@ public class GenerateAssertionsAPITests extends Workflow {
 
 
     // Load some IRV contests into the database.
-    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/corla-three-candidates-ten-votes-plus-plurality.sql");
+    runSQLSetupScript("SQL/corla-three-candidates-ten-votes-plus-plurality.sql");
 
     // Mock a proper response to the IRV TinyExample1 contest.
     stubFor(post(urlEqualTo(raireGenerateAssertionsEndpoint))

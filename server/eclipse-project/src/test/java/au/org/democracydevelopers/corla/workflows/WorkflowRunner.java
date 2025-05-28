@@ -138,7 +138,7 @@ public class WorkflowRunner extends Workflow {
 
       // Reset the database; do the workflow.
       resetDatabase("stateadmin1");
-      doWorkflow(pathToInstance, Optional.of(postgres));
+      doWorkflow(pathToInstance, true);
 
     } catch(IOException e){
       final String msg = prefix + " " + e.getMessage();

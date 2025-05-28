@@ -75,7 +75,7 @@ public abstract class TestClassWithDatabase {
   /**
    * Container for the mock-up database.
    */
-  protected PostgreSQLContainer<?> postgres = createTestContainer();
+  private PostgreSQLContainer<?> postgres = createTestContainer();
 
 
   public final static List<Choice> boulderMayoralCandidates = List.of(

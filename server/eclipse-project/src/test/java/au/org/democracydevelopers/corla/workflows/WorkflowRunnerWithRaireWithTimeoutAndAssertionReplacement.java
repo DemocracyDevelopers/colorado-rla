@@ -131,7 +131,7 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
         BigDecimal.valueOf(0.03));
 
     // 1. Call raire to request the assertion data, with an extremely small time limit.
-    makeAssertionData(Optional.empty(), List.of(), 0.00001);
+    makeAssertionData(false, List.of(), 0.00001);
 
     // Get the generate assertions summaries and check for timeout failure.
     dashboard = getDoSDashBoardRefreshResponse();
@@ -151,7 +151,7 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
     assertTrue(StringUtils.containsIgnoreCase(assertionsCSV.get(0), "NO_ASSERTIONS_PRESENT"));
 
     // 2. Request assertion generation with a reasonable time limit.
-    makeAssertionData(Optional.empty(), List.of(), 5);
+    makeAssertionData(false, List.of(), 5);
 
     // Get the generate assertions summaries and check for success and the correct winner.
     dashboard = getDoSDashBoardRefreshResponse();
@@ -179,7 +179,7 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
     // Note: if this test is failing, try increasing this number.
     Thread.sleep(2000);
     // Request assertion generation with a reasonable time limit.
-    makeAssertionData(Optional.empty(), List.of(), 5);
+    makeAssertionData(false, List.of(), 5);
 
     // Get the generate assertions summaries and check for success and the substituted winner.
     dashboard = getDoSDashBoardRefreshResponse();

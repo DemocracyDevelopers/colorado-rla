@@ -63,7 +63,7 @@ public class UploadAndDeleteIRVCVRs extends Workflow {
   public void setup() {
     runMain(config, "UploadAndDeleteIRVCVRs");
     Persistence.beginTransaction();
-    runSQLSetupScript(postgres, "SQL/co-admins.sql");
+    runSQLSetupScript("SQL/co-admins.sql");
 
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
