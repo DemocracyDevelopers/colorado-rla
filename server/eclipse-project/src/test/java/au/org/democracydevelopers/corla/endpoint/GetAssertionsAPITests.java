@@ -99,7 +99,7 @@ public class GetAssertionsAPITests extends Workflow {
     // Set the above-initialized URL for the RAIRE_URL property in Main.
     // This config is used in runMainAndInitializeDBIfNeeded.
     config.setProperty(RAIRE_URL, baseUrl);
-    runMainAndInitializeDBIfNeeded("GetAssertionsAPITests", Optional.of(postgres));
+    runMain(config, "GetAssertionsAPITests");
 
     // Load some IRV contests into the database.
     runSQLSetupScript(postgres, "SQL/corla-three-candidates-ten-votes-plus-plurality.sql");

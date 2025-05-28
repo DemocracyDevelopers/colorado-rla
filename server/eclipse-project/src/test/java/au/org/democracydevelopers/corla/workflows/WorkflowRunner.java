@@ -64,13 +64,12 @@ public class WorkflowRunner extends Workflow {
 
   @BeforeClass
   public void setup() {
-    runMainAndInitializeDBIfNeeded("WorkflowRunner", Optional.of(postgres));
+    runMain(config, "WorkflowRunner");
     Persistence.beginTransaction();
     runSQLSetupScript("SQL/co-admins.sql");
 
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
-    Persistence.commitTransaction();
   }
 
   /**
@@ -140,7 +139,6 @@ public class WorkflowRunner extends Workflow {
       // Reset the database; do the workflow.
       resetDatabase("stateadmin1");
       doWorkflow(pathToInstance, Optional.of(postgres));
-      Persistence.commitTransaction();
 
     } catch(IOException e){
       final String msg = prefix + " " + e.getMessage();
