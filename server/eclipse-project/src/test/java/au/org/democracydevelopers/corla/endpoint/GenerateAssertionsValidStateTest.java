@@ -37,6 +37,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.persistence.Persistence;
 
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
@@ -90,6 +91,8 @@ public class GenerateAssertionsValidStateTest extends Workflow {
   @BeforeClass
   public void initMocksAndMainAndDB() {
 
+    Persistence.beginTransaction();
+    runSQLSetupScript("SQL/co-counties.sql");
     // config = loadProperties();
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
