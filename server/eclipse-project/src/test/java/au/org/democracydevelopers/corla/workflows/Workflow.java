@@ -563,8 +563,8 @@ public abstract class Workflow  {
    * Hit the colorado-rla generate-assertions endpoint.
    * @param filter Session filter to maintain same session across API test.
    */
-  protected Response generateAssertionsCorla(final SessionFilter filter, Optional<String> contestName,
-                                             Optional<Double> timeLimitSeconds) {
+  protected Response generateAssertionsCorla(final SessionFilter filter, final Optional<String> contestName,
+                                             final Optional<Double> timeLimitSeconds) {
     final String contestQ = contestName.map(s -> CONTEST_NAME + "=" + s).orElse("");
     final String timeLimitQ = timeLimitSeconds.map(s -> TIME_LIMIT_SECONDS + "=" + s).orElse("");
     String queryString = (contestName.isPresent() || timeLimitSeconds.isPresent() ? "?" : "")
@@ -579,7 +579,7 @@ public abstract class Workflow  {
    * Hit the colorado-rla get-assertions endpoint, with the stated query string.
    * @param filter Session filter to maintain same session across API test.
    */
-  protected Response getAssertionsCorla(final SessionFilter filter, Optional<String> queryString) {
+  protected Response getAssertionsCorla(final SessionFilter filter, final Optional<String> queryString) {
 
     return given().filter(filter)
         .header("Content-Type", "application/json")

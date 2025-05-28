@@ -21,8 +21,11 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.util;
 
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
+import au.org.democracydevelopers.corla.model.ContestType;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.jdbc.JdbcDatabaseDelegate;
@@ -30,9 +33,12 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 
+import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
+import static au.org.democracydevelopers.corla.util.testUtils.*;
 
 /**
  * This class is designed to be extended by any test class that needs to interact with a test
@@ -72,6 +78,39 @@ public abstract class TestClassWithDatabase {
   protected static PostgreSQLContainer<?> postgres = createTestContainer();
 
 
+  public final static List<Choice> boulderMayoralCandidates = List.of(
+      new Choice("Aaron Brockett", "", false, false),
+      new Choice("Nicole Speer", "", false, false),
+      new Choice("Bob Yates", "", false, false),
+      new Choice("Paul Tweedlie", "", false, false)
+  );
+
+  /**
+   * Contest and ContestResult for Boulder Mayoral '23 example.
+   */
+  public final static Contest boulderMayoralContest = new Contest(boulderMayoral, new County("Boulder", 7L), ContestType.IRV.toString(),
+      boulderMayoralCandidates, 4, 1, 0);
+  public final static ContestResult boulderIRVContestResult = new ContestResult(boulderMayoral);
+
+  /**
+   * Contest and ContestResult for tiny IRV example.
+   */
+  public final static Contest tinyIRVExample = new Contest(tinyIRV, new County("Arapahoe", 3L), ContestType.IRV.toString(),
+      tinyIRVCandidates, 3, 1, 0);
+  public final static ContestResult tinyIRVContestResult = new ContestResult(tinyIRV);
+
+  /**
+   * Example contestresuls to mock.
+   */
+  public final static List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult, tinyIRVContestResult);
+
+  /**
+   * Contest and ContestResult for tied example.
+   */
+  public final static Contest tiedIRVContest = new Contest( tiedIRV, new County("Ouray", 46L), ContestType.IRV.toString(),
+      tinyIRVCandidates, 3, 1, 0);
+  public final static ContestResult tiedIRVContestResult = new ContestResult(tiedIRV);
+
   @BeforeClass
   public static void beforeAll() {
     postgres.start();
@@ -94,6 +133,25 @@ public abstract class TestClassWithDatabase {
     Persistence.beginTransaction();
   }
 
+  public static void initContestResults() {
+    boolean alreadyInit = false;
+
+    boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+    boulderIRVContestResult.setBallotCount(100000L);
+    boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
+    boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
+
+    tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+    tinyIRVContestResult.setBallotCount(10L);
+    tinyIRVContestResult.setWinners(Set.of("Alice"));
+    tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
+
+    tiedIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+    tiedIRVContestResult.setBallotCount((long) tinyIRVCount);
+    tiedIRVContestResult.setWinners(Set.of(UNKNOWN_WINNER));
+    tiedIRVContestResult.addContests(Set.of(tiedIRVContest));
+  }
+
   /**
    * Rollback any changes to the (test) database after each test method is run.
    */
@@ -109,7 +167,6 @@ public abstract class TestClassWithDatabase {
    * Create and return a postgres test container for the purposes of testing functionality that
    * interacts with the database.
    * @return a postgres test container representing a test database.
-   * FIXME This is more general than Matt's edits - suggest retaining this version.
    */
   public static PostgreSQLContainer<?> createTestContainer() {
     return new PostgreSQLContainer<>("postgres:15-alpine")

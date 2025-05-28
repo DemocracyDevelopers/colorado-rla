@@ -108,15 +108,7 @@ public class GetAssertionsTests extends TestClassWithDatabase {
   public void initMocks() {
     MockitoAnnotations.openMocks(this);
 
-    boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    boulderIRVContestResult.setBallotCount(100000L);
-    boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
-    boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
 
-    tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    tinyIRVContestResult.setBallotCount(10L);
-    tinyIRVContestResult.setWinners(Set.of("Alice"));
-    tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
 
     // Set up a wiremock raire server on the port defined in test.properties.
     final int rairePort = Integer.parseInt(config.getProperty(getAssertionsPortNumberString, ""));
@@ -171,9 +163,9 @@ public class GetAssertionsTests extends TestClassWithDatabase {
 
     // Now mock some with non-word characters and check they're properly sanitized.
     // All these complicated characters are removed.
-    Contest kempseyTricky = new Contest("K&e&*mpsey-!Mayoral", new County("Alamosa", 2L),
+    final Contest kempseyTricky = new Contest("K&e&*mpsey-!Mayoral", new County("Alamosa", 2L),
         ContestType.IRV.toString(), boulderMayoralCandidates, 4, 1, 0);
-    ContestResult kempseyTrickyIRVContestResult = new ContestResult(kempseyTricky.name());
+    final ContestResult kempseyTrickyIRVContestResult = new ContestResult(kempseyTricky.name());
     kempseyTrickyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
     kempseyTrickyIRVContestResult.setBallotCount(100000L);
     kempseyTrickyIRVContestResult.setWinners(Set.of("Bob"));
@@ -181,16 +173,16 @@ public class GetAssertionsTests extends TestClassWithDatabase {
     mockedTrickyContestResults.add(kempseyTrickyIRVContestResult);
 
     // Underscores are retained.
-    Contest byronTricky = new Contest(" Byron_Mayoral    ", new County("Arapahoe", 3L),
+    final Contest byronTricky = new Contest(" Byron_Mayoral    ", new County("Arapahoe", 3L),
         ContestType.IRV.toString(), boulderMayoralCandidates, 4, 1, 0);
-    ContestResult byronTrickyIRVContestResult = new ContestResult(byronTricky.name());
+    final ContestResult byronTrickyIRVContestResult = new ContestResult(byronTricky.name());
     byronTrickyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
     byronTrickyIRVContestResult.setBallotCount(10L);
     byronTrickyIRVContestResult.setWinners(Set.of("Alice"));
     byronTrickyIRVContestResult.addContests(Set.of(byronTricky));
     mockedTrickyContestResults.add(byronTrickyIRVContestResult);
 
-    String[] expectedSanitizedContestNames =  new String[] {"CityofBoulderMayoralCandidates", tinyIRV, "KempseyMayoral", "Byron_Mayoral"};
+    final String[] expectedSanitizedContestNames =  new String[] {"CityofBoulderMayoralCandidates", tinyIRV, "KempseyMayoral", "Byron_Mayoral"};
 
     try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults = Mockito.mockStatic(AbstractAllIrvEndpoint.class);
          MockedStatic<Main> mockedMain = Mockito.mockStatic(Main.class)) {
@@ -202,25 +194,24 @@ public class GetAssertionsTests extends TestClassWithDatabase {
       mockedMain.when(Main::properties).thenReturn(mockProperties);
 
       for (String suffix : List.of(JSON_SUFFIX, CSV_SUFFIX)) {
-        ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-        ZipOutputStream zos = new ZipOutputStream(bytesOut);
+        final ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+        final ZipOutputStream zos = new ZipOutputStream(bytesOut);
         getAssertions(zos, "", suffix);
         zos.close();
 
-        byte[] bytes = bytesOut.toByteArray();
-        InputStream bais = new ByteArrayInputStream(bytes);
-        ZipInputStream in = new ZipInputStream(bais);
+        final byte[] bytes = bytesOut.toByteArray();
+        final InputStream bais = new ByteArrayInputStream(bytes);
+        final ZipInputStream in = new ZipInputStream(bais);
         // Check that each entry is in the list of expectedSanitizedContestNames.
         for (int i = 0; i < expectedSanitizedContestNames.length; i++) {
-          ZipEntry entry = in.getNextEntry();
+          final ZipEntry entry = in.getNextEntry();
           assertNotNull(entry);
           assertTrue(Arrays.stream(expectedSanitizedContestNames)
                   .anyMatch(cn -> entry.getName().equalsIgnoreCase(cn + "_assertions." + suffix)));
         }
 
         // Check that there are no more entries than expectedSanitizedContestNames.
-        ZipEntry noEntry = in.getNextEntry();
-        assertNull(noEntry);
+        assertNull(in.getNextEntry());
       }
     }
   }
