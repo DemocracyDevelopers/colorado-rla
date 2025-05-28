@@ -41,6 +41,8 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
 
+import javax.transaction.Transactional;
+
 /**
  * This workflow runner is designed to execute all JSON workflows present in a specified
  * directory (defined in the "pathToInstances" member). These JSON workflows define a complete
@@ -128,8 +130,9 @@ public class WorkflowRunner extends Workflow {
    * @param pathToInstance Path to the JSON workflow instance defining the test.
    * @throws InterruptedException if there is a problem with the CVR and Manifest upload.
    */
-  //@Test(dataProvider = "workflow-provider")
-  @Test(dataProvider = "single-workflow-provider")
+  @Transactional
+  @Test(dataProvider = "workflow-provider")
+  // @Test(dataProvider = "single-workflow-provider")
   public void runInstance(final Path pathToInstance) throws InterruptedException {
     final String prefix = "[runInstance] " + pathToInstance;
 
@@ -138,10 +141,14 @@ public class WorkflowRunner extends Workflow {
       Persistence.beginTransaction();
 
       // Do the workflow.
+      resetDatabase("stateadmin1");
       doWorkflow(pathToInstance, Optional.of(postgres));
 
+
+      // reset the Database so multiple tests can be run.
+      // resetDatabase("stateadmin1");
+      // Persistence.rollbackTransaction();
       // postgres.stop();
-      Persistence.rollbackTransaction();
 
     } catch(IOException e){
       final String msg = prefix + " " + e.getMessage();
