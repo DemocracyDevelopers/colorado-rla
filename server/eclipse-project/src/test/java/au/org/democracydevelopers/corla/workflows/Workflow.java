@@ -494,7 +494,6 @@ public abstract class Workflow extends TestClassWithDatabase {
 
     // Check the tabulate_county_plurality report
     checkTabulateCountyPluralityReport(getReportAsCSV("tabulate_county_plurality"), instance);
-
   }
 
   /**
