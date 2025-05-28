@@ -111,8 +111,14 @@ public abstract class TestClassWithDatabase {
       tinyIRVCandidates, 3, 1, 0);
   public final static ContestResult tiedIRVContestResult = new ContestResult(tiedIRV);
 
+  /**
+   * So that all the different instances only initialize all the contest results once between them.
+   */
+  private static boolean alreadyInit = false;
+
   @BeforeClass
   public static void beforeAll() {
+    initContestResults();
     postgres.start();
     // Each class that inherits from TestClassWithDatabase gets a different url for the mocked DB.
     // Everything else is the same.
@@ -133,23 +139,24 @@ public abstract class TestClassWithDatabase {
     Persistence.beginTransaction();
   }
 
-  public static void initContestResults() {
-    boolean alreadyInit = false;
+  private static void initContestResults() {
 
-    boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    boulderIRVContestResult.setBallotCount(100000L);
-    boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
-    boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
+    if(!alreadyInit) {
+      boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+      boulderIRVContestResult.setBallotCount(100000L);
+      boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
+      boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
 
-    tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    tinyIRVContestResult.setBallotCount(10L);
-    tinyIRVContestResult.setWinners(Set.of("Alice"));
-    tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
+      tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+      tinyIRVContestResult.setBallotCount(10L);
+      tinyIRVContestResult.setWinners(Set.of("Alice"));
+      tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
 
-    tiedIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    tiedIRVContestResult.setBallotCount((long) tinyIRVCount);
-    tiedIRVContestResult.setWinners(Set.of(UNKNOWN_WINNER));
-    tiedIRVContestResult.addContests(Set.of(tiedIRVContest));
+      tiedIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+      tiedIRVContestResult.setBallotCount((long) tinyIRVCount);
+      tiedIRVContestResult.setWinners(Set.of(UNKNOWN_WINNER));
+      tiedIRVContestResult.addContests(Set.of(tiedIRVContest));
+    }
   }
 
   /**
