@@ -37,6 +37,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.persistence.Persistence;
 
 import java.util.Optional;
 
@@ -81,7 +82,9 @@ public class GetAssertionsAPITests extends Workflow {
   @BeforeClass
   public void initMocksAndMainAndDB() {
 
-    config = loadProperties();
+    Persistence.beginTransaction();
+    runSQLSetupScript("SQL/co-counties.sql");
+
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
 
@@ -96,7 +99,6 @@ public class GetAssertionsAPITests extends Workflow {
     // Set the above-initialized URL for the RAIRE_URL property in Main.
     // This config is used in runMainAndInitializeDBIfNeeded.
     config.setProperty(RAIRE_URL, baseUrl);
-    // final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
     runMainAndInitializeDBIfNeeded("GetAssertionsAPITests", Optional.of(postgres));
 
     // Load some IRV contests into the database.
