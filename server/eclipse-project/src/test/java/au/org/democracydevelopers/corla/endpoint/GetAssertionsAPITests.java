@@ -89,8 +89,8 @@ public class GetAssertionsAPITests extends Workflow {
     RestAssured.port = 8888;
 
     // Set up the mock raire server's port.
-    final int rairePort = Integer.parseInt(config.getProperty(getAssertionsPortNumberString, ""));
-    wireMockRaireServer = new WireMockServer(rairePort);
+    final int raireGetAssertionsPort = Integer.parseInt(config.getProperty(getAssertionsPortNumberString, ""));
+    wireMockRaireServer = new WireMockServer(raireGetAssertionsPort);
     wireMockRaireServer.start();
 
     baseUrl = wireMockRaireServer.baseUrl();

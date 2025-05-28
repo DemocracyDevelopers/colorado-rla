@@ -23,7 +23,6 @@ package au.org.democracydevelopers.corla.workflows;
 
 import static org.testng.Assert.assertTrue;
 
-import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import io.restassured.RestAssured;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,7 +34,6 @@ import java.util.stream.Stream;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -66,8 +64,9 @@ public class WorkflowRunner extends Workflow {
 
   @BeforeClass
   public void setup() {
+    runMainAndInitializeDBIfNeeded("WorkflowRunner", Optional.of(postgres));
     Persistence.beginTransaction();
-    runSQLSetupScript("SQL/co-counties.sql");
+    runSQLSetupScript("SQL/co-admins.sql");
 
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
@@ -137,18 +136,11 @@ public class WorkflowRunner extends Workflow {
     final String prefix = "[runInstance] " + pathToInstance;
 
     try {
-      runMainAndInitializeDBIfNeeded(pathToInstance.getFileName().toString(), Optional.of(postgres));
-      Persistence.beginTransaction();
 
-      // Do the workflow.
+      // Reset the database; do the workflow.
       resetDatabase("stateadmin1");
       doWorkflow(pathToInstance, Optional.of(postgres));
-
-
-      // reset the Database so multiple tests can be run.
-      // resetDatabase("stateadmin1");
-      // Persistence.rollbackTransaction();
-      // postgres.stop();
+      Persistence.commitTransaction();
 
     } catch(IOException e){
       final String msg = prefix + " " + e.getMessage();
