@@ -147,7 +147,7 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
    */
   @BeforeClass
   public static void beforeAllThisClass() {
-    Persistence.setProperties(config);
+    // Persistence.setProperties(config);
   }
 
   /**

@@ -85,7 +85,7 @@ import wiremock.net.minidev.json.JSONObject;
  * Base class for an API test workflow designed to run through a sequence of steps involving
  * a sequence of endpoint accesses.
  */
-public abstract class Workflow  {
+public abstract class Workflow extends TestClassWithDatabase {
 
   /**
    * A collection of data representing an audit session for a county.
@@ -111,11 +111,6 @@ public abstract class Workflow  {
    * Path for storing temporary config files
    */
   protected static final String tempConfigPath = "src/test/resources/workflows/temp/";
-
-  /**
-   * Properties such as database login and corla & raire urls.
-   */
-  protected Properties config;
 
   /**
    * Default audit board names.
@@ -669,10 +664,6 @@ public abstract class Workflow  {
           .header("Content-Type", "application/json")
           .body(params.toJSONString())
           .post("/audit-board-sign-in");
-      // FIXME This sometimes doesn't work, possibly because of contention.
-      //     .then()
-      //    .assertThat()
-      //    .statusCode(HttpStatus.SC_OK);
   }
 
   /**
@@ -1566,16 +1557,16 @@ public abstract class Workflow  {
    */
   protected void runMainAndInitializeDBIfNeeded(final String testName, final Optional<PostgreSQLContainer<?>> postgresOpt) {
     assertTrue(postgresOpt.isPresent());
-    final PostgreSQLContainer<?> postgres = postgresOpt.get();
+    // final PostgreSQLContainer<?> postgres = postgresOpt.get();
 
-    postgres.start();
-    config.setProperty("hibernate.url", postgres.getJdbcUrl());
-    Persistence.setProperties(config);
-    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
+    // postgres.start();
+    // config.setProperty("hibernate.url", postgres.getJdbcUrl());
+    // Persistence.setProperties(config);
+    // runSQLSetupScript(postgres, "SQL/co-counties.sql");
 
     runMain(config, testName);
 
-    Persistence.beginTransaction();
+    // Persistence.beginTransaction();
   }
 
   /**

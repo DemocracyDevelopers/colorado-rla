@@ -109,7 +109,7 @@ public class DominionCVRExportParserTests extends TestClassWithDatabase {
       CAB, CAB, CAB);
 
   @BeforeClass
-  public static void beforeAllThisClass() {
+  public void beforeAllThisClass() {
     runSQLSetupScript("SQL/co-counties.sql");
   }
 
