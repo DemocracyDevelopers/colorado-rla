@@ -32,6 +32,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.model.CastVoteRecord;
+import us.freeandfair.corla.persistence.Persistence;
 
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.*;
@@ -71,7 +72,9 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   @BeforeClass
   public void setup() {
     // config = loadProperties();
-    runSQLSetupScript(postgres, "SQL/co-counties.sql");
+    runMain(config, "runManifestVaryingDemo");
+    Persistence.beginTransaction();
+    runSQLSetupScript(postgres, "SQL/co-admins.sql");
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
   }
@@ -84,7 +87,7 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     testUtils.log(LOGGER, "runManifestVaryingDemo");
 
     // final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
-    runMain(config, "runManifestVaryingDemo");
+    // runMain(config, "runManifestVaryingDemo");
 
 
     final String margin2Contest = "PluralityMargin2";
