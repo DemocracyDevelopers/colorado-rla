@@ -39,6 +39,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.persistence.Persistence;
 
 /**
  * This workflow runner is designed to execute all JSON workflows present in a specified
@@ -63,8 +64,12 @@ public class WorkflowRunner extends Workflow {
 
   @BeforeClass
   public void setup() {
+    Persistence.beginTransaction();
+    runSQLSetupScript("SQL/co-counties.sql");
+
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
+    Persistence.commitTransaction();
   }
 
   /**
@@ -104,7 +109,7 @@ public class WorkflowRunner extends Workflow {
    */
   @DataProvider(name = "single-workflow-provider")
   public Object[][] supplySingleWorkflowPath() {
-    final String filename = "AllCountyWidePluralityAndIRVTwoRounds.json";
+    final String filename = "TinyIRV.INFINITE.json";
     Path path = Paths.get(pathToInstances, filename);
     Path normalizedPath = path.normalize();
     assertTrue(Files.isRegularFile(normalizedPath));
@@ -123,19 +128,20 @@ public class WorkflowRunner extends Workflow {
    * @param pathToInstance Path to the JSON workflow instance defining the test.
    * @throws InterruptedException if there is a problem with the CVR and Manifest upload.
    */
-  @Test(dataProvider = "workflow-provider")
-  //@Test(dataProvider = "single-workflow-provider")
+  //@Test(dataProvider = "workflow-provider")
+  @Test(dataProvider = "single-workflow-provider")
   public void runInstance(final Path pathToInstance) throws InterruptedException {
     final String prefix = "[runInstance] " + pathToInstance;
 
     try {
-      // final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
       runMainAndInitializeDBIfNeeded(pathToInstance.getFileName().toString(), Optional.of(postgres));
+      Persistence.beginTransaction();
 
       // Do the workflow.
       doWorkflow(pathToInstance, Optional.of(postgres));
 
-      postgres.stop();
+      // postgres.stop();
+      Persistence.rollbackTransaction();
 
     } catch(IOException e){
       final String msg = prefix + " " + e.getMessage();
