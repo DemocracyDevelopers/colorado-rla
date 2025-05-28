@@ -71,7 +71,6 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
    */
   @BeforeClass
   public void setup() {
-    // config = loadProperties();
     runMain(config, "runManifestVaryingDemo");
     Persistence.beginTransaction();
     runSQLSetupScript(postgres, "SQL/co-admins.sql");
@@ -85,10 +84,6 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   @Test(enabled=true)
   public void runManifestVaryingDemo() throws InterruptedException {
     testUtils.log(LOGGER, "runManifestVaryingDemo");
-
-    // final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
-    // runMain(config, "runManifestVaryingDemo");
-
 
     final String margin2Contest = "PluralityMargin2";
     final String margin10Contest = "PluralityMargin10";
