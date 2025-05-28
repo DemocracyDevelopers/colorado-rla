@@ -166,10 +166,6 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
     tinyIRVContestResult.setWinners(Set.of("Alice"));
     tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
 
-    tiedIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    tiedIRVContestResult.setBallotCount((long) tinyIRVCount);
-    tiedIRVContestResult.setWinners(Set.of(UNKNOWN_WINNER));
-    tiedIRVContestResult.addContests(Set.of(tiedIRVContest));
 
     // Set up default raire server on the port defined in test.properties.
     // You can instead run the real raire service and set baseUrl accordingly,

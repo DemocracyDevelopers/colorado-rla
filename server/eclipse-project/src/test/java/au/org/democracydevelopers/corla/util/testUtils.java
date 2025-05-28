@@ -35,7 +35,7 @@ public class testUtils {
   /**
    * First of two IRV contests for mocking the IRVContestCollector: Boulder Mayoral '22
    */
-  public final static String boulderMayoral = "City of Boulder Mayoral Candidates";
+   public final static String boulderMayoral = "City of Boulder Mayoral Candidates";
 
   /**
    * Count of the universe size for Boulder Mayoral '23.
@@ -71,35 +71,7 @@ public class testUtils {
    */
   public final static List<Choice> tinyIRVCandidates = List.of(alice, bob, chuan);
 
-  public final static List<Choice> boulderMayoralCandidates = List.of(
-      new Choice("Aaron Brockett", "", false, false),
-      new Choice("Nicole Speer", "", false, false),
-      new Choice("Bob Yates", "", false, false),
-      new Choice("Paul Tweedlie", "", false, false)
-  );
 
-  /**
-   * Contest and ContestResult for tiny IRV example.
-   */
-  public final static Contest tinyIRVExample = new Contest(tinyIRV, new County("Arapahoe", 3L), ContestType.IRV.toString(),
-      tinyIRVCandidates, 3, 1, 0);
-  public final static ContestResult tinyIRVContestResult = new ContestResult(tinyIRV);
-
-  /**
-   * Contest and ContestResult for Boulder Mayoral '23 example.
-   */
-  public final static Contest boulderMayoralContest = new Contest(boulderMayoral, new County("Boulder", 7L), ContestType.IRV.toString(),
-      boulderMayoralCandidates, 4, 1, 0);
-  public final static ContestResult boulderIRVContestResult = new ContestResult(boulderMayoral);
-
-  /**
-   * Contest and ContestResult for tied example.
-   */
-  public final static Contest tiedIRVContest = new Contest( tiedIRV, new County("Ouray", 46L), ContestType.IRV.toString(),
-      tinyIRVCandidates, 3, 1, 0);
-  public final static ContestResult tiedIRVContestResult = new ContestResult(tiedIRV);
-
-  public final static List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult, tinyIRVContestResult);
 
   /**
    * Comparator for doubles within a specific tolerance.
