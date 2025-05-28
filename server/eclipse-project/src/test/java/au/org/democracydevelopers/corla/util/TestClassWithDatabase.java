@@ -100,7 +100,7 @@ public abstract class TestClassWithDatabase {
   public final static ContestResult tinyIRVContestResult = new ContestResult(tinyIRV);
 
   /**
-   * Example contestresuls to mock.
+   * Example contestresults to mock.
    */
   public final static List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult, tinyIRVContestResult);
 
