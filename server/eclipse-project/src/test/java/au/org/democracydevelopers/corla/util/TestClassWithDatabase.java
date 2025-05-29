@@ -38,6 +38,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
+import org.hibernate.Session;
 
 import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
@@ -79,6 +80,11 @@ public abstract class TestClassWithDatabase {
    * Container for the mock-up database.
    */
   private final PostgreSQLContainer<?> postgres = createTestContainer(config);
+
+  /**
+   * Hibernate session.
+   */
+  private Session session;
 
   /**
    * GSON for json interpretation.
@@ -127,11 +133,12 @@ public abstract class TestClassWithDatabase {
     config.setProperty("hibernate.url", postgres.getJdbcUrl());
     Persistence.setProperties(config);
 
-    Persistence.openSession();
+    session = Persistence.openSession();
   }
 
   @AfterClass
   public void afterAll() {
+    session.close();
     postgres.stop();
   }
 
