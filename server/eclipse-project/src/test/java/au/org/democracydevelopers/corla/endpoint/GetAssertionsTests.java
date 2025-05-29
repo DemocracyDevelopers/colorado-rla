@@ -22,15 +22,15 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.endpoint;
 
 import au.org.democracydevelopers.corla.model.ContestType;
-import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
+import au.org.democracydevelopers.corla.workflows.Workflow;
+import io.restassured.RestAssured;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -43,8 +43,6 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipInputStream;
-
-import com.github.tomakehurst.wiremock.WireMockServer;
 
 import static au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint.RAIRE_URL;
 import static au.org.democracydevelopers.corla.endpoint.GetAssertions.*;
@@ -59,26 +57,9 @@ import static org.testng.Assert.*;
  * throws the correct exceptions.
  * Includes testing of filename sanitization (from contest names).
  */
-public class GetAssertionsTests extends TestClassWithDatabase {
+public class GetAssertionsTests extends Workflow {
 
   private static final Logger LOGGER = LogManager.getLogger(GetAssertionsTests.class);
-
-  /**
-   * Endpoint for getting assertions.
-   */
-  private final static String raireGetAssertionsEndpoint = "/raire/get-assertions";
-
-  /**
-   * Wiremock server for mocking the raire service.
-   * (Note the default of 8080 clashes with the raire-service default, so this is different.)
-   */
-  WireMockServer wireMockRaireServer;
-
-  /**
-   * Base url - this is set up to use the wiremock server, but could be set here to wherever you have the
-   * raire-service running to test with that directly.
-   */
-  private static String baseUrl;
 
   /**
    * The Properties that will be mocked in Main, specifically for the RAIRE_URL.
@@ -108,15 +89,8 @@ public class GetAssertionsTests extends TestClassWithDatabase {
   public void initMocks() {
     MockitoAnnotations.openMocks(this);
 
-    // Set up a wiremock raire server on the port defined in test.properties.
-    // FIXME Do we even need two config properties? Why not just one raire port?
-    final int raireGetAssertionsPort = Integer.parseInt(config.getProperty(getAssertionsPortNumberString, ""));
-    wireMockRaireServer = new WireMockServer(raireGetAssertionsPort);
-    wireMockRaireServer.start();
-    baseUrl = wireMockRaireServer.baseUrl();
-    configureFor("localhost", wireMockRaireServer.port());
-    // Mock the above-initialized URL for the RAIRE_URL property in Main.
-    mockProperties.setProperty(RAIRE_URL, baseUrl);
+    // Mock the Wiremock server URL for the RAIRE_URL property in Main.
+    mockProperties.setProperty(RAIRE_URL, wireMockRaireServer.baseUrl());
 
     stubFor(post(urlEqualTo(raireGetAssertionsEndpoint + "-" + CSV_SUFFIX))
         .willReturn(aResponse()
@@ -128,14 +102,7 @@ public class GetAssertionsTests extends TestClassWithDatabase {
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
             .withBody("Test json")));
-
   }
-
-  @AfterClass
-  public void closeMocks() {
-    wireMockRaireServer.stop();
-  }
-
 
   /**
    * Test data for the two valid IRV contest names.  This gives the successfully-sanitized version of
@@ -221,8 +188,8 @@ public class GetAssertionsTests extends TestClassWithDatabase {
   @DataProvider(name = "SampleBadEndpoints")
   public static String[][] SampleBadEndpoints() {
     return new String[][]{
-        {baseUrl + "/badUrl", CSV_SUFFIX},
-        {baseUrl + "/badUrl", JSON_SUFFIX}
+        {RestAssured.baseURI + "/badUrl", CSV_SUFFIX},
+        {RestAssured.baseURI + "/badUrl", JSON_SUFFIX}
     };
   }
 

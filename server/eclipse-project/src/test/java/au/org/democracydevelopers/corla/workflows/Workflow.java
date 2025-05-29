@@ -21,8 +21,10 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
+import static au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint.RAIRE_URL;
 import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.CONTEST_NAME;
 import static au.org.democracydevelopers.corla.workflows.Instance.INFINITE_ROUNDS;
+import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
 import static io.restassured.RestAssured.given;
 import static java.util.Collections.min;
 import static org.testng.Assert.assertEquals;
@@ -50,6 +52,7 @@ import au.org.democracydevelopers.corla.util.DoubleComparator;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.TestOnlyQueries;
 import au.org.democracydevelopers.corla.workflows.Instance.ReAuditDetails;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
 import io.restassured.path.json.JsonPath;
@@ -71,6 +74,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
@@ -111,6 +115,21 @@ public abstract class Workflow extends TestClassWithDatabase {
    * Path for storing temporary config files
    */
   protected static final String tempConfigPath = "src/test/resources/workflows/temp/";
+
+  /**
+   * Wiremock server for mocking the raire service.
+   */
+  protected WireMockServer wireMockRaireServer;
+
+  /**
+   * Raire endpoint for getting assertions.
+   */
+  protected final String raireGenerateAssertionsEndpoint = "/raire/generate-assertions";
+
+  /**
+   * Endpoint for getting assertions.
+   */
+  protected final static String raireGetAssertionsEndpoint = "/raire/get-assertions";
 
   /**
    * Default audit board names.
@@ -202,7 +221,25 @@ public abstract class Workflow extends TestClassWithDatabase {
    */
   @BeforeClass
   public void setupWiremockRaireService() {
+    // Set up default raire server on the port defined in test.properties.
+    // You can instead run the real raire service and set baseUrl accordingly,
+    // though some tests may fail, depending on whether you have
+    // appropriate contests in the database.
+    final int raireGenerateAssertionsPort = Integer.parseInt(config.getProperty(raireMockPortNumberString, ""));
+    wireMockRaireServer = new WireMockServer(raireGenerateAssertionsPort);
+    wireMockRaireServer.start();
 
+    String baseUrl = wireMockRaireServer.baseUrl();
+    configureFor("localhost", wireMockRaireServer.port());
+
+    // Set the above-initialized URL for the RAIRE_URL property in Main.
+    // This config is used in runMainAndInitializeDBIfNeeded.
+    config.setProperty(RAIRE_URL, baseUrl);
+  }
+
+  @AfterClass
+  public void closeMocks() {
+    wireMockRaireServer.stop();
   }
 
   /**
