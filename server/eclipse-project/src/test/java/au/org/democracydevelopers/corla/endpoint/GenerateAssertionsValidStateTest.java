@@ -24,7 +24,6 @@ package au.org.democracydevelopers.corla.endpoint;
 import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
 import au.org.democracydevelopers.corla.util.testUtils;
 import au.org.democracydevelopers.corla.workflows.Workflow;
-import com.google.gson.Gson;
 import io.restassured.filter.session.SessionFilter;
 import io.restassured.response.Response;
 import org.apache.http.HttpStatus;
@@ -60,11 +59,6 @@ public class GenerateAssertionsValidStateTest extends Workflow {
    */
   private final static GenerateAssertionsResponse tinyIRVResponse
       = new GenerateAssertionsResponse(tinyIRV, true, false);
-
-  /**
-   * GSON for json interpretation.
-   */
-  private final static Gson gson = new Gson();
 
   /**
    * Initialise mocked objects prior to the first test.

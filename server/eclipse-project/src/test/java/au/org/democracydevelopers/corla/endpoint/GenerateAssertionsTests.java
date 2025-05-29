@@ -29,7 +29,6 @@ import static au.org.democracydevelopers.corla.util.testUtils.*;
 import au.org.democracydevelopers.corla.util.testUtils;
 
 import au.org.democracydevelopers.corla.workflows.Workflow;
-import com.google.gson.Gson;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -118,11 +117,6 @@ public class GenerateAssertionsTests extends Workflow {
    * that we deal appropriately with the resulting error.
    */
   private final String invalidResponseEndpoint = "/raire/invalid-json-generating-url";
-
-  /**
-   * GSON for json interpretation.
-   */
-  private final static Gson gson = new Gson();
 
   /**
    * Initialise mocked objects prior to the first test.

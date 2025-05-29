@@ -26,6 +26,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import au.org.democracydevelopers.corla.model.ContestType;
+import com.google.gson.Gson;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.jdbc.JdbcDatabaseDelegate;
@@ -72,6 +73,10 @@ public abstract class TestClassWithDatabase {
    */
   private final PostgreSQLContainer<?> postgres = createTestContainer();
 
+  /**
+   * GSON for json interpretation.
+   */
+  protected final static Gson gson = new Gson();
 
   public final static List<Choice> boulderMayoralCandidates = List.of(
       new Choice("Aaron Brockett", "", false, false),
