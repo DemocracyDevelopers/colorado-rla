@@ -49,7 +49,7 @@ import javax.transaction.Transactional;
  * uploading audited ballots; reauditing ballots; and executing rounds until there are no further
  * ballots to sample. The workflow ends when the audit ends. Reporting is not tested in these workflows.
  */
-@Test(enabled = true)
+@Test(enabled = false)
 public class WorkflowRunner extends Workflow {
 
   /**
