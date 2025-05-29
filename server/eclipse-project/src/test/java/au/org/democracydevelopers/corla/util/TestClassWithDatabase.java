@@ -178,7 +178,6 @@ public abstract class TestClassWithDatabase {
    * @return a postgres test container representing a test database.
    */
   private static PostgreSQLContainer<?> createTestContainer(Properties config) {
-    LOGGER.debug("Creating PostgreSQLContainer");
 
     return new PostgreSQLContainer<>("postgres:15-alpine")
         // None of these actually have to be the same as the real database (except its name),
