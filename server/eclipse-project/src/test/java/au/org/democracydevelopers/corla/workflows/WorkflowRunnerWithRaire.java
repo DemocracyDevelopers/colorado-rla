@@ -112,7 +112,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
    * which ballots to simulate discrepancies for, and expected end of round states ...), run
    * the test audit and verify that the expected outcomes arise.
    * @param workflowFile Path to JSON workflow instance to execute.
-   * @throws InterruptedException
+   * @throws InterruptedException if something goes wrong with file I/O.
    */
   @Parameters("workflowFile")
   @Test
@@ -136,8 +136,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
     try {
       final Path pathToInstance = Paths.get(workflowFile);
       LOGGER.info(String.format("%s %s %s.", prefix, "running workflow", pathToInstance));
-      // runMainAndInitializeDBIfNeeded("Workflow with raire", Optional.empty());
-
+      
       // Do the workflow. Reset the database first.
       resetDatabase("stateadmin1");
 

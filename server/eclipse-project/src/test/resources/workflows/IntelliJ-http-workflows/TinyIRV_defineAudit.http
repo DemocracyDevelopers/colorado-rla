@@ -53,7 +53,6 @@ Content-Type: text/plain
 ### which are called separately.
 ### Also note that we have to find the IDs by asking for the _wrong_ names, then put the right name
 ### in the request.
-### TODO: Introduce errors into candidate names in the InvalidIRV contest.
 < {%
     import {getContestIDsWithCounties} from 'workflows/IntelliJ-http-workflows/testScripts/testUtils';
     const contestIDData = getContestIDsWithCounties(client.global.get("contestTinyIRVJsonData"));
