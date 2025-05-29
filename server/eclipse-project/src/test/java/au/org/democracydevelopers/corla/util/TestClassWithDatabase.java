@@ -70,7 +70,7 @@ public abstract class TestClassWithDatabase {
   /**
    * Container for the mock-up database.
    */
-  protected final PostgreSQLContainer<?> postgres = createTestContainer();
+  protected final PostgreSQLContainer<?> postgres = createTestContainer(config);
 
 
   public final static List<Choice> boulderMayoralCandidates = List.of(
@@ -165,7 +165,7 @@ public abstract class TestClassWithDatabase {
    * interacts with the database.
    * @return a postgres test container representing a test database.
    */
-  public PostgreSQLContainer<?> createTestContainer() {
+  public static PostgreSQLContainer<?> createTestContainer(Properties config) {
     return new PostgreSQLContainer<>("postgres:15-alpine")
         // None of these actually have to be the same as the real database (except its name),
         // but this makes it easy to match the setup scripts.
