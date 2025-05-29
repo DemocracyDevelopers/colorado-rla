@@ -35,6 +35,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
 
+import javax.transaction.Transactional;
 import java.util.*;
 
 import static au.org.democracydevelopers.corla.util.testUtils.*;
@@ -70,6 +71,7 @@ public class GenerateAssertionsAPITests extends Workflow {
    * Initialise mocked objects prior to the first test.
    */
   @BeforeClass
+  @Transactional
   public void initMocksAndMainAndDB() {
 
     runMain(config, "GenerateAssertionsAPITests");
@@ -86,6 +88,8 @@ public class GenerateAssertionsAPITests extends Workflow {
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
             .withBody(gson.toJson(tinyIRVResponse))));
+
+    Persistence.commitTransaction();
   }
 
   /**

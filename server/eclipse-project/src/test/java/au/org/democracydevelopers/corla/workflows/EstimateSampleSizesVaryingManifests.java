@@ -31,6 +31,8 @@ import org.testng.annotations.Test;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.persistence.Persistence;
 
+import javax.transaction.Transactional;
+
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
 import static us.freeandfair.corla.model.AuditReason.COUNTY_WIDE_CONTEST;
@@ -66,10 +68,12 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
    * TestNG guarantees that this runs _after_ @BeforeClass methods in the superclass.
    */
   @BeforeClass
+  @Transactional
   public void setup() {
     runMain(config, "runManifestVaryingDemo");
     Persistence.beginTransaction();
     runSQLSetupScript("SQL/co-admins.sql");
+    Persistence.commitTransaction();
   }
 
   /**

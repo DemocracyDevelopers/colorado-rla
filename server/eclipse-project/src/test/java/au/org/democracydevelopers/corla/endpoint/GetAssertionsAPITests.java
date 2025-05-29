@@ -35,6 +35,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
 
+import javax.transaction.Transactional;
 import java.util.Optional;
 
 import static au.org.democracydevelopers.corla.endpoint.GetAssertions.*;
@@ -55,6 +56,7 @@ public class GetAssertionsAPITests extends Workflow {
    * Initialise mocked raire service prior to the first test.
    */
   @BeforeClass
+  @Transactional
   public void initMocksAndMainAndDB() {
 
     Persistence.beginTransaction();
@@ -75,6 +77,8 @@ public class GetAssertionsAPITests extends Workflow {
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
             .withBody("Test json")));
+
+    Persistence.commitTransaction();
   }
 
   /**

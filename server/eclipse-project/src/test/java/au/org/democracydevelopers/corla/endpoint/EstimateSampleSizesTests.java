@@ -61,6 +61,7 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
    * Database init.
    */
   @BeforeClass
+  @Transactional
   public void beforeAllThisClass() {
 
     Persistence.beginTransaction();
@@ -92,6 +93,7 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
     irvContestResult.setDilutedMargin(BigDecimal.valueOf(0.01));
     irvContestResult.setBallotCount(20000L);
 
+    Persistence.commitTransaction();
   }
 
   /**
