@@ -22,19 +22,14 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.endpoint;
 
 import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
-import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 import au.org.democracydevelopers.corla.workflows.Workflow;
-import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.gson.Gson;
-import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
 import io.restassured.response.Response;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
@@ -43,10 +38,6 @@ import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.util.Optional;
 
-import static au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint.RAIRE_URL;
-import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
-import static au.org.democracydevelopers.corla.util.TestClassWithDatabase.generateAssertionsPortNumberString;
-import static au.org.democracydevelopers.corla.util.TestClassWithDatabase.runSQLSetupScript;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.assertEquals;
@@ -71,16 +62,6 @@ public class GenerateAssertionsValidStateTest extends Workflow {
       = new GenerateAssertionsResponse(tinyIRV, true, false);
 
   /**
-   * Raire endpoint for getting assertions.
-   */
-  private final String raireGenerateAssertionsEndpoint = "/raire/generate-assertions";
-
-  /**
-   * Wiremock server for mocking the raire service.
-   */
-  private WireMockServer wireMockRaireServer;
-
-  /**
    * GSON for json interpretation.
    */
   private final static Gson gson = new Gson();
@@ -93,25 +74,6 @@ public class GenerateAssertionsValidStateTest extends Workflow {
 
     Persistence.beginTransaction();
     runSQLSetupScript("SQL/co-counties.sql");
-    // config = loadProperties();
-    RestAssured.baseURI = "http://localhost";
-    RestAssured.port = 8888;
-
-    // Set up default raire server on the port defined in test.properties.
-    // You can instead run the real raire service and set baseUrl accordingly,
-    // though some tests may fail, depending on whether you have
-    // appropriate contests in the database.
-    final int raireGenerateAssertionsPort = Integer.parseInt(config.getProperty(generateAssertionsPortNumberString, ""));
-    wireMockRaireServer = new WireMockServer(raireGenerateAssertionsPort);
-    wireMockRaireServer.start();
-
-    String baseUrl = wireMockRaireServer.baseUrl();
-    configureFor("localhost", wireMockRaireServer.port());
-
-    // Set the above-initialized URL for the RAIRE_URL property in Main.
-    // This config is used in runMainAndInitializeDBIfNeeded.
-    config.setProperty(RAIRE_URL, baseUrl);
-    // final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
     runMain(config, "GenerateAssertionsAPITests");
 
     // Load some IRV contests into the database.
@@ -124,11 +86,6 @@ public class GenerateAssertionsValidStateTest extends Workflow {
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
             .withBody(gson.toJson(tinyIRVResponse))));
-  }
-
-  @AfterClass
-  public void closeMocks() {
-    wireMockRaireServer.stop();
   }
 
   /**

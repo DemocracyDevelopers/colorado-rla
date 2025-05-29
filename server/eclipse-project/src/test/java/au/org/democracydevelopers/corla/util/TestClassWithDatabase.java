@@ -65,17 +65,12 @@ public abstract class TestClassWithDatabase {
   /**
    * The string used to identify the configured port in test.properties.
    */
-  public final static String generateAssertionsPortNumberString = "generate_assertions_mock_port";
-
-  /**
-   * The string used to identify the configured port in test.properties.
-   */
-  public final static String getAssertionsPortNumberString = "get_assertions_mock_port";
+  public final static String raireMockPortNumberString = "raire_mock_port";
 
   /**
    * Container for the mock-up database.
    */
-  protected PostgreSQLContainer<?> postgres = createTestContainer();
+  protected final PostgreSQLContainer<?> postgres = createTestContainer();
 
 
   public final static List<Choice> boulderMayoralCandidates = List.of(
@@ -139,12 +134,12 @@ public abstract class TestClassWithDatabase {
   private static void initContestResults() {
 
     boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    boulderIRVContestResult.setBallotCount(100000L);
+    boulderIRVContestResult.setBallotCount((long) boulderMayoralCount);
     boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
     boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
 
     tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    tinyIRVContestResult.setBallotCount(10L);
+    tinyIRVContestResult.setBallotCount((long) tinyIRVCount);
     tinyIRVContestResult.setWinners(Set.of("Alice"));
     tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
 

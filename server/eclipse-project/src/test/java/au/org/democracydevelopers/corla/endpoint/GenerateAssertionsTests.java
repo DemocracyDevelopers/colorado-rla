@@ -24,26 +24,20 @@ package au.org.democracydevelopers.corla.endpoint;
 import au.org.democracydevelopers.corla.communication.requestToRaire.GenerateAssertionsRequest;
 import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
 
-import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 
-import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 
+import au.org.democracydevelopers.corla.workflows.Workflow;
 import com.google.gson.Gson;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.model.*;
 
 import java.util.List;
-import java.util.Set;
-
-import com.github.tomakehurst.wiremock.WireMockServer;
-import us.freeandfair.corla.persistence.Persistence;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.assertEquals;
@@ -56,7 +50,7 @@ import static org.testng.Assert.assertFalse;
  * Includes tests that AbstractAllIrvEndpoint::getIRVContestResults returns the correct values and
  * throws the correct exceptions.
  */
-public class GenerateAssertionsTests extends TestClassWithDatabase {
+public class GenerateAssertionsTests extends Workflow {
 
   /**
    * Class-wide logger.
@@ -85,7 +79,7 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
    * Request for Boulder Mayoral '23
    */
   private final static GenerateAssertionsRequest boulderRequest
-      = new GenerateAssertionsRequest(boulderMayoral, bouldMayoralCount, 5,
+      = new GenerateAssertionsRequest(boulderMayoral, boulderMayoralCount, 5,
           boulderMayoralCandidates.stream().map(Choice::name).toList());
 
   /**
@@ -101,18 +95,6 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   private final static GenerateAssertionsRequest tiedIRVRequest
       = new GenerateAssertionsRequest(tiedIRV, tinyIRVCount, 5,
       tinyIRVCandidates.stream().map(Choice::name).toList());
-
-
-  /**
-   * Raire endpoint for getting assertions.
-   */
-  private final static String raireGenerateAssertionsEndpoint = "/raire/generate-assertions";
-
-  /**
-   * Wiremock server for mocking the raire service.
-   * (Note the default of 8080 clashes with the raire-service default, so this is different.)
-   */
-  private WireMockServer wireMockRaireServer;
 
   /**
    * Base url - this is set up to use the wiremock server, but could be set here to wherever you have the
@@ -143,40 +125,14 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   private final static Gson gson = new Gson();
 
   /**
-   * Database init.
-   */
-  @BeforeClass
-  public static void beforeAllThisClass() {
-    // Persistence.setProperties(config);
-  }
-
-  /**
    * Initialise mocked objects prior to the first test.
    */
   @BeforeClass
   public void initMocks() {
 
-    boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    boulderIRVContestResult.setBallotCount((long) bouldMayoralCount);
-    boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
-    boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
-
-    tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    tinyIRVContestResult.setBallotCount((long) tinyIRVCount);
-    tinyIRVContestResult.setWinners(Set.of("Alice"));
-    tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
-
-
-    // Set up default raire server on the port defined in test.properties.
-    // You can instead run the real raire service and set baseUrl accordingly,
-    // though the tests of invalid/uninterpretable data will fail, and of course you have to have
-    // appropriate contests in the database.
-    final int raireGenerateAssertionsPort = Integer.parseInt(config.getProperty(generateAssertionsPortNumberString, ""));
-    wireMockRaireServer = new WireMockServer(raireGenerateAssertionsPort);
-    wireMockRaireServer.start();
     baseUrl = wireMockRaireServer.baseUrl();
     String badUrl = baseUrl + badEndpoint;
-    configureFor("localhost", wireMockRaireServer.port());
+
     // Mock a proper response to the Boulder Mayoral '23 contest.
     stubFor(post(urlEqualTo(raireGenerateAssertionsEndpoint))
         .withRequestBody(equalToJson(gson.toJson(boulderRequest)))
@@ -219,11 +175,6 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
             .withHeader("Content-Type", "application/json")
             .withBody("This isn't valid json")));
 
-  }
-
-  @AfterClass
-  public void closeMocks() {
-    wireMockRaireServer.stop();
   }
 
   /**

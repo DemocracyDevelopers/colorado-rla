@@ -20,11 +20,9 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 */
 
 package au.org.democracydevelopers.corla.util;
-import au.org.democracydevelopers.corla.model.ContestType;
 import org.apache.log4j.Logger;
 import us.freeandfair.corla.model.*;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -40,7 +38,7 @@ public class testUtils {
   /**
    * Count of the universe size for Boulder Mayoral '23.
    */
-  public final static int bouldMayoralCount = 118669;
+  public final static int boulderMayoralCount = 118669;
 
   /**
    * Tiny constructed example.

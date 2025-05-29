@@ -21,10 +21,8 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.endpoint;
 
-import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 import au.org.democracydevelopers.corla.workflows.Workflow;
-import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
 import io.restassured.response.Response;
@@ -32,8 +30,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -41,11 +37,7 @@ import us.freeandfair.corla.persistence.Persistence;
 
 import java.util.Optional;
 
-import static au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint.RAIRE_URL;
 import static au.org.democracydevelopers.corla.endpoint.GetAssertions.*;
-import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
-import static au.org.democracydevelopers.corla.util.TestClassWithDatabase.getAssertionsPortNumberString;
-import static au.org.democracydevelopers.corla.util.TestClassWithDatabase.runSQLSetupScript;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.*;
 
@@ -60,23 +52,6 @@ public class GetAssertionsAPITests extends Workflow {
   private static final Logger LOGGER = LogManager.getLogger(GetAssertionsAPITests.class);
 
   /**
-   * Endpoint for getting assertions.
-   */
-  private final static String raireGetAssertionsEndpoint = "/raire/get-assertions";
-
-  /**
-   * Wiremock server for mocking the raire service.
-   * (Note the default of 8080 clashes with the raire-service default, so this is different.)
-   */
-  WireMockServer wireMockRaireServer;
-
-  /**
-   * Base url - this is set up to use the wiremock server, but could be set here to wherever you have the
-   * raire-service running to test with that directly.
-   */
-  private static String baseUrl;
-
-  /**
    * Initialise mocked raire service prior to the first test.
    */
   @BeforeClass
@@ -84,21 +59,6 @@ public class GetAssertionsAPITests extends Workflow {
 
     Persistence.beginTransaction();
     runSQLSetupScript("SQL/co-counties.sql");
-
-    RestAssured.baseURI = "http://localhost";
-    RestAssured.port = 8888;
-
-    // Set up the mock raire server's port.
-    final int raireGetAssertionsPort = Integer.parseInt(config.getProperty(getAssertionsPortNumberString, ""));
-    wireMockRaireServer = new WireMockServer(raireGetAssertionsPort);
-    wireMockRaireServer.start();
-
-    baseUrl = wireMockRaireServer.baseUrl();
-    configureFor("localhost", wireMockRaireServer.port());
-
-    // Set the above-initialized URL for the RAIRE_URL property in Main.
-    // This config is used in runMainAndInitializeDBIfNeeded.
-    config.setProperty(RAIRE_URL, baseUrl);
     runMain(config, "GetAssertionsAPITests");
 
     // Load some IRV contests into the database.
@@ -115,11 +75,6 @@ public class GetAssertionsAPITests extends Workflow {
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
             .withBody("Test json")));
-  }
-
-  @AfterClass
-  public void closeMocks() {
-    wireMockRaireServer.stop();
   }
 
   /**
@@ -175,8 +130,8 @@ public class GetAssertionsAPITests extends Workflow {
   @DataProvider(name = "SampleBadEndpoints")
   public static String[][] SampleBadEndpoints() {
     return new String[][]{
-        {baseUrl + "/badUrl", CSV_SUFFIX},
-        {baseUrl + "/badUrl", JSON_SUFFIX}
+        {RestAssured.baseURI + "/badUrl", CSV_SUFFIX},
+        {RestAssured.baseURI + "/badUrl", JSON_SUFFIX}
     };
   }
 
