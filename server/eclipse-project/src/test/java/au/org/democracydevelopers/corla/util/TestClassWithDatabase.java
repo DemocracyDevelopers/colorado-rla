@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
-import au.org.democracydevelopers.corla.endpoint.GenerateAssertionsAPITests;
 import au.org.democracydevelopers.corla.model.ContestType;
 import com.google.gson.Gson;
 import org.apache.log4j.LogManager;
@@ -79,7 +78,7 @@ public abstract class TestClassWithDatabase {
   /**
    * Container for the mock-up database.
    */
-  private final PostgreSQLContainer<?> postgres = createTestContainer();
+  private final PostgreSQLContainer<?> postgres = createTestContainer(config);
 
   /**
    * GSON for json interpretation.
@@ -178,7 +177,7 @@ public abstract class TestClassWithDatabase {
    * interacts with the database.
    * @return a postgres test container representing a test database.
    */
-  public PostgreSQLContainer<?> createTestContainer() {
+  private static PostgreSQLContainer<?> createTestContainer(Properties config) {
     LOGGER.debug("Creating PostgreSQLContainer");
 
     return new PostgreSQLContainer<>("postgres:15-alpine")
