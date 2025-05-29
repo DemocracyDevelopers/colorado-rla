@@ -93,13 +93,6 @@ public class WorkflowRunnerWithRaire extends Workflow {
   }
 
   /**
-   * Start a transaction.
-   */
-  public void setup() {
-    Persistence.beginTransaction();
-  }
-
-  /**
    * Override Workflow close mocks - nothing to close.
    */
   @AfterClass

@@ -21,19 +21,15 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
-import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-import us.freeandfair.corla.persistence.Persistence;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import static org.testng.Assert.*;
@@ -93,8 +89,6 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
       // The default argument is passed in from src/test/resources/testng.xml
       return;
     }
-
-    runMainAndInitializeDBIfNeeded("Workflow with raire", Optional.empty());
 
     // Reset the database.
     resetDatabase("stateadmin1");
@@ -187,22 +181,5 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
     assertTrue(assertionsCSV.size() > 1);
     assertTrue(assertionsCSV.stream().noneMatch(l -> StringUtils.containsIgnoreCase(l, "LYON Michael")));
     assertTrue(assertionsCSV.stream().anyMatch(l -> StringUtils.containsIgnoreCase(l, "SWIVEL SwappedWithLyon")));
-  }
-
-  /**
-   * Set up persistence with the database and raire url set up in src/test/resources/test.properties
-   * This assumes the database is in an initial state, with administrator logins and counties but
-   * without other data.
-   * This version does not actually run main, because main is expected to be already running.
-   * @param testName not used.
-   * @param postgres not used.
-   */
-  protected void runMainAndInitializeDBIfNeeded(final String testName, final Optional<PostgreSQLContainer<?>> postgres) {
-    assertTrue(postgres.isEmpty());
-    testUtils.log(LOGGER, "[runMainAndInitializeDB] running workflow " + testName + ".");
-    // Don't need to start main because we assume it's already running.
-    // main("src/test/resources/test.properties");
-    Persistence.setProperties(config);
-    Persistence.beginTransaction();
   }
 }
