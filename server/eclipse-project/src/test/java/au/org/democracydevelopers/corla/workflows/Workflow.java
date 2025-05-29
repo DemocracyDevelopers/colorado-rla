@@ -75,6 +75,7 @@ import org.apache.log4j.Logger;
 import org.apache.http.HttpStatus;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
@@ -241,6 +242,13 @@ public abstract class Workflow extends TestClassWithDatabase {
   public void closeMocks() {
     wireMockRaireServer.stop();
   }
+
+  /**
+   * Override the rollback after each test. Not necessary for workflows because we reset the database.
+   */
+  @AfterMethod
+  @Override
+  public void rollbackAfterTest(){}
 
   /**
    * Runs a specified audit workflow which will either interact with the RAIRE service to

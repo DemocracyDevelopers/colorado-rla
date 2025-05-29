@@ -25,8 +25,11 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import au.org.democracydevelopers.corla.endpoint.GenerateAssertionsAPITests;
 import au.org.democracydevelopers.corla.model.ContestType;
 import com.google.gson.Gson;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.jdbc.JdbcDatabaseDelegate;
@@ -52,6 +55,11 @@ import static au.org.democracydevelopers.corla.util.testUtils.*;
  * name - otherwise it seems to silently not run.
  */
 public abstract class TestClassWithDatabase {
+
+  /**
+   * Class-wide logger.
+   */
+  private static final Logger LOGGER = LogManager.getLogger(TestClassWithDatabase.class);
 
   /**
    * Blank properties for submitting to the DominionCVRExportParser instance.
@@ -158,7 +166,7 @@ public abstract class TestClassWithDatabase {
    * Rollback any changes to the (test) database after each test method is run.
    */
   @AfterMethod
-  public static void afterTest(){
+  public void rollbackAfterTest(){
     try {
       Persistence.rollbackTransaction();
     } catch (Exception ignored) {
@@ -171,6 +179,8 @@ public abstract class TestClassWithDatabase {
    * @return a postgres test container representing a test database.
    */
   public PostgreSQLContainer<?> createTestContainer() {
+    LOGGER.debug("Creating PostgreSQLContainer");
+
     return new PostgreSQLContainer<>("postgres:15-alpine")
         // None of these actually have to be the same as the real database (except its name),
         // but this makes it easy to match the setup scripts.
