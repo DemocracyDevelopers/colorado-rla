@@ -87,7 +87,6 @@ public class GenerateAssertionsValidStateTest extends Workflow {
             .withHeader("Content-Type", "application/json")
             .withBody(gson.toJson(tinyIRVResponse))));
 
-    Persistence.commitTransaction();
   }
 
   /**

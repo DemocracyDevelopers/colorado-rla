@@ -92,8 +92,6 @@ public class EstimateSampleSizesTests extends TestClassWithAuth {
     irvContestResult.addCounties(Set.of(oneNEBAssertionCounty));
     irvContestResult.setDilutedMargin(BigDecimal.valueOf(0.01));
     irvContestResult.setBallotCount(20000L);
-
-    Persistence.commitTransaction();
   }
 
   /**

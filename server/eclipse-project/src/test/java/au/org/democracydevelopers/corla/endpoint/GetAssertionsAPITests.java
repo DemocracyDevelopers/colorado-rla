@@ -77,8 +77,6 @@ public class GetAssertionsAPITests extends Workflow {
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
             .withBody("Test json")));
-
-    Persistence.commitTransaction();
   }
 
   /**
