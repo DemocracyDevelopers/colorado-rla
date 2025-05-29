@@ -26,17 +26,14 @@ import io.restassured.RestAssured;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-import org.testng.annotations.Parameters;
+import org.testng.annotations.*;
 import us.freeandfair.corla.persistence.Persistence;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Optional;
 
-import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.*;
 
 /**
@@ -73,12 +70,47 @@ public class WorkflowRunnerWithRaire extends Workflow {
   private static final Logger LOGGER = LogManager.getLogger(WorkflowRunnerWithRaire.class);
 
 
+  /**
+   * Set up restassured to point to a real running instance of the corla server as specified in config.
+   */
   @BeforeClass
-  public void setup() {
-    config = loadProperties();
+  @Override
+  public void setupRestAssured() {
     RestAssured.baseURI = config.getProperty("corla_url");
     RestAssured.port = Integer.parseInt(config.getProperty("corla_http_port"));
   }
+
+  /**
+   * Override Workflow setup of a mocked raire service - just use the config as is.
+   */
+  @BeforeClass
+  @Override
+  public void setupWiremockRaireService() {}
+
+  /**
+   * Override TestClassWithDatabase setup of a postgres container - assume we've got a real corla
+   * database to use.
+   */
+  @BeforeClass
+  @Override
+  public void initDatabase() {
+    Persistence.setProperties(config);
+    Persistence.openSession();
+  }
+
+  /**
+   * Start a transaction.
+   */
+  public void setup() {
+    Persistence.beginTransaction();
+  }
+
+  /**
+   * Override Workflow close mocks - nothing to close.
+   */
+  @AfterClass
+  @Override
+  public void closeMocks() {}
 
   /**
    * Given a JSON file defining an audit workflow (CVRs, Manifests, which CVRs to replace with
@@ -110,7 +142,7 @@ public class WorkflowRunnerWithRaire extends Workflow {
     try {
       final Path pathToInstance = Paths.get(workflowFile);
       LOGGER.info(String.format("%s %s %s.", prefix, "running workflow", pathToInstance));
-      runMainAndInitializeDBIfNeeded("Workflow with raire", Optional.empty());
+      // runMainAndInitializeDBIfNeeded("Workflow with raire", Optional.empty());
 
       // Do the workflow. Reset the database first.
       resetDatabase("stateadmin1");
