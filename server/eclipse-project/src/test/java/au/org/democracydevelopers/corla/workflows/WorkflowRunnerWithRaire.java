@@ -100,6 +100,14 @@ public class WorkflowRunnerWithRaire extends Workflow {
   public void closeMocks() {}
 
   /**
+   * Override the rollback after each test. Might be a feature _not_ to roll back after one of the
+   * with-raire tests.
+   */
+  @AfterMethod
+  @Override
+  public void rollbackAfterTest(){}
+
+  /**
    * Given a JSON file defining an audit workflow (CVRs, Manifests, which CVRs to replace with
    * phantoms, which ballots to treat as phantoms, expected diluted margins and sample sizes,
    * which ballots to simulate discrepancies for, and expected end of round states ...), run

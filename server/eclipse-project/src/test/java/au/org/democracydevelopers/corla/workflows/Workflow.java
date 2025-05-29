@@ -244,13 +244,6 @@ public abstract class Workflow extends TestClassWithDatabase {
   }
 
   /**
-   * Override the rollback after each test. Not necessary for workflows because we reset the database.
-   */
-  @AfterMethod
-  @Override
-  public void rollbackAfterTest(){}
-
-  /**
    * Runs a specified audit workflow which will either interact with the RAIRE service to
    * generate assertions, or load assertions from an SQL file, depending on whether a test
    * database has been provided as input (ie. if optPostGres is not empty).
