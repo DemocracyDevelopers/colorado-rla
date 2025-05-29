@@ -67,7 +67,6 @@ public class WorkflowRunner extends Workflow {
     runMain(config, "WorkflowRunner");
     Persistence.beginTransaction();
     runSQLSetupScript("SQL/co-admins.sql");
-    Persistence.commitTransaction();
   }
 
   /**

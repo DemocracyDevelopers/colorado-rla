@@ -73,7 +73,6 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
     runMain(config, "runManifestVaryingDemo");
     Persistence.beginTransaction();
     runSQLSetupScript("SQL/co-admins.sql");
-    Persistence.commitTransaction();
   }
 
   /**

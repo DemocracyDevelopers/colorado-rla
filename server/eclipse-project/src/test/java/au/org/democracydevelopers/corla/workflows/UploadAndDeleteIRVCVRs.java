@@ -60,7 +60,6 @@ public class UploadAndDeleteIRVCVRs extends Workflow {
     runMain(config, "UploadAndDeleteIRVCVRs");
     Persistence.beginTransaction();
     runSQLSetupScript("SQL/co-admins.sql");
-    Persistence.commitTransaction();
   }
 
   /**
