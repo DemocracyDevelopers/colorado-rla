@@ -21,20 +21,15 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
-import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.RestAssured;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.*;
 import us.freeandfair.corla.persistence.Persistence;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
-
-import static org.testng.Assert.*;
 
 /**
  * This workflow runner is designed to run in a UAT environment in which the raire service, colorado-rla
@@ -68,7 +63,6 @@ public class WorkflowRunnerWithRaire extends Workflow {
    * Class-wide logger.
    */
   private static final Logger LOGGER = LogManager.getLogger(WorkflowRunnerWithRaire.class);
-
 
   /**
    * Set up restassured to point to a real running instance of the corla server as specified in config.
@@ -155,23 +149,5 @@ public class WorkflowRunnerWithRaire extends Workflow {
       throw new RuntimeException(msg);
     }
   }
-
-  /**
-   * Run everything with the database and raire url set up in src/test/resources/test.properties
-   * This assumes the database is in an initial state, with administrator logins and counties but
-   * without other data.
-   * TODO possibly get testName to be the full (relative) path of the config file. Then this can
-   * be used for src/main/resources/us/freeandfair/corla/default.properties
-   * This version does not actually run main, because main is expected to be already running.
-   * @param testName not used.
-   * @param postgres not used.
-   */
-  protected void runMainAndInitializeDBIfNeeded(final String testName, final Optional<PostgreSQLContainer<?>> postgres) {
-    assertTrue(postgres.isEmpty());
-    testUtils.log(LOGGER, "[runMainAndInitializeDB] running workflow " + testName + ".");
-    // Don't need to start main because we assume it's already running.
-    // main("src/test/resources/test.properties");
-    Persistence.setProperties(config);
-    Persistence.beginTransaction();
-  }
 }
+

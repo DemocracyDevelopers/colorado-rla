@@ -22,13 +22,11 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.workflows;
 
 import au.org.democracydevelopers.corla.util.testUtils;
-import io.restassured.RestAssured;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.persistence.Persistence;
@@ -38,7 +36,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
 
@@ -67,22 +64,12 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_ST
  * This test is skipped when the tests are run with default parameters, i.e. during automated testing.
  */
 @Test(enabled=true)
-public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends Workflow {
+public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends WorkflowRunnerWithRaire {
 
   /**
    * Class-wide logger.
    */
   private static final Logger LOGGER = LogManager.getLogger(WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement.class);
-
-
-  @BeforeClass
-  public void setup() {
-    // FIXME - we should now not need this. May also not need Persistence stuff in
-    // runMainAndInitializeDBIfNeeded() at all.
-    config = loadProperties();
-    RestAssured.baseURI = config.getProperty("corla_url");
-    RestAssured.port = Integer.parseInt(config.getProperty("corla_http_port"));
-  }
 
   /**
    * Run assertion generation test workflow, interacting with raire-service.
@@ -94,6 +81,7 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
    */
   @Parameters("workflowFile")
   @Test
+  @Override
   public void runInstance(final String workflowFile) throws InterruptedException {
     final String prefix = "[runInstance] ";
     LOGGER.info(String.format("%s %s.", prefix, "running WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement"));
