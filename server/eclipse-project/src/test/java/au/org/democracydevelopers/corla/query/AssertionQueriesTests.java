@@ -48,7 +48,7 @@ public class AssertionQueriesTests extends TestClassWithDatabase {
    * Start the test container and establish persistence properties before the first test.
    */
   @BeforeClass
-  public static void beforeAllThisClass() {
+  public void beforeAllThisClass() {
     runSQLSetupScript("SQL/co-counties.sql");
     runSQLSetupScript("SQL/simple-assertions.sql");
   }

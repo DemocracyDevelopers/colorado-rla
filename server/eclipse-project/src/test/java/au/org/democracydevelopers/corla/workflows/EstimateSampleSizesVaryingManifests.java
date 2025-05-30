@@ -22,18 +22,16 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.workflows;
 
 import au.org.democracydevelopers.corla.endpoint.EstimateSampleSizes;
-import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.RestAssured;
 import io.restassured.path.json.JsonPath;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import us.freeandfair.corla.model.CastVoteRecord;
+import us.freeandfair.corla.persistence.Persistence;
 
-import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.*;
 import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_STATE;
 import static us.freeandfair.corla.model.AuditReason.COUNTY_WIDE_CONTEST;
@@ -65,9 +63,14 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
    */
   private static final Logger LOGGER = LogManager.getLogger(EstimateSampleSizesVaryingManifests.class);
 
+  /**
+   * TestNG guarantees that this runs _after_ @BeforeClass methods in the superclass.
+   */
   @BeforeClass
   public void setup() {
-    config = loadProperties();
+    runMain(config, "runManifestVaryingDemo");
+    Persistence.beginTransaction();
+    runSQLSetupScript(postgres, "SQL/co-admins.sql");
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
   }
@@ -78,9 +81,6 @@ public class EstimateSampleSizesVaryingManifests extends Workflow {
   @Test(enabled=true)
   public void runManifestVaryingDemo() throws InterruptedException {
     testUtils.log(LOGGER, "runManifestVaryingDemo");
-
-    final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
-    runMainAndInitializeDBIfNeeded("runManifestVaryingDemo", Optional.of(postgres));
 
     final String margin2Contest = "PluralityMargin2";
     final String margin10Contest = "PluralityMargin10";

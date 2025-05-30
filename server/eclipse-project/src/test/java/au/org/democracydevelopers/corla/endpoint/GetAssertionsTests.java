@@ -21,6 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.endpoint;
 
+import au.org.democracydevelopers.corla.model.ContestType;
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 import org.apache.http.HttpStatus;
@@ -38,8 +39,7 @@ import us.freeandfair.corla.model.*;
 
 import java.io.*;
 import java.net.MalformedURLException;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipInputStream;
@@ -50,21 +50,14 @@ import static au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint.R
 import static au.org.democracydevelopers.corla.endpoint.GetAssertions.*;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.*;
 
 /**
  * Test the GetAssertions endpoint, both CSV and JSON versions. The response is supposed to be a zip file containing
  * the assertions.
  * Includes tests that AbstractAllIrvEndpoint::getIRVContestResults returns the correct values and
  * throws the correct exceptions.
- * TODO VT: This really isn't a completely comprehensive set of tests yet. We also need:
- * - API testing
- * - Testing for retrieving the data from the zip.
- * - More comprehensive testing of filename sanitization (from contest names).
- * - Testing that the service throws appropriate exceptions if the raire service connection isn't set up properly.
- * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/125">...</a>
+ * Includes testing of filename sanitization (from contest names).
  */
 public class GetAssertionsTests extends TestClassWithDatabase {
 
@@ -93,10 +86,16 @@ public class GetAssertionsTests extends TestClassWithDatabase {
   private static final Properties mockProperties = new Properties();
 
   /**
+   * The mocked contest results, which start off with just the ones from TestUtils, but to which we will add some
+   * difficult contest names.
+   */
+  private static final List<ContestResult> mockedTrickyContestResults = new ArrayList<>(mockedIRVContestResults);
+
+  /**
    * Database init.
    */
   @BeforeClass
-  public static void beforeAllThisClass() {
+  public void beforeAllThisClass() {
 
     // Load in the counties data, actually just for basic setup such as DoSDashboard.
     runSQLSetupScript("SQL/co-counties.sql");
@@ -109,19 +108,9 @@ public class GetAssertionsTests extends TestClassWithDatabase {
   public void initMocks() {
     MockitoAnnotations.openMocks(this);
 
-    boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    boulderIRVContestResult.setBallotCount(100000L);
-    boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
-    boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
-
-    tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    tinyIRVContestResult.setBallotCount(10L);
-    tinyIRVContestResult.setWinners(Set.of("Alice"));
-    tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
-
     // Set up a wiremock raire server on the port defined in test.properties.
-    final int rairePort = Integer.parseInt(config.getProperty(getAssertionsPortNumberString, ""));
-    wireMockRaireServer = new WireMockServer(rairePort);
+    final int raireMockPort = Integer.parseInt(config.getProperty(raireMockPortNumberString, ""));
+    wireMockRaireServer = new WireMockServer(raireMockPort);
     wireMockRaireServer.start();
     baseUrl = wireMockRaireServer.baseUrl();
     configureFor("localhost", wireMockRaireServer.port());
@@ -148,52 +137,80 @@ public class GetAssertionsTests extends TestClassWithDatabase {
 
 
   /**
-   * Test data for the two valid IRV contests, with json and csv.  This gives the successfully-sanitized version of
+   * Test data for the two valid IRV contest names.  This gives the successfully-sanitized version of
    * the contest names.
    */
   @DataProvider(name = "TwoIRVContests")
-  public static String[][] TwoIRVContests() {
-    return new String[][]{
-        {"CityofBoulderMayoralCandidates", tinyIRV, JSON_SUFFIX},
-        {"CityofBoulderMayoralCandidates", tinyIRV, CSV_SUFFIX}
+  public static String[][][] IRVContests() {
+    return new String[][][]{
+        {{"CityofBoulderMayoralCandidates", tinyIRV}}
     };
   }
 
   /**
-   * Calls the getAssertions main endpoint function and checks that the right file names are present in the
-   * zip.
-   *
-   * @throws Exception never.
+   * Calls the getAssertions main endpoint function and checks that the right file names are present in the zip. This
+   * runs two instances, one with the ordinary IRV contests ("City of Boulder Mayoral Candidates" and "TinyIRVExample1"),
+   * and the other with a list of weird contest names.
+   * @throws IOException or InterruptedException if something goes wrong with unzip or getting assertions.
    */
-  @Test(dataProvider = "TwoIRVContests")
-  public void rightFileNamesInZip(String contestName1, String contestName2, String suffix) throws Exception {
-    testUtils.log(LOGGER, "rightFileNamesInZip");
+  @Test
+  public void rightSanitizedFileNamesInZip() throws IOException, InterruptedException {
+    testUtils.log(LOGGER, "rightSanitizedFileNamesInZip");
+
+    // rightFileNamesInZip(new String[] {"CityofBoulderMayoralCandidates", tinyIRV}, mockedIRVContestResults);
+
+    // Now mock some with non-word characters and check they're properly sanitized.
+    // All these complicated characters are removed.
+    final Contest kempseyTricky = new Contest("K&e&*mpsey-!Mayoral", new County("Alamosa", 2L),
+        ContestType.IRV.toString(), boulderMayoralCandidates, 4, 1, 0);
+    final ContestResult kempseyTrickyIRVContestResult = new ContestResult(kempseyTricky.name());
+    kempseyTrickyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+    kempseyTrickyIRVContestResult.setBallotCount(100000L);
+    kempseyTrickyIRVContestResult.setWinners(Set.of("Bob"));
+    kempseyTrickyIRVContestResult.addContests(Set.of(boulderMayoralContest));
+    mockedTrickyContestResults.add(kempseyTrickyIRVContestResult);
+
+    // Underscores are retained.
+    final Contest byronTricky = new Contest(" Byron_Mayoral    ", new County("Arapahoe", 3L),
+        ContestType.IRV.toString(), boulderMayoralCandidates, 4, 1, 0);
+    final ContestResult byronTrickyIRVContestResult = new ContestResult(byronTricky.name());
+    byronTrickyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+    byronTrickyIRVContestResult.setBallotCount(10L);
+    byronTrickyIRVContestResult.setWinners(Set.of("Alice"));
+    byronTrickyIRVContestResult.addContests(Set.of(byronTricky));
+    mockedTrickyContestResults.add(byronTrickyIRVContestResult);
+
+    final String[] expectedSanitizedContestNames =  new String[] {"CityofBoulderMayoralCandidates", tinyIRV, "KempseyMayoral", "Byron_Mayoral"};
 
     try (MockedStatic<AbstractAllIrvEndpoint> mockIRVContestResults = Mockito.mockStatic(AbstractAllIrvEndpoint.class);
          MockedStatic<Main> mockedMain = Mockito.mockStatic(Main.class)) {
 
       // Mock IRV contest results
-      mockIRVContestResults.when(AbstractAllIrvEndpoint::getIRVContestResults).thenReturn(mockedIRVContestResults);
+      mockIRVContestResults.when(AbstractAllIrvEndpoint::getIRVContestResults).thenReturn(mockedTrickyContestResults);
 
       // Mock the RAIRE_URL from main.
       mockedMain.when(Main::properties).thenReturn(mockProperties);
 
-      ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-      ZipOutputStream zos = new ZipOutputStream(bytesOut);
-      getAssertions(zos, "", suffix);
-      zos.close();
+      for (String suffix : List.of(JSON_SUFFIX, CSV_SUFFIX)) {
+        final ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+        final ZipOutputStream zos = new ZipOutputStream(bytesOut);
+        getAssertions(zos, "", suffix);
+        zos.close();
 
-      byte[] bytes = bytesOut.toByteArray();
-      InputStream bais = new ByteArrayInputStream(bytes);
-      ZipInputStream in = new ZipInputStream(bais);
-      ZipEntry firstEntry = in.getNextEntry();
-      assertNotNull(firstEntry);
-      assertEquals(firstEntry.getName(), contestName1 + "_assertions." + suffix);
-      ZipEntry secondEntry = in.getNextEntry();
-      assertNotNull(secondEntry);
-      assertEquals(secondEntry.getName(), contestName2 + "_assertions." + suffix);
-      ZipEntry thirdEntry = in.getNextEntry();
-      assertNull(thirdEntry);
+        final byte[] bytes = bytesOut.toByteArray();
+        final InputStream bais = new ByteArrayInputStream(bytes);
+        final ZipInputStream in = new ZipInputStream(bais);
+        // Check that each entry is in the list of expectedSanitizedContestNames.
+        for (int i = 0; i < expectedSanitizedContestNames.length; i++) {
+          final ZipEntry entry = in.getNextEntry();
+          assertNotNull(entry);
+          assertTrue(Arrays.stream(expectedSanitizedContestNames)
+                  .anyMatch(cn -> entry.getName().equalsIgnoreCase(cn + "_assertions." + suffix)));
+        }
+
+        // Check that there are no more entries than expectedSanitizedContestNames.
+        assertNull(in.getNextEntry());
+      }
     }
   }
 

@@ -80,7 +80,7 @@ public class GetAssertions extends AbstractAllIrvEndpoint {
     /**
      * String for "format" query parameter (value will be csv or json).
      */
-    private static final String FORMAT_PARAM = "format";
+    public static final String FORMAT_PARAM = "format";
 
     /**
      * {@inheritDoc}

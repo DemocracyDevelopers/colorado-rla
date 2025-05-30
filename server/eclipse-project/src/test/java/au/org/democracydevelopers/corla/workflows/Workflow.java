@@ -21,6 +21,7 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
+import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.CONTEST_NAME;
 import static au.org.democracydevelopers.corla.workflows.Instance.INFINITE_ROUNDS;
 import static io.restassured.RestAssured.given;
 import static java.util.Collections.min;
@@ -61,6 +62,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import java.util.zip.ZipInputStream;
 
 import org.apache.commons.lang.StringUtils;
@@ -73,7 +75,6 @@ import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.model.UploadedFile;
-import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.query.ContestResultQueries;
 import wiremock.net.minidev.json.JSONArray;
@@ -83,7 +84,7 @@ import wiremock.net.minidev.json.JSONObject;
  * Base class for an API test workflow designed to run through a sequence of steps involving
  * a sequence of endpoint accesses.
  */
-public abstract class Workflow  {
+public abstract class Workflow extends TestClassWithDatabase {
 
   /**
    * A collection of data representing an audit session for a county.
@@ -109,11 +110,6 @@ public abstract class Workflow  {
    * Path for storing temporary config files
    */
   protected static final String tempConfigPath = "src/test/resources/workflows/temp/";
-
-  /**
-   * Properties such as database login and corla & raire urls.
-   */
-  protected Properties config;
 
   /**
    * Default audit board names.
@@ -183,6 +179,7 @@ public abstract class Workflow  {
   protected static final String RECORD_TYPE = "record_type";
   protected static final String SCANNER_ID = "scanner_id";
   protected static final String TIMESTAMP = "timestamp";
+  protected static final String TIME_LIMIT_SECONDS = "timeLimitSeconds";
 
   /**
    * Default time limit for a raire service call.
@@ -496,7 +493,6 @@ public abstract class Workflow  {
 
     // Check the tabulate_county_plurality report
     checkTabulateCountyPluralityReport(getReportAsCSV("tabulate_county_plurality"), instance);
-
   }
 
   /**
@@ -554,6 +550,33 @@ public abstract class Workflow  {
     LOGGER.debug("Auth status for login " + user + " stage " + stage + " is " + authStatus);
     assertEquals(authStatus, (stage == 1) ? TRADITIONALLY_AUTHENTICATED.toString()
         : SECOND_FACTOR_AUTHENTICATED.toString(), "Stage " + stage + " auth failed.");
+  }
+
+  /**
+   * Hit the colorado-rla generate-assertions endpoint.
+   * @param filter Session filter to maintain same session across API test.
+   */
+  protected Response generateAssertionsCorla(final SessionFilter filter, final Optional<String> contestName,
+                                             final Optional<Double> timeLimitSeconds) {
+    final String contestQ = contestName.map(s -> CONTEST_NAME + "=" + s).orElse("");
+    final String timeLimitQ = timeLimitSeconds.map(s -> TIME_LIMIT_SECONDS + "=" + s).orElse("");
+    final String queryString = (contestName.isPresent() || timeLimitSeconds.isPresent() ? "?" : "")
+        + String.join(",", Stream.of(contestQ, timeLimitQ).filter(s -> !s.isEmpty()).toList());
+
+    return given().filter(filter)
+        .header("Content-Type", "application/json")
+        .get("/generate-assertions" + queryString);
+  }
+
+  /**
+   * Hit the colorado-rla get-assertions endpoint, with the stated query string.
+   * @param filter Session filter to maintain same session across API test.
+   */
+  protected Response getAssertionsCorla(final SessionFilter filter, final Optional<String> queryString) {
+
+    return given().filter(filter)
+        .header("Content-Type", "application/json")
+        .get("/get-assertions" + queryString.orElse(""));
   }
 
   /**
@@ -639,10 +662,6 @@ public abstract class Workflow  {
           .header("Content-Type", "application/json")
           .body(params.toJSONString())
           .post("/audit-board-sign-in");
-      // FIXME This sometimes doesn't work, possibly because of contention.
-      //     .then()
-      //    .assertThat()
-      //    .statusCode(HttpStatus.SC_OK);
   }
 
   /**
@@ -1522,30 +1541,6 @@ public abstract class Workflow  {
       final Optional<Integer> expectedFinalEstimated = instance.getExpectedEstimatedSamples(contestName);
       expectedFinalEstimated.ifPresent(m -> assertTrue(m <= estimatedSamples));
     }
-  }
-
-  /**
-   * Set up main's configuration file to match the given postgres container, then run main and
-   * load the colorado-rla init script into the database.
-   * This loads in the properties in resources/test.properties, then overwrites the database
-   * location with the one in the newly-created test container.
-   * This is used as is in all the workflows except WorkflowRunnerWithRaire, which overrides it
-   * because it doesn't need to run main or initialize the DB.
-   * @param testName Name of test instance.
-   * @param postgresOpt The PostgreSQL container to use.
-   */
-  protected void runMainAndInitializeDBIfNeeded(final String testName, final Optional<PostgreSQLContainer<?>> postgresOpt) {
-    assertTrue(postgresOpt.isPresent());
-    final PostgreSQLContainer<?> postgres = postgresOpt.get();
-
-    postgres.start();
-    config.setProperty("hibernate.url", postgres.getJdbcUrl());
-    Persistence.setProperties(config);
-    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/co-counties.sql");
-
-    runMain(config, testName);
-
-    Persistence.beginTransaction();
   }
 
   /**

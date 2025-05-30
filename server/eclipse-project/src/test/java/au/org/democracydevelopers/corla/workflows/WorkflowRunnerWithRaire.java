@@ -21,23 +21,16 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
-import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.RestAssured;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-import org.testng.annotations.Parameters;
+import org.testng.annotations.*;
 import us.freeandfair.corla.persistence.Persistence;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-
-import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
-import static org.testng.Assert.*;
+import java.util.Optional;
 
 /**
  * This workflow runner is designed to run in a UAT environment in which the raire service, colorado-rla
@@ -63,6 +56,8 @@ import static org.testng.Assert.*;
  * You can also run the test in your IDE - instructions for IntelliJ are at
  * <a href="https://www.jetbrains.com/help/idea/work-with-tests-in-maven.html#skip_test">...</a>
  * This test is skipped when the tests are run with default parameters, i.e. during automated testing.
+ * This deliberately does _not_ reset the database after the workflow runs. This might be helpful if
+ * someone wants to examine its state via the client afterwards.
  */
 @Test(enabled=true)
 public class WorkflowRunnerWithRaire extends Workflow {
@@ -75,10 +70,33 @@ public class WorkflowRunnerWithRaire extends Workflow {
 
   @BeforeClass
   public void setup() {
-    config = loadProperties();
     RestAssured.baseURI = config.getProperty("corla_url");
     RestAssured.port = Integer.parseInt(config.getProperty("corla_http_port"));
   }
+
+  /**
+   * Override TestClassWithDatabase setup of a postgres container - assume we've got a real corla
+   * database to use.
+   */
+  @BeforeClass
+  @Override
+  public void initDatabase() {
+    Persistence.setProperties(config);
+    session = Persistence.openSession();
+  }
+
+  @AfterClass
+  @Override
+  public void afterAll() {
+    session.close();
+  }
+
+  /**
+   * Override TestClassWithDatabase's rollback.
+   */
+  @AfterMethod
+  @Override
+  public void afterTest() {}
 
   /**
    * Given a JSON file defining an audit workflow (CVRs, Manifests, which CVRs to replace with
@@ -110,7 +128,6 @@ public class WorkflowRunnerWithRaire extends Workflow {
     try {
       final Path pathToInstance = Paths.get(workflowFile);
       LOGGER.info(String.format("%s %s %s.", prefix, "running workflow", pathToInstance));
-      runMainAndInitializeDBIfNeeded("Workflow with raire", Optional.empty());
 
       // Do the workflow. Reset the database first.
       resetDatabase("stateadmin1");
@@ -122,23 +139,5 @@ public class WorkflowRunnerWithRaire extends Workflow {
       LOGGER.error(msg);
       throw new RuntimeException(msg);
     }
-  }
-
-  /**
-   * Run everything with the database and raire url set up in src/test/resources/test.properties
-   * This assumes the database is in an initial state, with administrator logins and counties but
-   * without other data.
-   * This version does not actually run main, because main is expected to be already running.
-   * @param testName not used.
-   * @param postgres not used.
-   */
-  @Override
-  protected void runMainAndInitializeDBIfNeeded(final String testName, final Optional<PostgreSQLContainer<?>> postgres) {
-    assertTrue(postgres.isEmpty());
-    testUtils.log(LOGGER, "[runMainAndInitializeDB] running workflow " + testName + ".");
-    // Don't need to start main because we assume it's already running.
-    // main("src/test/resources/test.properties");
-    Persistence.setProperties(config);
-    Persistence.beginTransaction();
   }
 }

@@ -21,60 +21,43 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.endpoint;
 
-import au.org.democracydevelopers.corla.communication.requestToRaire.GenerateAssertionsRequest;
 import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
-import au.org.democracydevelopers.corla.util.SparkRequestStub;
-import au.org.democracydevelopers.corla.util.TestClassWithAuth;
 import au.org.democracydevelopers.corla.util.testUtils;
+import au.org.democracydevelopers.corla.workflows.Workflow;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.gson.Gson;
+import io.restassured.RestAssured;
+import io.restassured.filter.session.SessionFilter;
+import io.restassured.response.Response;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import spark.HaltException;
-import spark.Request;
-import us.freeandfair.corla.Main;
-import us.freeandfair.corla.asm.*;
-import us.freeandfair.corla.model.AuditReason;
-import us.freeandfair.corla.model.Choice;
-import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.persistence.Persistence;
 
-import javax.transaction.Transactional;
 import java.util.*;
 
 import static au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint.RAIRE_URL;
-import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.CONTEST_NAME;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.*;
-import static us.freeandfair.corla.asm.ASMEvent.DoSDashboardEvent.*;
-import static us.freeandfair.corla.endpoint.Endpoint.AuthorizationType.STATE;
 
 /**
  * Test the GetAssertions endpoint via the API.
- * This currently tests that the assertion generation request is accepted and blocked in the right
- * circumstances.
- * TODO This really isn't a completely comprehensive set of tests yet.
- * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/125">...</a>
+ * This runs a series of basic tests for acceptance of valid queries and rejection of invalid ones,
+ * though it does not redo those from GenerateAssertionsTests, only the ones that are relevant to
+ * query processing before the call to GenerateAssertions::generateAllAssertions or
+ * GenerateAssertions::generateAssertionsUpdateWinners.
  */
-public class GenerateAssertionsAPITests extends TestClassWithAuth {
+public class GenerateAssertionsAPITests extends Workflow {
 
   /**
    * Class-wide logger.
    */
   private static final Logger LOGGER = LogManager.getLogger(GenerateAssertionsAPITests.class);
-
-  /**
-   * The Generate Assertions endpoint.
-   */
-  private final GenerateAssertions endpoint = new GenerateAssertions();
 
   /**
    * Mock response for tinyExample1 contest, which succeeded and is not worth retrying.
@@ -83,33 +66,14 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
       = new GenerateAssertionsResponse(tinyIRV, true, false);
 
   /**
-   * Request for tinyExample1 contest, intended as a boring request with normal parameters.
-   */
-  private final static GenerateAssertionsRequest tinyIRVRequest
-      = new GenerateAssertionsRequest(tinyIRV, tinyIRVCount, 5,
-      tinyIRVCandidates.stream().map(Choice::name).toList());
-
-  /**
    * Raire endpoint for getting assertions.
    */
   private final String raireGenerateAssertionsEndpoint = "/raire/generate-assertions";
 
   /**
    * Wiremock server for mocking the raire service.
-   *
    */
   private WireMockServer wireMockRaireServer;
-
-  /**
-   * Base url - this is set up to use the wiremock server, but could be set here to wherever you have the
-   * raire-service running to test with that directly.
-   */
-  private static String baseUrl;
-
-  /**
-   * The Properties that will be mocked in Main, specifically for the RAIRE_URL.
-   */
-  private static final Properties mockProperties = new Properties();
 
   /**
    * GSON for json interpretation.
@@ -117,49 +81,38 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
   private final static Gson gson = new Gson();
 
   /**
-   * Database init.
-   */
-  @BeforeClass
-  public static void beforeAllThisClass() {
-
-    var s = Persistence.openSession();
-    s.beginTransaction();
-
-    // Used to initialize the database, particularly to set the ASM state to the DOS_INITIAL_STATE.
-    runSQLSetupScript("SQL/co-counties.sql");
-  }
-
-  /**
    * Initialise mocked objects prior to the first test.
    */
   @BeforeClass
-  public void initMocks() {
+  public void initMocksAndMainAndDB() {
 
-    // Mock successful auth as a state admin.
-    MockitoAnnotations.openMocks(this);
-    mockAuth("State test 1", 1L, STATE);
+    Persistence.beginTransaction();
+    runSQLSetupScript("SQL/co-counties.sql");
 
-    tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    tinyIRVContestResult.setBallotCount((long) tinyIRVCount);
-    tinyIRVContestResult.setWinners(Set.of("Alice"));
-    tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
+    RestAssured.baseURI = "http://localhost";
+    RestAssured.port = 8888;
 
     // Set up default raire server on the port defined in test.properties.
     // You can instead run the real raire service and set baseUrl accordingly,
     // though some tests may fail, depending on whether you have
     // appropriate contests in the database.
-    final int rairePort = Integer.parseInt(config.getProperty(generateAssertionsPortNumberString, ""));
-    wireMockRaireServer = new WireMockServer(rairePort);
+    final int raireGenerateAssertionsPort = Integer.parseInt(config.getProperty(raireMockPortNumberString, ""));
+    wireMockRaireServer = new WireMockServer(raireGenerateAssertionsPort);
     wireMockRaireServer.start();
-    baseUrl = wireMockRaireServer.baseUrl();
+
+    String baseUrl = wireMockRaireServer.baseUrl();
     configureFor("localhost", wireMockRaireServer.port());
 
-    // Mock the above-initialized URL for the RAIRE_URL property in Main.
-    mockProperties.setProperty(RAIRE_URL, baseUrl);
+    // Set the above-initialized URL for the RAIRE_URL property in Main.
+    config.setProperty(RAIRE_URL, baseUrl);
+    runMain(config, "GenerateAssertionsAPITests");
+
+    // Load some IRV contests into the database.
+    runSQLSetupScript(postgres, "SQL/corla-three-candidates-ten-votes-plus-plurality.sql");
 
     // Mock a proper response to the IRV TinyExample1 contest.
     stubFor(post(urlEqualTo(raireGenerateAssertionsEndpoint))
-        .withRequestBody(equalToJson(gson.toJson(tinyIRVRequest)))
+        .withRequestBody(containing(tinyIRV))
         .willReturn(aResponse()
             .withStatus(HttpStatus.SC_OK)
             .withHeader("Content-Type", "application/json")
@@ -172,90 +125,126 @@ public class GenerateAssertionsAPITests extends TestClassWithAuth {
   }
 
   /**
-   * Simple test that the assertion generation request is made when in
-   * ASM initial state and ASM PARTIAL_AUDIT_INFO_SET states, and not in later states.
+   * Successful assertion generation for an IRV contest for which we've mocked a RAIRE response.
+   * This tests both the case when the tinyIRV example is specifically requested, and also the case
+   * where no contest is specified - these should produce the same result because there is only that
+   * one IRV contest in the database. It also tests that an explicit time limit doesn't change that
+   * result.
    */
   @Test
-  @Transactional
-  void assertionGenerationBlockedWhenInWrongASMState() {
-    testUtils.log(LOGGER, "assertionGenerationBlockedWhenInWrongASMState");
+  void assertionGenerationSucceedsOnRaireMockedIRV() {
+    testUtils.log(LOGGER, "assertionGenerationSucceedsOnRaireMockedIRV");
 
-    // Mock the main class; mock its auth as the mocked state admin auth.
-    try (MockedStatic<Main> mockedMain = Mockito.mockStatic(Main.class);
-         MockedStatic<AbstractAllIrvEndpoint> mockedIRVEndpoint = Mockito.mockStatic(AbstractAllIrvEndpoint.class)) {
+    SessionFilter session = doLogin("stateadmin1");
 
-      // Mock auth.
-      mockedMain.when(Main::authentication).thenReturn(auth);
+    // Request with TinyIRVExample1
+    Response response = generateAssertionsCorla(session, Optional.of(tinyIRV), Optional.empty());
+    assertEquals(response.getStatusCode(), HttpStatus.SC_OK);
+    GenerateAssertionsResponse[] gr1 = response.getBody().as(GenerateAssertionsResponse[].class);
+    assertEquals(gr1.length, 1);
+    assertTrue(gr1[0].succeeded);
 
-      // Mock properties, particularly the RAIRE URL.
-      mockedMain.when(Main::properties).thenReturn(mockProperties);
+    // Request without explicit contest name - should be the same because TinyIRVExample1 is the only
+    // one in the database.
+    response = generateAssertionsCorla(session, Optional.empty(), Optional.empty());
+    assertEquals(response.getStatusCode(), HttpStatus.SC_OK);
+    GenerateAssertionsResponse[] gr2 = response.getBody().as(GenerateAssertionsResponse[].class);
+    // Should be the same result as if we'd requested the one contest.
+    assertEquals(gson.toJson(gr2[0]), gson.toJson(gr1[0]));
 
-      // Mock non-empty contest response (one IRV contest).
-      List<ContestResult> mockedContestResults = List.of(tinyIRVContestResult);
-      mockedIRVEndpoint.when(AbstractAllIrvEndpoint::getIRVContestResults).thenReturn(mockedContestResults);
+    // Request with a time limit. Nothing changes.
+    response = generateAssertionsCorla(session, Optional.empty(), Optional.of(5.0));
+    assertEquals(response.getStatusCode(), HttpStatus.SC_OK);
+    GenerateAssertionsResponse[] gr3 = response.getBody().as(GenerateAssertionsResponse[].class);
+    // Should be the same result as if we'd requested the one contest.
+    assertEquals(gson.toJson(gr3[0]), gson.toJson(gr1[0]));
 
-      // We seem to need a dummy request to run before.
-      final Request request = new SparkRequestStub("", Map.of(CONTEST_NAME, tinyIRV));
-      endpoint.before(request, response);
+    logout(session, "stateadmin1");
+  }
 
-      // First test: check that the GenerateAssertions endpoint works when in the initial state
-      // (which is set up initially in the database).
+  /**
+   * An error response is returned for a plurality contest.
+   */
+  @Test
+  void assertionGenerationErrorOnPluralityExample() {
+    testUtils.log(LOGGER, "assertionGenerationErrorOnPluralityExample");
 
-      DoSDashboardASM doSDashboardASM = ASMUtilities.asmFor(DoSDashboardASM.class, DoSDashboardASM.IDENTITY);
-      assertTrue(doSDashboardASM.isInInitialState());
+    SessionFilter session = doLogin("stateadmin1");
 
-      String errorBody = "";
-      try {
-        endpoint.endpointBody(request, response);
-        endpoint.after(request, response);
-      } catch (HaltException e) {
-        errorBody = "Error: " + e.body();
-      }
-      // There should be no error when the ASM is in the initial state.
-      assertEquals(errorBody, "");
+    Response response = generateAssertionsCorla(session, Optional.of("PluralityExample1"), Optional.empty());
+    assertEquals(response.getStatusCode(), HttpStatus.SC_UNPROCESSABLE_ENTITY);
+    String s = response.getBody().asString();
+    assertTrue(StringUtils.containsIgnoreCase(s, "Non-existent or non-IRV"));
 
-      // Now transition to PARTIAL_AUDIT_INFO_SET
-      doSDashboardASM.stepEvent(PARTIAL_AUDIT_INFO_EVENT);
-      ASMUtilities.save(doSDashboardASM);
+    logout(session, "stateadmin1");
 
-      errorBody = "";
-      try {
-        endpoint.endpointBody(request, response);
-        endpoint.after(request, response);
-      } catch (HaltException e) {
-        errorBody = "Error: " + e.body();
-      }
-      // There should be still be no error when the ASM is in the PARTIAL_AUDIT_INFO_SET state.
-      assertEquals(errorBody, "");
+  }
 
-      final String expectedError = "Assertion generation not allowed in current state.";
+  /**
+   * An error response is returned for a non-existent contest.
+   */
+  @Test
+  void assertionGenerationErrorOnNonExistentExample() {
+    testUtils.log(LOGGER, "assertionGenerationErrorOnNonExistentExample");
 
-      // Now transition to COMPLETE_AUDIT_INFO_SET and other, subsequent, states, in which
-      // assertion generation is expected to throw an error. Check that it does.
-      for (ASMEvent.DoSDashboardEvent event : List.of(
-          COMPLETE_AUDIT_INFO_EVENT,
-          DOS_START_ROUND_EVENT,
-          AUDIT_EVENT,
-          DOS_ROUND_COMPLETE_EVENT,
-          // DoS can start another round after the earlier round is complete.
-          DOS_START_ROUND_EVENT,
-          DOS_COUNTY_AUDIT_COMPLETE_EVENT,
-          DOS_AUDIT_COMPLETE_EVENT,
-          PUBLISH_AUDIT_REPORT_EVENT
-      )) {
-        doSDashboardASM.stepEvent(event);
-        ASMUtilities.save(doSDashboardASM);
+    SessionFilter session = doLogin("stateadmin1");
 
-        // In this state, assertion generation attempts should throw an error.
-        errorBody = "";
-        try {
-          endpoint.endpointBody(request, response);
-          endpoint.after(request, response);
-        } catch (HaltException e) {
-          errorBody = "Error: " + e.body();
-        }
-        assertTrue(errorBody.contains(expectedError));
-      }
-    }
+    Response response = generateAssertionsCorla(session, Optional.of("badContest"), Optional.empty());
+    assertEquals(response.getStatusCode(), HttpStatus.SC_UNPROCESSABLE_ENTITY);
+    String s = response.getBody().asString();
+    assertTrue(StringUtils.containsIgnoreCase(s, "Non-existent or non-IRV"));
+
+    logout(session, "stateadmin1");
+  }
+
+  /**
+   * An error response is returned when the contestName parameter is specified but the value is blank.
+   */
+  @Test
+  void assertionGenerationErrorOnEmptyPresentContestParam() {
+    testUtils.log(LOGGER, "assertionGenerationErrorOnEmptyPresentContestParam");
+
+    SessionFilter session = doLogin("stateadmin1");
+
+    Response response = generateAssertionsCorla(session, Optional.of(""), Optional.empty());
+    assertEquals(response.getStatusCode(), HttpStatus.SC_NOT_FOUND);
+    String s = response.getBody().asString();
+    assertTrue(StringUtils.containsIgnoreCase(s, "parameter validation failed"));
+
+    logout(session, "stateadmin1");
+  }
+
+  /**
+   * An error response is returned when the timeLimitSeconds parameter is negative.
+   */
+  @Test
+  void assertionGenerationErrorOnNegativeTimeLimit() {
+    testUtils.log(LOGGER, "assertionGenerationErrorOnNegativeTimeLimit");
+
+    SessionFilter session = doLogin("stateadmin1");
+
+    Response response = generateAssertionsCorla(session, Optional.empty(), Optional.of(-1.0));
+    assertEquals(response.getStatusCode(), HttpStatus.SC_NOT_FOUND);
+    String s = response.getBody().asString();
+    assertTrue(StringUtils.containsIgnoreCase(s, "parameter validation failed"));
+
+    logout(session, "stateadmin1");
+  }
+
+  /**
+   * An error response is returned when the timeLimitSeconds parameter is zero.
+   */
+  @Test
+  void assertionGenerationErrorOnZeroTimeLimit() {
+    testUtils.log(LOGGER, "assertionGenerationErrorOnZeroTimeLimit");
+
+    SessionFilter session = doLogin("stateadmin1");
+
+    Response response = generateAssertionsCorla(session, Optional.empty(), Optional.of(0.0));
+    assertEquals(response.getStatusCode(), HttpStatus.SC_NOT_FOUND);
+    String s = response.getBody().asString();
+    assertTrue(StringUtils.containsIgnoreCase(s, "parameter validation failed"));
+
+    logout(session, "stateadmin1");
   }
 }

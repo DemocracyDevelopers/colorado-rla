@@ -63,7 +63,7 @@ public class RankedBallotInterpretationReportTests extends TestClassWithDatabase
       = LogManager.getLogger(RankedBallotInterpretationReportTests.class);
 
   @BeforeClass
-  public static void beforeAllThisClass() {
+  public void beforeAllThisClass() {
     runSQLSetupScript("SQL/co-counties.sql");
   }
 

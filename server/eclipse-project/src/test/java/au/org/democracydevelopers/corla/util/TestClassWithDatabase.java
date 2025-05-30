@@ -21,12 +21,12 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.util;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
+import au.org.democracydevelopers.corla.model.ContestType;
+import org.hibernate.Session;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.jdbc.JdbcDatabaseDelegate;
@@ -34,9 +34,12 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import us.freeandfair.corla.model.*;
 import us.freeandfair.corla.persistence.Persistence;
 
+import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
+import static au.org.democracydevelopers.corla.util.testUtils.*;
 
 /**
  * This class is designed to be extended by any test class that needs to interact with a test
@@ -56,28 +59,65 @@ public abstract class TestClassWithDatabase {
   protected static final Properties blank = new Properties();
 
   /**
-   * Properties derived from test.properties.
+   * Properties derived from test.properties. Not static because some workflows alter this.
    */
-  protected static Properties config = loadProperties();
+  protected Properties config = loadProperties();
 
   /**
    * The string used to identify the configured port in test.properties.
    */
-  protected final static String generateAssertionsPortNumberString = "generate_assertions_mock_port";
-
-  /**
-   * The string used to identify the configured port in test.properties.
-   */
-  protected final static String getAssertionsPortNumberString = "get_assertions_mock_port";
+  public final static String raireMockPortNumberString = "raire_mock_port";
 
   /**
    * Container for the mock-up database.
    */
-  protected static PostgreSQLContainer<?> postgres = createTestContainer();
+  protected PostgreSQLContainer<?> postgres = createTestContainer(config);
 
+  /**
+   * Database session.
+   */
+  protected Session session;
 
+  public final static List<Choice> boulderMayoralCandidates = List.of(
+      new Choice("Aaron Brockett", "", false, false),
+      new Choice("Nicole Speer", "", false, false),
+      new Choice("Bob Yates", "", false, false),
+      new Choice("Paul Tweedlie", "", false, false)
+  );
+
+  /**
+   * Contest and ContestResult for Boulder Mayoral '23 example.
+   */
+  public final static Contest boulderMayoralContest = new Contest(boulderMayoral, new County("Boulder", 7L), ContestType.IRV.toString(),
+      boulderMayoralCandidates, 4, 1, 0);
+  public final static ContestResult boulderIRVContestResult = new ContestResult(boulderMayoral);
+
+  /**
+   * Contest and ContestResult for tiny IRV example.
+   */
+  public final static Contest tinyIRVExample = new Contest(tinyIRV, new County("Arapahoe", 3L), ContestType.IRV.toString(),
+      tinyIRVCandidates, 3, 1, 0);
+  public final static ContestResult tinyIRVContestResult = new ContestResult(tinyIRV);
+
+  /**
+   * Example contestresults to mock.
+   */
+  public final static List<ContestResult> mockedIRVContestResults = List.of(boulderIRVContestResult, tinyIRVContestResult);
+
+  /**
+   * Contest and ContestResult for tied example.
+   */
+  public final static Contest tiedIRVContest = new Contest( tiedIRV, new County("Ouray", 46L), ContestType.IRV.toString(),
+      tinyIRVCandidates, 3, 1, 0);
+  public final static ContestResult tiedIRVContestResult = new ContestResult(tiedIRV);
+
+  /**
+   * Start the postgres container with appropriate config.
+   * init the contest results above (these are just generic/static test values).
+   */
   @BeforeClass
-  public static void beforeAll() {
+  public void initDatabase() {
+    initContestResults();
     postgres.start();
     // Each class that inherits from TestClassWithDatabase gets a different url for the mocked DB.
     // Everything else is the same.
@@ -85,8 +125,11 @@ public abstract class TestClassWithDatabase {
     Persistence.setProperties(config);
   }
 
+  /**
+   * Stop the postgres container.
+   */
   @AfterClass
-  public static void afterAll() {
+  public void afterAll() {
     postgres.stop();
   }
 
@@ -99,10 +142,31 @@ public abstract class TestClassWithDatabase {
   }
 
   /**
+   * Set up some example contest results for testing.
+   */
+  private static void initContestResults() {
+
+    boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+    boulderIRVContestResult.setBallotCount(100000L);
+    boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
+    boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
+
+    tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+    tinyIRVContestResult.setBallotCount(10L);
+    tinyIRVContestResult.setWinners(Set.of("Alice"));
+    tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
+
+    tiedIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
+    tiedIRVContestResult.setBallotCount((long) tinyIRVCount);
+    tiedIRVContestResult.setWinners(Set.of(UNKNOWN_WINNER));
+    tiedIRVContestResult.addContests(Set.of(tiedIRVContest));
+  }
+
+  /**
    * Rollback any changes to the (test) database after each test method is run.
    */
   @AfterMethod
-  public static void afterTest(){
+  public void afterTest(){
     try {
       Persistence.rollbackTransaction();
     } catch (Exception ignored) {
@@ -113,9 +177,8 @@ public abstract class TestClassWithDatabase {
    * Create and return a postgres test container for the purposes of testing functionality that
    * interacts with the database.
    * @return a postgres test container representing a test database.
-   * FIXME This is more general than Matt's edits - suggest retaining this version.
    */
-  public static PostgreSQLContainer<?> createTestContainer() {
+  private static PostgreSQLContainer<?> createTestContainer(Properties config) {
     return new PostgreSQLContainer<>("postgres:15-alpine")
         // None of these actually have to be the same as the real database (except its name),
         // but this makes it easy to match the setup scripts.
@@ -126,47 +189,11 @@ public abstract class TestClassWithDatabase {
   }
 
   /**
-   * Do the basic setup common to all the database test containers, which are all the same except for having a different url,
-   * generated at init.
-   * @param postgres the database container.
-   * @return the database delegate.
-   * FIXME possibly no longer needed, though actually the opportunity to configure the setup may be needed for
-   * some DD tests.
-   */
-  protected static JdbcDatabaseDelegate setupContainerStartPostgres(PostgreSQLContainer<?> postgres) {
-    postgres.start();
-
-    // Each class that inherits from TestClassWithDatabase gets a different url for the mocked DB.
-    // Everything else is the same.
-    config.setProperty("hibernate.url", postgres.getJdbcUrl());
-    Persistence.setProperties(config);
-
-    return new JdbcDatabaseDelegate(postgres, "");
-  }
-
-  /**
-   * Create and return a hibernate properties object for use in testing functionality that
-   * interacts with the database.
-   * @param postgres Postgres test container representing a test version of the database.
-   * @return Hibernate persistence properties.
-   */
-  public static Properties createHibernateProperties(PostgreSQLContainer<?> postgres) {
-    Properties hibernateProperties = new Properties();
-    hibernateProperties.setProperty("hibernate.driver", "org.postgresql.Driver");
-    hibernateProperties.setProperty("hibernate.url", postgres.getJdbcUrl());
-    hibernateProperties.setProperty("hibernate.user", postgres.getUsername());
-    hibernateProperties.setProperty("hibernate.pass", postgres.getPassword());
-    hibernateProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL9Dialect");
-
-    return hibernateProperties;
-  }
-
-  /**
    * Given a path to an SQL file containing an SQL script that we want to run, run the script.
    * Interacts with a test database.
    * @param initScriptPath Path to an SQL file containing the SQL script we want to run.
    */
-  protected static void runSQLSetupScript(String initScriptPath) {
+  protected void runSQLSetupScript(String initScriptPath) {
     runSQLSetupScript(postgres, initScriptPath);
   }
 

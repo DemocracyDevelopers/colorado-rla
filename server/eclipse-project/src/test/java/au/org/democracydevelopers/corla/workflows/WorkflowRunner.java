@@ -21,10 +21,8 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
-import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.assertTrue;
 
-import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import io.restassured.RestAssured;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,10 +34,12 @@ import java.util.stream.Stream;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import us.freeandfair.corla.persistence.Persistence;
+
+import javax.transaction.Transactional;
 
 /**
  * This workflow runner is designed to execute all JSON workflows present in a specified
@@ -64,7 +64,10 @@ public class WorkflowRunner extends Workflow {
 
   @BeforeClass
   public void setup() {
-    config = loadProperties();
+    runMain(config, "WorkflowRunner");
+    Persistence.beginTransaction();
+    runSQLSetupScript("SQL/co-admins.sql");
+
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
   }
@@ -106,7 +109,7 @@ public class WorkflowRunner extends Workflow {
    */
   @DataProvider(name = "single-workflow-provider")
   public Object[][] supplySingleWorkflowPath() {
-    final String filename = "AllCountyWidePluralityAndIRVTwoRounds.json";
+    final String filename = "TinyIRV.INFINITE.json";
     Path path = Paths.get(pathToInstances, filename);
     Path normalizedPath = path.normalize();
     assertTrue(Files.isRegularFile(normalizedPath));
@@ -125,19 +128,17 @@ public class WorkflowRunner extends Workflow {
    * @param pathToInstance Path to the JSON workflow instance defining the test.
    * @throws InterruptedException if there is a problem with the CVR and Manifest upload.
    */
+  @Transactional
   @Test(dataProvider = "workflow-provider")
-  //@Test(dataProvider = "single-workflow-provider")
+  // @Test(dataProvider = "single-workflow-provider")
   public void runInstance(final Path pathToInstance) throws InterruptedException {
     final String prefix = "[runInstance] " + pathToInstance;
 
     try {
-      final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
-      runMainAndInitializeDBIfNeeded(pathToInstance.getFileName().toString(), Optional.of(postgres));
 
-      // Do the workflow.
+      // Reset the database; do the workflow.
+      resetDatabase("stateadmin1");
       doWorkflow(pathToInstance, Optional.of(postgres));
-
-      postgres.stop();
 
     } catch(IOException e){
       final String msg = prefix + " " + e.getMessage();

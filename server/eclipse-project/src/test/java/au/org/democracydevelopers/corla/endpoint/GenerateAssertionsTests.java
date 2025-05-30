@@ -24,7 +24,6 @@ package au.org.democracydevelopers.corla.endpoint;
 import au.org.democracydevelopers.corla.communication.requestToRaire.GenerateAssertionsRequest;
 import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
 
-import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
@@ -43,7 +42,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import us.freeandfair.corla.persistence.Persistence;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.assertEquals;
@@ -55,14 +53,6 @@ import static org.testng.Assert.assertFalse;
  * the assertions.
  * Includes tests that AbstractAllIrvEndpoint::getIRVContestResults returns the correct values and
  * throws the correct exceptions.
- * TODO VT: This really isn't a completely comprehensive set of tests yet. We also need:
- * - API testing
- * - Testing that the service throws appropriate exceptions if the raire service connection isn't set up properly.
- * - More thorough tests of assertion generation for known cases, e.g. examples from NSW and the
- *   Guide to Raire.
- * - Testing of input validity, particularly non-negative time limits, which is done by the endpoint and hence
- *   not included in these tests.
- * See <a href="https://github.com/DemocracyDevelopers/colorado-rla/issues/125">...</a>
  */
 public class GenerateAssertionsTests extends TestClassWithDatabase {
 
@@ -151,14 +141,6 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   private final static Gson gson = new Gson();
 
   /**
-   * Database init.
-   */
-  @BeforeClass
-  public static void beforeAllThisClass() {
-    Persistence.setProperties(config);
-  }
-
-  /**
    * Initialise mocked objects prior to the first test.
    */
   @BeforeClass
@@ -174,17 +156,13 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
     tinyIRVContestResult.setWinners(Set.of("Alice"));
     tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
 
-    tiedIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    tiedIRVContestResult.setBallotCount((long) tinyIRVCount);
-    tiedIRVContestResult.setWinners(Set.of(UNKNOWN_WINNER));
-    tiedIRVContestResult.addContests(Set.of(tiedIRVContest));
 
     // Set up default raire server on the port defined in test.properties.
     // You can instead run the real raire service and set baseUrl accordingly,
     // though the tests of invalid/uninterpretable data will fail, and of course you have to have
     // appropriate contests in the database.
-    final int rairePort = Integer.parseInt(config.getProperty(generateAssertionsPortNumberString, ""));
-    wireMockRaireServer = new WireMockServer(rairePort);
+    final int raireMockPort = Integer.parseInt(config.getProperty(raireMockPortNumberString, ""));
+    wireMockRaireServer = new WireMockServer(raireMockPort);
     wireMockRaireServer.start();
     baseUrl = wireMockRaireServer.baseUrl();
     String badUrl = baseUrl + badEndpoint;
