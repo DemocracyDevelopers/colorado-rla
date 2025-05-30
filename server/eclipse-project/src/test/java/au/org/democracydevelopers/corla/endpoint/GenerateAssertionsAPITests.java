@@ -33,7 +33,6 @@ import io.restassured.response.Response;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -43,7 +42,6 @@ import us.freeandfair.corla.persistence.Persistence;
 import java.util.*;
 
 import static au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint.RAIRE_URL;
-import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.*;

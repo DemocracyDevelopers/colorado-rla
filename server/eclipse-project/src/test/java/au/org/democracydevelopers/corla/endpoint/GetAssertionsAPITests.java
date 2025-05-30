@@ -21,7 +21,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.endpoint;
 
-import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 import au.org.democracydevelopers.corla.workflows.Workflow;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -32,7 +31,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -43,9 +41,6 @@ import java.util.Optional;
 
 import static au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint.RAIRE_URL;
 import static au.org.democracydevelopers.corla.endpoint.GetAssertions.*;
-import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
-import static au.org.democracydevelopers.corla.util.TestClassWithDatabase.getAssertionsPortNumberString;
-import static au.org.democracydevelopers.corla.util.TestClassWithDatabase.runSQLSetupScript;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.*;
 

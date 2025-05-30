@@ -21,24 +21,16 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 
 package au.org.democracydevelopers.corla.workflows;
 
-import au.org.democracydevelopers.corla.util.testUtils;
 import io.restassured.RestAssured;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.hibernate.Session;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
 import org.testng.annotations.*;
 import us.freeandfair.corla.persistence.Persistence;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
 import java.util.Optional;
-
-import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
-import static org.testng.Assert.*;
 
 /**
  * This workflow runner is designed to run in a UAT environment in which the raire service, colorado-rla
@@ -64,7 +56,6 @@ import static org.testng.Assert.*;
  * You can also run the test in your IDE - instructions for IntelliJ are at
  * <a href="https://www.jetbrains.com/help/idea/work-with-tests-in-maven.html#skip_test">...</a>
  * This test is skipped when the tests are run with default parameters, i.e. during automated testing.
- *
  * This deliberately does _not_ reset the database after the workflow runs. This might be helpful if
  * someone wants to examine its state via the client afterwards.
  */

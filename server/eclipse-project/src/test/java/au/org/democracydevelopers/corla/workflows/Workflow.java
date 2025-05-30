@@ -75,7 +75,6 @@ import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.model.UploadedFile;
-import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.query.ContestResultQueries;
 import wiremock.net.minidev.json.JSONArray;

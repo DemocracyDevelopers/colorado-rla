@@ -22,7 +22,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.endpoint;
 
 import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
-import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 import au.org.democracydevelopers.corla.workflows.Workflow;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -33,7 +32,6 @@ import io.restassured.response.Response;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -44,9 +42,6 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 import static au.org.democracydevelopers.corla.endpoint.AbstractAllIrvEndpoint.RAIRE_URL;
-import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
-import static au.org.democracydevelopers.corla.util.TestClassWithDatabase.generateAssertionsPortNumberString;
-import static au.org.democracydevelopers.corla.util.TestClassWithDatabase.runSQLSetupScript;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.assertEquals;

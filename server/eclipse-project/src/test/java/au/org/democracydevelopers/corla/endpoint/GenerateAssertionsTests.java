@@ -24,7 +24,6 @@ package au.org.democracydevelopers.corla.endpoint;
 import au.org.democracydevelopers.corla.communication.requestToRaire.GenerateAssertionsRequest;
 import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
 
-import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
 
 import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
@@ -43,7 +42,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import us.freeandfair.corla.persistence.Persistence;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.assertEquals;
