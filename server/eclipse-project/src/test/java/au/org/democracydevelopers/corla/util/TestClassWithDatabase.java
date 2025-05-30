@@ -124,13 +124,10 @@ public abstract class TestClassWithDatabase {
     // Everything else is the same.
     config.setProperty("hibernate.url", postgres.getJdbcUrl());
     Persistence.setProperties(config);
-
-    session = Persistence.openSession();
   }
 
   @AfterClass
   public void afterAll() {
-    session.close();
     postgres.stop();
   }
 
