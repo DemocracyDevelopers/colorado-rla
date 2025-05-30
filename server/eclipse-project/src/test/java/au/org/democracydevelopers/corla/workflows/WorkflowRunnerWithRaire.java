@@ -67,7 +67,10 @@ public class WorkflowRunnerWithRaire extends Workflow {
    */
   private static final Logger LOGGER = LogManager.getLogger(WorkflowRunnerWithRaire.class);
 
-
+  /**
+   * Override Workflow's setup of RestAssured's baseURI and port - point them at the real
+   * colorado-rla server.
+   */
   @BeforeClass
   public void setup() {
     RestAssured.baseURI = config.getProperty("corla_url");

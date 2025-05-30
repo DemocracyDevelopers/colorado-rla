@@ -88,7 +88,7 @@ public class GenerateAssertionsValidStateTest extends Workflow {
 
     Persistence.beginTransaction();
     runSQLSetupScript("SQL/co-counties.sql");
-    // config = loadProperties();
+
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
 
