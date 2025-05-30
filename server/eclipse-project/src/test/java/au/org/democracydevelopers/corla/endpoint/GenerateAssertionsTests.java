@@ -146,17 +146,6 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   @BeforeClass
   public void initMocks() {
 
-    boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    boulderIRVContestResult.setBallotCount((long) bouldMayoralCount);
-    boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
-    boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
-
-    tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    tinyIRVContestResult.setBallotCount((long) tinyIRVCount);
-    tinyIRVContestResult.setWinners(Set.of("Alice"));
-    tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
-
-
     // Set up default raire server on the port defined in test.properties.
     // You can instead run the real raire service and set baseUrl accordingly,
     // though the tests of invalid/uninterpretable data will fail, and of course you have to have

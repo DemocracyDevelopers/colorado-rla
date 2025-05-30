@@ -147,12 +147,12 @@ public abstract class TestClassWithDatabase {
   private static void initContestResults() {
 
     boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    boulderIRVContestResult.setBallotCount(100000L);
+    boulderIRVContestResult.setBallotCount((long) bouldMayoralCount);
     boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
     boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
 
     tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    tinyIRVContestResult.setBallotCount(10L);
+    tinyIRVContestResult.setBallotCount((long) tinyIRVCount);
     tinyIRVContestResult.setWinners(Set.of("Alice"));
     tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
 
