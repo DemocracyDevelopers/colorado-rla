@@ -109,9 +109,8 @@ public class GetAssertionsTests extends TestClassWithDatabase {
     MockitoAnnotations.openMocks(this);
 
     // Set up a wiremock raire server on the port defined in test.properties.
-    // FIXME Do we even need two config properties? Why not just one raire port?
-    final int raireGetAssertionsPort = Integer.parseInt(config.getProperty(getAssertionsPortNumberString, ""));
-    wireMockRaireServer = new WireMockServer(raireGetAssertionsPort);
+    final int raireMockPort = Integer.parseInt(config.getProperty(raireMockPortNumberString, ""));
+    wireMockRaireServer = new WireMockServer(raireMockPort);
     wireMockRaireServer.start();
     baseUrl = wireMockRaireServer.baseUrl();
     configureFor("localhost", wireMockRaireServer.port());

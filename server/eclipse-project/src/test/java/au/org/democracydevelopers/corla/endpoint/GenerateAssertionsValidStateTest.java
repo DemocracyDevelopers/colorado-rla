@@ -96,8 +96,8 @@ public class GenerateAssertionsValidStateTest extends Workflow {
     // You can instead run the real raire service and set baseUrl accordingly,
     // though some tests may fail, depending on whether you have
     // appropriate contests in the database.
-    final int raireGenerateAssertionsPort = Integer.parseInt(config.getProperty(generateAssertionsPortNumberString, ""));
-    wireMockRaireServer = new WireMockServer(raireGenerateAssertionsPort);
+    final int raireMockPort = Integer.parseInt(config.getProperty(raireMockPortNumberString, ""));
+    wireMockRaireServer = new WireMockServer(raireMockPort);
     wireMockRaireServer.start();
 
     String baseUrl = wireMockRaireServer.baseUrl();

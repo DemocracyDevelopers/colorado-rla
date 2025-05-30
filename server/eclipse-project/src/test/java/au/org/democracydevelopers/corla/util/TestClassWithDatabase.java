@@ -66,12 +66,7 @@ public abstract class TestClassWithDatabase {
   /**
    * The string used to identify the configured port in test.properties.
    */
-  public final static String generateAssertionsPortNumberString = "generate_assertions_mock_port";
-
-  /**
-   * The string used to identify the configured port in test.properties.
-   */
-  public final static String getAssertionsPortNumberString = "get_assertions_mock_port";
+  public final static String raireMockPortNumberString = "raire_mock_port";
 
   /**
    * Container for the mock-up database.
