@@ -136,8 +136,11 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   @BeforeClass
   public void initMocks() {
 
-    baseUrl = initWireMockRaireServer(config);
-    String badUrl = baseUrl + badEndpoint;
+    // Set up the mock raire server.
+    wireMockRaireServer = initWireMockRaireServer(config);
+    baseUrl = wireMockRaireServer.baseUrl();
+
+    final String badUrl = baseUrl + badEndpoint;
 
     // Mock a proper response to the Boulder Mayoral '23 contest.
     stubFor(post(urlEqualTo(raireGenerateAssertionsEndpoint))

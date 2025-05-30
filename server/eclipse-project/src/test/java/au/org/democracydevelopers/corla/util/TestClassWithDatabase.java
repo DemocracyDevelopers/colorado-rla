@@ -217,10 +217,11 @@ public abstract class TestClassWithDatabase {
 
   /**
    * Set up default raire server on the port defined in config.
-   * @param  config The configuration properties.
+   *
+   * @param config The configuration properties.
    * @return the base url of the mocked server.
    */
-  protected String initWireMockRaireServer(Properties config) {
+  protected WireMockServer initWireMockRaireServer(Properties config) {
 
     final int raireMockPort = Integer.parseInt(config.getProperty(raireMockPortNumberString, ""));
     wireMockRaireServer = new WireMockServer(raireMockPort);
@@ -228,7 +229,7 @@ public abstract class TestClassWithDatabase {
 
     configureFor("localhost", wireMockRaireServer.port());
 
-    return wireMockRaireServer.baseUrl();
+    return wireMockRaireServer;
   }
 
 }
