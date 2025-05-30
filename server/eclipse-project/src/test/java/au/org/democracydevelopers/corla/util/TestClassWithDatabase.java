@@ -26,6 +26,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import au.org.democracydevelopers.corla.model.ContestType;
+import org.hibernate.Session;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.jdbc.JdbcDatabaseDelegate;
@@ -77,6 +78,10 @@ public abstract class TestClassWithDatabase {
    */
   protected PostgreSQLContainer<?> postgres = createTestContainer();
 
+  /**
+   * Database session.
+   */
+  protected Session session;
 
   public final static List<Choice> boulderMayoralCandidates = List.of(
       new Choice("Aaron Brockett", "", false, false),
@@ -120,11 +125,12 @@ public abstract class TestClassWithDatabase {
     config.setProperty("hibernate.url", postgres.getJdbcUrl());
     Persistence.setProperties(config);
 
-    Persistence.openSession();
+    session = Persistence.openSession();
   }
 
   @AfterClass
   public void afterAll() {
+    session.close();
     postgres.stop();
   }
 

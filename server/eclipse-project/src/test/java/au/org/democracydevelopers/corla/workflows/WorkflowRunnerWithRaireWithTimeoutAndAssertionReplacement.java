@@ -67,22 +67,12 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_ST
  * This test is skipped when the tests are run with default parameters, i.e. during automated testing.
  */
 @Test(enabled=true)
-public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends Workflow {
+public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends WorkflowRunnerWithRaire {
 
   /**
    * Class-wide logger.
    */
   private static final Logger LOGGER = LogManager.getLogger(WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement.class);
-
-
-  @BeforeClass
-  public void setup() {
-    // FIXME - we should now not need this. May also not need Persistence stuff in
-    // runMainAndInitializeDBIfNeeded() at all.
-    config = loadProperties();
-    RestAssured.baseURI = config.getProperty("corla_url");
-    RestAssured.port = Integer.parseInt(config.getProperty("corla_http_port"));
-  }
 
   /**
    * Run assertion generation test workflow, interacting with raire-service.
@@ -94,6 +84,7 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
    */
   @Parameters("workflowFile")
   @Test
+  @Override
   public void runInstance(final String workflowFile) throws InterruptedException {
     final String prefix = "[runInstance] ";
     LOGGER.info(String.format("%s %s.", prefix, "running WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement"));
@@ -105,8 +96,6 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
       // The default argument is passed in from src/test/resources/testng.xml
       return;
     }
-
-    runMainAndInitializeDBIfNeeded("Workflow with raire", Optional.empty());
 
     // Reset the database.
     resetDatabase("stateadmin1");
@@ -199,22 +188,5 @@ public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends W
     assertTrue(assertionsCSV.size() > 1);
     assertTrue(assertionsCSV.stream().noneMatch(l -> StringUtils.containsIgnoreCase(l, "LYON Michael")));
     assertTrue(assertionsCSV.stream().anyMatch(l -> StringUtils.containsIgnoreCase(l, "SWIVEL SwappedWithLyon")));
-  }
-
-  /**
-   * Set up persistence with the database and raire url set up in src/test/resources/test.properties
-   * This assumes the database is in an initial state, with administrator logins and counties but
-   * without other data.
-   * This version does not actually run main, because main is expected to be already running.
-   * @param testName not used.
-   * @param postgres not used.
-   */
-  protected void runMainAndInitializeDBIfNeeded(final String testName, final Optional<PostgreSQLContainer<?>> postgres) {
-    assertTrue(postgres.isEmpty());
-    testUtils.log(LOGGER, "[runMainAndInitializeDB] running workflow " + testName + ".");
-    // Don't need to start main because we assume it's already running.
-    // main("src/test/resources/test.properties");
-    Persistence.setProperties(config);
-    Persistence.beginTransaction();
   }
 }
