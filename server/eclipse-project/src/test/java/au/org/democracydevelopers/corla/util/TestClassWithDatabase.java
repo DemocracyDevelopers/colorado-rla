@@ -111,6 +111,10 @@ public abstract class TestClassWithDatabase {
       tinyIRVCandidates, 3, 1, 0);
   public final static ContestResult tiedIRVContestResult = new ContestResult(tiedIRV);
 
+  /**
+   * Start the postgres container with appropriate config.
+   * init the contest results above (these are just generic/static test values).
+   */
   @BeforeClass
   public void initDatabase() {
     initContestResults();
@@ -121,6 +125,9 @@ public abstract class TestClassWithDatabase {
     Persistence.setProperties(config);
   }
 
+  /**
+   * Stop the postgres container.
+   */
   @AfterClass
   public void afterAll() {
     postgres.stop();
@@ -134,6 +141,9 @@ public abstract class TestClassWithDatabase {
     Persistence.beginTransaction();
   }
 
+  /**
+   * Set up some example contest results for testing.
+   */
   private static void initContestResults() {
 
     boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);

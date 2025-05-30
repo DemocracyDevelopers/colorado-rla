@@ -106,7 +106,6 @@ public class GenerateAssertionsValidStateTest extends Workflow {
     // Set the above-initialized URL for the RAIRE_URL property in Main.
     // This config is used in runMainAndInitializeDBIfNeeded.
     config.setProperty(RAIRE_URL, baseUrl);
-    // final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
     runMain(config, "GenerateAssertionsAPITests");
 
     // Load some IRV contests into the database.

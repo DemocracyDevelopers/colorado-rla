@@ -22,7 +22,6 @@ raire-service. If not, see <https://www.gnu.org/licenses/>.
 package au.org.democracydevelopers.corla.endpoint;
 
 import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
-import au.org.democracydevelopers.corla.util.TestClassWithDatabase;
 import au.org.democracydevelopers.corla.util.testUtils;
 import au.org.democracydevelopers.corla.workflows.Workflow;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -97,22 +96,19 @@ public class GenerateAssertionsAPITests extends Workflow {
     // You can instead run the real raire service and set baseUrl accordingly,
     // though some tests may fail, depending on whether you have
     // appropriate contests in the database.
-    final int raireMockPort = Integer.parseInt(config.getProperty(raireMockPortNumberString, ""));
-    wireMockRaireServer = new WireMockServer(raireMockPort);
+    final int raireGenerateAssertionsPort = Integer.parseInt(config.getProperty(raireMockPortNumberString, ""));
+    wireMockRaireServer = new WireMockServer(raireGenerateAssertionsPort);
     wireMockRaireServer.start();
 
     String baseUrl = wireMockRaireServer.baseUrl();
     configureFor("localhost", wireMockRaireServer.port());
 
     // Set the above-initialized URL for the RAIRE_URL property in Main.
-    // This config is used in runMainAndInitializeDBIfNeeded.
     config.setProperty(RAIRE_URL, baseUrl);
-    // final PostgreSQLContainer<?> postgres = TestClassWithDatabase.createTestContainer();
     runMain(config, "GenerateAssertionsAPITests");
 
-
     // Load some IRV contests into the database.
-    TestClassWithDatabase.runSQLSetupScript(postgres, "SQL/corla-three-candidates-ten-votes-plus-plurality.sql");
+    runSQLSetupScript(postgres, "SQL/corla-three-candidates-ten-votes-plus-plurality.sql");
 
     // Mock a proper response to the IRV TinyExample1 contest.
     stubFor(post(urlEqualTo(raireGenerateAssertionsEndpoint))

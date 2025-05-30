@@ -141,14 +141,6 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   private final static Gson gson = new Gson();
 
   /**
-   * Database init.
-   */
-  @BeforeClass
-  public static void beforeAllThisClass() {
-    // Persistence.setProperties(config);
-  }
-
-  /**
    * Initialise mocked objects prior to the first test.
    */
   @BeforeClass

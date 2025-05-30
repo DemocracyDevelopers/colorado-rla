@@ -560,7 +560,7 @@ public abstract class Workflow extends TestClassWithDatabase {
                                              final Optional<Double> timeLimitSeconds) {
     final String contestQ = contestName.map(s -> CONTEST_NAME + "=" + s).orElse("");
     final String timeLimitQ = timeLimitSeconds.map(s -> TIME_LIMIT_SECONDS + "=" + s).orElse("");
-    String queryString = (contestName.isPresent() || timeLimitSeconds.isPresent() ? "?" : "")
+    final String queryString = (contestName.isPresent() || timeLimitSeconds.isPresent() ? "?" : "")
         + String.join(",", Stream.of(contestQ, timeLimitQ).filter(s -> !s.isEmpty()).toList());
 
     return given().filter(filter)
