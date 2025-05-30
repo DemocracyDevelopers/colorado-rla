@@ -76,7 +76,7 @@ public abstract class TestClassWithDatabase {
   /**
    * Container for the mock-up database.
    */
-  protected PostgreSQLContainer<?> postgres = createTestContainer();
+  protected PostgreSQLContainer<?> postgres = createTestContainer(config);
 
   /**
    * Database session.
@@ -176,7 +176,7 @@ public abstract class TestClassWithDatabase {
    * interacts with the database.
    * @return a postgres test container representing a test database.
    */
-  public PostgreSQLContainer<?> createTestContainer() {
+  private static PostgreSQLContainer<?> createTestContainer(Properties config) {
     return new PostgreSQLContainer<>("postgres:15-alpine")
         // None of these actually have to be the same as the real database (except its name),
         // but this makes it easy to match the setup scripts.
