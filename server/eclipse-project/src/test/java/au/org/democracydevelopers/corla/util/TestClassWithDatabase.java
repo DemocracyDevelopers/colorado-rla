@@ -164,7 +164,7 @@ public abstract class TestClassWithDatabase {
    * Rollback any changes to the (test) database after each test method is run.
    */
   @AfterMethod
-  public static void afterTest(){
+  public void afterTest(){
     try {
       Persistence.rollbackTransaction();
     } catch (Exception ignored) {

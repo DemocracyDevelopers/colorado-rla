@@ -28,16 +28,14 @@ import org.apache.log4j.Logger;
 import org.hibernate.Session;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-import org.testng.annotations.Parameters;
+import org.testng.annotations.*;
 import us.freeandfair.corla.persistence.Persistence;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.Optional;
 
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static org.testng.Assert.*;
@@ -101,6 +99,13 @@ public class WorkflowRunnerWithRaire extends Workflow {
   public void afterAll() {
     session.close();
   }
+
+  /**
+   * Override TestClassWithDatabase's rollback.
+   */
+  @AfterMethod
+  @Override
+  public void afterTest() {}
 
   /**
    * Given a JSON file defining an audit workflow (CVRs, Manifests, which CVRs to replace with
