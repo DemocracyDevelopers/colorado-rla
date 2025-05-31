@@ -39,9 +39,6 @@ import org.testng.annotations.Test;
 import us.freeandfair.corla.model.*;
 
 import java.util.List;
-import java.util.Set;
-
-import com.github.tomakehurst.wiremock.WireMockServer;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.testng.Assert.assertEquals;
@@ -100,17 +97,10 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
       = new GenerateAssertionsRequest(tiedIRV, tinyIRVCount, 5,
       tinyIRVCandidates.stream().map(Choice::name).toList());
 
-
   /**
    * Raire endpoint for getting assertions.
    */
   private final static String raireGenerateAssertionsEndpoint = "/raire/generate-assertions";
-
-  /**
-   * Wiremock server for mocking the raire service.
-   * (Note the default of 8080 clashes with the raire-service default, so this is different.)
-   */
-  private WireMockServer wireMockRaireServer;
 
   /**
    * Base url - this is set up to use the wiremock server, but could be set here to wherever you have the
@@ -146,27 +136,12 @@ public class GenerateAssertionsTests extends TestClassWithDatabase {
   @BeforeClass
   public void initMocks() {
 
-    boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    boulderIRVContestResult.setBallotCount((long) bouldMayoralCount);
-    boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
-    boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
-
-    tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    tinyIRVContestResult.setBallotCount((long) tinyIRVCount);
-    tinyIRVContestResult.setWinners(Set.of("Alice"));
-    tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
-
-
-    // Set up default raire server on the port defined in test.properties.
-    // You can instead run the real raire service and set baseUrl accordingly,
-    // though the tests of invalid/uninterpretable data will fail, and of course you have to have
-    // appropriate contests in the database.
-    final int raireMockPort = Integer.parseInt(config.getProperty(raireMockPortNumberString, ""));
-    wireMockRaireServer = new WireMockServer(raireMockPort);
-    wireMockRaireServer.start();
+    // Set up the mock raire server.
+    wireMockRaireServer = initWireMockRaireServer(config);
     baseUrl = wireMockRaireServer.baseUrl();
-    String badUrl = baseUrl + badEndpoint;
-    configureFor("localhost", wireMockRaireServer.port());
+
+    final String badUrl = baseUrl + badEndpoint;
+
     // Mock a proper response to the Boulder Mayoral '23 contest.
     stubFor(post(urlEqualTo(raireGenerateAssertionsEndpoint))
         .withRequestBody(equalToJson(gson.toJson(boulderRequest)))

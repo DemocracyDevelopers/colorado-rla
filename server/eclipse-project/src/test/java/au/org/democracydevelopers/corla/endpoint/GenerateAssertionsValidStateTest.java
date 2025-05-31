@@ -24,7 +24,6 @@ package au.org.democracydevelopers.corla.endpoint;
 import au.org.democracydevelopers.corla.communication.responseFromRaire.GenerateAssertionsResponse;
 import au.org.democracydevelopers.corla.util.testUtils;
 import au.org.democracydevelopers.corla.workflows.Workflow;
-import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.gson.Gson;
 import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
@@ -71,11 +70,6 @@ public class GenerateAssertionsValidStateTest extends Workflow {
   private final String raireGenerateAssertionsEndpoint = "/raire/generate-assertions";
 
   /**
-   * Wiremock server for mocking the raire service.
-   */
-  private WireMockServer wireMockRaireServer;
-
-  /**
    * GSON for json interpretation.
    */
   private final static Gson gson = new Gson();
@@ -84,24 +78,17 @@ public class GenerateAssertionsValidStateTest extends Workflow {
    * Initialise mocked objects prior to the first test.
    */
   @BeforeClass
-  public void initMocksAndMainAndDB() {
+  public void initMocksAndMain() {
 
     Persistence.beginTransaction();
     runSQLSetupScript("SQL/co-counties.sql");
-    // config = loadProperties();
+
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
 
-    // Set up default raire server on the port defined in test.properties.
-    // You can instead run the real raire service and set baseUrl accordingly,
-    // though some tests may fail, depending on whether you have
-    // appropriate contests in the database.
-    final int raireMockPort = Integer.parseInt(config.getProperty(raireMockPortNumberString, ""));
-    wireMockRaireServer = new WireMockServer(raireMockPort);
-    wireMockRaireServer.start();
-
+    // Set up the mock raire server.
+    wireMockRaireServer = initWireMockRaireServer(config);
     String baseUrl = wireMockRaireServer.baseUrl();
-    configureFor("localhost", wireMockRaireServer.port());
 
     // Set the above-initialized URL for the RAIRE_URL property in Main.
     // This config is used in runMainAndInitializeDBIfNeeded.

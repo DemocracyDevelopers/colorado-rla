@@ -69,12 +69,6 @@ public class GetAssertionsTests extends TestClassWithDatabase {
   private final static String raireGetAssertionsEndpoint = "/raire/get-assertions";
 
   /**
-   * Wiremock server for mocking the raire service.
-   * (Note the default of 8080 clashes with the raire-service default, so this is different.)
-   */
-  WireMockServer wireMockRaireServer;
-
-  /**
    * Base url - this is set up to use the wiremock server, but could be set here to wherever you have the
    * raire-service running to test with that directly.
    */
@@ -108,12 +102,10 @@ public class GetAssertionsTests extends TestClassWithDatabase {
   public void initMocks() {
     MockitoAnnotations.openMocks(this);
 
-    // Set up a wiremock raire server on the port defined in test.properties.
-    final int raireMockPort = Integer.parseInt(config.getProperty(raireMockPortNumberString, ""));
-    wireMockRaireServer = new WireMockServer(raireMockPort);
-    wireMockRaireServer.start();
+    // Set up the mock raire server.
+    wireMockRaireServer = initWireMockRaireServer(config);
     baseUrl = wireMockRaireServer.baseUrl();
-    configureFor("localhost", wireMockRaireServer.port());
+
     // Mock the above-initialized URL for the RAIRE_URL property in Main.
     mockProperties.setProperty(RAIRE_URL, baseUrl);
 

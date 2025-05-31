@@ -26,6 +26,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import au.org.democracydevelopers.corla.model.ContestType;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import org.hibernate.Session;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.ext.ScriptUtils;
@@ -40,6 +41,7 @@ import us.freeandfair.corla.persistence.Persistence;
 import static au.org.democracydevelopers.corla.endpoint.GenerateAssertions.UNKNOWN_WINNER;
 import static au.org.democracydevelopers.corla.util.PropertiesLoader.loadProperties;
 import static au.org.democracydevelopers.corla.util.testUtils.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
 
 /**
  * This class is designed to be extended by any test class that needs to interact with a test
@@ -62,6 +64,12 @@ public abstract class TestClassWithDatabase {
    * Properties derived from test.properties. Not static because some workflows alter this.
    */
   protected Properties config = loadProperties();
+
+  /**
+   * Wiremock server for mocking the raire service.
+   * (Note the default of 8080 clashes with the raire-service default, so this is different.)
+   */
+  protected WireMockServer wireMockRaireServer;
 
   /**
    * The string used to identify the configured port in test.properties.
@@ -147,12 +155,12 @@ public abstract class TestClassWithDatabase {
   private static void initContestResults() {
 
     boulderIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    boulderIRVContestResult.setBallotCount(100000L);
+    boulderIRVContestResult.setBallotCount((long) bouldMayoralCount);
     boulderIRVContestResult.setWinners(Set.of("Aaron Brockett"));
     boulderIRVContestResult.addContests(Set.of(boulderMayoralContest));
 
     tinyIRVContestResult.setAuditReason(AuditReason.COUNTY_WIDE_CONTEST);
-    tinyIRVContestResult.setBallotCount(10L);
+    tinyIRVContestResult.setBallotCount((long) tinyIRVCount);
     tinyIRVContestResult.setWinners(Set.of("Alice"));
     tinyIRVContestResult.addContests(Set.of(tinyIRVExample));
 
@@ -205,6 +213,23 @@ public abstract class TestClassWithDatabase {
   public static void runSQLSetupScript(final PostgreSQLContainer<?> container, final String initScriptPath) {
     var containerDelegate = new JdbcDatabaseDelegate(container, "");
     ScriptUtils.runInitScript(containerDelegate, initScriptPath);
+  }
+
+  /**
+   * Set up default raire server on the port defined in config.
+   *
+   * @param config The configuration properties.
+   * @return the base url of the mocked server.
+   */
+  protected WireMockServer initWireMockRaireServer(Properties config) {
+
+    final int raireMockPort = Integer.parseInt(config.getProperty(raireMockPortNumberString, ""));
+    wireMockRaireServer = new WireMockServer(raireMockPort);
+    wireMockRaireServer.start();
+
+    configureFor("localhost", wireMockRaireServer.port());
+
+    return wireMockRaireServer;
   }
 
 }

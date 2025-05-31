@@ -75,7 +75,7 @@ public class GetAssertionsAPITests extends Workflow {
    * Initialise mocked raire service prior to the first test.
    */
   @BeforeClass
-  public void initMocksAndMainAndDB() {
+  public void initMocksAndMain() {
 
     Persistence.beginTransaction();
     runSQLSetupScript("SQL/co-counties.sql");
@@ -83,16 +83,11 @@ public class GetAssertionsAPITests extends Workflow {
     RestAssured.baseURI = "http://localhost";
     RestAssured.port = 8888;
 
-    // Set up the mock raire server's port.
-    final int raireMockPort = Integer.parseInt(config.getProperty(raireMockPortNumberString, ""));
-    wireMockRaireServer = new WireMockServer(raireMockPort);
-    wireMockRaireServer.start();
-
+    // Set up the mock raire server.
+    wireMockRaireServer = initWireMockRaireServer(config);
     baseUrl = wireMockRaireServer.baseUrl();
-    configureFor("localhost", wireMockRaireServer.port());
 
-    // Set the above-initialized URL for the RAIRE_URL property in Main.
-    // This config is used in runMainAndInitializeDBIfNeeded.
+    // Set the above-initialized URL for the RAIRE_URL property in Main; run main.
     config.setProperty(RAIRE_URL, baseUrl);
     runMain(config, "GetAssertionsAPITests");
 
