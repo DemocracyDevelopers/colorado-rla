@@ -19,10 +19,10 @@ Older documentation about this project and the Colorado RLA system is in the leg
 * other information related to development, testing and deployment.
 
 Documentation related to IRV extensions is in the irv-docs folder. 
-  - a [slide deck] summarizing the main ideas,
-  - the Guide To RAIRE, [Part 1] and [Part 2], describing the background theory for IRV auditing,
-  - the [Implementation Report], detailing the implementation describing the user workflow
-    changes from plurality-only audits,
+  - a [slide deck](irv-docs/RaireGuide_SlideDeck.pdf) summarizing the main ideas,
+  - the Guide To RAIRE, [Part 1](irv-docs/A_Guide_to_RAIRE_Part_1.pdf) and [Part 2](irv-docs/A_Guide_to_RAIRE_Part_2.pdf), describing the background theory for IRV auditing,
+  - the [Implementation Report](irv-docs/ImplementationReport.pdf), detailing the implementation and describing the user workflow
+    changes from plurality-only audits.
 
 More recent versions may be available at [the Democracy Developers github repository](https://github.com/DemocracyDevelopers/Colorado-irv-rla-educational-materials),
 
