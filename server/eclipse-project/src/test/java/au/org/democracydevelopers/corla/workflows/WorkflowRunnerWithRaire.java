@@ -138,7 +138,8 @@ public class WorkflowRunnerWithRaire extends Workflow {
       doWorkflow(pathToInstance, Optional.empty());
 
     } catch(IOException e){
-      final String msg = prefix + " " + e.getMessage() + ". Check that the path and filename are correct.";
+      final String msg = prefix + " " + e.getMessage() +
+          ". Check colorado-rla is running, and that the address, path and filename are correct.";
       LOGGER.error(msg);
       throw new RuntimeException(msg);
     }

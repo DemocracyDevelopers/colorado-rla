@@ -185,7 +185,7 @@ public class IRVChoices {
    * to produce a valid IRV vote, and returns that valid IRV vote as an ordered list of candidate
    * names, with the highest-preference candidate first.
    * This specifies that candidate duplicates (Rule 26.7.3) should be removed before overvotes
-   * (Rule 26.7.1). Although the regulation specify that skipped preferences should be addressed
+   * (Rule 26.7.1). Although the regulations specify that skipped preferences should be addressed
    * first (Rule 26.7.2), we do them last in case skips have been introduced by the application of
    * Rules 26.7.1 or 26.7.3. This would have to be done anyway, and it makes no difference whether
    * it is also done at the beginning.
