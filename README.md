@@ -4,7 +4,7 @@ ColoradoRLA
 [![Build Status](https://travis-ci.org/FreeAndFair/ColoradoRLA.svg?branch=master)](https://travis-ci.org/FreeAndFair/ColoradoRLA)
 
 The **ColoradoRLA** system is software to facilitate risk-limiting
-audits at the state level, initiall developed by Free and Fair for Colorado's Department of
+audits at the state level, initial developed by Free and Fair for Colorado's Department of
 State in July and August of 2017. Extensions for Instant Runoff Voting (IRV) were developed
 by Democracy Developers in 2023-2025.
 
