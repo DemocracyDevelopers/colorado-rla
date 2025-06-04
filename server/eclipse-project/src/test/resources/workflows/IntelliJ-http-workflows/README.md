@@ -1,4 +1,7 @@
 This directory contains the http files for loading up the database intended to be used for demo 1.
+This approach is generally superseded by the [workflow instances](src/test/resources/workflows/instances).
+These http scripts do not implement all relevant tests - the workflows are much more comprehensive,
+but these are left in case they are helpful. 
 
 # Setup
 Before running these demos, 
