@@ -298,7 +298,7 @@ When prompted for the password, enter `corlasecret`.
 
 11. Now everything should be working. Note that the .jar is expected to hang when working.
 
-You can [build and run the client](https://github.com/DemocracyDevelopers/colorado-rla/blob/master/docs/15_installation.md), which will be available at [http://localhost:3000](http://localhost:3000). Use the credentials from `corla-test-credentials.psql` to log in. For example, `stateadmin1` is a state administrator. Log in with no password. `123` seems to work as a response to the grid challenge.
+You can [build and run the client](https://github.com/DemocracyDevelopers/colorado-rla/blob/master/legacy-docs/15_installation.md), which will be available at [http://localhost:3000](http://localhost:3000). Use the credentials from `corla-test-credentials.psql` to log in. For example, `stateadmin1` is a state administrator. Log in with no password. `123` seems to work as a response to the grid challenge.
 
 ### After the first run
 
