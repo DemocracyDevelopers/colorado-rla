@@ -38,4 +38,4 @@ jobs:
     
     - name: IRV Tests
       working-directory: server/eclipse-project 
-      run: mvn -Dtest='au.org.democracydevelopers.corla.**' test
+      run: mvn -Dtest='au.org.democracydevelopers.corla.**' -DexcludedGroups="needs-raire" test
