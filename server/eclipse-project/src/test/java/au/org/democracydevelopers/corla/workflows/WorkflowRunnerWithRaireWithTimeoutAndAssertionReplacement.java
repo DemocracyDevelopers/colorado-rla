@@ -60,7 +60,7 @@ import static us.freeandfair.corla.asm.ASMState.DoSDashboardState.DOS_INITIAL_ST
  * <a href="https://www.jetbrains.com/help/idea/work-with-tests-in-maven.html#skip_test">...</a>
  * This test is skipped when the tests are run with default parameters, i.e. during automated testing.
  */
-@Test(enabled=true)
+@Test(groups = {"needs-raire"})
 public class WorkflowRunnerWithRaireWithTimeoutAndAssertionReplacement extends WorkflowRunnerWithRaire {
 
   /**

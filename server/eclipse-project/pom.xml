@@ -156,7 +156,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.22.2</version>
 				<configuration>
-					<excludedGroups>${corla.test.excludedGroups}</excludedGroups>
+					<excludedGroups>needs-raire,${corla.test.excludedGroups}</excludedGroups>
 					<suiteXmlFiles>
 						<!-- used to allow file name to be passed as a parameter to the workflow test. -->
 						<suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
@@ -260,7 +260,7 @@
 		<dependency>
 			<groupId>org.testng</groupId>
 			<artifactId>testng</artifactId>
-			<version>6.8</version>
+			<version>7.11.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
