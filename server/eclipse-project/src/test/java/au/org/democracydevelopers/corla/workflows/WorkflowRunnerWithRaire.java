@@ -59,7 +59,7 @@ import java.util.Optional;
  * This deliberately does _not_ reset the database after the workflow runs. This might be helpful if
  * someone wants to examine its state via the client afterwards.
  */
-@Test(enabled=true)
+@Test(groups = {"needs-raire"})
 public class WorkflowRunnerWithRaire extends Workflow {
 
   /**
